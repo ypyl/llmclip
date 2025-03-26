@@ -244,12 +244,3 @@ CanUseFileRead(filePath) {
     allowedExts := "txt,csv,log,ini,json,xml,html,md,ahk,bat,sh,ps1,yml,toml,cs,ts,js,jsx,tsx,py,java,kt,go,rs,php,rb,pl,swift,c,cpp,h,hpp,m,mm,elm,erl,ex,exs,clj,cljc,cljx,cl,scala,sql"
     return ext && InStr("," allowedExts ",", "," ext ",")
 }
-
-HasValue(haystack, needle) {
-    if (!isObject(haystack))
-        return false
-    for k, v in haystack
-        if (v == needle)
-            return true
-    return false
-}

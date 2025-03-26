@@ -9,6 +9,10 @@ LLMClip is an AutoHotkey script that records clipboard content and provides a tr
 - Delete individual items from the recorded list
 - Automatically detects and processes clipboard content from Visual Studio Code
 
+## Primary Goal
+
+The primary goal of LLMClip is to combine all copied data from the clipboard (including text, file paths, folder paths, and their content) into one text value that can be passed to a Large Language Model (LLM) as context.
+
 ## Installation
 
 1. Download and install [AutoHotkey v2](https://www.autohotkey.com/download/).

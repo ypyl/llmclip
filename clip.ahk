@@ -158,16 +158,6 @@ ClipChanged(DataType) {
                     }
                 }
 
-                ; Dump raw bytes for debugging
-                byteDump := ""
-                Loop cb_all.Size {
-                    byte := NumGet(cb_all.Ptr, A_Index - 1, "UChar")
-                    byteDump .= Format("{:02x} ", byte)
-                    if (Mod(A_Index, 16) = 0) {
-                        byteDump .= "`n"
-                    }
-                }
-
                 ; Extract all file URIs present
                 localTxtFromClipboardArray := []  ; Reset array
                 position := 1
@@ -187,10 +177,6 @@ ClipChanged(DataType) {
                 ; If no URIs found, fall back to original clipboard text
                 if (localTxtFromClipboardArray.Length = 0)
                     localTxtFromClipboardArray := [txtFromClipboard]
-
-                ; Debug: Log everything
-                ; FileAppend cb_all, "D:\clipboard.bin", "RAW"
-                ; FileAppend "Raw data (ANSI): " rawData "`nLength: " StrLen(rawData) "`nByte dump:`n" byteDump "`nProcessed path: " txtFromClipboard "`n", "D:\clipboard.txt"
             } catch as e {
                 MsgBox "Error processing clipboard: " e.Message
             }

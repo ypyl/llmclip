@@ -1,16 +1,7 @@
 #Requires AutoHotkey 2.0
 #SingleInstance Force  ; Prevent multiple instances
 #Warn
-
-; Initialize variables
-isRecording := false
-context := []
-guiShown := false
-messages := [{
-    role: "system",
-    content: "You are a helpful assistant. Be concise and direct in your responses."
-}]
-global MyGui
+#Include <Json>
 #Include settings.ahk
 ; GetLLMSettings()
 ; {
@@ -21,9 +12,20 @@ global MyGui
 ;     )
 ; }
 
-settings := Map(
-    "settings", GetLLMSettings()
-)
+; Initialize variables
+settings := GetLLMSettings()
+defaultSystemMessage := "You are a helpful assistant. Be concise and direct in your responses."
+if settings.Get("system_prompt", "") {
+    defaultSystemMessage := settings["system_prompt"]
+}
+isRecording := false
+context := []
+guiShown := false
+messages := [{
+    role: "system",
+    content: defaultSystemMessage
+}]
+global MyGui
 
 A_TrayMenu.Delete()  ; Remove default menu items
 A_TrayMenu.Add("Start Recording", StartRecording)
@@ -41,8 +43,6 @@ F3:: {
         StopRecording()
     }
 }
-
-#Include <Json>
 
 ; Set default tray icon and tooltip
 SetTrayStatus(false)  ; Default state (not recording)
@@ -111,7 +111,7 @@ AskLLM(*) {
     leftPanel := MyGui.Add("GroupBox", "x10 y10 w400 h180", "Context")
 
     ; Add context list with reduced height
-    listBox := MyGui.Add("ListBox", "vListBox x20 y30 w380 h120 VScroll", context)
+    listBox := MyGui.Add("ListBox", "vListBox x20 y30 w380 h120 VScroll Multi", context)
     listBox.OnEvent("Change", ListBoxSelect)  ; Add this line
 
     ; Context buttons moved up
@@ -166,33 +166,40 @@ SendToLLM(*) {
     global MyGui, messages, context
     promptText := MyGui["PromptEdit"].Value
     listBox := MyGui["ListBox"]
-    selectedIndex := listBox.Value
 
     ; Update context in system message if needed
     if (context.Length > 0) {
         contextText := ""
-        ; Skip selected item when building context
+        selectedIndices := []
+
+        ; Get selected indices
+        if (listBox.Value is Array) {
+            selectedIndices := listBox.Value
+        } else if (listBox.Value) {
+            selectedIndices := [listBox.Value]
+        }
+
+        ; Build context excluding selected items
         for index, item in context {
-            if (index != selectedIndex) {
+            if !HasVal(selectedIndices, index) {
                 contextText .= GetTextFromContextItem(item)
             }
         }
         messages[1].content := "You are a helpful assistant. Here is the context:`n" contextText "`n\nPlease consider this context when answering the following question."
-    }
 
-    ; Check for selected text and add it as a special focus point
-    listBox := MyGui["ListBox"]
-    selectedIndex := listBox.Value
-    if (selectedIndex > 0) {
-        selectedItem := context[selectedIndex]
-        selectedText := GetTextFromContextItem(selectedItem)
-        messages[1].content .= "`n\nThe user has selected this text which may be particularly relevant: " selectedText
+        ; Add selected items as special focus points
+        if (selectedIndices.Length > 0) {
+            messages[1].content .= "`n\nThe user has selected these items which may be particularly relevant:`n"
+            for index in selectedIndices {
+                messages[1].content .= GetTextFromContextItem(context[index]) "`n"
+            }
+        }
     }
 
     messages.Push({ role: "user", content: promptText })
 
     try {
-        assistantResponse := CallLLM("settings", messages)
+        assistantResponse := CallLLM(messages)
         messages.Push({ role: "assistant", content: assistantResponse })
         MyGui["Response"].Value := assistantResponse
         UpdateChatHistoryView()  ; Update the chat history view
@@ -212,18 +219,18 @@ GetTextFromContextItem(item) {
     return itemText
 }
 
-CallLLM(provider, messages) {
+CallLLM(messages) {
     try {
-        endpoint := settings[provider]["endpoint"]
-        apiKey := settings[provider]["api_key"]
-        model := settings[provider].Get("model", "")
+        endpoint := settings["endpoint"]
+        apiKey := settings["api_key"]
+        model := settings.Get("model", "")
 
         ; Prepare request body
         body := {}
         if (model)
             body.model := model
         body.messages := messages
-        body.temperature := 0.7
+        body.temperature := settings.Get("temperature", "")
 
         ; Create temporary files for input/output
         tempDir := A_Temp "\llmclip"
@@ -277,23 +284,51 @@ GuiClose(*) {
 ListBoxSelect(*) {
     global MyGui, context
     listBox := MyGui["ListBox"]
-    selectedIndex := listBox.Value
-    if (selectedIndex > 0) {
-        selectedItem := context[selectedIndex]
-        textContent := GetTextFromContextItem(selectedItem)
-        MyGui["Response"].Value := textContent
+    selectedItems := []
+    textContent := ""
+
+    ; Handle multi-select values
+    if (listBox.Value is Array) {
+        ; Process multiple selections
+        for index in listBox.Value {
+            selectedItems.Push(context[index])
+        }
+    } else if (listBox.Value) {
+        ; Single selection
+        selectedItems.Push(context[listBox.Value])
     }
+
+    ; Process each selected item
+    for item in selectedItems {
+        textContent .= GetTextFromContextItem(item) "`n"
+    }
+
+    MyGui["Response"].Value := textContent
 }
 
 DeleteSelected(*) {
     global context, MyGui
     listBox := MyGui["ListBox"]
-    selectedIndex := listBox.Value
-    if (selectedIndex > 0) {
-        context.RemoveAt(selectedIndex)
-        listBox.Delete()
-        listBox.Add(context)
+    selectedIndices := []
+
+    ; Handle multi-select values
+    if (listBox.Value is Array) {
+        ; Get indices in reverse order (to avoid index shifting when removing)
+        for index in listBox.Value {
+            selectedIndices.InsertAt(1, index)
+        }
+    } else if (listBox.Value) {
+        selectedIndices.Push(listBox.Value)
     }
+
+    ; Remove selected items
+    for index in selectedIndices {
+        context.RemoveAt(index)
+    }
+
+    ; Refresh the listbox
+    listBox.Delete()
+    listBox.Add(context)
 }
 
 ClearSelection(*) {
@@ -302,10 +337,10 @@ ClearSelection(*) {
 }
 
 ClearChatHistory(*) {
-    global messages, MyGui
+    global messages, MyGui, defaultSystemMessage
     messages := [{
         role: "system",
-        content: "You are a helpful assistant. Be concise and direct in your responses."
+        content: defaultSystemMessage
     }]
     UpdateChatHistoryView()  ; Update the chat history view
     MyGui["Response"].Value := ""  ; Clear response area
@@ -385,7 +420,8 @@ ClipChanged(DataType) {
 
         ; MsgBox "Clipboard processed as: " txtFromClipboard
         for item in localTxtFromClipboardArray {
-            context.Push(item)
+            if !HasVal(context, item)
+                context.Push(item)
         }
 
         ; Update ListBox in GUI if shown
@@ -395,6 +431,15 @@ ClipChanged(DataType) {
             listBox.Add(context)
         }
     }
+}
+
+; Helper function to check if value exists in array
+HasVal(haystack, needle) {
+    for index, value in haystack {
+        if (value = needle)
+            return true
+    }
+    return false
 }
 
 UriToPath(uri) {

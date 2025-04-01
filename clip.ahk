@@ -110,11 +110,14 @@ AskLLM(*) {
     listBox.OnEvent("Change", ListBoxSelect)  ; Add this line
 
     ; Context buttons moved up
-    deleteButton := MyGui.Add("Button", "x20 y160 w185", "Delete Selected")
-    deleteButton.OnEvent("Click", DeleteSelected)
+    clearAllButton := MyGui.Add("Button", "x20 y160 w120", "Clear All")
+    clearAllButton.OnEvent("Click", ClearAllContext)
 
-    clearSelectionButton := MyGui.Add("Button", "x215 y160 w185", "Clear Selection")
+    clearSelectionButton := MyGui.Add("Button", "x150 y160 w120", "Clear Selection")
     clearSelectionButton.OnEvent("Click", ClearSelection)
+
+    deleteButton := MyGui.Add("Button", "x280 y160 w120", "Delete Selected")
+    deleteButton.OnEvent("Click", DeleteSelected)
 
     ; Create left panel for chat history, moved up
     historyPanel := MyGui.Add("GroupBox", "x10 y200 w400 h220", "Chat History")
@@ -578,4 +581,11 @@ PromptChange(GuiCtrl, Info) {
             return true
         }
     }
+}
+
+ClearAllContext(*) {
+    global context, MyGui
+    context := []
+    listBox := MyGui["ListBox"]
+    listBox.Delete()
 }

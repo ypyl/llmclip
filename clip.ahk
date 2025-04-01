@@ -13,6 +13,7 @@
 ; }
 
 ; Initialize variables
+global askButton
 settings := GetLLMSettings()
 defaultSystemMessage := "You are a helpful assistant. Be concise and direct in your responses."
 if settings.Get("system_prompt", "") {
@@ -97,7 +98,7 @@ StopRecording(*) {
 }
 
 AskLLM(*) {
-    global context, MyGui, guiShown
+    global context, MyGui, guiShown, askButton
     MyGui := Gui()
     MyGui.Title := "LLM Assistant"
 
@@ -219,6 +220,11 @@ CallLLM(messages) {
         apiKey := settings["api_key"]
         model := settings.Get("model", "")
 
+        ; Disable Ask LLM button and show progress
+        if (MyGui) {
+            askButton.Enabled := false  ; Disable Ask LLM button
+        }
+
         ; Prepare request body
         body := {}
         if (model)
@@ -248,6 +254,13 @@ CallLLM(messages) {
         ; Execute curl
         RunWait(curlCmd, , "Hide")
 
+        ; Show error if response file doesn't exist
+        if (!FileExist(outputFile)) {
+            if (MyGui)
+                MyGui["Response"].Value := "Error: No response received from API"
+            throw Error("No response file created")
+        }
+
         ; Read response
         if FileExist(outputFile) {
             response := FileRead(outputFile)
@@ -259,8 +272,14 @@ CallLLM(messages) {
         throw Error("No response received")
 
     } catch as e {
+        if (MyGui)
+            MyGui["Response"].Value := "Error calling LLM: " e.Message
         throw Error("Error calling LLM: " e.Message)
     } finally {
+        ; Re-enable Ask LLM button
+        if (MyGui)
+            askButton.Enabled := true
+
         ; Cleanup temp files
         try {
             FileDelete(inputFile)

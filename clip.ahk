@@ -134,7 +134,10 @@ AskLLM(*) {
     promptEdit.OnEvent("Change", PromptChange)
 
     ; Button section moved down
-    askButton := MyGui.Add("Button", "x20 y600 w380", "Ask LLM")
+    resetButton := MyGui.Add("Button", "x20 y600 w185", "Reset All")
+    resetButton.OnEvent("Click", ResetAll)
+
+    askButton := MyGui.Add("Button", "x215 y600 w185", "Ask LLM")
     askButton.OnEvent("Click", SendToLLM)
 
     ; Right panel remains unchanged
@@ -357,6 +360,25 @@ ClearChatHistory(*) {
     }]
     UpdateChatHistoryView()  ; Update the chat history view
     MyGui["Response"].Value := ""  ; Clear response area
+}
+
+ResetAll(*) {
+    global MyGui, messages, context, defaultSystemMessage
+    ; Clear chat history
+    messages := [{
+        role: "system",
+        content: defaultSystemMessage
+    }]
+    UpdateChatHistoryView()
+
+    ; Clear context
+    context := []
+    listBox := MyGui["ListBox"]
+    listBox.Delete()
+
+    ; Clear response and prompt
+    MyGui["Response"].Value := ""
+    MyGui["PromptEdit"].Value := ""
 }
 
 ExitApp(*) {

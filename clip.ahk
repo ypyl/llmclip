@@ -63,12 +63,12 @@ TrayIconClick(wParam, lParam, msg, hwnd) {
 
 SetTrayStatus(isRecording) {
     if (isRecording) {
-        TraySetIcon("shell32.dll", 132)  ; Red circle (recording)
+        TraySetIcon("shell32.dll", 294)  ; Red circle (recording)
         A_IconTip := "📍 Recording Clipboard..."
         A_TrayMenu.Disable("Start Recording")
         A_TrayMenu.Enable("Stop Recording")
     } else {
-        TraySetIcon("shell32.dll", 177)  ; Default clipboard icon
+        TraySetIcon("shell32.dll", 171)  ; Default clipboard icon
         A_IconTip := ""
         A_TrayMenu.Enable("Start Recording")
         A_TrayMenu.Disable("Stop Recording")

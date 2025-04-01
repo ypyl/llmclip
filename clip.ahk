@@ -137,10 +137,10 @@ AskLLM(*) {
     promptEdit.OnEvent("Change", PromptChange)
 
     ; Button section moved down
-    resetButton := MyGui.Add("Button", "x20 y600 w185", "Reset All")
+    resetButton := MyGui.Add("Button", "x20 y600 w90", "Reset All")
     resetButton.OnEvent("Click", ResetAll)
 
-    askButton := MyGui.Add("Button", "x215 y600 w185", "Ask LLM")
+    askButton := MyGui.Add("Button", "x120 y600 w280", "Ask LLM")
     askButton.OnEvent("Click", SendToLLM)
 
     ; Right panel remains unchanged

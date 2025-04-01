@@ -90,13 +90,7 @@ StopRecording(*) {
         SetTrayStatus(false)  ; Update icon & tooltip
         recordedText := ""  ; Clear recorded text
         for item in context {
-            if (DirExist(item)) {
-                recordedText .= "`n======`n" ProcessFolder(item)
-            } else if (FileExist(item)) {
-                recordedText .= "`n======`n" ProcessFile(item)
-            } else {
-                recordedText .= "`n======`n" item
-            }
+            recordedText .= GetTextFromContextItem(item)
         }
         A_Clipboard := recordedText  ; Copy recorded text to clipboard
     }
@@ -211,11 +205,11 @@ SendToLLM(*) {
 GetTextFromContextItem(item) {
     itemText := ""
     if (DirExist(item))
-        itemText := "`n======`n" ProcessFolder(item)
+        itemText := "======`n" ProcessFolder(item)
     else if (FileExist(item))
-        itemText := "`n======`n" ProcessFile(item)
+        itemText := "======`n" ProcessFile(item)
     else
-        itemText := "`n======`n" item
+        itemText := "======`n" item "`n"
     return itemText
 }
 
@@ -230,7 +224,7 @@ CallLLM(messages) {
         if (model)
             body.model := model
         body.messages := messages
-        body.temperature := settings.Get("temperature", "")
+        body.temperature := settings.Get("temperature", 0.7)
 
         ; Create temporary files for input/output
         tempDir := A_Temp "\llmclip"
@@ -350,10 +344,43 @@ ExitApp(*) {
     ExitApp
 }
 
+HasVal(haystack, needle) {
+    for index, value in haystack {
+        if (value = needle)
+            return true
+    }
+    return false
+}
+
+HasContent(haystack, newContent) {
+    if (newContent = "")
+        return true
+
+    ; First check exact matches
+    if (HasVal(haystack, newContent))
+        return true
+
+    ; Also check in chat history
+    for msg in messages {
+        v := InStr(msg.content, newContent)
+        if (v)
+            return true
+    }
+
+    ; Then check content matches for files and folders
+    newContentText := GetTextFromContextItem(newContent)
+    for item in haystack {
+        if (GetTextFromContextItem(item) = newContentText)
+            return true
+    }
+
+    return false
+}
+
 OnClipboardChange ClipChanged
 
 ClipChanged(DataType) {
-    global isRecording, context, MyGui, guiShown
+    global isRecording, context, MyGui, guiShown, messages
     if (isRecording) {
         ; First try plain text from A_Clipboard
         txtFromClipboard := Trim(A_Clipboard, '"')
@@ -370,6 +397,7 @@ ClipChanged(DataType) {
         for index, item in localTxtFromClipboardArray {
             if (!FileExist(item) && !DirExist(item)) {
                 ; If any item is not a valid path, treat the whole content as plain text
+                txtFromClipboard := StrReplace(txtFromClipboard, "`r`n", "`n")
                 localTxtFromClipboardArray := [txtFromClipboard]
                 break
             }
@@ -419,8 +447,9 @@ ClipChanged(DataType) {
         }
 
         ; MsgBox "Clipboard processed as: " txtFromClipboard
+        ; Add non-duplicate items to context
         for item in localTxtFromClipboardArray {
-            if !HasVal(context, item)
+            if !HasContent(context, item)
                 context.Push(item)
         }
 
@@ -431,15 +460,6 @@ ClipChanged(DataType) {
             listBox.Add(context)
         }
     }
-}
-
-; Helper function to check if value exists in array
-HasVal(haystack, needle) {
-    for index, value in haystack {
-        if (value = needle)
-            return true
-    }
-    return false
 }
 
 UriToPath(uri) {
@@ -469,10 +489,10 @@ ProcessFolder(FolderPath) {
     if (DirExist(FolderPath)) {
         Loop Files, FolderPath "\*.*", "R"  ; Recursively loop through all files
         {
-            folderText .= "`n======`n" ProcessFile(A_LoopFileFullPath)
+            folderText .= "======`n" ProcessFile(A_LoopFileFullPath) "`n"
         }
     } else {
-        folderText := "`n======`nFolder does not contains files"
+        folderText := "======`nFolder does not contains files`n"
     }
 
     return folderText
@@ -483,9 +503,9 @@ ProcessFile(FilePath) {
     if CanUseFileRead(FilePath) {
         try {
             content := FileRead(FilePath)
-            return FilePath "`n------`n" content
+            return FilePath "------`n" content "------`n"
         } catch {
-            return FilePath "`n------`n[Error reading file content]"
+            return FilePath "------`n[Error reading file content]`n"
         }
     }
     return FilePath

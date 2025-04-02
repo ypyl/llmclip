@@ -3,21 +3,26 @@
 #Warn
 #Include <Json>
 #Include settings.ahk
-; GetLLMSettings()
-; {
-;     return Map(
-;         "endpoint", "https://api.groq.com/openai/v1/chat/completions",
-;         "api_key", "<<KEY>",
-;         "model", "llama-3.3-70b-versatile"
-;     )
-; }
 
 ; Initialize variables
 global askButton
+global MyGui
 settings := GetLLMSettings()
+llmTypes := []
+for key in settings {
+    llmTypes.Push(key)
+}
+selectedIndex := 1
+GetSelectedSettings() {
+    global selectedIndex, llmTypes, settings
+    selectedLLMType := llmTypes[selectedIndex]
+    selectedSettings := settings[selectedLLMType]
+    return selectedSettings
+}
+
 defaultSystemMessage := "You are a helpful assistant. Be concise and direct in your responses."
-if settings.Get("system_prompt", "") {
-    defaultSystemMessage := settings["system_prompt"]
+if GetSelectedSettings().Get("system_prompt", "") {
+    defaultSystemMessage := GetSelectedSettings()["system_prompt"]
 }
 isRecording := false
 context := []
@@ -26,7 +31,6 @@ messages := [{
     role: "system",
     content: defaultSystemMessage
 }]
-global MyGui
 
 A_TrayMenu.Delete()  ; Remove default menu items
 A_TrayMenu.Add("Start Recording", StartRecording)
@@ -51,8 +55,7 @@ SetTrayStatus(false)  ; Default state (not recording)
 OnMessage(0x404, TrayIconClick)
 
 TrayIconClick(wParam, lParam, msg, hwnd) {
-    ; If left-clicked (lParam = 0x202)
-    if (lParam = 0x202) {
+    if (lParam = 0x202) {  ; Left click
         if (isRecording) {
             StopRecording()  ; Stop recording
         } else {
@@ -98,60 +101,63 @@ StopRecording(*) {
 }
 
 AskLLM(*) {
-    global context, MyGui, guiShown, askButton
+    global context, MyGui, guiShown, askButton, selectedIndex, llmTypes
     MyGui := Gui()
     MyGui.Title := "LLM Assistant"
 
-    ; Create left panel for context with reduced height
-    leftPanel := MyGui.Add("GroupBox", "x10 y10 w400 h180", "Context")
+    ; Add LLM type selector at the top
+    MyGui.Add("Text", "x20 y15", "LLM Type:")
+    llmTypeCombo := MyGui.Add("ComboBox", "x90 y12 w120 vLLMType", llmTypes)
+    llmTypeCombo.Value := selectedIndex
+    llmTypeCombo.OnEvent("Change", LLMTypeChanged)
 
     ; Add context list with reduced height
-    listBox := MyGui.Add("ListBox", "vListBox x20 y30 w380 h120 VScroll Multi", context)
+    listBox := MyGui.Add("ListBox", "vListBox x20 y45 w380 h150 VScroll Multi", context)
     listBox.OnEvent("Change", ListBoxSelect)  ; Add this line
 
     ; Context buttons moved up
-    clearAllButton := MyGui.Add("Button", "x20 y160 w120", "Clear All")
+    clearAllButton := MyGui.Add("Button", "x20 y205 w120", "Clear All")
     clearAllButton.OnEvent("Click", ClearAllContext)
 
-    clearSelectionButton := MyGui.Add("Button", "x150 y160 w120", "Clear Selection")
+    clearSelectionButton := MyGui.Add("Button", "x150 y205 w120", "Clear Selection")
     clearSelectionButton.OnEvent("Click", ClearSelection)
 
-    deleteButton := MyGui.Add("Button", "x280 y160 w120", "Delete Selected")
+    deleteButton := MyGui.Add("Button", "x280 y205 w120", "Delete Selected")
     deleteButton.OnEvent("Click", DeleteSelected)
 
-    ; Create left panel for chat history, moved up
-    historyPanel := MyGui.Add("GroupBox", "x10 y200 w400 h220", "Chat History")
-
     ; Add ListView for chat history
-    chatHistory := MyGui.Add("ListView", "vChatHistory x20 y220 w380 h160 NoSort", ["Role", "Text"])
+    chatHistory := MyGui.Add("ListView", "vChatHistory x20 y245 w380 h150 NoSort", ["Role", "Text"])
     chatHistory.ModifyCol(1, 60)  ; Role column width
     chatHistory.ModifyCol(2, 290) ; Text column width
     chatHistory.OnEvent("ItemSelect", ChatHistorySelect)
 
-    clearHistoryButton := MyGui.Add("Button", "x20 y390 w380", "Clear Chat History")
+    clearHistoryButton := MyGui.Add("Button", "x20 y405 w380", "Clear Chat History")
     clearHistoryButton.OnEvent("Click", ClearChatHistory)
 
     ; Prompt section with increased height
-    MyGui.Add("GroupBox", "x10 y430 w400 h200", "Your prompt")
-    promptEdit := MyGui.Add("Edit", "vPromptEdit x20 y450 w380 h140 Multi WantReturn")  ; Add WantReturn option
+    promptEdit := MyGui.Add("Edit", "vPromptEdit x20 y445 w380 h140 Multi WantReturn")  ; Add WantReturn option
     promptEdit.OnEvent("Change", PromptChange)
 
     ; Button section moved down
-    resetButton := MyGui.Add("Button", "x20 y600 w90", "Reset All")
+    resetButton := MyGui.Add("Button", "x20 y595 w90", "Reset All")
     resetButton.OnEvent("Click", ResetAll)
 
-    askButton := MyGui.Add("Button", "x120 y600 w280", "Ask LLM")
+    askButton := MyGui.Add("Button", "x120 y595 w280", "Ask LLM")
     askButton.OnEvent("Click", SendToLLM)
 
     ; Right panel remains unchanged
-    rightPanel := MyGui.Add("GroupBox", "x420 y10 w800 h610", "LLM Response")
-    MyGui.Add("Edit", "vResponse x430 y30 w780 h580 ReadOnly Multi VScroll Wrap", "")
+    MyGui.Add("Edit", "vResponse x420 y45 w790 h590 ReadOnly Multi VScroll Wrap", "")
 
     MyGui.OnEvent("Close", GuiClose)
-    MyGui.Show("w1230 h640")
+    MyGui.Show("w1230 h650")
     guiShown := true
 
     UpdateChatHistoryView()
+}
+
+LLMTypeChanged(*) {
+    global MyGui, llmTypes, selectedIndex
+    selectedIndex := MyGui["LLMType"].Value
 }
 
 UpdateChatHistoryView(*) {
@@ -220,11 +226,63 @@ GetTextFromContextItem(item) {
     return itemText
 }
 
+GetRequestBody(type, messages, settings) {
+    body := Map()
+    if (type = "groq" || type = "azure") {
+        if (model := settings.Get("model", ""))
+            body["model"] := model
+        body["messages"] := messages
+        body["temperature"] := settings.Get("temperature", 0.7)
+    } else if (type = "google") {
+        contents := []
+        systemMessage := ""
+
+        ; First, find and handle system message
+        for msg in messages {
+            if (msg.role = "system") {
+                systemMessage := msg
+                break
+            }
+        }
+
+        ; Add system instruction if present
+        if (systemMessage) {
+            body["system_instruction"] := {
+                parts: [{
+                    text: systemMessage.content
+                }]
+            }
+        }
+
+        ; Add other messages to contents
+        for msg in messages {
+            if (msg.role != "system") { ; Skip system messages as they're handled separately
+                contents.Push({
+                    role: msg.role = "assistant" ? "model" : msg.role,
+                    parts: [{
+                        text: msg.content
+                    }]
+                })
+            }
+        }
+
+        body["contents"] := contents
+        body["generationConfig"] := {
+            stopSequences: settings.Get("stopSequences", ["Title"]),
+            temperature: settings.Get("temperature", 1.0),
+            maxOutputTokens: settings.Get("maxOutputTokens", 800),
+            topP: settings.Get("topP", 0.8),
+            topK: settings.Get("topK", 10)
+        }
+    }
+    return body
+}
+
 CallLLM(messages) {
+    global selectedIndex, llmTypes
     try {
-        endpoint := settings["endpoint"]
-        apiKey := settings["api_key"]
-        model := settings.Get("model", "")
+        selectedSettings := GetSelectedSettings()
+        curl := selectedSettings["curl"]
 
         ; Disable Ask LLM button and show progress
         if (MyGui) {
@@ -232,11 +290,7 @@ CallLLM(messages) {
         }
 
         ; Prepare request body
-        body := {}
-        if (model)
-            body.model := model
-        body.messages := messages
-        body.temperature := settings.Get("temperature", 0.7)
+        body := GetRequestBody(llmTypes[selectedIndex], messages, selectedSettings)
 
         ; Create temporary files for input/output
         tempDir := A_Temp "\llmclip"
@@ -251,12 +305,7 @@ CallLLM(messages) {
         FileAppend(JSON.Dump(body), inputFile)
 
         ; Prepare curl command
-        curlCmd := model ?
-            Format('curl -s -S -X POST "{1}" -H "Content-Type: application/json" -H "Authorization: Bearer {2}" -d "@{3}" -o "{4}"',
-                endpoint, apiKey, inputFile, outputFile) :
-            Format('curl -s -S -X POST "{1}" -H "Content-Type: application/json" -H "api-key: {2}" -d "@{3}" -o "{4}"',
-                endpoint, apiKey, inputFile, outputFile)
-
+        curlCmd := Format(curl, inputFile, outputFile)
         ; Execute curl
         RunWait(curlCmd, , "Hide")
 
@@ -272,6 +321,12 @@ CallLLM(messages) {
             response := FileRead(outputFile)
             if (response != "") {
                 obj := JSON.Load(response)
+                if (obj.Has("candidates") && obj["candidates"].Length > 0) {
+                    candidate := obj["candidates"][1]
+                    if (candidate.Has("content") && candidate["content"].Has("parts") && candidate["content"]["parts"].Length > 0) {
+                        return candidate["content"]["parts"][1]["text"]
+                    }
+                }
                 return obj["choices"][1]["message"]["content"]
             }
         }

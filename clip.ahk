@@ -102,6 +102,10 @@ StopRecording(*) {
 
 AskLLM(*) {
     global context, MyGui, guiShown, askButton, selectedIndex, llmTypes
+    if (guiShown) {
+        MyGui.Show()
+        return
+    }
     MyGui := Gui()
     MyGui.Title := "LLM Assistant"
 

@@ -148,13 +148,13 @@ AskLLM(*) {
 
     ; Add LLM type selector at the top
     MyGui.Add("Text", "x20 y15", "LLM Type:")
-    llmTypeCombo := MyGui.Add("ComboBox", "x90 y12 w120 vLLMType", llmTypes)
+    llmTypeCombo := MyGui.Add("DropDownList", "x90 y12 w120 vLLMType", llmTypes)
     llmTypeCombo.Value := selectedIndex
     llmTypeCombo.OnEvent("Change", LLMTypeChanged)
 
     ; Add session selector
     MyGui.Add("Text", "x230 y15", "Session:")
-    sessionCombo := MyGui.Add("ComboBox", "x280 y12 w120 vSessionSelect", sessionNames)
+    sessionCombo := MyGui.Add("DropDownList", "x280 y12 w120 vSessionSelect", sessionNames)
     sessionCombo.Value := currentSessionIndex
     sessionCombo.OnEvent("Change", SessionChanged)
 
@@ -734,4 +734,5 @@ ClearAllContext(*) {
     sessionContexts[currentSessionIndex] := []
     listBox := MyGui["ListBox"]
     listBox.Delete()
+    listBox.Add(context)
 }

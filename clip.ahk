@@ -40,17 +40,34 @@ GetSelectedSettings() {
     return selectedSettings
 }
 
+; Add session management
+global currentSessionIndex := 1
+global MAX_SESSIONS := 3
+global sessionNames := ["Session 1", "Session 2", "Session 3"]
+global sessionMessages := []
+global sessionContexts := []
+
+; Initialize session arrays
+Loop MAX_SESSIONS {
+    defaultSystemMessage := "You are a helpful assistant. Be concise and direct in your responses."
+    if GetSelectedSettings().Get("system_prompt", "") {
+        defaultSystemMessage := GetSelectedSettings()["system_prompt"]
+    }
+    sessionMessages.Push([{
+        role: "system",
+        content: defaultSystemMessage
+    }])
+    sessionContexts.Push([])
+}
+
 defaultSystemMessage := "You are a helpful assistant. Be concise and direct in your responses."
 if GetSelectedSettings().Get("system_prompt", "") {
     defaultSystemMessage := GetSelectedSettings()["system_prompt"]
 }
 isRecording := false
-context := []
+context := sessionContexts[currentSessionIndex]
 guiShown := false
-messages := [{
-    role: "system",
-    content: defaultSystemMessage
-}]
+messages := sessionMessages[currentSessionIndex]
 
 A_TrayMenu.Delete()  ; Remove default menu items
 A_TrayMenu.Add("Start Recording", StartRecording)
@@ -121,7 +138,7 @@ StopRecording(*) {
 }
 
 AskLLM(*) {
-    global context, MyGui, guiShown, askButton, selectedIndex, llmTypes
+    global context, MyGui, guiShown, askButton, selectedIndex, llmTypes, currentSessionIndex, MAX_SESSIONS, sessionNames
     if (guiShown) {
         MyGui.Show()
         return
@@ -134,6 +151,12 @@ AskLLM(*) {
     llmTypeCombo := MyGui.Add("ComboBox", "x90 y12 w120 vLLMType", llmTypes)
     llmTypeCombo.Value := selectedIndex
     llmTypeCombo.OnEvent("Change", LLMTypeChanged)
+
+    ; Add session selector
+    MyGui.Add("Text", "x230 y15", "Session:")
+    sessionCombo := MyGui.Add("ComboBox", "x280 y12 w120 vSessionSelect", sessionNames)
+    sessionCombo.Value := currentSessionIndex
+    sessionCombo.OnEvent("Change", SessionChanged)
 
     ; Add context list with reduced height
     listBox := MyGui.Add("ListBox", "vListBox x20 y45 w380 h150 VScroll Multi", context)
@@ -182,6 +205,30 @@ AskLLM(*) {
 LLMTypeChanged(*) {
     global MyGui, llmTypes, selectedIndex
     selectedIndex := MyGui["LLMType"].Value
+}
+
+; Add session switching function
+SessionChanged(*) {
+    global MyGui, currentSessionIndex, context, messages, sessionContexts, sessionMessages
+
+    ; Save current session data
+    sessionContexts[currentSessionIndex] := context.Clone()
+    sessionMessages[currentSessionIndex] := messages.Clone()
+
+    ; Switch to new session
+    currentSessionIndex := MyGui["SessionSelect"].Value
+    context := sessionContexts[currentSessionIndex]
+    messages := sessionMessages[currentSessionIndex]
+
+    ; Update UI
+    listBox := MyGui["ListBox"]
+    listBox.Delete()
+    listBox.Add(context)
+
+    UpdateChatHistoryView()
+
+    ; Clear response field
+    MyGui["Response"].Value := ""
 }
 
 UpdateChatHistoryView(*) {
@@ -435,26 +482,45 @@ ClearSelection(*) {
 }
 
 ClearChatHistory(*) {
-    global messages, MyGui, defaultSystemMessage
+    global messages, MyGui, defaultSystemMessage, currentSessionIndex, sessionMessages
+
+    ; Reset just the current session
+    defaultSystemMessage := "You are a helpful assistant. Be concise and direct in your responses."
+    if GetSelectedSettings().Get("system_prompt", "") {
+        defaultSystemMessage := GetSelectedSettings()["system_prompt"]
+    }
+
     messages := [{
         role: "system",
         content: defaultSystemMessage
     }]
+
+    ; Update the session storage
+    sessionMessages[currentSessionIndex] := messages.Clone()
+
     UpdateChatHistoryView()  ; Update the chat history view
     MyGui["Response"].Value := ""  ; Clear response area
 }
 
 ResetAll(*) {
-    global MyGui, messages, context, defaultSystemMessage
-    ; Clear chat history
+    global MyGui, messages, context, defaultSystemMessage, currentSessionIndex, sessionMessages, sessionContexts
+
+    ; Clear chat history for current session
+    defaultSystemMessage := "You are a helpful assistant. Be concise and direct in your responses."
+    if GetSelectedSettings().Get("system_prompt", "") {
+        defaultSystemMessage := GetSelectedSettings()["system_prompt"]
+    }
+
     messages := [{
         role: "system",
         content: defaultSystemMessage
     }]
+    sessionMessages[currentSessionIndex] := messages.Clone()
     UpdateChatHistoryView()
 
-    ; Clear context
+    ; Clear context for current session
     context := []
+    sessionContexts[currentSessionIndex] := []
     listBox := MyGui["ListBox"]
     listBox.Delete()
 
@@ -663,8 +729,9 @@ PromptChange(GuiCtrl, Info) {
 }
 
 ClearAllContext(*) {
-    global context, MyGui
+    global context, MyGui, currentSessionIndex, sessionContexts
     context := []
+    sessionContexts[currentSessionIndex] := []
     listBox := MyGui["ListBox"]
     listBox.Delete()
 }

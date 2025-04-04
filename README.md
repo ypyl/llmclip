@@ -2,7 +2,8 @@
 
 LLMClip is an AutoHotkey script that records clipboard content and provides a tray menu for controlling the recording process. It can handle plain text, file paths, and folder paths, and allows you to interact with LLMs using the collected content.
 
-![image](https://github.com/user-attachments/assets/1d2bc166-f5cc-4e6c-a7b2-709f5916ec26)
+![image](https://github.com/user-attachments/assets/d14c261f-5616-4e09-b0fe-12fe1e6ebfd7)
+
 
 ## Features
 

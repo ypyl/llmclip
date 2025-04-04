@@ -12,14 +12,17 @@
 ;             "curl", 'curl -s -S -X POST "https://api.groq.com/openai/v1/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer <<KEY>" -d "@{1}" -o "{2}"',
 ;             "model", "llama-3.3-70b-versatile",
 ;             "temperature", 0.7,
-;             "system_prompt", "You are a helpful assistant. Be concise and direct in your responses. My name is Yauhen.",
+;             "system_prompt", "You are a helpful assistant. Be concise and direct in your responses.",
 ;         ),
 ;         "google", Map(
 ;             "curl", 'curl -s -S -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=<<KEY>>" -H "Content-Type: application/json" -d "@{1}" -o "{2}"',
-;             "system_prompt", "You are a helpful assistant. Be concise and direct in your responses. My name is Yauhen.",
+;             "system_prompt", "You are a helpful assistant. Be concise and direct in your responses.",
 ;             "temperature", 0.7,
 ;         ))
 ; }
+
+
+; cURL is also should be installed as it is used to actually call LLM providers. Please install it using:`nwinget install cURL.cURL`nor visit https://curl.se/download.html
 
 ; Initialize variables
 global askButton
@@ -302,13 +305,6 @@ GetRequestBody(type, messages, settings) {
 CallLLM(messages) {
     global selectedIndex, llmTypes
     try {
-        if (!IsCurlInstalled()) {
-            errorMsg := "cURL is not installed. Please install it using:`nwinget install cURL.cURL`nor visit https://curl.se/download.html"
-            if (MyGui)
-                MyGui["Response"].Value := errorMsg
-            throw Error(errorMsg)
-        }
-
         selectedSettings := GetSelectedSettings()
         curl := selectedSettings["curl"]
 
@@ -375,11 +371,6 @@ CallLLM(messages) {
             FileDelete(outputFile)
         }
     }
-}
-
-IsCurlInstalled() {
-    RunWait("curl --version",, "Hide UseErrorLevel")
-    return !A_LastError
 }
 
 GuiClose(*) {

@@ -16,8 +16,39 @@ The primary goal of LLMClip is to combine all copied data from the clipboard (in
 ## Installation
 
 1. Download and install [AutoHotkey v2](https://www.autohotkey.com/download/).
-2. Save the `clip.ahk` script to your desired location.
-3. Run the script by double-clicking the `clip.ahk` file.
+2. Install cURL using one of these methods:
+   - Run `winget install cURL.cURL` in PowerShell
+   - Download from [curl.se](https://curl.se/download.html)
+3. Save the `clip.ahk` script to your desired location.
+4. Create a `settings.ahk` file in the same directory with your LLM configurations.
+5. Run the script by double-clicking the `clip.ahk` file.
+
+## LLM Configuration
+
+The `settings.ahk` file contains configurations for different LLM providers. The example script includes built-in support for:
+
+- Groq (using llama-3.3-70b-versatile model)
+- Google (using gemini-2.0-flash model)
+
+Example `settings.ahk`:
+```autohotkey
+GetLLMSettings() {
+    return Map(
+        "groq", Map(
+            "curl", 'curl -s -S -X POST "https://api.groq.com/openai/v1/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer <<KEY>" -d "@{1}" -o "{2}"',
+            "model", "llama-3.3-70b-versatile",
+            "temperature", 0.7,
+            "system_prompt", "You are a helpful assistant. Be concise and direct in your responses.",
+        ),
+        "google", Map(
+            "curl", 'curl -s -S -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=<<KEY>>" -H "Content-Type: application/json" -d "@{1}" -o "{2}"',
+            "system_prompt", "You are a helpful assistant. Be concise and direct in your responses.",
+            "temperature", 0.7,
+        ))
+}
+```
+
+Replace `<<KEY>` with your actual API keys for each service.
 
 ## Usage
 

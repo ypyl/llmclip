@@ -1,6 +1,6 @@
 # LLMClip
 
-LLMClip is an AutoHotkey script that records clipboard content and provides a tray menu for controlling the recording process. It can handle plain text, file paths, and folder paths, and allows you to view and delete recorded clipboard items.
+LLMClip is an AutoHotkey script that records clipboard content and provides a tray menu for controlling the recording process. It can handle plain text, file paths, and folder paths, and allows you to interact with LLMs using the collected content.
 
 ## Features
 
@@ -8,6 +8,10 @@ LLMClip is an AutoHotkey script that records clipboard content and provides a tr
 - Show a list of copied text and paths
 - Delete individual items from the recorded list
 - Automatically detects and processes clipboard content from Visual Studio Code
+- Interactive GUI for managing context and chatting with LLMs
+- Support for multiple LLM providers (Groq, Google, Azure)
+- Multi-select context items for focused LLM queries
+- Chat history tracking and management
 
 ## Primary Goal
 
@@ -22,6 +26,46 @@ The primary goal of LLMClip is to combine all copied data from the clipboard (in
 3. Save the `clip.ahk` script to your desired location.
 4. Create a `settings.ahk` file in the same directory with your LLM configurations.
 5. Run the script by double-clicking the `clip.ahk` file.
+
+## Usage
+
+### Hotkeys
+
+- **F3**: Smart toggle key
+  - First press: Start recording
+  - Second press: Open LLM chat interface
+  - Third press: Stop recording
+- **Left-click** on tray icon: Toggle recording on/off
+
+### Tray Menu
+
+- **Start Recording**: Starts recording clipboard content
+- **Stop Recording**: Stops recording clipboard content
+- **Ask LLM**: Opens the LLM chat interface
+- **Exit**: Exits the script
+
+### LLM Chat Interface
+
+The chat interface provides several features:
+- LLM provider selection dropdown
+- Context list with multi-select support
+- Chat history view
+- Response viewer
+- Interactive prompt input
+
+### Context Management
+
+- Select multiple context items to focus the LLM's attention
+- Clear all context or selected items
+- View raw content of selected context items
+- Delete individual context items
+
+### Chat Features
+
+- Chat history tracking
+- Clear chat history
+- View full message content by selecting chat history items
+- Press Enter to send message (Shift+Enter for new line)
 
 ## LLM Configuration
 
@@ -49,25 +93,6 @@ GetLLMSettings() {
 ```
 
 Replace `<<KEY>` with your actual API keys for each service.
-
-## Usage
-
-### Tray Menu
-
-- **Start Recording**: Starts recording clipboard content.
-- **Stop Recording**: Stops recording clipboard content and copies the recorded text to the clipboard.
-- **Show Copied Text**: Displays a list of recorded clipboard items, allowing you to delete individual items.
-- **Exit**: Exits the script.
-
-### Hotkeys
-
-- **Ctrl + Alt + R**: Toggles recording on and off.
-
-### Clipboard Content Handling
-
-- The script records plain text, file paths, and folder paths.
-- When recording is stopped, the recorded content is copied to the clipboard.
-- If the clipboard content is from Visual Studio Code, the script attempts to extract file URIs.
 
 ## Contributing
 

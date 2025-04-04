@@ -21,7 +21,6 @@
 ;         ))
 ; }
 
-
 ; cURL is also should be installed as it is used to actually call LLM providers. Please install it using:`nwinget install cURL.cURL`nor visit https://curl.se/download.html
 
 ; Initialize variables
@@ -146,57 +145,57 @@ AskLLM(*) {
     MyGui := Gui()
     MyGui.Title := "LLM Assistant"
 
-    ; Add LLM type selector at the top
-    MyGui.Add("Text", "x20 y15", "LLM Type:")
-    llmTypeCombo := MyGui.Add("DropDownList", "x90 y12 w120 vLLMType", llmTypes)
-    llmTypeCombo.Value := selectedIndex
-    llmTypeCombo.OnEvent("Change", LLMTypeChanged)
-
     ; Add session selector
-    MyGui.Add("Text", "x230 y15", "Session:")
-    sessionCombo := MyGui.Add("DropDownList", "x280 y12 w120 vSessionSelect", sessionNames)
+    MyGui.Add("Text", "x20 y15", "Session:")
+    sessionCombo := MyGui.Add("DropDownList", "x80 y12 w120 vSessionSelect", sessionNames)
     sessionCombo.Value := currentSessionIndex
     sessionCombo.OnEvent("Change", SessionChanged)
 
     ; Add context list with reduced height
-    listBox := MyGui.Add("ListBox", "vListBox x20 y45 w380 h150 VScroll Multi", context)
+    listBox := MyGui.Add("ListBox", "vListBox x20 y40 w380 h150 VScroll Multi", context)
     listBox.OnEvent("Change", ListBoxSelect)  ; Add this line
 
     ; Context buttons moved up
-    clearAllButton := MyGui.Add("Button", "x20 y205 w120", "Clear All")
+    clearAllButton := MyGui.Add("Button", "x20 y190 w120", "Clear All")
     clearAllButton.OnEvent("Click", ClearAllContext)
 
-    clearSelectionButton := MyGui.Add("Button", "x150 y205 w120", "Clear Selection")
+    clearSelectionButton := MyGui.Add("Button", "x150 y190 w120", "Clear Selection")
     clearSelectionButton.OnEvent("Click", ClearSelection)
 
-    deleteButton := MyGui.Add("Button", "x280 y205 w120", "Delete Selected")
+    deleteButton := MyGui.Add("Button", "x280 y190 w120", "Delete Selected")
     deleteButton.OnEvent("Click", DeleteSelected)
 
     ; Add ListView for chat history
-    chatHistory := MyGui.Add("ListView", "vChatHistory x20 y245 w380 h150 NoSort", ["Role", "Text"])
+    chatHistory := MyGui.Add("ListView", "vChatHistory x20 y225 w380 h150 NoSort", ["Role", "Text"])
     chatHistory.ModifyCol(1, 60)  ; Role column width
     chatHistory.ModifyCol(2, 290) ; Text column width
     chatHistory.OnEvent("ItemSelect", ChatHistorySelect)
 
-    clearHistoryButton := MyGui.Add("Button", "x20 y405 w380", "Clear Chat History")
+    clearHistoryButton := MyGui.Add("Button", "x20 y385 w380", "Clear Chat History")
     clearHistoryButton.OnEvent("Click", ClearChatHistory)
 
     ; Prompt section with increased height
-    promptEdit := MyGui.Add("Edit", "vPromptEdit x20 y445 w380 h140 Multi WantReturn")  ; Add WantReturn option
+    promptEdit := MyGui.Add("Edit", "vPromptEdit x20 y420 w380 h140 Multi WantReturn")  ; Add WantReturn option
     promptEdit.OnEvent("Change", PromptChange)
 
+    ; Add LLM type selector near Reset All button
+    MyGui.Add("Text", "x20 y575", "LLM Type:")
+    llmTypeCombo := MyGui.Add("DropDownList", "x80 y572 w70 vLLMType", llmTypes)
+    llmTypeCombo.Value := selectedIndex
+    llmTypeCombo.OnEvent("Change", LLMTypeChanged)
+
     ; Button section moved down
-    resetButton := MyGui.Add("Button", "x20 y595 w90", "Reset All")
+    resetButton := MyGui.Add("Button", "x160 y570 w90", "Reset All")
     resetButton.OnEvent("Click", ResetAll)
 
-    askButton := MyGui.Add("Button", "x120 y595 w280", "Ask LLM")
+    askButton := MyGui.Add("Button", "x260 y570 w140", "Ask LLM")
     askButton.OnEvent("Click", SendToLLM)
 
     ; Right panel remains unchanged
-    MyGui.Add("Edit", "vResponse x420 y45 w790 h590 ReadOnly Multi VScroll Wrap", "")
+    MyGui.Add("Edit", "vResponse x420 y10 w790 h590 ReadOnly Multi VScroll Wrap", "")
 
     MyGui.OnEvent("Close", GuiClose)
-    MyGui.Show("w1230 h650")
+    MyGui.Show("w1230 h610")
     guiShown := true
 
     UpdateChatHistoryView()

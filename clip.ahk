@@ -34,54 +34,109 @@
 ; cURL is also should be installed as it is used to actually call LLM providers. Please install it using:`nwinget install cURL.cURL`nor visit https://curl.se/download.html
 
 ; Initialize variables
+
 global askButton
 global MyGui
-settings := GetSettings()
-llmSettings := settings.providers
-llmTypes := []
-selectedIndex := 1
-for key in llmSettings {
-    llmTypes.Push(key)
-    if (key = settings.selectedLLMType) {
-        selectedIndex := A_Index
+
+class AppSettings {
+    providers := Map()
+    selectedLLMType := ""
+    llmTypes := []
+    selectedIndex := 1
+
+    __New() {
+        settings := GetSettings()
+        this.providers := settings.providers
+        this.selectedLLMType := settings.selectedLLMType
+
+        ; Initialize LLM types
+        this.llmTypes := []
+        for key in this.providers {
+            this.llmTypes.Push(key)
+            if (key = this.selectedLLMType) {
+                this.selectedIndex := A_Index
+            }
+        }
+    }
+
+    GetSelectedSettings() {
+        selectedLLMType := this.llmTypes[this.selectedIndex]
+        return this.providers[selectedLLMType]
+    }
+
+    GetDefaultSystemPrompt() {
+        defaultPrompt := "You are a helpful assistant. Be concise and direct in your responses."
+        if (prompt := this.GetSelectedSettings().Get("system_prompt", ""))
+            defaultPrompt := prompt
+        return defaultPrompt
     }
 }
 
-GetSelectedSettings() {
-    global selectedIndex, llmTypes, llmSettings
-    selectedLLMType := llmTypes[selectedIndex]
-    currentLLMSettings := llmSettings[selectedLLMType]
-    return currentLLMSettings
-}
+; Create settings instance
+global AppSettingsValue := AppSettings()
 
-; Add session management
-global currentSessionIndex := 1
-global MAX_SESSIONS := 3
-global sessionNames := ["Session 1", "Session 2", "Session 3"]
-global sessionMessages := []
-global sessionContexts := []
+class SessionManager {
+    currentSessionIndex := 1
+    MAX_SESSIONS := 3
+    sessionNames := ["Session 1", "Session 2", "Session 3"]
+    sessionMessages := []
+    sessionContexts := []
 
-; Initialize session arrays
-Loop MAX_SESSIONS {
-    defaultSystemMessage := "You are a helpful assistant. Be concise and direct in your responses."
-    if GetSelectedSettings().Get("system_prompt", "") {
-        defaultSystemMessage := GetSelectedSettings()["system_prompt"]
+    __New(appSettings) {
+        this.appSettings := appSettings
+
+        ; Initialize session arrays
+        Loop this.MAX_SESSIONS {
+            this.sessionMessages.Push([{
+                role: "system",
+                content: this.appSettings.GetDefaultSystemPrompt()
+            }])
+            this.sessionContexts.Push([])
+        }
     }
-    sessionMessages.Push([{
-        role: "system",
-        content: defaultSystemMessage
-    }])
-    sessionContexts.Push([])
+
+    GetCurrentSessionMessages() {
+        return this.sessionMessages[this.currentSessionIndex]
+    }
+
+    GetCurrentSessionContext() {
+        return this.sessionContexts[this.currentSessionIndex]
+    }
+
+    SetCurrentSessionContext(newContext) {
+        this.sessionContexts[this.currentSessionIndex] := newContext
+    }
+
+    SwitchSession(newIndex) {
+        if (newIndex > 0 && newIndex <= this.MAX_SESSIONS) {
+            this.currentSessionIndex := newIndex
+            return true
+        }
+        return false
+    }
+
+    ResetCurrentSession() {
+        this.ClearCurrentMessages()
+        this.ClearCurrentContext()
+    }
+
+    ClearCurrentMessages() {
+        this.sessionMessages[this.currentSessionIndex] := [{
+            role: "system",
+            content: this.appSettings.GetDefaultSystemPrompt()
+        }]
+    }
+
+    ClearCurrentContext() {
+        this.sessionContexts[this.currentSessionIndex] := []
+    }
 }
 
-defaultSystemMessage := "You are a helpful assistant. Be concise and direct in your responses."
-if GetSelectedSettings().Get("system_prompt", "") {
-    defaultSystemMessage := GetSelectedSettings()["system_prompt"]
-}
+; Create session manager instance
+global SessionManagerValue := SessionManager(AppSettingsValue)
+
 isRecording := false
-context := sessionContexts[currentSessionIndex]
 guiShown := false
-messages := sessionMessages[currentSessionIndex]
 
 A_TrayMenu.Delete()  ; Remove default menu items
 A_TrayMenu.Add("Start Recording", StartRecording)
@@ -130,20 +185,20 @@ SetTrayStatus(isRecording) {
 }
 
 StartRecording(*) {
-    global isRecording, context
+    global isRecording
     if (!isRecording) {
         isRecording := true
-        context := []
         SetTrayStatus(true)  ; Update icon & tooltip
     }
 }
 
 StopRecording(*) {
-    global isRecording, context
+    global isRecording
     if (isRecording) {
         isRecording := false
         SetTrayStatus(false)  ; Update icon & tooltip
         recordedText := ""  ; Clear recorded text
+        context := SessionManagerValue.GetCurrentSessionContext()
         for item in context {
             recordedText .= GetTextFromContextItem(item)
         }
@@ -152,7 +207,7 @@ StopRecording(*) {
 }
 
 AskLLM(*) {
-    global context, MyGui, guiShown, askButton, selectedIndex, llmTypes, currentSessionIndex, MAX_SESSIONS, sessionNames
+    global MyGui, guiShown, askButton, AppSettingsValue, SessionManagerValue
     if (guiShown) {
         MyGui.Show()
         return
@@ -161,8 +216,8 @@ AskLLM(*) {
     MyGui.Title := "LLM Assistant"
 
     ; Add session selector
-    sessionCombo := MyGui.Add("DropDownList", "x20 y10 w70 vSessionSelect", sessionNames)
-    sessionCombo.Value := currentSessionIndex
+    sessionCombo := MyGui.Add("DropDownList", "x20 y10 w70 vSessionSelect", SessionManagerValue.sessionNames)
+    sessionCombo.Value := SessionManagerValue.currentSessionIndex
     sessionCombo.OnEvent("Change", SessionChanged)
 
     ; Button section moved down
@@ -170,6 +225,7 @@ AskLLM(*) {
     resetButton.OnEvent("Click", ResetAll)
 
     ; Add context list with reduced height
+    context := SessionManagerValue.GetCurrentSessionContext()
     listBox := MyGui.Add("ListBox", "vListBox x20 y40 w380 h150 VScroll Multi", context)
     listBox.OnEvent("Change", ListBoxSelect)  ; Add this line
 
@@ -197,8 +253,8 @@ AskLLM(*) {
     promptEdit.OnEvent("Change", PromptChange)
 
     ; Add LLM type selector near Reset All button
-    llmTypeCombo := MyGui.Add("DropDownList", "x20 y570 w70 vLLMType", llmTypes)
-    llmTypeCombo.Value := selectedIndex
+    llmTypeCombo := MyGui.Add("DropDownList", "x20 y570 w70 vLLMType", AppSettingsValue.llmTypes)
+    llmTypeCombo.Value := AppSettingsValue.selectedIndex
     llmTypeCombo.OnEvent("Change", LLMTypeChanged)
 
     askButton := MyGui.Add("Button", "x100 y570 w300", "Ask LLM")
@@ -215,36 +271,37 @@ AskLLM(*) {
 }
 
 LLMTypeChanged(*) {
-    global MyGui, llmTypes, selectedIndex
-    selectedIndex := MyGui["LLMType"].Value
+    global MyGui, AppSettingsValue
+    AppSettingsValue.selectedIndex := MyGui["LLMType"].Value
 }
 
 ; Add session switching function
 SessionChanged(*) {
-    global MyGui, currentSessionIndex, context, messages, sessionContexts, sessionMessages
-
-    ; Save current session data
-    sessionContexts[currentSessionIndex] := context.Clone()
-    sessionMessages[currentSessionIndex] := messages.Clone()
+    global MyGui, SessionManagerValue
 
     ; Switch to new session
-    currentSessionIndex := MyGui["SessionSelect"].Value
-    context := sessionContexts[currentSessionIndex]
-    messages := sessionMessages[currentSessionIndex]
+    SessionManagerValue.SwitchSession(MyGui["SessionSelect"].Value)
 
-    ; Update UI
-    listBox := MyGui["ListBox"]
-    listBox.Delete()
-    listBox.Add(context)
-
+    UpdateContextView()
     UpdateChatHistoryView()
 
     ; Clear response field
     MyGui["Response"].Value := ""
 }
 
+UpdateContextView(*) {
+    ; Update local references
+    context := SessionManagerValue.GetCurrentSessionContext()
+
+    ; Update UI
+    listBox := MyGui["ListBox"]
+    listBox.Delete()
+    listBox.Add(context)
+}
+
 UpdateChatHistoryView(*) {
-    global MyGui, messages
+    global MyGui
+    messages := SessionManagerValue.GetCurrentSessionMessages()
     chatHistory := MyGui["ChatHistory"]
     chatHistory.Delete()
     for msg in messages {
@@ -253,7 +310,9 @@ UpdateChatHistoryView(*) {
 }
 
 SendToLLM(*) {
-    global MyGui, messages, context
+    global MyGui
+    messages := SessionManagerValue.GetCurrentSessionMessages()
+    context := SessionManagerValue.GetCurrentSessionContext()
     promptText := MyGui["PromptEdit"].Value
     listBox := MyGui["ListBox"]
 
@@ -369,9 +428,9 @@ GetRequestBody(type, messages, settings) {
 }
 
 CallLLM(messages) {
-    global selectedIndex, llmTypes
+    global AppSettingsValue
     try {
-        selectedSettings := GetSelectedSettings()
+        selectedSettings := AppSettingsValue.GetSelectedSettings()
         curl := selectedSettings["curl"]
 
         ; Disable Ask LLM button and show progress
@@ -380,7 +439,7 @@ CallLLM(messages) {
         }
 
         ; Prepare request body
-        body := GetRequestBody(llmTypes[selectedIndex], messages, selectedSettings)
+        body := GetRequestBody(AppSettingsValue.llmTypes[AppSettingsValue.selectedIndex], messages, selectedSettings)
 
         ; Create temporary files for input/output
         tempDir := A_Temp "\llmclip"
@@ -455,7 +514,8 @@ GuiClose(*) {
 }
 
 ListBoxSelect(*) {
-    global MyGui, context
+    global MyGui
+    context := SessionManagerValue.GetCurrentSessionContext()
     listBox := MyGui["ListBox"]
     selectedItems := []
     textContent := ""
@@ -480,7 +540,8 @@ ListBoxSelect(*) {
 }
 
 DeleteSelected(*) {
-    global context, MyGui
+    global MyGui
+    context := SessionManagerValue.GetCurrentSessionContext()
     listBox := MyGui["ListBox"]
     selectedIndices := []
 
@@ -510,47 +571,22 @@ ClearSelection(*) {
 }
 
 ClearChatHistory(*) {
-    global messages, MyGui, defaultSystemMessage, currentSessionIndex, sessionMessages
-
-    ; Reset just the current session
-    defaultSystemMessage := "You are a helpful assistant. Be concise and direct in your responses."
-    if GetSelectedSettings().Get("system_prompt", "") {
-        defaultSystemMessage := GetSelectedSettings()["system_prompt"]
-    }
-
-    messages := [{
-        role: "system",
-        content: defaultSystemMessage
-    }]
-
-    ; Update the session storage
-    sessionMessages[currentSessionIndex] := messages.Clone()
+    global MyGui, SessionManagerValue, AppSettingsValue
+    SessionManagerValue.ClearCurrentMessages()
 
     UpdateChatHistoryView()  ; Update the chat history view
     MyGui["Response"].Value := ""  ; Clear response area
 }
 
 ResetAll(*) {
-    global MyGui, messages, context, defaultSystemMessage, currentSessionIndex, sessionMessages, sessionContexts
+    global MyGui, SessionManagerValue
 
-    ; Clear chat history for current session
-    defaultSystemMessage := "You are a helpful assistant. Be concise and direct in your responses."
-    if GetSelectedSettings().Get("system_prompt", "") {
-        defaultSystemMessage := GetSelectedSettings()["system_prompt"]
-    }
+    ; Reset current session
+    SessionManagerValue.ResetCurrentSession()
 
-    messages := [{
-        role: "system",
-        content: defaultSystemMessage
-    }]
-    sessionMessages[currentSessionIndex] := messages.Clone()
+    ; Update UI
     UpdateChatHistoryView()
-
-    ; Clear context for current session
-    context := []
-    sessionContexts[currentSessionIndex] := []
-    listBox := MyGui["ListBox"]
-    listBox.Delete()
+    UpdateContextView()
 
     ; Clear response and prompt
     MyGui["Response"].Value := ""
@@ -578,6 +614,7 @@ HasContent(haystack, newContent) {
         return true
 
     ; Also check in chat history
+    messages := SessionManagerValue.GetCurrentSessionMessages()
     for msg in messages {
         v := InStr(msg.content, newContent)
         if (v)
@@ -597,7 +634,7 @@ HasContent(haystack, newContent) {
 OnClipboardChange ClipChanged
 
 ClipChanged(DataType) {
-    global isRecording, context, MyGui, guiShown, messages
+    global isRecording, MyGui, guiShown, SessionManagerValue
     if (isRecording) {
         ; First try plain text from A_Clipboard
         txtFromClipboard := Trim(A_Clipboard, '"')
@@ -665,10 +702,14 @@ ClipChanged(DataType) {
 
         ; MsgBox "Clipboard processed as: " txtFromClipboard
         ; Add non-duplicate items to context
+        context := SessionManagerValue.GetCurrentSessionContext()
         for item in localTxtFromClipboardArray {
             if !HasContent(context, item)
                 context.Push(item)
         }
+
+        ; Update session contexts
+        SessionManagerValue.SetCurrentSessionContext(context)
 
         ; Update ListBox in GUI if shown
         if (guiShown) {
@@ -735,7 +776,8 @@ CanUseFileRead(filePath) {
 }
 
 ChatHistorySelect(*) {
-    global MyGui, messages
+    global MyGui
+    messages := SessionManagerValue.GetCurrentSessionMessages()
     chatHistory := MyGui["ChatHistory"]
     if (focused_row := chatHistory.GetNext()) {
         MyGui["Response"].Value := messages[focused_row].content
@@ -757,10 +799,8 @@ PromptChange(GuiCtrl, Info) {
 }
 
 ClearAllContext(*) {
-    global context, MyGui, currentSessionIndex, sessionContexts
-    context := []
-    sessionContexts[currentSessionIndex] := []
-    listBox := MyGui["ListBox"]
-    listBox.Delete()
-    listBox.Add(context)
+    global MyGui, SessionManagerValue
+
+    SessionManagerValue.SetCurrentSessionContext([])
+    UpdateContextView()
 }

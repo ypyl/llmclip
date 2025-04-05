@@ -5,20 +5,23 @@
 #Include settings.ahk
 ; There is a content of settings.ahk file that you can create near the current script file.
 ; It contains the function GetLLMSettings() that returns a map with settings for different LLMs.
-; GetLLMSettings()
+; GetSettings()
 ; {
-;     return Map(
-;         "groq", Map(
-;             "curl", 'curl -s -S -X POST "https://api.groq.com/openai/v1/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer <<KEY>" -d "@{1}" -o "{2}"',
-;             "model", "llama-3.3-70b-versatile",
-;             "temperature", 0.7,
-;             "system_prompt", "You are a helpful assistant. Be concise and direct in your responses.",
-;         ),
-;         "google", Map(
-;             "curl", 'curl -s -S -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=<<KEY>>" -H "Content-Type: application/json" -d "@{1}" -o "{2}"',
-;             "system_prompt", "You are a helpful assistant. Be concise and direct in your responses.",
-;             "temperature", 0.7,
-;         ))
+;     return {
+;         selectedLLMType: "groq",
+;         providers: Map(
+;             "groq", Map(
+;                 "curl", 'curl -s -S -X POST "https://api.groq.com/openai/v1/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer <<KEY>" -d "@{1}" -o "{2}"',
+;                 "model", "llama-3.3-70b-versatile",
+;                 "temperature", 0.7,
+;                 "system_prompt", "You are a helpful assistant. Be concise and direct in your responses.",
+;             ),
+;             "google", Map(
+;                 "curl", 'curl -s -S -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=<<KEY>>" -H "Content-Type: application/json" -d "@{1}" -o "{2}"',
+;                 "system_prompt", "You are a helpful assistant. Be concise and direct in your responses.",
+;                 "temperature", 0.7,
+;             ))
+;     }
 ; }
 
 ; cURL is also should be installed as it is used to actually call LLM providers. Please install it using:`nwinget install cURL.cURL`nor visit https://curl.se/download.html
@@ -26,17 +29,22 @@
 ; Initialize variables
 global askButton
 global MyGui
-settings := GetLLMSettings()
+settings := GetSettings()
+llmSettings := settings.providers
 llmTypes := []
-for key in settings {
-    llmTypes.Push(key)
-}
 selectedIndex := 1
+for key in llmSettings {
+    llmTypes.Push(key)
+    if (key = settings.selectedLLMType) {
+        selectedIndex := A_Index
+    }
+}
+
 GetSelectedSettings() {
-    global selectedIndex, llmTypes, settings
+    global selectedIndex, llmTypes, llmSettings
     selectedLLMType := llmTypes[selectedIndex]
-    selectedSettings := settings[selectedLLMType]
-    return selectedSettings
+    currentLLMSettings := llmSettings[selectedLLMType]
+    return currentLLMSettings
 }
 
 ; Add session management

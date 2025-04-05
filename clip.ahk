@@ -1,8 +1,10 @@
 #Requires AutoHotkey 2.0
 #SingleInstance Force  ; Prevent multiple instances
 #Warn
-#Include <Json>
-#Include settings.ahk
+#Include AppSettings.ahk
+#Include LLMClient.ahk
+#Include SessionManager.ahk
+#Include ClipboardParser.ahk
 ; There is a content of settings.ahk file that you can create near the current script file.
 ; It contains the function GetLLMSettings() that returns a map with settings for different LLMs.
 ; GetSettings()
@@ -38,102 +40,14 @@
 global askButton
 global MyGui
 
-class AppSettings {
-    providers := Map()
-    selectedLLMType := ""
-    llmTypes := []
-    selectedIndex := 1
-
-    __New() {
-        settings := GetSettings()
-        this.providers := settings.providers
-        this.selectedLLMType := settings.selectedLLMType
-
-        ; Initialize LLM types
-        this.llmTypes := []
-        for key in this.providers {
-            this.llmTypes.Push(key)
-            if (key = this.selectedLLMType) {
-                this.selectedIndex := A_Index
-            }
-        }
-    }
-
-    GetSelectedSettings() {
-        selectedLLMType := this.llmTypes[this.selectedIndex]
-        return this.providers[selectedLLMType]
-    }
-
-    GetDefaultSystemPrompt() {
-        defaultPrompt := "You are a helpful assistant. Be concise and direct in your responses."
-        if (prompt := this.GetSelectedSettings().Get("system_prompt", ""))
-            defaultPrompt := prompt
-        return defaultPrompt
-    }
-}
-
 ; Create settings instance
 global AppSettingsValue := AppSettings()
 
-class SessionManager {
-    currentSessionIndex := 1
-    MAX_SESSIONS := 3
-    sessionNames := ["Session 1", "Session 2", "Session 3"]
-    sessionMessages := []
-    sessionContexts := []
-
-    __New(appSettings) {
-        this.appSettings := appSettings
-
-        ; Initialize session arrays
-        Loop this.MAX_SESSIONS {
-            this.sessionMessages.Push([{
-                role: "system",
-                content: this.appSettings.GetDefaultSystemPrompt()
-            }])
-            this.sessionContexts.Push([])
-        }
-    }
-
-    GetCurrentSessionMessages() {
-        return this.sessionMessages[this.currentSessionIndex]
-    }
-
-    GetCurrentSessionContext() {
-        return this.sessionContexts[this.currentSessionIndex]
-    }
-
-    SetCurrentSessionContext(newContext) {
-        this.sessionContexts[this.currentSessionIndex] := newContext
-    }
-
-    SwitchSession(newIndex) {
-        if (newIndex > 0 && newIndex <= this.MAX_SESSIONS) {
-            this.currentSessionIndex := newIndex
-            return true
-        }
-        return false
-    }
-
-    ResetCurrentSession() {
-        this.ClearCurrentMessages()
-        this.ClearCurrentContext()
-    }
-
-    ClearCurrentMessages() {
-        this.sessionMessages[this.currentSessionIndex] := [{
-            role: "system",
-            content: this.appSettings.GetDefaultSystemPrompt()
-        }]
-    }
-
-    ClearCurrentContext() {
-        this.sessionContexts[this.currentSessionIndex] := []
-    }
-}
-
 ; Create session manager instance
 global SessionManagerValue := SessionManager(AppSettingsValue)
+
+; Create clipboard parser instance
+global ClipboardParserValue := ClipboardParser()
 
 isRecording := false
 guiShown := false
@@ -310,7 +224,7 @@ UpdateChatHistoryView(*) {
 }
 
 SendToLLM(*) {
-    global MyGui
+    global MyGui, AppSettingsValue
     messages := SessionManagerValue.GetCurrentSessionMessages()
     context := SessionManagerValue.GetCurrentSessionContext()
     promptText := MyGui["PromptEdit"].Value
@@ -340,171 +254,38 @@ SendToLLM(*) {
         if (selectedIndices.Length > 0) {
             messages[1].content .= "`n\nThe user has selected these items which may be particularly relevant:`n"
             for index in selectedIndices {
-                messages[1].content .= GetTextFromContextItem(context[index]) "`n"
+                messages[1].content .= GetTextFromContextItem(context[index])
             }
         }
     }
 
     messages.Push({ role: "user", content: promptText })
 
+    ; Disable Ask LLM button while processing
+    if (MyGui) {
+        askButton.Enabled := false
+    }
+
     try {
-        assistantResponse := CallLLM(messages)
+        ; Create LLM client if it doesn't exist yet
+        LLMClientInstance := LLMClient(AppSettingsValue.GetSelectedSettings())
+
+        assistantResponse := LLMClientInstance.Call(messages)
         messages.Push({ role: "assistant", content: assistantResponse })
         MyGui["Response"].Value := assistantResponse
         UpdateChatHistoryView()  ; Update the chat history view
     } catch as e {
         MyGui["Response"].Value := "Error: " e.Message
+    } finally {
+        ; Re-enable Ask LLM button
+        if (MyGui) {
+            askButton.Enabled := true
+        }
     }
 }
 
 GetTextFromContextItem(item) {
-    itemText := ""
-    if (DirExist(item))
-        itemText := "======`n" ProcessFolder(item)
-    else if (FileExist(item))
-        itemText := "======`n" ProcessFile(item)
-    else
-        itemText := "======`n" item "`n"
-    return itemText
-}
-
-GetRequestBody(type, messages, settings) {
-    body := Map()
-    if (type = "groq" || type = "azure") {
-        if (model := settings.Get("model", ""))
-            body["model"] := model
-        body["messages"] := messages
-        body["temperature"] := settings.Get("temperature", 0.7)
-    } else if (InStr(type, "ol-") = 1) {
-        body["model"] := settings["model"]
-        body["options"] := Map(
-            "temperature", settings.Get("temperature", 0.7),
-        )
-        body["stream"] := JSON.False
-        body["messages"] := messages
-    } else if (type = "google") {
-        contents := []
-        systemMessage := ""
-
-        ; First, find and handle system message
-        for msg in messages {
-            if (msg.role = "system") {
-                systemMessage := msg
-                break
-            }
-        }
-
-        ; Add system instruction if present
-        if (systemMessage) {
-            body["system_instruction"] := {
-                parts: [{
-                    text: systemMessage.content
-                }]
-            }
-        }
-
-        ; Add other messages to contents
-        for msg in messages {
-            if (msg.role != "system") { ; Skip system messages as they're handled separately
-                contents.Push({
-                    role: msg.role = "assistant" ? "model" : msg.role,
-                    parts: [{
-                        text: msg.content
-                    }]
-                })
-            }
-        }
-
-        body["contents"] := contents
-        body["generationConfig"] := {
-            stopSequences: settings.Get("stopSequences", ["Title"]),
-            temperature: settings.Get("temperature", 1.0),
-            maxOutputTokens: settings.Get("maxOutputTokens", 800),
-            topP: settings.Get("topP", 0.8),
-            topK: settings.Get("topK", 10)
-        }
-    }
-    return body
-}
-
-CallLLM(messages) {
-    global AppSettingsValue
-    try {
-        selectedSettings := AppSettingsValue.GetSelectedSettings()
-        curl := selectedSettings["curl"]
-
-        ; Disable Ask LLM button and show progress
-        if (MyGui) {
-            askButton.Enabled := false  ; Disable Ask LLM button
-        }
-
-        ; Prepare request body
-        body := GetRequestBody(AppSettingsValue.llmTypes[AppSettingsValue.selectedIndex], messages, selectedSettings)
-
-        ; Create temporary files for input/output
-        tempDir := A_Temp "\llmclip"
-        if !DirExist(tempDir)
-            DirCreate(tempDir)
-
-        inputFile := tempDir "\request.json"
-        outputFile := tempDir "\response.json"
-
-        ; Write request body to temp file
-        try FileDelete(inputFile)
-        FileAppend(JSON.Dump(body), inputFile)
-
-        ; Prepare curl command
-        curlCmd := Format(curl, inputFile, outputFile)
-        ; Execute curl
-        RunWait(curlCmd, , "Hide")
-
-        ; Show error if response file doesn't exist
-        if (!FileExist(outputFile)) {
-            if (MyGui)
-                MyGui["Response"].Value := "Error: No response received from API"
-            throw Error("No response file created")
-        }
-
-        ; Read response
-        if FileExist(outputFile) {
-            response := FileRead(outputFile)
-            if (response != "") {
-                obj := JSON.Load(response)
-                ; Handle Google's response format
-                if (obj.Has("candidates") && obj["candidates"].Length > 0) {
-                    candidate := obj["candidates"][1]
-                    if (candidate.Has("content") && candidate["content"].Has("parts") && candidate["content"]["parts"].Length > 0) {
-                        return candidate["content"]["parts"][1]["text"]
-                    }
-                }
-                ; Handle format with direct message object
-                if (obj.Has("message") && obj["message"].Has("content")) {
-                    return obj["message"]["content"]
-                }
-                ; Handle OpenAI-style format
-                if (obj.Has("choices") && obj["choices"].Length > 0) {
-                    return obj["choices"][1]["message"]["content"]
-                }
-                throw Error("No able to parse response")
-            }
-        }
-        throw Error("No response received")
-
-    } catch as e {
-        if (MyGui)
-            MyGui["Response"].Value := "Error calling LLM: " e.Message
-        throw Error("Error calling LLM: " e.Message)
-    } finally {
-        ; Re-enable Ask LLM button
-        if (MyGui)
-            askButton.Enabled := true
-
-        ; Cleanup temp files
-        try {
-            FileDelete(inputFile)
-            FileDelete(outputFile)
-        }
-    }
+    return ClipboardParserValue.GetTextFromContextItem(item)
 }
 
 GuiClose(*) {
@@ -622,9 +403,9 @@ HasContent(haystack, newContent) {
     }
 
     ; Then check content matches for files and folders
-    newContentText := GetTextFromContextItem(newContent)
+    newContentText := ClipboardParserValue.GetTextFromContextItem(newContent)
     for item in haystack {
-        if (GetTextFromContextItem(item) = newContentText)
+        if (ClipboardParserValue.GetTextFromContextItem(item) = newContentText)
             return true
     }
 
@@ -634,73 +415,10 @@ HasContent(haystack, newContent) {
 OnClipboardChange ClipChanged
 
 ClipChanged(DataType) {
-    global isRecording, MyGui, guiShown, SessionManagerValue
+    global isRecording, MyGui, guiShown, SessionManagerValue, ClipboardParserValue
     if (isRecording) {
-        ; First try plain text from A_Clipboard
-        txtFromClipboard := Trim(A_Clipboard, '"')
-        localTxtFromClipboardArray := [txtFromClipboard]
-        ; Check if the clipboard content contains paths
-        if (InStr(txtFromClipboard, "`r`n") || InStr(txtFromClipboard, "`n")) {
-            localTxtFromClipboardArray := StrSplit(txtFromClipboard, "`r`n")
-            if (localTxtFromClipboardArray.Length = 1) {
-                localTxtFromClipboardArray := StrSplit(txtFromClipboard, "`n")
-            }
-        }
+        localTxtFromClipboardArray := ClipboardParserValue.Parse()
 
-        ; Validate if the split items are paths
-        for index, item in localTxtFromClipboardArray {
-            if (!FileExist(item) && !DirExist(item)) {
-                ; If any item is not a valid path, treat the whole content as plain text
-                txtFromClipboard := StrReplace(txtFromClipboard, "`r`n", "`n")
-                localTxtFromClipboardArray := [txtFromClipboard]
-                break
-            }
-        }
-
-        activeClass := WinGetClass("A")  ; Get handle of active window
-        activeTitle := WinGetTitle("A")  ; Get handle of active window
-
-        ; Check for VS Code using class and title
-        isVsCodeActive := (activeClass = "Chrome_WidgetWin_1" && InStr(activeTitle, "Visual Studio Code"))
-
-        ; If empty, check raw clipboard for file URI
-        if (isVsCodeActive && txtFromClipboard = "") {
-            try {
-                cb_all := ClipboardAll()
-                ; Build string byte-by-byte assuming ANSI
-                rawData := ""
-                Loop cb_all.Size {
-                    byte := NumGet(cb_all.Ptr, A_Index - 1, "UChar")
-                    if (byte != 0) {  ; Skip null bytes
-                        rawData .= Chr(byte)
-                    }
-                }
-
-                ; Extract all file URIs present
-                localTxtFromClipboardArray := []  ; Reset array
-                position := 1
-                while (position := InStr(rawData, "file:///", false, position)) {
-                    uriStart := position
-                    uriEnd := InStr(rawData, "`n", false, uriStart) || StrLen(rawData) + 1
-                    fileUri := SubStr(rawData, uriStart, uriEnd - uriStart)
-
-                    ; Decode URI to Windows path and add to array
-                    decodedPath := UriToPath(fileUri)
-                    if (decodedPath)
-                        localTxtFromClipboardArray.Push(decodedPath)
-
-                    position := uriEnd  ; Move to next position
-                }
-
-                ; If no URIs found, fall back to original clipboard text
-                if (localTxtFromClipboardArray.Length = 0)
-                    localTxtFromClipboardArray := [txtFromClipboard]
-            } catch as e {
-                MsgBox "Error processing clipboard: " e.Message
-            }
-        }
-
-        ; MsgBox "Clipboard processed as: " txtFromClipboard
         ; Add non-duplicate items to context
         context := SessionManagerValue.GetCurrentSessionContext()
         for item in localTxtFromClipboardArray {
@@ -718,61 +436,6 @@ ClipChanged(DataType) {
             listBox.Add(context)
         }
     }
-}
-
-UriToPath(uri) {
-    ; Remove "file:///" prefix
-    path := SubStr(uri, 8)
-
-    ; Decode URL-encoded characters
-    path := StrReplace(path, "%20", " ")
-    path := StrReplace(path, "%3A", ":")
-    path := StrReplace(path, "%5C", "\")
-    path := StrReplace(path, "%2F", "/")
-
-    ; Convert forward slashes to backslashes for Windows
-    path := StrReplace(path, "/", "\")
-
-    ; Remove leading slash if present
-    if (SubStr(path, 1, 1) = "\") {
-        path := SubStr(path, 2)
-    }
-
-    return path
-}
-
-ProcessFolder(FolderPath) {
-    folderText := FolderPath
-
-    if (DirExist(FolderPath)) {
-        Loop Files, FolderPath "\*.*", "R"  ; Recursively loop through all files
-        {
-            folderText .= "======`n" ProcessFile(A_LoopFileFullPath) "`n"
-        }
-    } else {
-        folderText := "======`nFolder does not contains files`n"
-    }
-
-    return folderText
-}
-
-ProcessFile(FilePath) {
-    ; Check if the file is readable as text
-    if CanUseFileRead(FilePath) {
-        try {
-            content := FileRead(FilePath)
-            return FilePath "------`n" content "------`n"
-        } catch {
-            return FilePath "------`n[Error reading file content]`n"
-        }
-    }
-    return FilePath
-}
-
-CanUseFileRead(filePath) {
-    SplitPath filePath, , , &ext
-    allowedExts := "txt,csv,log,ini,json,xml,html,md,ahk,bat,sh,ps1,yml,toml,cs,ts,js,jsx,tsx,py,java,kt,go,rs,php,rb,pl,swift,c,cpp,h,hpp,m,mm,elm,erl,ex,exs,clj,cljc,cljx,cl,scala,sql"
-    return ext && InStr("," allowedExts ",", "," ext ",")
 }
 
 ChatHistorySelect(*) {

@@ -146,10 +146,13 @@ AskLLM(*) {
     MyGui.Title := "LLM Assistant"
 
     ; Add session selector
-    MyGui.Add("Text", "x20 y15", "Session:")
-    sessionCombo := MyGui.Add("DropDownList", "x80 y12 w120 vSessionSelect", sessionNames)
+    sessionCombo := MyGui.Add("DropDownList", "x20 y10 w70 vSessionSelect", sessionNames)
     sessionCombo.Value := currentSessionIndex
     sessionCombo.OnEvent("Change", SessionChanged)
+
+    ; Button section moved down
+    resetButton := MyGui.Add("Button", "x310 y10 w90", "Reset All")
+    resetButton.OnEvent("Click", ResetAll)
 
     ; Add context list with reduced height
     listBox := MyGui.Add("ListBox", "vListBox x20 y40 w380 h150 VScroll Multi", context)
@@ -179,16 +182,11 @@ AskLLM(*) {
     promptEdit.OnEvent("Change", PromptChange)
 
     ; Add LLM type selector near Reset All button
-    MyGui.Add("Text", "x20 y575", "LLM Type:")
-    llmTypeCombo := MyGui.Add("DropDownList", "x80 y572 w70 vLLMType", llmTypes)
+    llmTypeCombo := MyGui.Add("DropDownList", "x20 y570 w70 vLLMType", llmTypes)
     llmTypeCombo.Value := selectedIndex
     llmTypeCombo.OnEvent("Change", LLMTypeChanged)
 
-    ; Button section moved down
-    resetButton := MyGui.Add("Button", "x160 y570 w90", "Reset All")
-    resetButton.OnEvent("Click", ResetAll)
-
-    askButton := MyGui.Add("Button", "x260 y570 w140", "Ask LLM")
+    askButton := MyGui.Add("Button", "x100 y570 w300", "Ask LLM")
     askButton.OnEvent("Click", SendToLLM)
 
     ; Right panel remains unchanged

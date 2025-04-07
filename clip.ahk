@@ -99,15 +99,18 @@ SetTrayStatus(isRecording) {
 }
 
 StartRecording(*) {
-    global isRecording
+    global isRecording, MyGui
     if (!isRecording) {
         isRecording := true
         SetTrayStatus(true)  ; Update icon & tooltip
+        if (MyGui) {
+            MyGui["Record"].Text := "Stop"
+        }
     }
 }
 
 StopRecording(*) {
-    global isRecording
+    global isRecording, MyGui
     if (isRecording) {
         isRecording := false
         SetTrayStatus(false)  ; Update icon & tooltip
@@ -117,6 +120,9 @@ StopRecording(*) {
             recordedText .= GetTextFromContextItem(item)
         }
         A_Clipboard := recordedText  ; Copy recorded text to clipboard
+        if (MyGui) {
+            MyGui["Stop"].Text := "Record"
+        }
     }
 }
 
@@ -133,6 +139,10 @@ AskLLM(*) {
     sessionCombo := MyGui.Add("DropDownList", "x20 y10 w70 vSessionSelect", SessionManagerValue.sessionNames)
     sessionCombo.Value := SessionManagerValue.currentSessionIndex
     sessionCombo.OnEvent("Change", SessionChanged)
+
+    ; Add record button
+    recordButton := MyGui.Add("Button", "x100 y10 w90", "Record")
+    recordButton.OnEvent("Click", ToggleRecording)
 
     ; Button section moved down
     resetButton := MyGui.Add("Button", "x310 y10 w90", "Reset All")
@@ -171,7 +181,7 @@ AskLLM(*) {
     llmTypeCombo.Value := AppSettingsValue.selectedIndex
     llmTypeCombo.OnEvent("Change", LLMTypeChanged)
 
-    askButton := MyGui.Add("Button", "x100 y570 w300", "Ask LLM")
+    askButton := MyGui.Add("Button", "x200 y570 w200", "Ask LLM")
     askButton.OnEvent("Click", SendToLLM)
 
     ; Right panel remains unchanged
@@ -467,4 +477,13 @@ ClearAllContext(*) {
 
     SessionManagerValue.SetCurrentSessionContext([])
     UpdateContextView()
+}
+
+ToggleRecording(*) {
+    global isRecording
+    if (isRecording) {
+        StopRecording()
+    } else {
+        StartRecording()
+    }
 }

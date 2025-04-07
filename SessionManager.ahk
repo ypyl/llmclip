@@ -1,4 +1,3 @@
-
 class SessionManager {
     currentSessionIndex := 1
     MAX_SESSIONS := 3
@@ -53,5 +52,13 @@ class SessionManager {
 
     ClearCurrentContext() {
         this.sessionContexts[this.currentSessionIndex] := []
+    }
+
+    DeleteMessage(index) {
+        if (index > 1 && index <= this.sessionMessages[this.currentSessionIndex].Length) {
+            this.sessionMessages[this.currentSessionIndex].RemoveAt(index)
+            return true
+        }
+        return false
     }
 }

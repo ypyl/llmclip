@@ -169,7 +169,11 @@ AskLLM(*) {
     chatHistory.ModifyCol(2, 290) ; Text column width
     chatHistory.OnEvent("ItemSelect", ChatHistorySelect)
 
-    clearHistoryButton := MyGui.Add("Button", "x20 y385 w380", "Clear Chat History")
+    ; Split the Clear History button into two
+    deleteMessageButton := MyGui.Add("Button", "x20 y385 w120", "Delete Selected")
+    deleteMessageButton.OnEvent("Click", DeleteSelectedMessage)
+
+    clearHistoryButton := MyGui.Add("Button", "x280 y385 w120", "Clear History")
     clearHistoryButton.OnEvent("Click", ClearChatHistory)
 
     ; Prompt section with increased height
@@ -181,7 +185,7 @@ AskLLM(*) {
     llmTypeCombo.Value := AppSettingsValue.selectedIndex
     llmTypeCombo.OnEvent("Change", LLMTypeChanged)
 
-    askButton := MyGui.Add("Button", "x200 y570 w200", "Ask LLM")
+    askButton := MyGui.Add("Button", "x210 y570 w190", "Ask LLM")
     askButton.OnEvent("Click", SendToLLM)
 
     ; Right panel remains unchanged
@@ -485,5 +489,19 @@ ToggleRecording(*) {
         StopRecording()
     } else {
         StartRecording()
+    }
+}
+
+DeleteSelectedMessage(*) {
+    global MyGui, SessionManagerValue
+    messages := SessionManagerValue.GetCurrentSessionMessages()
+    chatHistory := MyGui["ChatHistory"]
+
+    if (focused_row := chatHistory.GetNext()) {
+        if (focused_row > 1) { ; Don't delete system message
+            messages.RemoveAt(focused_row)
+            UpdateChatHistoryView()
+            MyGui["Response"].Value := ""
+        }
     }
 }

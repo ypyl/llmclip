@@ -248,11 +248,12 @@ SendToLLM(*) {
                 contextText .= GetTextFromContextItem(item)
             }
         }
-        messages[1].content := "You are a helpful assistant. Here is the context:`n" contextText "`n\nPlease consider this context when answering the following question."
+        messages[1].content := AppSettingsValue.GetDefaultSystemPrompt() "`n"
+        messages[1].content .= "Here is the context:`n" contextText "`nPlease consider this context when answering the following question."
 
         ; Add selected items as special focus points
         if (selectedIndices.Length > 0) {
-            messages[1].content .= "`n\nThe user has selected these items which may be particularly relevant:`n"
+            messages[1].content .= "`nThe user has selected these items which may be particularly relevant:`n"
             for index in selectedIndices {
                 messages[1].content .= GetTextFromContextItem(context[index])
             }

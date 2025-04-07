@@ -27,7 +27,7 @@ The primary goal of LLMClip is to combine all copied data from the clipboard (in
    - Run `winget install cURL.cURL` in PowerShell
    - Download from [curl.se](https://curl.se/download.html)
 3. Save the `clip.ahk` script to your desired location.
-4. Create a `settings.ahk` file in the same directory with your LLM configurations.
+4. Create a `settings.json` file in the same directory with your LLM configurations.
 5. Run the script by double-clicking the `clip.ahk` file.
 
 ## Usage
@@ -72,30 +72,40 @@ The chat interface provides several features:
 
 ## LLM Configuration
 
-The `settings.ahk` file contains configurations for different LLM providers. The example script includes built-in support for:
+The `settings.json` file contains configurations for different LLM providers. The example script includes built-in support for:
 
 - Groq (using llama-3.3-70b-versatile model)
 - Google (using gemini-2.0-flash model)
+- Ollama (local models support)
 
-Example `settings.ahk`:
-```autohotkey
-GetLLMSettings() {
-    return Map(
-        "groq", Map(
-            "curl", 'curl -s -S -X POST "https://api.groq.com/openai/v1/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer <<KEY>" -d "@{1}" -o "{2}"',
-            "model", "llama-3.3-70b-versatile",
-            "temperature", 0.7,
-            "system_prompt", "You are a helpful assistant. Be concise and direct in your responses.",
-        ),
-        "google", Map(
-            "curl", 'curl -s -S -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=<<KEY>>" -H "Content-Type: application/json" -d "@{1}" -o "{2}"',
-            "system_prompt", "You are a helpful assistant. Be concise and direct in your responses.",
-            "temperature", 0.7,
-        ))
+Example `settings.json`:
+```json
+{
+    "selectedLLMType": "groq",
+    "providers": {
+        "groq": {
+            "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer <<KEY>>\" -d \"@{1}\" -o \"{2}\"",
+            "model": "llama-3.3-70b-versatile",
+            "temperature": 0.7,
+            "system_prompt": "You are a helpful assistant. Be concise and direct in your responses."
+        },
+        "google": {
+            "curl": "curl -s -S -X POST \"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=<<KEY>>\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
+            "system_prompt": "You are a helpful assistant. Be concise and direct in your responses.",
+            "temperature": 0.7
+        },
+        "ol-phi4": {
+            "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
+            "model": "phi4",
+            "stream": false,
+            "system_prompt": "You are a helpful assistant. Be concise and direct in your responses.",
+            "temperature": 0.7
+        }
+    }
 }
 ```
 
-Replace `<<KEY>` with your actual API keys for each service.
+Replace `<<KEY>>` with your actual API keys for each service.
 
 ## Contributing
 

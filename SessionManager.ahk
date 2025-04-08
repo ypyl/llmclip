@@ -12,7 +12,7 @@ class SessionManager {
         Loop this.MAX_SESSIONS {
             this.sessionMessages.Push([{
                 role: "system",
-                content: this.appSettings.GetDefaultSystemPrompt()
+                content: this.appSettings.GetSystemPromptValue()
             }])
             this.sessionContexts.Push([])
         }

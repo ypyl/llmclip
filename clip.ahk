@@ -185,6 +185,11 @@ AskLLM(*) {
     llmTypeCombo.Value := AppSettingsValue.selectedIndex
     llmTypeCombo.OnEvent("Change", LLMTypeChanged)
 
+    ; Add system prompt selector
+    systemPromptCombo := MyGui.Add("DropDownList", "x100 y570 w100 vSystemPrompt", AppSettingsValue.GetSystemPromptNames())
+    systemPromptCombo.Value := AppSettingsValue.selectedSystemPromptIndex
+    systemPromptCombo.OnEvent("Change", SystemPromptChanged)
+
     askButton := MyGui.Add("Button", "x210 y570 w190", "Ask LLM")
     askButton.OnEvent("Click", SendToLLM)
 
@@ -196,6 +201,11 @@ AskLLM(*) {
     guiShown := true
 
     UpdateChatHistoryView()
+}
+
+SystemPromptChanged(*) {
+    global MyGui, AppSettingsValue
+    AppSettingsValue.selectedSystemPromptIndex := MyGui["SystemPrompt"].Value
 }
 
 LLMTypeChanged(*) {
@@ -240,6 +250,7 @@ UpdateChatHistoryView(*) {
 SendToLLM(*) {
     global MyGui, AppSettingsValue
     messages := SessionManagerValue.GetCurrentSessionMessages()
+    messages[1].content := AppSettingsValue.GetSystemPromptValue()
     context := SessionManagerValue.GetCurrentSessionContext()
     promptText := MyGui["PromptEdit"].Value
     listBox := MyGui["ListBox"]
@@ -262,8 +273,7 @@ SendToLLM(*) {
                 contextText .= GetTextFromContextItem(item)
             }
         }
-        messages[1].content := AppSettingsValue.GetDefaultSystemPrompt() "`n"
-        messages[1].content .= "Here is the context:`n" contextText "`nPlease consider this context when answering the following question."
+        messages[1].content .= "`nHere is the context:`n" contextText "`nPlease consider this context when answering the following question."
 
         ; Add selected items as special focus points
         if (selectedIndices.Length > 0) {

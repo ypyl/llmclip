@@ -6,6 +6,7 @@ class AppSettings {
     selectedLLMType := ""
     llmTypes := []
     selectedIndex := 1
+    selectedSystemPromptIndex := 1
 
     __New() {
         settings := JSON.LoadFile("settings.json")
@@ -35,10 +36,27 @@ class AppSettings {
         return settings
     }
 
-    GetDefaultSystemPrompt() {
+    GetSystemPromptValue() {
         defaultPrompt := "You are a helpful assistant. Be concise and direct in your responses."
-        if (prompt := this.GetSelectedSettings().Get("system_prompt", ""))
-            defaultPrompt := prompt
+        settings := this.GetSelectedSettings()
+        if (prompts := settings.Get("system_prompts", "")) {
+            if (prompts.Length >= this.selectedSystemPromptIndex)
+                defaultPrompt := prompts[this.selectedSystemPromptIndex]["value"]
+            else if (prompts.Length > 0)
+                defaultPrompt := prompts[1]["value"]
+        }
         return defaultPrompt
+    }
+
+    GetSystemPromptNames() {
+        settings := this.GetSelectedSettings()
+        names := []
+        if (prompts := settings.Get("system_prompts", "")) {
+            for prompt in prompts {
+                names.Push(prompt["name"])
+            }
+            return names
+        }
+        return []
     }
 }

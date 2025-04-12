@@ -58,7 +58,7 @@ guiShown := false
 A_TrayMenu.Delete()  ; Remove default menu items
 A_TrayMenu.Add("Start Recording", StartRecording)
 A_TrayMenu.Add("Stop Recording", StopRecording)
-A_TrayMenu.Add("Ask LLM", AskLLM)
+A_TrayMenu.Add("Ask LLM", DisplayLLMUserInterface)
 A_TrayMenu.Add("Exit", ExitApp)
 
 F3:: {
@@ -66,7 +66,7 @@ F3:: {
     if (!isRecording) {
         StartRecording()
     } else if (!guiShown) {
-        AskLLM()
+        DisplayLLMUserInterface()
     } else {
         StopRecording()
     }
@@ -129,7 +129,7 @@ StopRecording(*) {
     }
 }
 
-AskLLM(*) {
+DisplayLLMUserInterface(*) {
     global MyGui, guiShown, askButton, AppSettingsValue, SessionManagerValue
     if (guiShown) {
         MyGui.Show()
@@ -551,7 +551,7 @@ PromptChange(GuiCtrl, Info) {
             ; Remove the trailing newline
             GuiCtrl.Value := SubStr(text, 1, -1)
             ; Send the prompt
-            SendToLLM()
+            AskToLLM()
             return true
         }
     }

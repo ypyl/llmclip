@@ -18,19 +18,28 @@ class FileSystemTool {
         }
     }
 
+    DeleteFile(filePath) {
+        try {
+            FileDelete(filePath)
+            return "File deleted successfully"
+        } catch as e {
+            return "Error deleting file: " e.Message
+        }
+    }
+
     GetToolDefinition() {
         return {
             type: "function",
             function: {
                 name: "file_operation",
-                description: "Read from or write to files on the system",
+                description: "Read from, write to, or delete files on the system",
                 parameters: {
                     type: "object",
                     properties: {
                         operation: {
                             type: "string",
-                            description: "The operation to perform (read/write)",
-                            enum: ["read", "write"]
+                            description: "The operation to perform (read/write/delete)",
+                            enum: ["read", "write", "delete"]
                         },
                         path: {
                             type: "string",
@@ -67,6 +76,10 @@ class FileSystemTool {
                     return { role: "tool", content: "Error: Content is required for write operation", tool_call_id: toolCall.id }
                 }
                 result := this.WriteFile(args["path"], args["content"])
+                return { role: "tool", content: result, tool_call_id: toolCall.id }
+            }
+            else if (args["operation"] = "delete") {
+                result := this.DeleteFile(args["path"])
                 return { role: "tool", content: result, tool_call_id: toolCall.id }
             }
             return { role: "tool", content: "Error: Invalid operation", tool_call_id: toolCall.id }

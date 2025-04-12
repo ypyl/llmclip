@@ -6,6 +6,7 @@
 #Include SessionManager.ahk
 #Include ClipboardParser.ahk
 #Include ComSpecTool.ahk
+#Include FileSystemTool.ahk
 
 ; cURL is also should be installed as it is used to actually call LLM providers. Please install it using:`nwinget install cURL.cURL`nor visit https://curl.se/download.html
 
@@ -24,6 +25,7 @@ global SessionManagerValue := SessionManager(AppSettingsValue)
 global ClipboardParserValue := ClipboardParser()
 
 global ComSpecToolValue := ComSpecTool()
+global FileSystemToolValue := FileSystemTool()
 
 isRecording := false
 guiShown := false
@@ -503,6 +505,9 @@ RunSelectedTool(*) {
                 MyGui["RunToolButton"].Enable := false
                 for tool_call in msg.tool_calls {
                     if result := ComSpecToolValue.ExecuteToolCall(tool_call) {
+                        messages.Push(result)
+                    }
+                    if result := FileSystemToolValue.ExecuteToolCall(tool_call) {
                         messages.Push(result)
                     }
                 }

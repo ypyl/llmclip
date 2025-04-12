@@ -1,12 +1,14 @@
 #Requires AutoHotkey 2.0
 #Include <Json>
 #Include "ComSpecTool.ahk"
+#Include "FileSystemTool.ahk"
 
 class LLMClient {
     ; Private properties
     settings := {}
     tempDir := A_Temp "\llmclip"
     comSpecTool := ComSpecTool()
+    fileSystemTool := FileSystemTool()
 
     __New(settings) {
         this.settings := settings
@@ -80,7 +82,7 @@ class LLMClient {
         body["temperature"] := settings.Get("temperature", 0.7)
 
         ; Add ComSpec tool
-        body["tools"] := [this.comSpecTool.GetToolDefinition()]
+        body["tools"] := [this.comSpecTool.GetToolDefinition(), this.fileSystemTool.GetToolDefinition()]
 
         return body
     }

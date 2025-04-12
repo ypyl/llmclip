@@ -15,6 +15,8 @@ LLMClip is an AutoHotkey script that records clipboard content and provides a tr
 - Support for multiple LLM providers (Groq, Google, Azure)
 - Multi-select context items for focused LLM queries
 - Chat history tracking and management
+- Built-in tools for file operations and command execution
+- Support for function calling in compatible LLMs
 
 ## Primary Goal
 
@@ -55,6 +57,7 @@ The chat interface provides several features:
 - Chat history view
 - Response viewer
 - Interactive prompt input
+- Tool execution support for compatible models
 
 ### Context Management
 
@@ -63,12 +66,22 @@ The chat interface provides several features:
 - View raw content of selected context items
 - Delete individual context items
 
+### Tools Support
+
+LLMClip includes built-in tools that compatible LLM providers can use:
+
+- **File System Tool**: Read, write and delete files
+- **Command Line Tool**: Execute commands in Windows Command Prompt
+
+When an LLM suggests using a tool, a "Run Tool" button will appear to execute the suggested operation.
+
 ### Chat Features
 
 - Chat history tracking
 - Clear chat history
 - View full message content by selecting chat history items
 - Press Enter to send message (Shift+Enter for new line)
+- Execute suggested tools with one click
 
 ## LLM Configuration
 

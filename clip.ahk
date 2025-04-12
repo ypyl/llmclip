@@ -147,7 +147,6 @@ DisplayLLMUserInterface(*) {
     chatHistory.ModifyCol(2, 310) ; Text column width
     chatHistory.OnEvent("ItemSelect", ChatHistorySelect)
 
-    ; Split the Clear History button into two
     deleteMessageButton := MyGui.Add("Button", "x20 y385 w120", "Delete Selected")
     deleteMessageButton.OnEvent("Click", DeleteSelectedMessage)
 
@@ -233,6 +232,7 @@ AskToLLM(*) {
     promptText := MyGui["PromptEdit"].Value
     messages.Push({ role: "user", content: promptText })
     SendToLLM()
+    MyGui["PromptEdit"].Value := ""  ; Clear prompt field
 }
 
 SendToLLM() {
@@ -556,11 +556,18 @@ DeleteSelectedMessage(*) {
     messages := SessionManagerValue.GetCurrentSessionMessages()
     chatHistory := MyGui["ChatHistory"]
 
-    if (focused_row := chatHistory.GetNext()) {
-        if (focused_row > 1) { ; Don't delete system message
-            messages.RemoveAt(focused_row)
-            UpdateChatHistoryView()
-            MyGui["Response"].Value := ""
-        }
-    }
+    selectedIndices := []
+    focused_row := 0
+
+    ; Collect all selected rows
+    while (focused_row := chatHistory.GetNext(focused_row))
+        if (focused_row > 1)  ; Don't include system message
+            selectedIndices.InsertAt(1, focused_row)
+
+    ; Remove messages in reverse order to maintain correct indices
+    for index in selectedIndices
+        messages.RemoveAt(index)
+
+    UpdateChatHistoryView()
+    MyGui["Response"].Value := ""
 }

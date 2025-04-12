@@ -6,33 +6,6 @@
 #Include SessionManager.ahk
 #Include ClipboardParser.ahk
 #Include ComSpecTool.ahk
-; There is a content of settings.ahk file that you can create near the current script file.
-; It contains the function GetLLMSettings() that returns a map with settings for different LLMs.
-; GetSettings()
-; {
-;      return {
-;          selectedLLMType: "groq",
-;          providers: Map(
-;              "groq", Map(
-;                  "curl", 'curl -s -S -X POST "https://api.groq.com/openai/v1/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer <<KEY>" -d "@{1}" -o "{2}"',
-;                  "model", "llama-3.3-70b-versatile",
-;                  "temperature", 0.7,
-;                  "system_prompt", "You are a helpful assistant. Be concise and direct in your responses.",
-;              ),
-;              "google", Map(
-;                  "curl", 'curl -s -S -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=<<KEY>>" -H "Content-Type: application/json" -d "@{1}" -o "{2}"',
-;                  "system_prompt", "You are a helpful assistant. Be concise and direct in your responses.",
-;                  "temperature", 0.7,
-;              )),
-;              "ol-phi4", Map(
-;                  "curl", 'curl -s -S -X POST "http://localhost:11434/api/chat" -H "Content-Type: application/json" -d "@{1}" -o "{2}"',
-;                  "model", "phi4",
-;                  "stream", false,
-;                  "system_prompt", "You are a helpful assistant. Be concise and direct in your responses. My name is Yauhen.",
-;                  "temperature", 0.7,
-;              )
-;       }
-; }
 
 ; cURL is also should be installed as it is used to actually call LLM providers. Please install it using:`nwinget install cURL.cURL`nor visit https://curl.se/download.html
 

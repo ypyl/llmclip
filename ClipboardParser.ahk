@@ -25,8 +25,13 @@ class ClipboardParser {
             }
         }
 
-        activeClass := WinGetClass("A")  ; Get handle of active window
-        activeTitle := WinGetTitle("A")  ; Get handle of active window
+        try {
+            activeClass := WinGetClass("A")  ; Get handle of active window
+            activeTitle := WinGetTitle("A")  ; Get handle of active window
+        } catch as e {
+            activeClass := ""
+            activeTitle := ""
+        }
 
         ; Check for VS Code using class and title
         isVsCodeActive := (activeClass = "Chrome_WidgetWin_1" && InStr(activeTitle, "Visual Studio Code"))

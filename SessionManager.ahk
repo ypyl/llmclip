@@ -18,8 +18,27 @@ class SessionManager {
         }
     }
 
+    GetMessageAsString(message) {
+        if (message.HasOwnProp("content") && message.content) {
+            return message.content
+        }
+        if (message.HasOwnProp("tool_calls") && message.tool_calls.Length > 0) {
+            toolCall := message.tool_calls[1]  ; Get only first tool call
+            return toolCall.function.name "(" toolCall.function.arguments ")"
+        }
+        return ""
+    }
+
     GetCurrentSessionMessages() {
         return this.sessionMessages[this.currentSessionIndex]
+    }
+
+    GetCurrentSessionMessagesAsStrings() {
+        messages := []
+        for message in this.GetCurrentSessionMessages() {
+            messages.Push({ role: message.role, content: this.GetMessageAsString(message) } )
+        }
+        return messages
     }
 
     GetCurrentSessionContext() {
@@ -46,7 +65,7 @@ class SessionManager {
     ClearCurrentMessages() {
         this.sessionMessages[this.currentSessionIndex] := [{
             role: "system",
-            content: this.appSettings.GetDefaultSystemPrompt()
+            content: this.appSettings.GetSystemPromptValue()
         }]
     }
 

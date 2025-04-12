@@ -5,6 +5,7 @@
 #Include LLMClient.ahk
 #Include SessionManager.ahk
 #Include ClipboardParser.ahk
+#Include ComSpecTool.ahk
 ; There is a content of settings.ahk file that you can create near the current script file.
 ; It contains the function GetLLMSettings() that returns a map with settings for different LLMs.
 ; GetSettings()
@@ -48,6 +49,8 @@ global SessionManagerValue := SessionManager(AppSettingsValue)
 
 ; Create clipboard parser instance
 global ClipboardParserValue := ClipboardParser()
+
+global ComSpecToolValue := ComSpecTool()
 
 isRecording := false
 guiShown := false
@@ -166,18 +169,21 @@ AskLLM(*) {
     ; Add ListView for chat history
     chatHistory := MyGui.Add("ListView", "vChatHistory x20 y225 w380 h150 NoSort", ["Role", "Text"])
     chatHistory.ModifyCol(1, 60)  ; Role column width
-    chatHistory.ModifyCol(2, 290) ; Text column width
+    chatHistory.ModifyCol(2, 310) ; Text column width
     chatHistory.OnEvent("ItemSelect", ChatHistorySelect)
 
     ; Split the Clear History button into two
     deleteMessageButton := MyGui.Add("Button", "x20 y385 w120", "Delete Selected")
     deleteMessageButton.OnEvent("Click", DeleteSelectedMessage)
 
+    runToolButton := MyGui.Add("Button", "vRunToolButton x150 y385 w120 Hidden", "Run Tool")
+    runToolButton.OnEvent("Click", RunSelectedTool)
+
     clearHistoryButton := MyGui.Add("Button", "x280 y385 w120", "Clear History")
     clearHistoryButton.OnEvent("Click", ClearChatHistory)
 
     ; Prompt section with increased height
-    promptEdit := MyGui.Add("Edit", "vPromptEdit x20 y420 w380 h140 Multi WantReturn")  ; Add WantReturn option
+    promptEdit := MyGui.Add("Edit", "vPromptEdit x20 y420 w380 h140 Multi WantReturn")
     promptEdit.OnEvent("Change", PromptChange)
 
     ; Add LLM type selector near Reset All button
@@ -191,10 +197,10 @@ AskLLM(*) {
     systemPromptCombo.OnEvent("Change", SystemPromptChanged)
 
     askButton := MyGui.Add("Button", "x210 y570 w190", "Ask LLM")
-    askButton.OnEvent("Click", SendToLLM)
+    askButton.OnEvent("Click", AskToLLM)
 
     ; Right panel remains unchanged
-    MyGui.Add("Edit", "vResponse x420 y10 w790 h590 ReadOnly Multi VScroll Wrap", "")
+    MyGui.Add("Edit", "vResponse x420 y10 w790 h580 ReadOnly Multi VScroll Wrap", "")
 
     MyGui.OnEvent("Close", GuiClose)
     MyGui.Show("w1230 h610")
@@ -239,20 +245,26 @@ UpdateContextView(*) {
 
 UpdateChatHistoryView(*) {
     global MyGui
-    messages := SessionManagerValue.GetCurrentSessionMessages()
+    messages := SessionManagerValue.GetCurrentSessionMessagesAsStrings()
     chatHistory := MyGui["ChatHistory"]
     chatHistory.Delete()
     for msg in messages {
-        chatHistory.Add(, msg.role, SubStr(msg.content, 1, 50) (StrLen(msg.content) > 50 ? "..." : ""))
+        chatHistory.Add(, msg.role, SubStr(msg.content, 1, 70) (StrLen(msg.content) > 70 ? "..." : ""))
     }
 }
 
-SendToLLM(*) {
-    global MyGui, AppSettingsValue
+AskToLLM(*) {
+    messages := SessionManagerValue.GetCurrentSessionMessages()
+    promptText := MyGui["PromptEdit"].Value
+    messages.Push({ role: "user", content: promptText })
+    SendToLLM()
+}
+
+SendToLLM() {
     messages := SessionManagerValue.GetCurrentSessionMessages()
     messages[1].content := AppSettingsValue.GetSystemPromptValue()
     context := SessionManagerValue.GetCurrentSessionContext()
-    promptText := MyGui["PromptEdit"].Value
+
     listBox := MyGui["ListBox"]
 
     ; Update context in system message if needed
@@ -284,8 +296,6 @@ SendToLLM(*) {
         }
     }
 
-    messages.Push({ role: "user", content: promptText })
-
     ; Disable Ask LLM button while processing
     if (MyGui) {
         askButton.Enabled := false
@@ -296,17 +306,34 @@ SendToLLM(*) {
         LLMClientInstance := LLMClient(AppSettingsValue.GetSelectedSettings())
 
         assistantResponse := LLMClientInstance.Call(messages)
-        messages.Push({ role: "assistant", content: assistantResponse })
-        MyGui["Response"].Value := assistantResponse
-        UpdateChatHistoryView()  ; Update the chat history view
+        if (assistantResponse.Type = "tool_call") {
+            ; Create proper assistant message with tool_calls
+            newMessage := {
+                role: "assistant",
+                content: "",  ; Empty content as we have tool_calls
+                tool_calls: [{
+                    id: assistantResponse.content.id,
+                    type: "function",
+                    function: {
+                        name: assistantResponse.content.name,
+                        arguments: assistantResponse.content.arguments
+                    }
+                }]
+            }
+        } else {
+            newMessage := { role: "assistant", content: assistantResponse.content }
+        }
     } catch as e {
-        MyGui["Response"].Value := "Error: " e.Message
+        newMessage := { role: "assistant", content: e.Message }
     } finally {
         ; Re-enable Ask LLM button
         if (MyGui) {
             askButton.Enabled := true
         }
     }
+    messages.Push(newMessage)
+    UpdateChatHistoryView()  ; Update the chat history view
+    MyGui["Response"].Value := SessionManagerValue.GetMessageAsString(newMessage)
 }
 
 GetTextFromContextItem(item) {
@@ -468,7 +495,51 @@ ChatHistorySelect(*) {
     messages := SessionManagerValue.GetCurrentSessionMessages()
     chatHistory := MyGui["ChatHistory"]
     if (focused_row := chatHistory.GetNext()) {
-        MyGui["Response"].Value := messages[focused_row].content
+        msg := messages[focused_row]
+        MyGui["Response"].Value := SessionManagerValue.GetMessageAsString(msg)
+
+        ; Show/hide Run Tool button based on message type
+        if (msg.HasOwnProp("tool_calls") && msg.tool_calls.Length > 0) {
+            ; Check if there's already a tool response for this tool call
+            hasToolResponse := false
+            for toolCall in msg.tool_calls {
+                for i in messages {
+                    if (i.HasOwnProp("role") && i.role = "tool" && i.HasOwnProp("tool_call_id") && i.tool_call_id = toolCall.id) {
+                        hasToolResponse := true
+                        break
+                    }
+                }
+                if (hasToolResponse)
+                    break
+            }
+            MyGui["RunToolButton"].Visible := !hasToolResponse
+        } else {
+            MyGui["RunToolButton"].Visible := false
+        }
+    }
+}
+
+RunSelectedTool(*) {
+    global MyGui
+    messages := SessionManagerValue.GetCurrentSessionMessages()
+    chatHistory := MyGui["ChatHistory"]
+    if (focused_row := chatHistory.GetNext()) {
+        msg := messages[focused_row]
+        if (msg.HasOwnProp("tool_calls")) {
+            try {
+                MyGui["RunToolButton"].Enable := false
+                for tool_call in msg.tool_calls {
+                    if result := ComSpecToolValue.ExecuteToolCall(tool_call) {
+                        messages.Push(result)
+                    }
+                }
+                MyGui["Response"].Value := SessionManagerValue.GetMessageAsString(messages[messages.Length])
+                UpdateChatHistoryView()
+                SendToLLM()
+            } finally {
+                MyGui["RunToolButton"].Enable := true
+            }
+        }
     }
 }
 

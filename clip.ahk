@@ -81,7 +81,7 @@ StartRecording(*) {
     if (!isRecording) {
         isRecording := true
         SetTrayStatus(true)  ; Update icon & tooltip
-        if (MyGui) {
+        if (IsSet(MyGui) && MyGui is Gui && guiShown && MyGui.HasProp("Record")) {
             MyGui["Record"].Text := "Stop"
         }
     }
@@ -98,7 +98,7 @@ StopRecording(*) {
             recordedText .= GetTextFromContextItem(item)
         }
         A_Clipboard := recordedText  ; Copy recorded text to clipboard
-        if (MyGui) {
+        if (IsSet(MyGui) && MyGui is Gui && guiShown && MyGui.HasProp("Stop")) {
             MyGui["Stop"].Text := "Record"
         }
     }

@@ -81,7 +81,7 @@ StartRecording(*) {
     if (!isRecording) {
         isRecording := true
         SetTrayStatus(true)  ; Update icon & tooltip
-        if (IsSet(MyGui) && MyGui is Gui && guiShown && MyGui.HasProp("Record")) {
+        if (guiShown) {
             MyGui["Record"].Text := "Stop"
         }
     }
@@ -98,7 +98,7 @@ StopRecording(*) {
             recordedText .= GetTextFromContextItem(item)
         }
         A_Clipboard := recordedText  ; Copy recorded text to clipboard
-        if (IsSet(MyGui) && MyGui is Gui && guiShown && MyGui.HasProp("Stop")) {
+        if (guiShown) {
             MyGui["Stop"].Text := "Record"
         }
     }
@@ -119,7 +119,8 @@ DisplayLLMUserInterface(*) {
     sessionCombo.OnEvent("Change", SessionChanged)
 
     ; Add record button
-    recordButton := MyGui.Add("Button", "x100 y10 w90", "Record")
+    recordButtonTitle := isRecording ? "Stop" : "Record"
+    recordButton := MyGui.Add("Button", "x100 y10 w90", recordButtonTitle)
     recordButton.OnEvent("Click", ToggleRecording)
 
     ; Button section moved down

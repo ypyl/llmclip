@@ -1,10 +1,24 @@
 class ComSpecTool {
-    RunWaitOne(command) {
+    RunWaitOne(command, working_directory := A_ScriptDir) {
         shell := ComObject("WScript.Shell")
-        ; Execute a single command via cmd.exe
-        exec := shell.Exec(A_ComSpec " /C " command)
-        ; Read and return the command's output
-        return exec.StdOut.ReadAll()
+
+        ; Properly quote and construct the full cmd line
+        ; DO NOT add a trailing '"' after the command
+        cmd := A_ComSpec ' /C "cd /d "' working_directory '" && ' command '"'
+
+        ; Execute using WScript.Shell
+        exec := shell.Exec(cmd)
+
+        ; Read output and error
+        output := exec.StdOut.ReadAll()
+        errorOutput := exec.StdErr.ReadAll()
+
+        if (output = "" && errorOutput != "")
+            return "Error: " errorOutput
+        if (output = "")
+            return "Error: Command returned no output."
+
+        return output
     }
 
     RunWaitMany(commands) {
@@ -22,13 +36,17 @@ class ComSpecTool {
             type: "function",
             function: {
                 name: "execute_command",
-                description: "Execute a command in Windows Command Prompt (cmd.exe)",
+                description: "Execute a command in Windows Command Prompt (cmd.exe) via WScript.Shell",
                 parameters: {
                     type: "object",
                     properties: {
                         command: {
                             type: "string",
                             description: "The command to execute in cmd.exe"
+                        },
+                        working_directory: {
+                            type: "string",
+                            description: "The working directory for the command"
                         }
                     },
                     required: ["command"]
@@ -45,20 +63,11 @@ class ComSpecTool {
         try {
             args := JSON.parse(toolCall.function.arguments)
             if (args.Has("command")) {
-                result := this.RunWaitOne(args["command"])
+                result := this.RunWaitOne(args["command"], args["working_directory"])
                 return { role: "tool", content: result, tool_call_id: toolCall.id }
             }
         } catch as e {
             return { role: "tool", content: "Error: " e.Message, tool_call_id: toolCall.id }
         }
     }
-
-    ;     MsgBox RunWaitOne("dir " A_ScriptDir)
-
-    ;     MsgBox RunWaitMany("
-    ; (
-    ; echo Put your commands here,
-    ; echo each one will be run,
-    ; echo and you'll get the output.
-    ; )")
 }

@@ -193,11 +193,10 @@ LLMTypeChanged(*) {
     global MyGui, AppSettingsValue
     AppSettingsValue.selectedIndex := MyGui["LLMType"].Value
 
-    ; Reload systemPromptCombo values
     systemPromptCombo := MyGui["SystemPrompt"]
-    systemPromptCombo.Delete()  ; Clear existing items
-    systemPromptCombo.Add(AppSettingsValue.GetSystemPromptNames())  ; Add new items
-    systemPromptCombo.Value := AppSettingsValue.selectedSystemPromptIndex  ; Set default value
+    systemPromptCombo.Delete()
+    systemPromptCombo.Add(AppSettingsValue.GetSystemPromptNames())
+    systemPromptCombo.Value := AppSettingsValue.selectedSystemPromptIndex
 }
 
 ; Add session switching function

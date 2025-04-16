@@ -55,6 +55,10 @@ class AppSettings {
             for prompt in prompts {
                 names.Push(prompt["name"])
             }
+            ; Reset selectedSystemPromptIndex if out of range
+            if (this.selectedSystemPromptIndex > names.Length || this.selectedSystemPromptIndex < 1) {
+                this.selectedSystemPromptIndex := 1
+            }
             return names
         }
         return []

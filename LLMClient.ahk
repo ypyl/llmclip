@@ -48,7 +48,7 @@ class LLMClient {
 
             ; Read response
             if FileExist(outputFile) {
-                response := FileRead(outputFile)
+                response := FileRead(outputFile, "UTF-8")
                 if (response != "") {
                     return this.ParseResponse(response, selectedLLMType)
                 }

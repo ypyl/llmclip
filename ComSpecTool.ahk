@@ -31,7 +31,7 @@ class ComSpecTool {
         return exec.StdOut.ReadAll()
     }
 
-    GetToolDefinition() {
+    GetOpenAiToolDefinition() {
         return {
             type: "function",
             function: {
@@ -49,9 +49,34 @@ class ComSpecTool {
                             description: "The working directory for the command"
                         }
                     },
-                    required: ["command"]
+                    required: ["command", "working_directory"]
                 }
             }
+        }
+    }
+
+    GetGeminiToolDefinition() {
+        return {
+            functionDeclarations: [
+                {
+                    name: "execute_command",
+                    description: "Execute a command in Windows Command Prompt (cmd.exe) via WScript.Shell",
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            command: {
+                                type: "string",
+                                description: "The command to execute in cmd.exe"
+                            },
+                            working_directory: {
+                                type: "string",
+                                description: "The working directory for the command"
+                            }
+                        },
+                        required: ["command", "working_directory"]
+                    }
+                }
+            ]
         }
     }
 

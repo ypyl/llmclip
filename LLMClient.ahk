@@ -82,7 +82,7 @@ class LLMClient {
         body["temperature"] := settings.Get("temperature", 0.7)
 
         ; Add ComSpec tool
-        body["tools"] := [this.comSpecTool.GetToolDefinition(), this.fileSystemTool.GetToolDefinition()]
+        body["tools"] := [this.comSpecTool.GetOpenAiToolDefinition(), this.fileSystemTool.GetOpenAiToolDefinition()]
 
         return body
     }
@@ -123,16 +123,52 @@ class LLMClient {
         ; Add other messages to contents
         for msg in messages {
             if (msg.role != "system") {
-                contents.Push({
-                    role: msg.role = "assistant" ? "model" : msg.role,
-                    parts: [{
-                        text: msg.content
-                    }]
-                })
+                if (msg.role = "tool") {
+                    ; Handle tool response
+                    contents.Push({
+                        role: "user",
+                        parts: [{
+                            functionResponse: {
+                                id: msg.tool_call_id,
+                                name: "execute_command",
+                                response: { result: msg.content }
+                            }
+                        }]
+                    })
+                } else if (msg.role = "assistant") {
+                    if (msg.content = "" && msg.HasProp("tool_calls")) {
+                        contents.Push({
+                            role: "model",
+                            parts: [{
+                                functionCall: {
+                                    id: msg.tool_calls[1].id,
+                                    name: msg.tool_calls[1].function.name,
+                                    args: JSON.Parse(msg.tool_calls[1].function.arguments),
+                                }
+                            }]
+                        })
+                        prevMsgAssistant := msg
+                    } else {
+                        contents.Push({
+                            role: "model",
+                            parts: [{
+                                text: msg.content
+                            }]
+                        })
+                    }
+                } else {
+                    contents.Push({
+                        role: msg.role,
+                        parts: [{
+                            text: msg.content
+                        }]
+                    })
+                }
             }
         }
 
         body["contents"] := contents
+        body["tools"] := [this.comSpecTool.GetGeminiToolDefinition()]
         body["generationConfig"] := {
             stopSequences: settings.Get("stopSequences", ["Title"]),
             temperature: settings.Get("temperature", 1.0),
@@ -150,7 +186,23 @@ class LLMClient {
         if (obj.Has("candidates") && obj["candidates"].Length > 0) {
             candidate := obj["candidates"][1]
             if (candidate.Has("content") && candidate["content"].Has("parts") && candidate["content"]["parts"].Length > 0) {
-                return { type: "text", content: candidate["content"]["parts"][1]["text"] }
+                ; Check for function calls in parts
+                parts := candidate["content"]["parts"]
+                for part in parts {
+                    if (part.Has("functionCall")) {
+                        functionCall := part["functionCall"]
+                        return {
+                            type: "tool_call",
+                            content: {
+                                id: functionCall.Get("id", ""),
+                                name: functionCall["name"],
+                                arguments: JSON.Stringify(functionCall["args"])
+                            }
+                        }
+                    }
+                }
+                ; If no function call found, return text content
+                return { type: "text", content: parts[1]["text"] }
             }
         }
 

@@ -27,7 +27,7 @@ class FileSystemTool {
         }
     }
 
-    GetToolDefinition() {
+    GetOpenAiToolDefinition() {
         return {
             type: "function",
             function: {

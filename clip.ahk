@@ -29,6 +29,9 @@ global FileSystemToolValue := FileSystemTool()
 
 global wv, wvc
 
+clipboardHost := {}
+clipboardHost.Copy := (text) => A_Clipboard := text
+
 htmlContent := '
     (
     <!DOCTYPE html>
@@ -41,21 +44,63 @@ htmlContent := '
                 margin: 0 auto;
                 padding: 0px 5px;
             }
+            .code-block-wrapper {
+                margin: 16px 0;
+            }
             pre {
                 background-color: #f6f8fa;
                 padding: 16px;
                 border-radius: 6px;
+                margin: 0;
             }
             code {
                 font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            }
+            .collapsed code {
+                display: -webkit-box;
+                -webkit-line-clamp: 1;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+            .copy-button, .toggle-button {
+                margin: 4px;
+                padding: 4px 8px;
             }
         </style>
     </head>
     <body>
         <div id="content"></div>
         <script>
+            // Configure marked to customize code block rendering
+            marked.setOptions({
+                renderer: new marked.Renderer(),
+                highlight: function(code, lang) {
+                    return code; // No syntax highlighting for simplicity
+                }
+            });
+
+            // Function to copy code to clipboard
+            function copyCode(button) {
+                const codeElement = button.previousElementSibling.previousElementSibling;
+                const text = codeElement.textContent;
+                window.chrome.webview.hostObjects.sync.clipboard.Copy(text);
+            }
+
+            // Function to toggle code block visibility
+            function toggle(button) {
+                const wrapper = button.closest('.code-block-wrapper');
+                wrapper.classList.toggle('collapsed');
+                button.textContent = wrapper.classList.contains('collapsed') ? 'Expand' : 'Collapse';
+            }
+
+            // Override the code block renderer to include copy and toggle buttons
+            const renderer = new marked.Renderer();
+            renderer.code = function(code, infostring, escaped) {
+                return ``<div class="code-block-wrapper"><pre><code>${code.text}</code><br /><button class="copy-button" onclick="copyCode(this)">Copy</button><button class="toggle-button" onclick="toggle(this)">Collapse</button></pre></div>``;
+            };
+
             function renderMarkdown(content) {
-                document.getElementById("content").innerHTML = marked.parse(content);
+                document.getElementById("content").innerHTML = marked.parse(content, { renderer: renderer });
             }
         </script>
     </body>
@@ -101,7 +146,7 @@ RenderMarkdown(content) {
     global wv
     escapedMd := StrReplace(content, "`"", '\"') ; simple quote escaping
     escapedMd := StrReplace(escapedMd, "`n", "\n") ; simple quote escaping
-    wv.ExecuteScript("renderMarkdown(`""  escapedMd "`")")
+    wv.ExecuteScript("renderMarkdown(`"" escapedMd "`")")
 }
 
 SetTrayStatus(isRecording) {
@@ -225,6 +270,7 @@ DisplayLLMUserInterface(*) {
     wvc := WebView2.CreateControllerAsync(responseCtr.Hwnd).await2()
     wv := wvc.CoreWebView2
     wv.NavigateToString(htmlContent)
+    wv.AddHostObjectToScript("clipboard", clipboardHost)
     guiShown := true
 
     UpdateChatHistoryView()

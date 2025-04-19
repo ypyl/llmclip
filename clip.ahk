@@ -7,8 +7,7 @@
 #Include ClipboardParser.ahk
 #Include ComSpecTool.ahk
 #Include FileSystemTool.ahk
-#Include <WebView2>
-; cURL is also should be installed as it is used to actually call LLM providers. Please install it using:`nwinget install cURL.cURL`nor visit https://curl.se/download.html
+#Include WebViewManager.ahk
 
 ; Initialize variables
 
@@ -27,85 +26,8 @@ global ClipboardParserValue := ClipboardParser()
 global ComSpecToolValue := ComSpecTool()
 global FileSystemToolValue := FileSystemTool()
 
-global wv, wvc
-
-clipboardHost := {}
-clipboardHost.Copy := (text) => A_Clipboard := text
-
-htmlContent := '
-    (
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-        <style>
-            body {
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-                margin: 0 auto;
-                padding: 0px 5px;
-            }
-            .code-block-wrapper {
-                margin: 16px 0;
-            }
-            pre {
-                background-color: #f6f8fa;
-                padding: 16px;
-                border-radius: 6px;
-                margin: 0;
-            }
-            code {
-                font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
-            }
-            .collapsed code {
-                display: -webkit-box;
-                -webkit-line-clamp: 1;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
-            }
-            .copy-button, .toggle-button {
-                margin: 4px;
-                padding: 4px 8px;
-            }
-        </style>
-    </head>
-    <body>
-        <div id="content"></div>
-        <script>
-            // Configure marked to customize code block rendering
-            marked.setOptions({
-                renderer: new marked.Renderer(),
-                highlight: function(code, lang) {
-                    return code; // No syntax highlighting for simplicity
-                }
-            });
-
-            // Function to copy code to clipboard
-            function copyCode(button) {
-                const codeElement = button.previousElementSibling.previousElementSibling;
-                const text = codeElement.textContent;
-                window.chrome.webview.hostObjects.sync.clipboard.Copy(text);
-            }
-
-            // Function to toggle code block visibility
-            function toggle(button) {
-                const wrapper = button.closest('.code-block-wrapper');
-                wrapper.classList.toggle('collapsed');
-                button.textContent = wrapper.classList.contains('collapsed') ? 'Expand' : 'Collapse';
-            }
-
-            // Override the code block renderer to include copy and toggle buttons
-            const renderer = new marked.Renderer();
-            renderer.code = function(code, infostring, escaped) {
-                return ``<div class="code-block-wrapper"><pre><code>${code.text}</code><br /><button class="copy-button" onclick="copyCode(this)">Copy</button><button class="toggle-button" onclick="toggle(this)">Collapse</button></pre></div>``;
-            };
-
-            function renderMarkdown(content) {
-                document.getElementById("content").innerHTML = marked.parse(content, { renderer: renderer });
-            }
-        </script>
-    </body>
-    </html>
-    )'
+; Create WebView manager instance
+global WebViewManagerValue := WebViewManager()
 
 isRecording := false
 guiShown := false
@@ -143,10 +65,8 @@ TrayIconClick(wParam, lParam, msg, hwnd) {
 }
 
 RenderMarkdown(content) {
-    global wv
-    escapedMd := StrReplace(content, "`"", '\"') ; simple quote escaping
-    escapedMd := StrReplace(escapedMd, "`n", "\n") ; simple quote escaping
-    wv.ExecuteScript("renderMarkdown(`"" escapedMd "`")")
+    global WebViewManagerValue
+    WebViewManagerValue.RenderMarkdown(content)
 }
 
 SetTrayStatus(isRecording) {
@@ -192,7 +112,7 @@ StopRecording(*) {
 }
 
 DisplayLLMUserInterface(*) {
-    global MyGui, guiShown, askButton, AppSettingsValue, SessionManagerValue, wv, wvc
+    global MyGui, guiShown, askButton, AppSettingsValue, SessionManagerValue, WebViewManagerValue
     if (guiShown) {
         MyGui.Show()
         return
@@ -271,10 +191,7 @@ DisplayLLMUserInterface(*) {
     MyGui.OnEvent("Close", GuiClose)
     MyGui.Show("w1230 h610")
 
-    wvc := WebView2.CreateControllerAsync(responseCtr.Hwnd).await2()
-    wv := wvc.CoreWebView2
-    wv.NavigateToString(htmlContent)
-    wv.AddHostObjectToScript("clipboard", clipboardHost)
+    WebViewManagerValue.Init(responseCtr)
     guiShown := true
 
     UpdateChatHistoryView()
@@ -684,7 +601,7 @@ DeleteSelectedMessage(*) {
 }
 
 GuiResize(thisGui, MinMax, Width, Height) {
-    global wvc  ; Add wv to globals
+    global WebViewManagerValue
     if (MinMax = -1)  ; If window is minimized
         return
 
@@ -698,21 +615,19 @@ GuiResize(thisGui, MinMax, Width, Height) {
     thisGui["ResponseCtr"].Move(responseCtrX, responseCtrY, responseCtrWidth, responseCtrHeight)
 
     ; Resize the WebView2 control to match ResponseCtr
-    if (IsSet(wvc) && wvc) {  ; Check if WebView2 controller exists
-        hCtrl := thisGui["ResponseCtr"].Hwnd
-        rect := Buffer(16, 0)  ; RECT: left, top, right, bottom
-        DllCall("GetClientRect", "ptr", hCtrl, "ptr", rect)
+    hCtrl := thisGui["ResponseCtr"].Hwnd
+    rect := Buffer(16, 0)  ; RECT: left, top, right, bottom
+    DllCall("GetClientRect", "ptr", hCtrl, "ptr", rect)
 
-        widthResponseCtr := NumGet(rect, 8, "Int")   ; right
-        heightResponseCtr := NumGet(rect, 12, "Int") ; bottom
-        ; Set bounds relative to the ResponseCtr — top-left is (0,0)
-        wvRect := Buffer(16, 0)
-        NumPut("Int", 0, wvRect, 0)                          ; left
-        NumPut("Int", 0, wvRect, 4)                          ; top
-        NumPut("Int", widthResponseCtr, wvRect, 8)           ; right
-        NumPut("Int", heightResponseCtr, wvRect, 12)         ; bottom
-        wvc.Bounds := wvRect
-    }
+    widthResponseCtr := NumGet(rect, 8, "Int")   ; right
+    heightResponseCtr := NumGet(rect, 12, "Int") ; bottom
+    ; Set bounds relative to the ResponseCtr — top-left is (0,0)
+    wvRect := Buffer(16, 0)
+    NumPut("Int", 0, wvRect, 0)                          ; left
+    NumPut("Int", 0, wvRect, 4)                          ; top
+    NumPut("Int", widthResponseCtr, wvRect, 8)           ; right
+    NumPut("Int", heightResponseCtr, wvRect, 12)         ; bottom
+    WebViewManagerValue.Resize(wvRect)
 
     ; Resize the prompt edit control
     promptEditHeight := 140  ; Original height

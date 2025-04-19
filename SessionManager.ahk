@@ -1,9 +1,11 @@
 class SessionManager {
     currentSessionIndex := 1
-    MAX_SESSIONS := 3
-    sessionNames := ["Session 1", "Session 2", "Session 3"]
+    MAX_SESSIONS := 5
+    sessionNames := ["Session 1", "Session 2", "Session 3", "Session 4", "Session 5"]
     sessionMessages := []
     sessionContexts := []
+    sessionLLMTypes := []
+    sessionSystemPrompts := []
 
     __New(appSettings) {
         this.appSettings := appSettings
@@ -12,9 +14,11 @@ class SessionManager {
         Loop this.MAX_SESSIONS {
             this.sessionMessages.Push([{
                 role: "system",
-                content: this.appSettings.GetSystemPromptValue()
+                content: this.appSettings.GetSystemPromptValue(this.appSettings.selectedLLMTypeIndex, 1)
             }])
             this.sessionContexts.Push([])
+            this.sessionLLMTypes.Push(this.appSettings.selectedLLMTypeIndex)
+            this.sessionSystemPrompts.Push(1)
         }
     }
 
@@ -36,7 +40,7 @@ class SessionManager {
     GetCurrentSessionMessagesAsStrings() {
         messages := []
         for message in this.GetCurrentSessionMessages() {
-            messages.Push({ role: message.role, content: this.GetMessageAsString(message) } )
+            messages.Push({ role: message.role, content: this.GetMessageAsString(message) })
         }
         return messages
     }
@@ -47,6 +51,22 @@ class SessionManager {
 
     SetCurrentSessionContext(newContext) {
         this.sessionContexts[this.currentSessionIndex] := newContext
+    }
+
+    GetCurrentSessionLLMType() {
+        return this.sessionLLMTypes[this.currentSessionIndex]
+    }
+
+    GetCurrentSessionSystemPrompt() {
+        return this.sessionSystemPrompts[this.currentSessionIndex]
+    }
+
+    SetCurrentSessionLLMType(index) {
+        this.sessionLLMTypes[this.currentSessionIndex] := index
+    }
+
+    SetCurrentSessionSystemPrompt(index) {
+        this.sessionSystemPrompts[this.currentSessionIndex] := index
     }
 
     SwitchSession(newIndex) {
@@ -65,7 +85,7 @@ class SessionManager {
     ClearCurrentMessages() {
         this.sessionMessages[this.currentSessionIndex] := [{
             role: "system",
-            content: this.appSettings.GetSystemPromptValue()
+            content: this.appSettings.GetSystemPromptValue(this.GetCurrentSessionLLMType(), this.GetCurrentSessionSystemPrompt())
         }]
     }
 

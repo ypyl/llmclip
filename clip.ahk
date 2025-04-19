@@ -163,12 +163,12 @@ DisplayLLMUserInterface(*) {
 
     ; Add LLM type selector near Reset All button
     llmTypeCombo := MyGui.Add("DropDownList", "x20 y570 w70 vLLMType", AppSettingsValue.llmTypes)
-    llmTypeCombo.Value := AppSettingsValue.selectedIndex
+    llmTypeCombo.Value := SessionManagerValue.GetCurrentSessionLLMType()
     llmTypeCombo.OnEvent("Change", LLMTypeChanged)
 
     ; Add system prompt selector
-    systemPromptCombo := MyGui.Add("DropDownList", "x100 y570 w100 vSystemPrompt", AppSettingsValue.GetSystemPromptNames())
-    systemPromptCombo.Value := AppSettingsValue.selectedSystemPromptIndex
+    systemPromptCombo := MyGui.Add("DropDownList", "x100 y570 w100 vSystemPrompt", AppSettingsValue.GetSystemPromptNames(SessionManagerValue.GetCurrentSessionLLMType()))
+    systemPromptCombo.Value := SessionManagerValue.GetCurrentSessionSystemPrompt()
     systemPromptCombo.OnEvent("Change", SystemPromptChanged)
 
     askButton := MyGui.Add("Button", "x210 y570 w190", "Ask LLM")
@@ -185,29 +185,39 @@ DisplayLLMUserInterface(*) {
 }
 
 SystemPromptChanged(*) {
-    global MyGui, AppSettingsValue
-    AppSettingsValue.selectedSystemPromptIndex := MyGui["SystemPrompt"].Value
+    global MyGui, SessionManagerValue
+    SessionManagerValue.SetCurrentSessionSystemPrompt(MyGui["SystemPrompt"].Value)
 }
 
 LLMTypeChanged(*) {
-    global MyGui, AppSettingsValue
-    AppSettingsValue.selectedIndex := MyGui["LLMType"].Value
+    global MyGui, AppSettingsValue, SessionManagerValue
+    SessionManagerValue.SetCurrentSessionLLMType(MyGui["LLMType"].Value)
 
     systemPromptCombo := MyGui["SystemPrompt"]
     systemPromptCombo.Delete()
-    systemPromptCombo.Add(AppSettingsValue.GetSystemPromptNames())
-    systemPromptCombo.Value := AppSettingsValue.selectedSystemPromptIndex
+    systemPromptCombo.Add(AppSettingsValue.GetSystemPromptNames(SessionManagerValue.GetCurrentSessionLLMType()))
+    systemPromptCombo.Value := 1  ; Reset to first prompt when LLM type changes
+    SessionManagerValue.SetCurrentSessionSystemPrompt(1)
 }
 
-; Add session switching function
+; Update session switching function
 SessionChanged(*) {
-    global MyGui, SessionManagerValue
+    global MyGui, AppSettingsValue, SessionManagerValue
 
     ; Switch to new session
     SessionManagerValue.SwitchSession(MyGui["SessionSelect"].Value)
 
     UpdateContextView()
     UpdateChatHistoryView()
+
+    ; Update LLM type and system prompt selections
+    MyGui["LLMType"].Value := SessionManagerValue.GetCurrentSessionLLMType()
+
+    ; Update system prompts for the selected LLM type
+    systemPromptCombo := MyGui["SystemPrompt"]
+    systemPromptCombo.Delete()
+    systemPromptCombo.Add(AppSettingsValue.GetSystemPromptNames(SessionManagerValue.GetCurrentSessionLLMType()))
+    systemPromptCombo.Value := SessionManagerValue.GetCurrentSessionSystemPrompt()
 
     ; Clear response field
     MyGui["Response"].Value := ""
@@ -243,7 +253,7 @@ AskToLLM(*) {
 
 SendToLLM() {
     messages := SessionManagerValue.GetCurrentSessionMessages()
-    messages[1].content := AppSettingsValue.GetSystemPromptValue()
+    messages[1].content := AppSettingsValue.GetSystemPromptValue(SessionManagerValue.GetCurrentSessionLLMType(), SessionManagerValue.GetCurrentSessionSystemPrompt())
     context := SessionManagerValue.GetCurrentSessionContext()
 
     listBox := MyGui["ListBox"]
@@ -284,7 +294,7 @@ SendToLLM() {
 
     try {
         ; Create LLM client if it doesn't exist yet
-        LLMClientInstance := LLMClient(AppSettingsValue.GetSelectedSettings())
+        LLMClientInstance := LLMClient(AppSettingsValue.GetSelectedSettings(SessionManagerValue.GetCurrentSessionLLMType()))
 
         assistantResponse := LLMClientInstance.Call(messages)
         if (assistantResponse.Type = "tool_call") {
@@ -385,7 +395,7 @@ ClearSelection(*) {
 }
 
 ClearChatHistory(*) {
-    global MyGui, SessionManagerValue, AppSettingsValue
+    global MyGui, SessionManagerValue
     SessionManagerValue.ClearCurrentMessages()
 
     UpdateChatHistoryView()  ; Update the chat history view

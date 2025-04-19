@@ -4,9 +4,8 @@
 class AppSettings {
     providers := Map()
     selectedLLMType := ""
+    selectedLLMTypeIndex := 1
     llmTypes := []
-    selectedIndex := 1
-    selectedSystemPromptIndex := 1
 
     __New() {
         settings := JSON.LoadFile("settings.json")
@@ -24,40 +23,33 @@ class AppSettings {
         for key in this.providers {
             this.llmTypes.Push(key)
             if (key = this.selectedLLMType) {
-                this.selectedIndex := A_Index
+                this.selectedLLMTypeIndex := A_Index
             }
         }
     }
 
-    GetSelectedSettings() {
-        selectedLLMType := this.llmTypes[this.selectedIndex]
+    GetSelectedSettings(llmIndex) {
+        selectedLLMType := this.llmTypes[llmIndex]
         settings := this.providers[selectedLLMType]
         settings["type"] := selectedLLMType  ; Add type to settings
         return settings
     }
 
-    GetSystemPromptValue() {
+    GetSystemPromptValue(llmIndex, promptInde) {
         defaultPrompt := "You are a helpful assistant. Be concise and direct in your responses."
-        settings := this.GetSelectedSettings()
+        settings := this.GetSelectedSettings(llmIndex)
         if (prompts := settings.Get("system_prompts", "")) {
-            if (prompts.Length >= this.selectedSystemPromptIndex)
-                defaultPrompt := prompts[this.selectedSystemPromptIndex]["value"]
-            else if (prompts.Length > 0)
-                defaultPrompt := prompts[1]["value"]
+            return prompts[promptInde]["value"]
         }
         return defaultPrompt
     }
 
-    GetSystemPromptNames() {
-        settings := this.GetSelectedSettings()
+    GetSystemPromptNames(llmIndex) {
+        settings := this.GetSelectedSettings(llmIndex)
         names := []
         if (prompts := settings.Get("system_prompts", "")) {
             for prompt in prompts {
                 names.Push(prompt["name"])
-            }
-            ; Reset selectedSystemPromptIndex if out of range
-            if (this.selectedSystemPromptIndex > names.Length || this.selectedSystemPromptIndex < 1) {
-                this.selectedSystemPromptIndex := 1
             }
             return names
         }

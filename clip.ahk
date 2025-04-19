@@ -199,70 +199,74 @@ DisplayLLMUserInterface(*) {
     }
     MyGui := Gui()
     MyGui.Title := "LLM Assistant"
+    MyGui.SetFont("s9", "Segoe UI")
+    MyGui.Opt("+Resize +MinSize800x610")  ; Only main window gets resize option
+
+    MyGui.OnEvent("Size", GuiResize)
 
     ; Add session selector
-    sessionCombo := MyGui.Add("DropDownList", "x20 y10 w70 vSessionSelect", SessionManagerValue.sessionNames)
+    sessionCombo := MyGui.Add("DropDownList", "x10 y10 w70 vSessionSelect", SessionManagerValue.sessionNames)
     sessionCombo.Value := SessionManagerValue.currentSessionIndex
     sessionCombo.OnEvent("Change", SessionChanged)
 
     ; Add record button
     recordButtonTitle := isRecording ? "Stop" : "Record"
-    recordButton := MyGui.Add("Button", "x100 y10 w90", recordButtonTitle)
+    recordButton := MyGui.Add("Button", "x90 y10 w90", recordButtonTitle)
     recordButton.OnEvent("Click", ToggleRecording)
 
     ; Button section moved down
-    resetButton := MyGui.Add("Button", "x310 y10 w90", "Reset All")
+    resetButton := MyGui.Add("Button", "x300 y10 w90", "Reset All")
     resetButton.OnEvent("Click", ResetAll)
 
     ; Add context list with reduced height
     context := SessionManagerValue.GetCurrentSessionContext()
-    listBox := MyGui.Add("ListBox", "vListBox x20 y40 w380 h150 VScroll Multi", context)
+    listBox := MyGui.Add("ListBox", "vListBox x10 y40 w380 h150 VScroll Multi", context)
     listBox.OnEvent("Change", ListBoxSelect)  ; Add this line
 
     ; Context buttons moved up
-    clearAllButton := MyGui.Add("Button", "x20 y190 w120", "Clear All")
+    clearAllButton := MyGui.Add("Button", "x10 y190 w120", "Clear All")
     clearAllButton.OnEvent("Click", ClearAllContext)
 
-    clearSelectionButton := MyGui.Add("Button", "x150 y190 w120", "Clear Selection")
+    clearSelectionButton := MyGui.Add("Button", "x140 y190 w120", "Clear Selection")
     clearSelectionButton.OnEvent("Click", ClearSelection)
 
-    deleteButton := MyGui.Add("Button", "x280 y190 w120", "Delete Selected")
+    deleteButton := MyGui.Add("Button", "x270 y190 w120", "Delete Selected")
     deleteButton.OnEvent("Click", DeleteSelected)
 
     ; Add ListView for chat history
-    chatHistory := MyGui.Add("ListView", "vChatHistory x20 y225 w380 h150 NoSort", ["Role", "Text"])
+    chatHistory := MyGui.Add("ListView", "vChatHistory x10 y220 w380 h150 NoSort", ["Role", "Text"])
     chatHistory.ModifyCol(1, 60)  ; Role column width
     chatHistory.ModifyCol(2, 310) ; Text column width
     chatHistory.OnEvent("ItemSelect", ChatHistorySelect)
 
-    deleteMessageButton := MyGui.Add("Button", "x20 y385 w120", "Delete Selected")
+    deleteMessageButton := MyGui.Add("Button", "x10 y375 w120", "Delete Selected")
     deleteMessageButton.OnEvent("Click", DeleteSelectedMessage)
 
-    runToolButton := MyGui.Add("Button", "vRunToolButton x150 y385 w120 Hidden", "Run Tool")
+    runToolButton := MyGui.Add("Button", "vRunToolButton x140 y375 w120 Hidden", "Run Tool")
     runToolButton.OnEvent("Click", RunSelectedTool)
 
-    clearHistoryButton := MyGui.Add("Button", "x280 y385 w120", "Clear History")
+    clearHistoryButton := MyGui.Add("Button", "x270 y375 w120", "Clear History")
     clearHistoryButton.OnEvent("Click", ClearChatHistory)
 
     ; Prompt section with increased height
-    promptEdit := MyGui.Add("Edit", "vPromptEdit x20 y420 w380 h140 Multi WantReturn")
+    promptEdit := MyGui.Add("Edit", "vPromptEdit x10 y405 w380 h140 Multi WantReturn", "")
     promptEdit.OnEvent("Change", PromptChange)
 
     ; Add LLM type selector near Reset All button
-    llmTypeCombo := MyGui.Add("DropDownList", "x20 y570 w70 vLLMType", AppSettingsValue.llmTypes)
+    llmTypeCombo := MyGui.Add("DropDownList", "x10 y570 w70 vLLMType", AppSettingsValue.llmTypes)
     llmTypeCombo.Value := SessionManagerValue.GetCurrentSessionLLMType()
     llmTypeCombo.OnEvent("Change", LLMTypeChanged)
 
     ; Add system prompt selector
-    systemPromptCombo := MyGui.Add("DropDownList", "x100 y570 w100 vSystemPrompt", AppSettingsValue.GetSystemPromptNames(SessionManagerValue.GetCurrentSessionLLMType()))
+    systemPromptCombo := MyGui.Add("DropDownList", "x90 y570 w100 vSystemPrompt", AppSettingsValue.GetSystemPromptNames(SessionManagerValue.GetCurrentSessionLLMType()))
     systemPromptCombo.Value := SessionManagerValue.GetCurrentSessionSystemPrompt()
     systemPromptCombo.OnEvent("Change", SystemPromptChanged)
 
-    askButton := MyGui.Add("Button", "x210 y570 w190", "Ask LLM")
+    askButton := MyGui.Add("Button", "x200 y570 w190 vAskLLM", "Ask LLM")
     askButton.OnEvent("Click", AskToLLM)
 
     ; Right panel remains unchanged
-    responseCtr := MyGui.Add("edit", "x420 y10 w790 h580 -VScroll")
+    responseCtr := MyGui.Add("Edit", "vResponseCtr x420 y10 w790 h580 -VScroll", "")
 
     MyGui.OnEvent("Close", GuiClose)
     MyGui.Show("w1230 h610")
@@ -677,4 +681,23 @@ DeleteSelectedMessage(*) {
 
     UpdateChatHistoryView()
     RenderMarkdown("")  ; Clear the response area
+}
+
+GuiResize(thisGui, MinMax, Width, Height) {
+    if (MinMax = -1)  ; If window is minimized
+        return
+
+    ; Resize the response control
+    thisGui["ResponseCtr"].Move(420, 10, Width - 430, Height - 20)
+
+    ; Resize the prompt edit control
+    promptEditHeight := 140  ; Original height
+    bottomControlsHeight := 40  ; Height reserved for bottom controls
+    thisGui["PromptEdit"].Move(10, 405, 380, Height - 405 - bottomControlsHeight)
+
+    ; Move bottom controls
+    bottomY := Height - 35  ; 35 pixels from bottom
+    thisGui["LLMType"].Move(10, bottomY)
+    thisGui["SystemPrompt"].Move(90, bottomY)
+    thisGui["AskLLM"].Move(200, bottomY)
 }

@@ -7,7 +7,7 @@
 #Include ClipboardParser.ahk
 #Include ComSpecTool.ahk
 #Include FileSystemTool.ahk
-
+#Include <WebView2>
 ; cURL is also should be installed as it is used to actually call LLM providers. Please install it using:`nwinget install cURL.cURL`nor visit https://curl.se/download.html
 
 ; Initialize variables
@@ -26,6 +26,40 @@ global ClipboardParserValue := ClipboardParser()
 
 global ComSpecToolValue := ComSpecTool()
 global FileSystemToolValue := FileSystemTool()
+
+global wv, wvc
+
+htmlContent := '
+    (
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                margin: 0 auto;
+            }
+            pre {
+                background-color: #f6f8fa;
+                padding: 16px;
+                border-radius: 6px;
+            }
+            code {
+                font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="content"></div>
+        <script>
+            function renderMarkdown(content) {
+                document.getElementById("content").innerHTML = marked.parse(content);
+            }
+        </script>
+    </body>
+    </html>
+    )'
 
 isRecording := false
 guiShown := false
@@ -60,6 +94,13 @@ TrayIconClick(wParam, lParam, msg, hwnd) {
             StartRecording()  ; Start recording
         }
     }
+}
+
+RenderMarkdown(content) {
+    global wv
+    escapedMd := StrReplace(content, "`"", '\"') ; simple quote escaping
+    escapedMd := StrReplace(escapedMd, "`n", "\n") ; simple quote escaping
+    wv.ExecuteScript("renderMarkdown(`"" escapedMd "`")")
 }
 
 SetTrayStatus(isRecording) {
@@ -105,7 +146,7 @@ StopRecording(*) {
 }
 
 DisplayLLMUserInterface(*) {
-    global MyGui, guiShown, askButton, AppSettingsValue, SessionManagerValue
+    global MyGui, guiShown, askButton, AppSettingsValue, SessionManagerValue, wv, wvc
     if (guiShown) {
         MyGui.Show()
         return
@@ -175,10 +216,14 @@ DisplayLLMUserInterface(*) {
     askButton.OnEvent("Click", AskToLLM)
 
     ; Right panel remains unchanged
-    MyGui.Add("Edit", "vResponse x420 y10 w790 h580 ReadOnly Multi VScroll Wrap", "")
+    responseCtr := MyGui.Add("edit", "x420 y10 w790 h580 -VScroll")
 
     MyGui.OnEvent("Close", GuiClose)
     MyGui.Show("w1230 h610")
+
+    wvc := WebView2.CreateControllerAsync(responseCtr.Hwnd).await2()
+    wv := wvc.CoreWebView2
+    wv.NavigateToString(htmlContent)
     guiShown := true
 
     UpdateChatHistoryView()
@@ -220,7 +265,7 @@ SessionChanged(*) {
     systemPromptCombo.Value := SessionManagerValue.GetCurrentSessionSystemPrompt()
 
     ; Clear response field
-    MyGui["Response"].Value := ""
+    RenderMarkdown("")  ; Clear the response area
 }
 
 UpdateContextView(*) {
@@ -324,7 +369,7 @@ SendToLLM() {
     }
     messages.Push(newMessage)
     UpdateChatHistoryView()  ; Update the chat history view
-    MyGui["Response"].Value := SessionManagerValue.GetMessageAsString(newMessage)
+    RenderMarkdown(SessionManagerValue.GetMessageAsString(newMessage))
 }
 
 GetTextFromContextItem(item) {
@@ -360,7 +405,7 @@ ListBoxSelect(*) {
         textContent .= GetTextFromContextItem(item) "`n"
     }
 
-    MyGui["Response"].Value := textContent
+    RenderMarkdown(textContent)  ; Render the selected item(s) in the WebView
 }
 
 DeleteSelected(*) {
@@ -399,7 +444,7 @@ ClearChatHistory(*) {
     SessionManagerValue.ClearCurrentMessages()
 
     UpdateChatHistoryView()  ; Update the chat history view
-    MyGui["Response"].Value := ""  ; Clear response area
+    RenderMarkdown("")  ; Clear the response area
 }
 
 ResetAll(*) {
@@ -413,8 +458,7 @@ ResetAll(*) {
     UpdateContextView()
 
     ; Clear response and prompt
-    MyGui["Response"].Value := ""
-    MyGui["PromptEdit"].Value := ""
+    RenderMarkdown("")  ; Clear the response area
 }
 
 ExitApp(*) {
@@ -487,7 +531,7 @@ ChatHistorySelect(*) {
     chatHistory := MyGui["ChatHistory"]
     if (focused_row := chatHistory.GetNext()) {
         msg := messages[focused_row]
-        MyGui["Response"].Value := SessionManagerValue.GetMessageAsString(msg)
+        RenderMarkdown(SessionManagerValue.GetMessageAsString(msg))  ; Render the selected message in the WebView
 
         ; Show/hide Run Tool button based on message type
         if (msg.HasOwnProp("tool_calls") && msg.tool_calls.Length > 0) {
@@ -527,7 +571,7 @@ RunSelectedTool(*) {
                         messages.Push(result)
                     }
                 }
-                MyGui["Response"].Value := SessionManagerValue.GetMessageAsString(messages[messages.Length])
+                RenderMarkdown(SessionManagerValue.GetMessageAsString(messages[messages.Length]))  ; Render the response in the WebView
                 UpdateChatHistoryView()
                 SendToLLM()
             } finally {
@@ -585,5 +629,5 @@ DeleteSelectedMessage(*) {
         messages.RemoveAt(index)
 
     UpdateChatHistoryView()
-    MyGui["Response"].Value := ""
+    RenderMarkdown("")  ; Clear the response area
 }

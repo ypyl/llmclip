@@ -4,19 +4,21 @@ LLMClip is an AutoHotkey script that records clipboard content and provides a tr
 
 ![image](https://github.com/user-attachments/assets/d14c261f-5616-4e09-b0fe-12fe1e6ebfd7)
 
-
 ## Features
 
 - Start and stop clipboard recording
 - Show a list of copied text and paths
 - Delete individual items from the recorded list
 - Automatically detects and processes clipboard content from Visual Studio Code
+- Smart clipboard content parsing for different data types
 - Interactive GUI for managing context and chatting with LLMs
-- Support for multiple LLM providers (Groq, Google, Azure)
+- Support for multiple LLM providers (Groq, Google, Ollama)
 - Multi-select context items for focused LLM queries
 - Chat history tracking and management
 - Built-in tools for file operations and command execution
 - Support for function calling in compatible LLMs
+- Markdown rendering for responses with code block management
+- Collapsible and copyable code blocks in responses
 
 ## Primary Goal
 
@@ -70,8 +72,18 @@ The chat interface provides several features:
 
 LLMClip includes built-in tools that compatible LLM providers can use:
 
-- **File System Tool**: Read, write and delete files
-- **Command Line Tool**: Execute commands in Windows Command Prompt
+#### File System Tool
+- Read file contents
+- Write content to files
+- Delete files
+- Full path support for file operations
+- Automatic error handling and reporting
+
+#### Command Line Tool
+- Execute commands in Windows Command Prompt
+- Capture command output
+- Support for complex command arguments
+- Error handling and status reporting
 
 When an LLM suggests using a tool, a "Run Tool" button will appear to execute the suggested operation.
 
@@ -91,6 +103,12 @@ The `settings.json` file contains configurations for different LLM providers. Th
 - Google (using gemini-2.0-flash model)
 - Ollama (local models support)
 
+Each provider can be configured with:
+- Custom temperature settings
+- Model selection
+- System prompts
+- API endpoints and authentication
+
 Example `settings.json`:
 ```json
 {
@@ -101,19 +119,8 @@ Example `settings.json`:
             "model": "llama-3.3-70b-versatile",
             "temperature": 0.7,
             "system_prompt": "You are a helpful assistant. Be concise and direct in your responses."
-        },
-        "google": {
-            "curl": "curl -s -S -X POST \"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=<<KEY>>\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
-            "system_prompt": "You are a helpful assistant. Be concise and direct in your responses.",
-            "temperature": 0.7
-        },
-        "ol-phi4": {
-            "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
-            "model": "phi4",
-            "stream": false,
-            "system_prompt": "You are a helpful assistant. Be concise and direct in your responses.",
-            "temperature": 0.7
         }
+        // ...other provider configurations...
     }
 }
 ```

@@ -684,11 +684,35 @@ DeleteSelectedMessage(*) {
 }
 
 GuiResize(thisGui, MinMax, Width, Height) {
+    global wvc  ; Add wv to globals
     if (MinMax = -1)  ; If window is minimized
         return
 
-    ; Resize the response control
-    thisGui["ResponseCtr"].Move(420, 10, Width - 430, Height - 20)
+    ; Calculate new dimensions for ResponseCtr
+    responseCtrX := 420
+    responseCtrY := 10
+    responseCtrWidth := Width - 430
+    responseCtrHeight := Height - 20
+
+    ; Resize the ResponseCtr control
+    thisGui["ResponseCtr"].Move(responseCtrX, responseCtrY, responseCtrWidth, responseCtrHeight)
+
+    ; Resize the WebView2 control to match ResponseCtr
+    if (IsSet(wvc) && wvc) {  ; Check if WebView2 controller exists
+        hCtrl := thisGui["ResponseCtr"].Hwnd
+        rect := Buffer(16, 0)  ; RECT: left, top, right, bottom
+        DllCall("GetClientRect", "ptr", hCtrl, "ptr", rect)
+
+        width := NumGet(rect, 8, "Int")   ; right
+        height := NumGet(rect, 12, "Int") ; bottom
+        ; Set bounds relative to the ResponseCtr — top-left is (0,0)
+        wvRect := Buffer(16, 0)
+        NumPut("Int", 0, wvRect, 0)                          ; left
+        NumPut("Int", 0, wvRect, 4)                          ; top
+        NumPut("Int", width, wvRect, 8)           ; right
+        NumPut("Int", height, wvRect, 12)         ; bottom
+        wvc.Bounds := wvRect
+    }
 
     ; Resize the prompt edit control
     promptEditHeight := 140  ; Original height

@@ -97,9 +97,17 @@ class WebViewManager {
     }
 
     RenderMarkdown(content) {
-        escapedMd := StrReplace(content, "`"", '\"') ; simple quote escaping
-        escapedMd := StrReplace(escapedMd, "`n", "\n") ; simple quote escaping
-        this.wv.ExecuteScript("renderMarkdown(`"" escapedMd "`")")
+        escapedMd := StrReplace(content, "\", "\\")       ; escape backslashes first
+        escapedMd := StrReplace(escapedMd, "`"", '\"')     ; escape double quotes
+        escapedMd := StrReplace(escapedMd, "`n", "\n")     ; escape newline
+        escapedMd := StrReplace(escapedMd, "`r", "\r")     ; escape carriage return
+        escapedMd := StrReplace(escapedMd, "`t", "\t")     ; escape tab (optional)
+        escapedMd := StrReplace(escapedMd, "`b", "\b")     ; backspace (optional)
+        escapedMd := StrReplace(escapedMd, "`f", "\f")     ; form feed (optional)
+
+        escapedMd := StrReplace(escapedMd, "``", "\``")     ; escape double backticks (optional)
+
+        this.wv.ExecuteScript("renderMarkdown(``" escapedMd "``)")
     }
 
     Resize(rect) {

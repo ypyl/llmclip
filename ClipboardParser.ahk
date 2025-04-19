@@ -102,11 +102,11 @@ class ClipboardParser {
     GetTextFromContextItem(item) {
         itemText := ""
         if (DirExist(item))
-            itemText := "======`n" this.ProcessFolder(item)
+            itemText := "Folder:`n" this.ProcessFolder(item)
         else if (FileExist(item))
-            itemText := "======`n" this.ProcessFile(item)
+            itemText := "File:`n" this.ProcessFile(item)
         else
-            itemText := "======`n" item "`n"
+            itemText := "`n```````n" item "`n```````n"
         return itemText
     }
 
@@ -116,10 +116,10 @@ class ClipboardParser {
         if (DirExist(FolderPath)) {
             Loop Files, FolderPath "\*.*", "R"  ; Recursively loop through all files
             {
-                folderText .= "======`n" this.ProcessFile(A_LoopFileFullPath)
+                folderText .= "File:`n" this.ProcessFile(A_LoopFileFullPath)
             }
         } else {
-            folderText := "======`nFolder does not contains files`n"
+            folderText := "`nFolder does not contains files`n"
         }
 
         return folderText
@@ -130,9 +130,9 @@ class ClipboardParser {
         if this.CanUseFileRead(FilePath) {
             try {
                 content := FileRead(FilePath)
-                return FilePath "`n------`n" content "------`n"
+                return FilePath "`n```````n" content "`n```````n"
             } catch {
-                return FilePath "`n------`n[Error reading file content]`n"
+                return FilePath "`n[Error reading file content]`n"
             }
         }
         return FilePath

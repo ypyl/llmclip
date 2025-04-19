@@ -289,7 +289,7 @@ SendToLLM() {
                 contextText .= GetTextFromContextItem(item)
             }
         }
-        messages[1].content .= "`nHere is the context:`n" contextText "`nPlease consider this context when answering the following question."
+        messages[1].content .= "`n`nHere is the context:`n`n" contextText "`nPlease consider this context when answering the following question."
 
         ; Add selected items as special focus points
         if (selectedIndices.Length > 0) {

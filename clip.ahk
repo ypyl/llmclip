@@ -39,6 +39,7 @@ htmlContent := '
             body {
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
                 margin: 0 auto;
+                padding: 0px 5px;
             }
             pre {
                 background-color: #f6f8fa;
@@ -100,7 +101,7 @@ RenderMarkdown(content) {
     global wv
     escapedMd := StrReplace(content, "`"", '\"') ; simple quote escaping
     escapedMd := StrReplace(escapedMd, "`n", "\n") ; simple quote escaping
-    wv.ExecuteScript("renderMarkdown(`"" escapedMd "`")")
+    wv.ExecuteScript("renderMarkdown(`""  escapedMd "`")")
 }
 
 SetTrayStatus(isRecording) {

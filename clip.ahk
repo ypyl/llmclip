@@ -266,7 +266,7 @@ DisplayLLMUserInterface(*) {
     askButton.OnEvent("Click", AskToLLM)
 
     ; Right panel remains unchanged
-    responseCtr := MyGui.Add("Edit", "vResponseCtr x420 y10 w790 h580 -VScroll", "")
+    responseCtr := MyGui.Add("Edit", "vResponseCtr x400 y10 w790 h580 -VScroll", "")
 
     MyGui.OnEvent("Close", GuiClose)
     MyGui.Show("w1230 h610")
@@ -689,9 +689,9 @@ GuiResize(thisGui, MinMax, Width, Height) {
         return
 
     ; Calculate new dimensions for ResponseCtr
-    responseCtrX := 420
+    responseCtrX := 400
     responseCtrY := 10
-    responseCtrWidth := Width - 430
+    responseCtrWidth := Width - 410
     responseCtrHeight := Height - 20
 
     ; Resize the ResponseCtr control
@@ -703,14 +703,14 @@ GuiResize(thisGui, MinMax, Width, Height) {
         rect := Buffer(16, 0)  ; RECT: left, top, right, bottom
         DllCall("GetClientRect", "ptr", hCtrl, "ptr", rect)
 
-        width := NumGet(rect, 8, "Int")   ; right
-        height := NumGet(rect, 12, "Int") ; bottom
+        widthResponseCtr := NumGet(rect, 8, "Int")   ; right
+        heightResponseCtr := NumGet(rect, 12, "Int") ; bottom
         ; Set bounds relative to the ResponseCtr — top-left is (0,0)
         wvRect := Buffer(16, 0)
         NumPut("Int", 0, wvRect, 0)                          ; left
         NumPut("Int", 0, wvRect, 4)                          ; top
-        NumPut("Int", width, wvRect, 8)           ; right
-        NumPut("Int", height, wvRect, 12)         ; bottom
+        NumPut("Int", widthResponseCtr, wvRect, 8)           ; right
+        NumPut("Int", heightResponseCtr, wvRect, 12)         ; bottom
         wvc.Bounds := wvRect
     }
 

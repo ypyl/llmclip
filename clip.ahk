@@ -162,8 +162,8 @@ DisplayLLMUserInterface(*) {
     deleteMessageButton := MyGui.Add("Button", "x10 y375 w120", "Delete Selected")
     deleteMessageButton.OnEvent("Click", DeleteSelectedMessage)
 
-    runToolButton := MyGui.Add("Button", "vRunToolButton x140 y375 w120 Hidden", "Run Tool")
-    runToolButton.OnEvent("Click", RunSelectedTool)
+    chatMessageButton := MyGui.Add("Button", "vChatMessageActionButton x140 y375 w120 Hidden", "Run Tool")
+    chatMessageButton.OnEvent("Click", RunSelectedTool)
 
     clearHistoryButton := MyGui.Add("Button", "x270 y375 w120", "Clear History")
     clearHistoryButton.OnEvent("Click", ClearChatHistory)
@@ -254,6 +254,7 @@ UpdateChatHistoryView(*) {
     for msg in messages {
         chatHistory.Add(, msg.role, SubStr(msg.content, 1, 70) (StrLen(msg.content) > 70 ? "..." : ""))
     }
+    MyGui["ChatMessageActionButton"].Visible := false  ; Hide the Run Tool button
 }
 
 AskToLLM(*) {
@@ -499,6 +500,7 @@ ChatHistorySelect(*) {
     chatHistory := MyGui["ChatHistory"]
     if (focused_row := chatHistory.GetNext()) {
         msg := messages[focused_row]
+        MyGui["ChatMessageActionButton"].Visible := true  ; Show the Run Tool button
         RenderMarkdown(SessionManagerValue.GetMessageAsString(msg))  ; Render the selected message in the WebView
 
         ; Show/hide Run Tool button based on message type
@@ -515,9 +517,9 @@ ChatHistorySelect(*) {
                 if (hasToolResponse)
                     break
             }
-            MyGui["RunToolButton"].Visible := !hasToolResponse
+            MyGui["ChatMessageActionButton"].Text := "Run Tool"
         } else {
-            MyGui["RunToolButton"].Visible := false
+            MyGui["ChatMessageActionButton"].Text := "Copy"
         }
     }
 }
@@ -530,7 +532,7 @@ RunSelectedTool(*) {
         msg := messages[focused_row]
         if (msg.HasOwnProp("tool_calls")) {
             try {
-                MyGui["RunToolButton"].Enable := false
+                MyGui["ChatMessageActionButton"].Enable := false
                 for tool_call in msg.tool_calls {
                     if result := ComSpecToolValue.ExecuteToolCall(tool_call) {
                         messages.Push(result)
@@ -543,8 +545,12 @@ RunSelectedTool(*) {
                 UpdateChatHistoryView()
                 SendToLLM()
             } finally {
-                MyGui["RunToolButton"].Enable := true
+                MyGui["ChatMessageActionButton"].Enable := true
             }
+        }
+        else {
+            ; Copy the selected message to clipboard
+            A_Clipboard := msg.content
         }
     }
 }

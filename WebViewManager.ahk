@@ -106,6 +106,8 @@ class WebViewManager {
         escapedMd := StrReplace(escapedMd, "`f", "\f")     ; form feed (optional)
 
         escapedMd := StrReplace(escapedMd, "``", "\``")     ; escape double backticks (optional)
+        escapedMd := StrReplace(escapedMd, "<", "&lt;")     ; escape less than sign (optional)
+        escapedMd := StrReplace(escapedMd, ">", "&gt;")     ; escape greater than sign (optional)
 
         this.wv.ExecuteScript("renderMarkdown(``" escapedMd "``)")
     }

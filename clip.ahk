@@ -139,8 +139,8 @@ DisplayLLMUserInterface(*) {
     resetButton.OnEvent("Click", ResetAll)
 
     ; Add context list with reduced height
-    context := SessionManagerValue.GetCurrentSessionContext()
-    listBox := MyGui.Add("ListBox", "vListBox x10 y40 w380 h150 VScroll HScroll Multi", context)
+    labels := GetLabelsForContextItems()
+    listBox := MyGui.Add("ListBox", "vListBox x10 y40 w380 h150 VScroll HScroll Multi", labels)
     listBox.OnEvent("Change", ListBoxSelect)  ; Add this line
 
     ; Context buttons moved up
@@ -197,6 +197,15 @@ DisplayLLMUserInterface(*) {
     UpdateChatHistoryView()
 }
 
+GetLabelsForContextItems() {
+    context := SessionManagerValue.GetCurrentSessionContext()
+    labels := []
+    for item in context {
+        labels.Push(ClipboardParserValue.GetLabelFromContextItem(item))
+    }
+    return labels
+}
+
 SystemPromptChanged(*) {
     global MyGui, SessionManagerValue
     SessionManagerValue.SetCurrentSessionSystemPrompt(MyGui["SystemPrompt"].Value)
@@ -238,12 +247,12 @@ SessionChanged(*) {
 
 UpdateContextView(*) {
     ; Update local references
-    context := SessionManagerValue.GetCurrentSessionContext()
+    labels := GetLabelsForContextItems()
 
     ; Update UI
     listBox := MyGui["ListBox"]
     listBox.Delete()
-    listBox.Add(context)
+    listBox.Add(labels)
 }
 
 UpdateChatHistoryView(*) {
@@ -400,7 +409,8 @@ DeleteSelected(*) {
 
     ; Refresh the listbox
     listBox.Delete()
-    listBox.Add(context)
+    labels := GetLabelsForContextItems()
+    listBox.Add(labels)
 }
 
 ClearSelection(*) {
@@ -459,9 +469,9 @@ HasContent(haystack, newContent) {
     }
 
     ; Then check content matches for files and folders
-    newContentText := ClipboardParserValue.GetTextFromContextItem(newContent)
+    newContentText := GetTextFromContextItem(newContent)
     for item in haystack {
-        if (ClipboardParserValue.GetTextFromContextItem(item) = newContentText)
+        if (GetTextFromContextItem(item) = newContentText)
             return true
     }
 
@@ -489,7 +499,8 @@ ClipChanged(DataType) {
         if (guiShown) {
             listBox := MyGui["ListBox"]
             listBox.Delete()
-            listBox.Add(context)
+            labels := GetLabelsForContextItems()
+            listBox.Add(labels)
         }
     }
 }

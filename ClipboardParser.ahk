@@ -143,4 +143,21 @@ class ClipboardParser {
         allowedExts := "txt,csv,log,ini,json,xml,html,md,ahk,bat,sh,ps1,yml,toml,cs,ts,js,jsx,tsx,py,java,kt,go,rs,php,rb,pl,swift,c,cpp,h,hpp,m,mm,elm,erl,ex,exs,clj,cljc,cljx,cl,scala,sql"
         return ext && InStr("," allowedExts ",", "," ext ",")
     }
+
+    GetLabelFromContextItem(item) {
+        if (DirExist(item)) {
+            SplitPath item, &name
+            return "📁 " name " - " item
+        }
+        else if (FileExist(item)) {
+            SplitPath item, &name, &dir
+            return "📄 " name " - " dir
+        }
+        else {
+            truncatedText := SubStr(item, 1, 50)
+            if (StrLen(item) > 50)
+                truncatedText .= "..."
+            return "📝 " truncatedText
+        }
+    }
 }

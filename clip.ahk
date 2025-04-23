@@ -155,8 +155,8 @@ DisplayLLMUserInterface(*) {
 
     ; Add ListView for chat history
     chatHistory := MyGui.Add("ListView", "vChatHistory x10 y220 w380 h150 NoSort", ["Role", "Text"])
-    chatHistory.ModifyCol(1, 60)  ; Role column width
-    chatHistory.ModifyCol(2, 310) ; Text column width
+    chatHistory.ModifyCol(1, 30)  ; Role column width
+    chatHistory.ModifyCol(2, 340) ; Text column width
     chatHistory.OnEvent("ItemSelect", ChatHistorySelect)
 
     deleteMessageButton := MyGui.Add("Button", "x10 y375 w120", "Delete Selected")

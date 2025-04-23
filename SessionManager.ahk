@@ -40,7 +40,11 @@ class SessionManager {
     GetCurrentSessionMessagesAsStrings() {
         messages := []
         for message in this.GetCurrentSessionMessages() {
-            messages.Push({ role: message.role, content: this.GetMessageAsString(message) })
+            roleEmoji := message.role == "system" ? "⚙️" :
+                        message.role == "user" ? "👤" :
+                        message.role == "assistant" ? "🤖" :
+                        message.role == "tool" ? "🛠️" : message.role
+            messages.Push({ role: roleEmoji, content: this.GetMessageAsString(message) })
         }
         return messages
     }

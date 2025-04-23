@@ -140,7 +140,7 @@ DisplayLLMUserInterface(*) {
 
     ; Add context list with reduced height
     context := SessionManagerValue.GetCurrentSessionContext()
-    listBox := MyGui.Add("ListBox", "vListBox x10 y40 w380 h150 VScroll Multi", context)
+    listBox := MyGui.Add("ListBox", "vListBox x10 y40 w380 h150 VScroll HScroll Multi", context)
     listBox.OnEvent("Change", ListBoxSelect)  ; Add this line
 
     ; Context buttons moved up

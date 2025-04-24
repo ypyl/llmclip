@@ -644,7 +644,9 @@ GuiResize(thisGui, MinMax, Width, Height) {
     NumPut("Int", 0, wvRect, 4)                          ; top
     NumPut("Int", widthResponseCtr, wvRect, 8)           ; right
     NumPut("Int", heightResponseCtr, wvRect, 12)         ; bottom
-    WebViewManagerValue.Resize(wvRect)
+    if guiShown {
+        WebViewManagerValue.Resize(wvRect)
+    }
 
     ; Resize the prompt edit control
     promptEditHeight := 140  ; Original height

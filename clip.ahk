@@ -144,14 +144,14 @@ DisplayLLMUserInterface(*) {
     listBox.OnEvent("Change", ListBoxSelect)  ; Add this line
 
     ; Context buttons moved up
-    clearAllButton := MyGui.Add("Button", "x10 y190 w120", "Clear All")
-    clearAllButton.OnEvent("Click", ClearAllContext)
-
-    clearSelectionButton := MyGui.Add("Button", "x140 y190 w120", "Clear Selection")
-    clearSelectionButton.OnEvent("Click", ClearSelection)
-
-    deleteButton := MyGui.Add("Button", "x270 y190 w120", "Delete Selected")
+    deleteButton := MyGui.Add("Button", "x10 y190 w120", "Delete Selected")
     deleteButton.OnEvent("Click", DeleteSelected)
+
+    clearSelectionButton := MyGui.Add("Button", "x140 y190 w120", "Reset Selection")
+    clearSelectionButton.OnEvent("Click", ResetSelection)
+
+    clearAllButton := MyGui.Add("Button", "x270 y190 w120", "Clear Context")
+    clearAllButton.OnEvent("Click", ClearAllContext)
 
     ; Add ListView for chat history
     chatHistory := MyGui.Add("ListView", "vChatHistory x10 y220 w380 h150 NoSort", ["Role", "Text"])
@@ -413,7 +413,7 @@ DeleteSelected(*) {
     listBox.Add(labels)
 }
 
-ClearSelection(*) {
+ResetSelection(*) {
     global MyGui
     MyGui["ListBox"].Value := 0  ; Set selection to 0 to clear it
 }

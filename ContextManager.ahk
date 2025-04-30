@@ -6,7 +6,7 @@ class ContextManager {
         itemText := ""
         if (this.IsHttpLink(item)) {
             article := WebViewManagerValue.LoadArticle(item)
-            itemText := "URL: " item "`n`n### " article.title "`n`n" article.textContent
+            itemText := "URL: " item "`n`nTitle: " article.title "`n`nAuthor metadata: " article.byline "`n`n" article.textContent
         } else if (DirExist(item))
             itemText := "Folder:`n" this.ProcessFolder(item)
         else if (FileExist(item))

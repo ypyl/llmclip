@@ -302,13 +302,17 @@ SendToLLM() {
                 contextText .= GetTextFromContextItem(item)
             }
         }
-        messages[1].content .= "`n`nHere is the context:`n`n" contextText "`nPlease consider this context when answering the following question."
+
+        ; Only add general context if there is any non-selected content
+        if (contextText != "") {
+            messages[1].content .= "`n`nHere is the context:`n`n" contextText "`n`nPlease consider this context when answering the following question."
+        }
 
         ; Add selected items as special focus points
         if (selectedIndices.Length > 0) {
-            messages[1].content .= "`nThe user has selected these items which may be particularly relevant:`n`n"
+            messages[1].content .= "`nThe user has selected the folloing text which may be particularly relevant:`n`n"
             for index in selectedIndices {
-                messages[1].content .= GetTextFromContextItem(context[index])
+                messages[1].content .= GetTextFromContextItem(context[index]) "`n`n"
             }
         }
     }

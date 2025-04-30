@@ -99,6 +99,7 @@ class WebViewManager {
     RenderMarkdown(content) {
         escapedMd := StrReplace(content, "\", "\\")       ; escape backslashes first
         escapedMd := StrReplace(escapedMd, "`"", '\"')     ; escape double quotes
+        escapedMd := StrReplace(escapedMd, "$", '\$')     ; escape double quotes
         escapedMd := StrReplace(escapedMd, "`n", "\n")     ; escape newline
         escapedMd := StrReplace(escapedMd, "`r", "\r")     ; escape carriage return
         escapedMd := StrReplace(escapedMd, "`t", "\t")     ; escape tab (optional)

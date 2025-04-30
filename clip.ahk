@@ -8,6 +8,7 @@
 #Include ComSpecTool.ahk
 #Include FileSystemTool.ahk
 #Include WebViewManager.ahk
+#Include ContextManager.ahk
 
 ; Initialize variables
 
@@ -28,6 +29,8 @@ global FileSystemToolValue := FileSystemTool()
 
 ; Create WebView manager instance
 global WebViewManagerValue := WebViewManager()
+
+global ContextManagerValue := ContextManager()
 
 isRecording := false
 guiShown := false
@@ -201,7 +204,7 @@ GetLabelsForContextItems() {
     context := SessionManagerValue.GetCurrentSessionContext()
     labels := []
     for item in context {
-        labels.Push(ClipboardParserValue.GetLabelFromContextItem(item))
+        labels.Push(ContextManagerValue.GetLabelFromContextItem(item))
     }
     return labels
 }
@@ -303,7 +306,7 @@ SendToLLM() {
 
         ; Add selected items as special focus points
         if (selectedIndices.Length > 0) {
-            messages[1].content .= "`nThe user has selected these items which may be particularly relevant:`n"
+            messages[1].content .= "`nThe user has selected these items which may be particularly relevant:`n`n"
             for index in selectedIndices {
                 messages[1].content .= GetTextFromContextItem(context[index])
             }
@@ -351,7 +354,7 @@ SendToLLM() {
 }
 
 GetTextFromContextItem(item) {
-    return ClipboardParserValue.GetTextFromContextItem(item)
+    return ContextManagerValue.GetTextFromContextItem(item)
 }
 
 GuiClose(*) {

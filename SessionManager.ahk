@@ -7,17 +7,23 @@ class SessionManager {
     sessionLLMTypes := []
     sessionSystemPrompts := []
 
-    __New(appSettings) {
-        this.appSettings := appSettings
+    ; Store default values to be used when no settings are provided
+    defaultSystemPrompt := "You are a helpful assistant. Be concise and direct in your responses."
+    defaultLLMType := 1
+
+    __New(defaultLLMType := 1, defaultSystemPrompt := "") {
+        this.defaultLLMType := defaultLLMType
+        if (defaultSystemPrompt)
+            this.defaultSystemPrompt := defaultSystemPrompt
 
         ; Initialize session arrays
         Loop this.MAX_SESSIONS {
             this.sessionMessages.Push([{
                 role: "system",
-                content: this.appSettings.GetSystemPromptValue(this.appSettings.selectedLLMTypeIndex, 1)
+                content: this.defaultSystemPrompt
             }])
             this.sessionContexts.Push([])
-            this.sessionLLMTypes.Push(this.appSettings.selectedLLMTypeIndex)
+            this.sessionLLMTypes.Push(this.defaultLLMType)
             this.sessionSystemPrompts.Push(1)
         }
     }
@@ -81,6 +87,13 @@ class SessionManager {
         return false
     }
 
+    UpdateSystemPromptContent(systemPromptContent) {
+        if (this.sessionMessages[this.currentSessionIndex].Length > 0 &&
+            this.sessionMessages[this.currentSessionIndex][1].role == "system") {
+            this.sessionMessages[this.currentSessionIndex][1].content := systemPromptContent
+        }
+    }
+
     ResetCurrentSession() {
         this.ClearCurrentMessages()
         this.ClearCurrentContext()
@@ -89,7 +102,7 @@ class SessionManager {
     ClearCurrentMessages() {
         this.sessionMessages[this.currentSessionIndex] := [{
             role: "system",
-            content: this.appSettings.GetSystemPromptValue(this.GetCurrentSessionLLMType(), this.GetCurrentSessionSystemPrompt())
+            content: this.defaultSystemPrompt
         }]
     }
 

@@ -35,11 +35,11 @@ class AppSettings {
         return settings
     }
 
-    GetSystemPromptValue(llmIndex, promptInde) {
+    GetSystemPromptValue(llmIndex, promptIndex) {
         defaultPrompt := "You are a helpful assistant. Be concise and direct in your responses."
         settings := this.GetSelectedSettings(llmIndex)
         if (prompts := settings.Get("system_prompts", "")) {
-            return prompts[promptInde]["value"]
+            return prompts[promptIndex]["value"]
         }
         return defaultPrompt
     }

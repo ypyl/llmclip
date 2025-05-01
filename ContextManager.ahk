@@ -2,11 +2,11 @@
 
 class ContextManager {
     ; Get text content from a context item (file, folder, plain text or URL)
-    GetTextFromContextItem(item, callback := "") {
+    GetTextFromContextItem(item, articleExtract := "") {
         itemText := ""
-        if (this.IsHttpLink(item)) {
-            article := WebViewManagerValue.LoadArticle(item)
-            itemText := "URL: " item "`n`nTitle: " article.title "`n`nAuthor metadata: " article.byline "`n`n" article.textContent
+        if (articleExtract && this.IsHttpLink(item)) {
+            article := articleExtract(item)
+            itemText := "URL: " item "`n`nTitle: " article.title "`n`n" article.textContent
         } else if (DirExist(item))
             itemText := "Folder:`n" this.ProcessFolder(item)
         else if (FileExist(item))
@@ -19,24 +19,6 @@ class ContextManager {
     ; Check if the item is an HTTP link
     IsHttpLink(item) {
         return RegExMatch(item, "i)^https?://") > 0
-    }
-
-    ; Callback for when an article is loaded
-    OnArticleLoaded(article) {
-        if (this.pendingUrl && this.articleCallback) {
-            url := this.pendingUrl
-            callback := this.articleCallback
-
-            ; Format the article content
-            content := "URL: " url "`n`n### " article.title "`n`n" article.textContent
-
-            ; Clear pending state
-            this.pendingUrl := ""
-            this.articleCallback := ""
-
-            ; Call the original callback with the content
-            callback.Call(content)
-        }
     }
 
     ProcessFolder(FolderPath) {

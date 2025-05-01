@@ -18,8 +18,11 @@ global MyGui
 ; Create settings instance
 global AppSettingsValue := AppSettings()
 
-; Create session manager instance
-global SessionManagerValue := SessionManager(AppSettingsValue)
+; Create session manager instance with default values from AppSettings
+global SessionManagerValue := SessionManager(
+    AppSettingsValue.selectedLLMTypeIndex,
+    AppSettingsValue.GetSystemPromptValue(AppSettingsValue.selectedLLMTypeIndex, 1)
+)
 
 ; Create clipboard parser instance
 global ClipboardParserValue := ClipboardParser()
@@ -210,8 +213,15 @@ GetLabelsForContextItems() {
 }
 
 SystemPromptChanged(*) {
-    global MyGui, SessionManagerValue
+    global MyGui, SessionManagerValue, AppSettingsValue
     SessionManagerValue.SetCurrentSessionSystemPrompt(MyGui["SystemPrompt"].Value)
+
+    ; Update the system prompt content
+    systemPrompt := AppSettingsValue.GetSystemPromptValue(
+        SessionManagerValue.GetCurrentSessionLLMType(),
+        SessionManagerValue.GetCurrentSessionSystemPrompt()
+    )
+    SessionManagerValue.UpdateSystemPromptContent(systemPrompt)
 }
 
 LLMTypeChanged(*) {
@@ -279,7 +289,14 @@ AskToLLM(*) {
 
 SendToLLM() {
     messages := SessionManagerValue.GetCurrentSessionMessages()
-    messages[1].content := AppSettingsValue.GetSystemPromptValue(SessionManagerValue.GetCurrentSessionLLMType(), SessionManagerValue.GetCurrentSessionSystemPrompt())
+
+    ; Update the system prompt content
+    systemPrompt := AppSettingsValue.GetSystemPromptValue(
+        SessionManagerValue.GetCurrentSessionLLMType(),
+        SessionManagerValue.GetCurrentSessionSystemPrompt()
+    )
+    SessionManagerValue.UpdateSystemPromptContent(systemPrompt)
+
     context := SessionManagerValue.GetCurrentSessionContext()
 
     listBox := MyGui["ListBox"]
@@ -358,7 +375,7 @@ SendToLLM() {
 }
 
 GetTextFromContextItem(item) {
-    return ContextManagerValue.GetTextFromContextItem(item)
+    return ContextManagerValue.GetTextFromContextItem(item, WebViewManagerValue.LoadArticle)
 }
 
 GuiClose(*) {
@@ -426,8 +443,15 @@ ResetSelection(*) {
 }
 
 ClearChatHistory(*) {
-    global MyGui, SessionManagerValue
+    global MyGui, SessionManagerValue, AppSettingsValue
     SessionManagerValue.ClearCurrentMessages()
+
+    ; Update the system prompt content after clearing
+    systemPrompt := AppSettingsValue.GetSystemPromptValue(
+        SessionManagerValue.GetCurrentSessionLLMType(),
+        SessionManagerValue.GetCurrentSessionSystemPrompt()
+    )
+    SessionManagerValue.UpdateSystemPromptContent(systemPrompt)
 
     UpdateChatHistoryView()  ; Update the chat history view
     RenderMarkdown("")  ; Clear the response area

@@ -375,7 +375,8 @@ SendToLLM() {
 }
 
 GetTextFromContextItem(item) {
-    return ContextManagerValue.GetTextFromContextItem(item, WebViewManagerValue.LoadArticle)
+    global WebViewManagerValue
+    return ContextManagerValue.GetTextFromContextItem(item, (url) => WebViewManagerValue.LoadArticle(url))
 }
 
 GuiClose(*) {

@@ -5,8 +5,18 @@ class ContextManager {
     GetTextFromContextItem(item, articleExtract := "") {
         itemText := ""
         if (articleExtract && this.IsHttpLink(item)) {
-            article := articleExtract(item)
-            itemText := "URL: " item "`n`nTitle: " article.title "`n`n" article.textContent
+            try {
+                article := articleExtract.Call(item)  ; Use .Call() method to properly invoke the function
+                if (article) {
+                    ; Normalize whitespace in textContent
+                    normalizedText := RegExReplace(article.textContent, "\s+", " ")
+                    itemText := "URL: " item "`n`nTitle: " article.title "`n`n" normalizedText
+                } else {
+                    itemText := "URL: " item
+                }
+            } catch as e {
+                itemText := "URL: " item "`n[Error extracting article: " e.Message "]"
+            }
         } else if (DirExist(item))
             itemText := "Folder:`n" this.ProcessFolder(item)
         else if (FileExist(item))

@@ -65,11 +65,11 @@ class LLMClient {
     }
 
     GetRequestBody(type, messages, settings) {
-        if (type = "groq" || type = "azure")
+        if (InStr(type, "gr") = 1 || InStr(type, "az") = 1)
             return this.GetGroqAzureBody(messages, settings)
         else if (InStr(type, "ol-") = 1)
             return this.GetOllamaAILikeBody(messages, settings)
-        else if (type = "google")
+        else if (InStr(type, "go") = 1)
             return this.GetGoogleBody(messages, settings)
         throw Error("Unknown model type: " type)
     }
@@ -237,6 +237,6 @@ class LLMClient {
             }
         }
 
-        throw Error("Unable to parse response")
+        throw Error(response)
     }
 }

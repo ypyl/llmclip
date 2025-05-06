@@ -179,16 +179,16 @@ DisplayLLMUserInterface(*) {
     promptEdit.OnEvent("Change", PromptChange)
 
     ; Add LLM type selector near Reset All button
-    llmTypeCombo := MyGui.Add("DropDownList", "x10 y570 w70 vLLMType", AppSettingsValue.llmTypes)
+    llmTypeCombo := MyGui.Add("DropDownList", "x10 y570 w90 vLLMType", AppSettingsValue.llmTypes)
     llmTypeCombo.Value := SessionManagerValue.GetCurrentSessionLLMType()
     llmTypeCombo.OnEvent("Change", LLMTypeChanged)
 
     ; Add system prompt selector
-    systemPromptCombo := MyGui.Add("DropDownList", "x90 y570 w100 vSystemPrompt", AppSettingsValue.GetSystemPromptNames(SessionManagerValue.GetCurrentSessionLLMType()))
+    systemPromptCombo := MyGui.Add("DropDownList", "x110 y570 w100 vSystemPrompt", AppSettingsValue.GetSystemPromptNames(SessionManagerValue.GetCurrentSessionLLMType()))
     systemPromptCombo.Value := SessionManagerValue.GetCurrentSessionSystemPrompt()
     systemPromptCombo.OnEvent("Change", SystemPromptChanged)
 
-    askButton := MyGui.Add("Button", "x200 y570 w190 vAskLLM", "Ask LLM")
+    askButton := MyGui.Add("Button", "x220 y570 w170 vAskLLM", "Ask LLM")
     askButton.OnEvent("Click", AskToLLM)
 
     ; Right panel remains unchanged
@@ -693,6 +693,6 @@ GuiResize(thisGui, MinMax, Width, Height) {
     ; Move bottom controls
     bottomY := Height - 35  ; 35 pixels from bottom
     thisGui["LLMType"].Move(10, bottomY)
-    thisGui["SystemPrompt"].Move(90, bottomY)
-    thisGui["AskLLM"].Move(200, bottomY)
+    thisGui["SystemPrompt"].Move(110, bottomY)
+    thisGui["AskLLM"].Move(220, bottomY)
 }

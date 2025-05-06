@@ -280,11 +280,16 @@ UpdateChatHistoryView(*) {
 }
 
 AskToLLM(*) {
+    global isRecording
     messages := SessionManagerValue.GetCurrentSessionMessages()
     promptText := MyGui["PromptEdit"].Value
     messages.Push({ role: "user", content: promptText })
     SendToLLM()
     MyGui["PromptEdit"].Value := ""  ; Clear prompt field
+
+    if (isRecording) {
+        StopRecording()
+    }
 }
 
 SendToLLM() {

@@ -363,6 +363,14 @@ SendToLLM() {
                     }
                 }]
             }
+        } else if (assistantResponse.type = "audio") {
+            newMessage := {
+                role: "assistant",
+                content: "",
+                audio: {
+                    link: assistantResponse.content,
+                }
+            }
         } else {
             newMessage := { role: "assistant", content: assistantResponse.content }
         }

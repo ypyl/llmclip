@@ -29,7 +29,13 @@ class LLMClient {
 
             ; Create temporary files for input/output
             inputFile := this.tempDir "\request.json"
-            outputFile := this.tempDir "\response.json"
+
+            ; Handle audio output differently
+            if (InStr(selectedLLMType, "gr-audio") = 1) {
+                outputFile := this.tempDir "\response.wav"
+            } else {
+                outputFile := this.tempDir "\response.json"
+            }
 
             ; Write request body to temp file
             try FileDelete(inputFile)
@@ -46,7 +52,12 @@ class LLMClient {
                 throw Error("No response file created")
             }
 
-            ; Read response
+            ; Handle audio response
+            if (InStr(selectedLLMType, "gr-audio") = 1) {
+                return { type: "audio", content: outputFile }
+            }
+
+            ; Read response for non-audio types
             if FileExist(outputFile) {
                 response := FileRead(outputFile, "UTF-8")
                 if (response != "") {
@@ -56,16 +67,22 @@ class LLMClient {
             throw Error("No response received")
 
         } finally {
-            ; Cleanup temp files
+            ; Cleanup temp files but don't delete audio files
             try {
                 FileDelete(inputFile)
-                FileDelete(outputFile)
+
+                ; Only delete JSON response files, not audio files
+                if (!InStr(selectedLLMType, "gr-audio") = 1) {
+                    FileDelete(outputFile)
+                }
             }
         }
     }
 
     GetRequestBody(type, messages, settings) {
-        if (InStr(type, "gr") = 1 || InStr(type, "az") = 1)
+        if (InStr(type, "gr-audio") = 1)
+            return this.GetGroqAudioBody(messages, settings)
+        else if (InStr(type, "gr") = 1 || InStr(type, "az") = 1)
             return this.GetGroqAzureBody(messages, settings)
         else if (InStr(type, "ol-") = 1)
             return this.GetOllamaAILikeBody(messages, settings)
@@ -74,11 +91,67 @@ class LLMClient {
         throw Error("Unknown model type: " type)
     }
 
+    FilterMessages(messages) {
+        ; Filter out audio messages and their corresponding user prompts
+        filteredMessages := []
+        skipNextUser := false
+
+        ; Process messages in reverse order to identify audio messages first
+        i := messages.Length
+        Loop messages.Length {
+            msg := messages[i]
+
+            ; If this is an audio message, skip it and mark to skip the next user message
+            if (msg.role = "assistant" && msg.content = "" && msg.HasProp("audio")) {
+                skipNextUser := true
+                i--
+                continue
+            }
+
+            ; Skip the user message that triggered an audio response
+            if (skipNextUser && msg.role = "user") {
+                skipNextUser := false
+                i--
+                continue
+            }
+
+            ; Insert at beginning to preserve original order
+            filteredMessages.InsertAt(1, msg)
+            i--
+        }
+
+        return filteredMessages
+    }
+
+    GetGroqAudioBody(messages, settings) {
+        ; For audio generation, we use the last user message as input text
+        lastUserMessage := ""
+        Loop messages.Length
+        {
+            idx := messages.Length - A_Index + 1
+            if (messages[idx].role = "user") {
+                lastUserMessage := messages[idx].content
+                break
+            }
+        }
+
+        body := Map()
+        body["model"] := settings.Get("model", "playai-tts")
+        body["input"] := lastUserMessage
+        ; https://console.groq.com/docs/text-to-speech#available-english-voices
+        body["voice"] := settings.Get("voice", "Arista-PlayAI")
+        body["response_format"] := settings.Get("response_format", "wav")
+
+        return body
+    }
+
     GetGroqAzureBody(messages, settings) {
         body := Map()
         if (model := settings.Get("model", ""))
             body["model"] := model
-        body["messages"] := messages
+
+        ; Apply message filtering
+        body["messages"] := this.FilterMessages(messages)
         body["temperature"] := settings.Get("temperature", 0.7)
 
         ; Add ComSpec tool
@@ -94,7 +167,7 @@ class LLMClient {
             "temperature", settings.Get("temperature", 0.7),
         )
         body["stream"] := JSON.False
-        body["messages"] := messages
+        body["messages"] := this.FilterMessages(messages)
         return body
     }
 
@@ -103,8 +176,11 @@ class LLMClient {
         contents := []
         systemMessage := ""
 
+        ; Filter messages to remove audio messages and their prompts
+        filteredMessages := this.FilterMessages(messages)
+
         ; First, find and handle system message
-        for msg in messages {
+        for msg in filteredMessages {
             if (msg.role = "system") {
                 systemMessage := msg
                 break
@@ -121,7 +197,7 @@ class LLMClient {
         }
 
         ; Add other messages to contents
-        for msg in messages {
+        for msg in filteredMessages {
             if (msg.role != "system") {
                 if (msg.role = "tool") {
                     ; Handle tool response

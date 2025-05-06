@@ -1,3 +1,5 @@
+#Include Base64.ahk
+
 class SessionManager {
     currentSessionIndex := 1
     MAX_SESSIONS := 5
@@ -29,6 +31,10 @@ class SessionManager {
     }
 
     GetMessageAsString(message) {
+        if (message.HasOwnProp("audio")) {
+            audioBase64 := this.GetAudioFileAsBase64(message.audio.link)
+            return '<audio controls><source src="data:audio/wav;base64,' audioBase64 '" type="audio/wav"></audio>'
+        }
         if (message.HasOwnProp("content") && message.content) {
             return message.content
         }
@@ -39,6 +45,25 @@ class SessionManager {
         return ""
     }
 
+    GetAudioFileAsBase64(filePath) {
+        try {
+            if (FileExist(filePath)) {
+                fileObj := FileOpen(filePath, "r")
+                if (fileObj) {
+                    fileSize := fileObj.Length
+                    fileBuffer := Buffer(fileSize)
+                    fileObj.RawRead(fileBuffer, fileSize)
+                    fileObj.Close()
+
+                    return Base64.Encode(fileBuffer)
+                }
+            }
+            return ""
+        } catch Error as e {
+            return ""
+        }
+    }
+
     GetCurrentSessionMessages() {
         return this.sessionMessages[this.currentSessionIndex]
     }
@@ -47,9 +72,9 @@ class SessionManager {
         messages := []
         for message in this.GetCurrentSessionMessages() {
             roleEmoji := message.role == "system" ? "⚙️" :
-                        message.role == "user" ? "👤" :
-                        message.role == "assistant" ? "🤖" :
-                        message.role == "tool" ? "🛠️" : message.role
+                message.role == "user" ? "👤" :
+                message.role == "assistant" ? "🤖" :
+                message.role == "tool" ? "🛠️" : message.role
             messages.Push({ role: roleEmoji, content: this.GetMessageAsString(message) })
         }
         return messages

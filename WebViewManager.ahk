@@ -152,7 +152,10 @@ class WebViewManager {
                     renderer: new marked.Renderer(),
                     highlight: function(code, lang) {
                         return code; // No syntax highlighting for simplicity
-                    }
+                    },
+                    gfm: true,
+                    breaks: true,
+                    sanitize: false, // This must be false to allow HTML
                 });
 
                 // Function to copy code to clipboard
@@ -196,8 +199,10 @@ class WebViewManager {
         escapedMd := StrReplace(escapedMd, "`f", "\f")     ; form feed (optional)
 
         escapedMd := StrReplace(escapedMd, "``", "\``")     ; escape double backticks (optional)
-        escapedMd := StrReplace(escapedMd, "<", "&lt;")     ; escape less than sign (optional)
-        escapedMd := StrReplace(escapedMd, ">", "&gt;")     ; escape greater than sign (optional)
+        if (InStr(escapedMd, "<audio") != 1) {
+           escapedMd := StrReplace(escapedMd, "<", "&lt;")     ; escape less than sign (optional)
+            escapedMd := StrReplace(escapedMd, ">", "&gt;")     ; escape greater than sign (optional)
+        }
 
         escapedMd := Trim(escapedMd)                    ; Remove leading/trailing whitespace
         escapedMd := RegExReplace(escapedMd, "\n\n+", "\n\n")  ; Replace multiple newlines with double newline

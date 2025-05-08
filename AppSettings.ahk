@@ -44,6 +44,17 @@ class AppSettings {
         return defaultPrompt
     }
 
+    GetInputTemplate(llmIndex, promptIndex) {
+        defaultPrompt := ""
+        settings := this.GetSelectedSettings(llmIndex)
+        if (prompts := settings.Get("system_prompts", "")) {
+            if (inputTempalte := prompts[promptIndex].Get("input_template", "")) {
+                return inputTempalte
+            }
+        }
+        return defaultPrompt
+    }
+
     GetSystemPromptNames(llmIndex) {
         settings := this.GetSelectedSettings(llmIndex)
         names := []

@@ -197,49 +197,96 @@ class LLMClient {
         }
 
         ; Add other messages to contents
-        for msg in filteredMessages {
-            if (msg.role != "system") {
-                if (msg.role = "tool") {
-                    ; Handle tool response
+        for i, msg in filteredMessages {
+            if (msg.role == "system") {
+                continue ; Skip system messages, already handled
+            }
+            if (msg.role = "tool") {
+                ; Group all tool responses that belong to the same assistant message
+                if (i < filteredMessages.Length && filteredMessages[i + 1].role = "tool") {
+                    continue ; Skip this one, we'll handle it in the next pass
+                }
+
+                ; Collect all tool responses that belong to the previous assistant message
+                toolResponses := []
+                currentIndex := i
+
+                ; Work backwards to collect all tool responses for this group
+                while (currentIndex > 0 && filteredMessages[currentIndex].role = "tool") {
+                    toolResponses.InsertAt(1, {
+                        functionResponse: {
+                            id: filteredMessages[currentIndex].tool_call_id,
+                            name: "execute_command", ; or the appropriate function name
+                            response: { result: filteredMessages[currentIndex].content }
+                        }
+                    })
+                    currentIndex--
+                }
+
+                ; Add all tool responses as parts of a single user message
+                if (toolResponses.Length > 0) {
                     contents.Push({
                         role: "user",
-                        parts: [{
-                            functionResponse: {
-                                id: msg.tool_call_id,
-                                name: "execute_command",
-                                response: { result: msg.content }
-                            }
-                        }]
+                        parts: toolResponses
                     })
-                } else if (msg.role = "assistant") {
-                    if (msg.content = "" && msg.HasProp("tool_calls")) {
-                        contents.Push({
-                            role: "model",
-                            parts: [{
+                }
+            } else if (msg.role = "assistant") {
+                if (msg.content = "" && msg.HasProp("tool_calls")) {
+                    ; Skip if this is not the last of consecutive assistant messages with tool calls
+                    if (i < filteredMessages.Length &&
+                        filteredMessages[i + 1].role = "assistant" &&
+                        filteredMessages[i + 1].content = "" &&
+                        filteredMessages[i + 1].HasProp("tool_calls")) {
+                        continue
+                    }
+
+                    ; Collect all function calls from consecutive assistant messages
+                    functionCalls := []
+                    currentIndex := i
+
+                    ; Work backwards to collect all tool calls from consecutive assistant messages
+                    while (currentIndex > 0 &&
+                        filteredMessages[currentIndex].role = "assistant" &&
+                        filteredMessages[currentIndex].content = "" &&
+                        filteredMessages[currentIndex].HasProp("tool_calls")) {
+
+                        ; Add all tool calls from this message
+                        for toolCall in filteredMessages[currentIndex].tool_calls {
+                            functionCalls.InsertAt(1, {
                                 functionCall: {
-                                    id: msg.tool_calls[1].id,
-                                    name: msg.tool_calls[1].function.name,
-                                    args: JSON.Parse(msg.tool_calls[1].function.arguments),
+                                    id: toolCall.id,
+                                    name: toolCall.function.name,
+                                    args: JSON.Parse(toolCall.function.arguments),
                                 }
-                            }]
-                        })
-                        prevMsgAssistant := msg
-                    } else {
+                            })
+                        }
+                        currentIndex--
+                    }
+
+                    ; Add all function calls as parts of a single model message
+                    if (functionCalls.Length > 0) {
                         contents.Push({
                             role: "model",
-                            parts: [{
-                                text: msg.content
-                            }]
+                            parts: functionCalls
                         })
                     }
                 } else {
                     contents.Push({
-                        role: msg.role,
+                        role: "model",
                         parts: [{
                             text: msg.content
                         }]
                     })
                 }
+            } else if (msg.role = "user" && !(i > 0 && filteredMessages[i - 1].role = "tool")) {
+                ; Only add user messages that aren't immediately after tool messages
+                ; (those would be handled by the tool response logic)
+                contents.Push({
+                    role: msg.role,
+                    parts: [{
+                        text: msg.content
+                    }]
+                })
             }
         }
 
@@ -257,6 +304,7 @@ class LLMClient {
 
     ParseResponse(response, type := "") {
         obj := JSON.Load(response)
+        results := []
 
         ; Handle Google's response format
         if (obj.Has("candidates") && obj["candidates"].Length > 0) {
@@ -267,24 +315,24 @@ class LLMClient {
                 for part in parts {
                     if (part.Has("functionCall")) {
                         functionCall := part["functionCall"]
-                        return {
+                        results.Push({
                             type: "tool_call",
                             content: {
                                 id: functionCall.Get("id", ""),
                                 name: functionCall["name"],
                                 arguments: JSON.Stringify(functionCall["args"])
                             }
-                        }
+                        })
+                    } else if (part.Has("text")) {
+                        results.Push({ type: "text", content: part["text"] })
                     }
                 }
-                ; If no function call found, return text content
-                return { type: "text", content: parts[1]["text"] }
             }
         }
 
         ; Handle format with direct message object
         if (obj.Has("message") && obj["message"].Has("content")) {
-            return { type: "text", content: obj["message"]["content"] }
+            results.Push({ type: "text", content: obj["message"]["content"] })
         }
 
         ; Handle OpenAI-style format
@@ -295,22 +343,27 @@ class LLMClient {
 
                 ; Check for tool calls
                 if (message.Has("tool_calls") && message["tool_calls"].Length > 0) {
-                    toolCall := message["tool_calls"][1]
-                    return {
-                        type: "tool_call",
-                        content: {
-                            id: toolCall["id"],
-                            name: toolCall["function"]["name"],
-                            arguments: toolCall["function"]["arguments"]
-                        }
+                    for toolCall in message["tool_calls"] {
+                        results.Push({
+                            type: "tool_call",
+                            content: {
+                                id: toolCall["id"],
+                                name: toolCall["function"]["name"],
+                                arguments: toolCall["function"]["arguments"]
+                            }
+                        })
                     }
                 }
 
                 ; Handle regular text response
-                if (message.Has("content")) {
-                    return { type: "text", content: message["content"] }
+                if (message.Has("content") && message["content"] != "") {
+                    results.Push({ type: "text", content: message["content"] })
                 }
             }
+        }
+
+        if (results.Length > 0) {
+            return results
         }
 
         throw Error(response)

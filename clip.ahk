@@ -221,6 +221,11 @@ SystemPromptChanged(*) {
         SessionManagerValue.GetCurrentSessionLLMType(),
         SessionManagerValue.GetCurrentSessionSystemPrompt()
     )
+    inputTemplate := AppSettingsValue.GetInputTemplate(
+        SessionManagerValue.GetCurrentSessionLLMType(),
+        SessionManagerValue.GetCurrentSessionSystemPrompt()
+    )
+    MyGui["PromptEdit"].Value := inputTemplate  ; Set the prompt edit value to the input template
     SessionManagerValue.UpdateSystemPromptContent(systemPrompt)
 }
 
@@ -283,7 +288,9 @@ AskToLLM(*) {
     global isRecording
     messages := SessionManagerValue.GetCurrentSessionMessages()
     promptText := MyGui["PromptEdit"].Value
-    messages.Push({ role: "user", content: promptText })
+    if (promptText != "") {
+        messages.Push({ role: "user", content: promptText })
+    }
     SendToLLM()
     MyGui["PromptEdit"].Value := ""  ; Clear prompt field
 
@@ -348,43 +355,52 @@ SendToLLM() {
         ; Create LLM client if it doesn't exist yet
         LLMClientInstance := LLMClient(AppSettingsValue.GetSelectedSettings(SessionManagerValue.GetCurrentSessionLLMType()))
 
-        assistantResponse := LLMClientInstance.Call(messages)
-        if (assistantResponse.Type = "tool_call") {
-            ; Create proper assistant message with tool_calls
-            newMessage := {
-                role: "assistant",
-                content: "",  ; Empty content as we have tool_calls
-                tool_calls: [{
-                    id: assistantResponse.content.id,
-                    type: "function",
-                    function: {
-                        name: assistantResponse.content.name,
-                        arguments: assistantResponse.content.arguments
-                    }
-                }]
-            }
-        } else if (assistantResponse.type = "audio") {
-            newMessage := {
-                role: "assistant",
-                content: "",
-                audio: {
-                    link: assistantResponse.content,
+        assistantResponses := LLMClientInstance.Call(messages)
+        ; Process each response in the array
+        for assistantResponse in assistantResponses {
+            if (assistantResponse.Type = "tool_call") {
+                ; Create proper assistant message with tool_calls
+                newMessage := {
+                    role: "assistant",
+                    content: "",  ; Empty content as we have tool_calls
+                    tool_calls: [{
+                        id: assistantResponse.content.id,
+                        type: "function",
+                        function: {
+                            name: assistantResponse.content.name,
+                            arguments: assistantResponse.content.arguments
+                        }
+                    }]
                 }
+            } else if (assistantResponse.type = "audio") {
+                newMessage := {
+                    role: "assistant",
+                    content: "",
+                    audio: {
+                        link: assistantResponse.content,
+                    }
+                }
+            } else {
+                newMessage := { role: "assistant", content: assistantResponse.content }
             }
-        } else {
-            newMessage := { role: "assistant", content: assistantResponse.content }
+            ; Add the new message to the session
+            messages.Push(newMessage)
         }
     } catch as e {
         newMessage := { role: "assistant", content: e.Message }
+        messages.Push(newMessage)
     } finally {
         ; Re-enable Ask LLM button
         if (MyGui) {
             askButton.Enabled := true
         }
     }
-    messages.Push(newMessage)
     UpdateChatHistoryView()  ; Update the chat history view
-    RenderMarkdown(SessionManagerValue.GetMessageAsString(newMessage))
+
+    ; Render the last message in the series of responses
+    if (messages.Length > 0) {
+        RenderMarkdown(SessionManagerValue.GetMessageAsString(messages[messages.Length]))
+    }
 }
 
 GetTextFromContextItem(item) {
@@ -599,7 +615,6 @@ RunSelectedTool(*) {
                 }
                 RenderMarkdown(SessionManagerValue.GetMessageAsString(messages[messages.Length]))  ; Render the response in the WebView
                 UpdateChatHistoryView()
-                SendToLLM()
             } finally {
                 MyGui["ChatMessageActionButton"].Enable := true
             }

@@ -201,7 +201,7 @@ class LLMClient {
                     insertPosition := toolCallPositions[toolCallId]
 
                     ; Insert the tool result right after its tool call
-                    reorderedMessages.InsertAt(insertPosition, msg)
+                    reorderedMessages.InsertAt(insertPosition + 1, msg)
 
                     ; After inserting, remove this ID from the map and
                     ; increment all positions for remaining tool calls

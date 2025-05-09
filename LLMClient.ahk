@@ -200,19 +200,19 @@ class LLMClient {
                 if (toolCallPositions.Has(toolCallId)) {
                     insertPosition := toolCallPositions[toolCallId]
 
-                    ; Find how many tool results we've already inserted at this position
-                    offset := 0
-                    for i, existingMsg in reorderedMessages {
-                        if (i > insertPosition && existingMsg.role = "tool" &&
-                            existingMsg.HasProp("tool_call_id") &&
-                            toolCallPositions.Has(existingMsg.tool_call_id) &&
-                            toolCallPositions[existingMsg.tool_call_id] = insertPosition) {
-                            offset++
+                    ; Insert the tool result right after its tool call
+                    reorderedMessages.InsertAt(insertPosition, msg)
+
+                    ; After inserting, remove this ID from the map and
+                    ; increment all positions for remaining tool calls
+                    toolCallPositions.Delete(toolCallId)
+
+                    ; Update positions for all remaining tool calls
+                    for id, pos in toolCallPositions {
+                        if (pos > insertPosition) {
+                            toolCallPositions[id] := pos + 1
                         }
                     }
-
-                    ; Insert the tool result after its tool call, considering any previously inserted results
-                    reorderedMessages.InsertAt(insertPosition + 1 + offset, msg)
                 } else {
                     ; If we can't find the corresponding tool call, just add at the end
                     reorderedMessages.Push(msg)

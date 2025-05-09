@@ -150,14 +150,77 @@ class LLMClient {
         if (model := settings.Get("model", ""))
             body["model"] := model
 
-        ; Apply message filtering
-        body["messages"] := this.FilterMessages(messages)
+        ; Apply message filtering and reordering
+        filteredMessages := this.FilterMessages(messages)
+        reorderedMessages := this.ReorderToolCallsAndResults(filteredMessages)
+
+        body["messages"] := reorderedMessages
         body["temperature"] := settings.Get("temperature", 0.7)
 
         ; Add ComSpec tool
         body["tools"] := [this.comSpecTool.GetOpenAiToolDefinition(), this.fileSystemTool.GetOpenAiToolDefinition()]
 
         return body
+    }
+
+    ReorderToolCallsAndResults(messages) {
+        ; Create a map of tool call IDs to their positions
+        toolCallPositions := Map()
+        reorderedMessages := []
+
+        ; First pass: identify tool calls and build the position map
+        Loop messages.Length {
+            msg := messages[A_Index]
+
+            ; If this is an assistant message with tool calls
+            if (msg.role = "assistant" && msg.content = "" && msg.HasProp("tool_calls")) {
+                ; Record the position of each tool call
+                for toolCall in msg.tool_calls {
+                    if (toolCall.HasProp("id")) {
+                        toolCallPositions[toolCall.id] := reorderedMessages.Length + 1
+                    }
+                }
+            }
+
+            ; Add all non-tool messages to the result
+            if (msg.role != "tool") {
+                reorderedMessages.Push(msg)
+            }
+        }
+
+        ; Second pass: insert tool results after their corresponding tool calls
+        Loop messages.Length {
+            msg := messages[A_Index]
+
+            ; If this is a tool result message
+            if (msg.role = "tool" && msg.HasProp("tool_call_id")) {
+                toolCallId := msg.tool_call_id
+
+                ; If we have a record of the corresponding tool call
+                if (toolCallPositions.Has(toolCallId)) {
+                    insertPosition := toolCallPositions[toolCallId]
+
+                    ; Find how many tool results we've already inserted at this position
+                    offset := 0
+                    for i, existingMsg in reorderedMessages {
+                        if (i > insertPosition && existingMsg.role = "tool" &&
+                            existingMsg.HasProp("tool_call_id") &&
+                            toolCallPositions.Has(existingMsg.tool_call_id) &&
+                            toolCallPositions[existingMsg.tool_call_id] = insertPosition) {
+                            offset++
+                        }
+                    }
+
+                    ; Insert the tool result after its tool call, considering any previously inserted results
+                    reorderedMessages.InsertAt(insertPosition + 1 + offset, msg)
+                } else {
+                    ; If we can't find the corresponding tool call, just add at the end
+                    reorderedMessages.Push(msg)
+                }
+            }
+        }
+
+        return reorderedMessages
     }
 
     GetOllamaAILikeBody(messages, settings) {

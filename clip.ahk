@@ -177,7 +177,7 @@ GuiResize(thisGui, MinMax, Width, Height) {
     global responseCtrX, responseCtrY, responseCtrWidth, responseCtrHeight
     global promptEditX, promptEditY, promptEditWidth, promptEditHeight
     global llmTypeX, systemPromptX, askLLMX, bottomControlsHeight
-    
+
     if (MinMax = -1)  ; If window is minimized
         return
 

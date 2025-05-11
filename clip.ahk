@@ -515,24 +515,7 @@ ChatHistorySelect(*) {
         MyGui["ChatMessageActionButton"].Visible := true  ; Show the Run Tool button
         RenderMarkdown(SessionManagerValue.GetMessageAsString(msg))  ; Render the selected message in the WebView
 
-        ; Show/hide Run Tool button based on message type
-        if (msg.HasOwnProp("tool_calls") && msg.tool_calls.Length > 0) {
-            ; Check if there's already a tool response for this tool call
-            hasToolResponse := false
-            for toolCall in msg.tool_calls {
-                for i in messages {
-                    if (i.HasOwnProp("role") && i.role = "tool" && i.HasOwnProp("tool_call_id") && i.tool_call_id = toolCall.id) {
-                        hasToolResponse := true
-                        break
-                    }
-                }
-                if (hasToolResponse)
-                    break
-            }
-            MyGui["ChatMessageActionButton"].Text := "Run Tool"
-        } else {
-            MyGui["ChatMessageActionButton"].Text := "Copy"
-        }
+        MyGui["ChatMessageActionButton"].Text := SessionManagerValue.HasToolCalls(msg) ? "Run Tool" : "Copy"
     }
 }
 

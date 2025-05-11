@@ -135,6 +135,26 @@ class SessionManager {
         this.sessionContexts[this.currentSessionIndex] := []
     }
 
+    HasToolResponse(message) {
+        if (!message.HasOwnProp("tool_calls") || message.tool_calls.Length = 0)
+            return false
+
+        messages := this.GetCurrentSessionMessages()
+        for toolCall in message.tool_calls {
+            for msg in messages {
+                if (msg.HasOwnProp("role") && msg.role = "tool" &&
+                    msg.HasOwnProp("tool_call_id") && msg.tool_call_id = toolCall.id) {
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
+    HasToolCalls(message) {
+        return message.HasOwnProp("tool_calls") && message.tool_calls.Length > 0
+    }
+
     DeleteMessage(index) {
         if (index > 1 && index <= this.sessionMessages[this.currentSessionIndex].Length) {
             this.sessionMessages[this.currentSessionIndex].RemoveAt(index)

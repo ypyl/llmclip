@@ -45,6 +45,12 @@ global responseCtrY := 10
 global responseCtrWidth := 790
 global responseCtrHeight := 580
 
+; PromptEdit positioning variables
+global promptEditX := 10
+global promptEditY := 405
+global promptEditWidth := 380
+global promptEditHeight := 140
+
 guiShown := false
 
 F3:: {
@@ -66,7 +72,8 @@ RenderMarkdown(content) {
 DisplayLLMUserInterface(*) {
     global MyGui, guiShown, askButton, AppSettingsValue, SessionManagerValue, WebViewManagerValue, TrayManagerValue
     global responseCtrX, responseCtrY, responseCtrWidth, responseCtrHeight
-    
+    global promptEditX, promptEditY, promptEditWidth, promptEditHeight
+
     if (guiShown) {
         MyGui.Show()
         return
@@ -123,7 +130,7 @@ DisplayLLMUserInterface(*) {
     clearHistoryButton.OnEvent("Click", ClearChatHistory)
 
     ; Prompt section with increased height
-    promptEdit := MyGui.Add("Edit", "vPromptEdit x10 y405 w380 h140 Multi WantReturn", "")
+    promptEdit := MyGui.Add("Edit", "vPromptEdit x" promptEditX " y" promptEditY " w" promptEditWidth " h" promptEditHeight " Multi WantReturn", "")
     promptEdit.OnEvent("Change", PromptChange)
 
     ; Add LLM type selector near Reset All button
@@ -155,7 +162,8 @@ DisplayLLMUserInterface(*) {
 GuiResize(thisGui, MinMax, Width, Height) {
     global WebViewManagerValue
     global responseCtrX, responseCtrY, responseCtrWidth, responseCtrHeight
-    
+    global promptEditX, promptEditY, promptEditWidth, promptEditHeight
+
     if (MinMax = -1)  ; If window is minimized
         return
 
@@ -184,9 +192,9 @@ GuiResize(thisGui, MinMax, Width, Height) {
     }
 
     ; Resize the prompt edit control
-    promptEditHeight := 140  ; Original height
     bottomControlsHeight := 40  ; Height reserved for bottom controls
-    thisGui["PromptEdit"].Move(10, 405, 380, Height - 405 - bottomControlsHeight)
+    promptEditHeight := Height - promptEditY - bottomControlsHeight
+    thisGui["PromptEdit"].Move(promptEditX, promptEditY, promptEditWidth, promptEditHeight)
 
     ; Move bottom controls
     bottomY := Height - 35  ; 35 pixels from bottom

@@ -151,6 +151,14 @@ class SessionManager {
         return false
     }
 
+    GetToolCalls(msg) {
+        if (msg.HasOwnProp("tool_calls")) {
+            return msg.tool_calls
+        }
+
+        return []
+    }
+
     HasToolCalls(message) {
         return message.HasOwnProp("tool_calls") && message.tool_calls.Length > 0
     }

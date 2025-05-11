@@ -525,26 +525,26 @@ RunSelectedTool(*) {
     chatHistory := MyGui["ChatHistory"]
     if (focused_row := chatHistory.GetNext()) {
         msg := messages[focused_row]
-        if (msg.HasOwnProp("tool_calls")) {
-            try {
-                MyGui["ChatMessageActionButton"].Enable := false
-                for tool_call in msg.tool_calls {
-                    if result := ComSpecToolValue.ExecuteToolCall(tool_call) {
-                        messages.Push(result)
-                    }
-                    if result := FileSystemToolValue.ExecuteToolCall(tool_call) {
-                        messages.Push(result)
-                    }
-                }
-                RenderMarkdown(SessionManagerValue.GetMessageAsString(messages[messages.Length]))  ; Render the response in the WebView
-                UpdateChatHistoryView()
-            } finally {
-                MyGui["ChatMessageActionButton"].Enable := true
-            }
-        }
-        else {
-            ; Copy the selected message to clipboard
+        tool_calls := SessionManagerValue.GetToolCalls(msg)
+        if (tool_calls.Length = 0) {
+            ; No tool calls, just copy the message
             A_Clipboard := msg.content
+            return
+        }
+        try {
+            MyGui["ChatMessageActionButton"].Enable := false
+            for tool_call in tool_calls {
+                if result := ComSpecToolValue.ExecuteToolCall(tool_call) {
+                    messages.Push(result)
+                }
+                if result := FileSystemToolValue.ExecuteToolCall(tool_call) {
+                    messages.Push(result)
+                }
+            }
+            RenderMarkdown(SessionManagerValue.GetMessageAsString(messages[messages.Length]))  ; Render the response in the WebView
+            UpdateChatHistoryView()
+        } finally {
+            MyGui["ChatMessageActionButton"].Enable := true
         }
     }
 }

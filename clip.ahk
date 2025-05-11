@@ -51,6 +51,18 @@ global promptEditY := 405
 global promptEditWidth := 380
 global promptEditHeight := 140
 
+; Bottom controls positioning
+global llmTypeX := 10
+global llmTypeY := 570
+global llmTypeWidth := 90
+global systemPromptX := 110
+global systemPromptY := 570
+global systemPromptWidth := 100
+global askLLMX := 220
+global askLLMY := 570
+global askLLMWidth := 170
+global bottomControlsHeight := 40  ; Height reserved for bottom controls
+
 guiShown := false
 
 F3:: {
@@ -73,6 +85,7 @@ DisplayLLMUserInterface(*) {
     global MyGui, guiShown, askButton, AppSettingsValue, SessionManagerValue, WebViewManagerValue, TrayManagerValue
     global responseCtrX, responseCtrY, responseCtrWidth, responseCtrHeight
     global promptEditX, promptEditY, promptEditWidth, promptEditHeight
+    global llmTypeX, llmTypeY, llmTypeWidth, systemPromptX, systemPromptY, systemPromptWidth, askLLMX, askLLMY, askLLMWidth
 
     if (guiShown) {
         MyGui.Show()
@@ -134,16 +147,16 @@ DisplayLLMUserInterface(*) {
     promptEdit.OnEvent("Change", PromptChange)
 
     ; Add LLM type selector near Reset All button
-    llmTypeCombo := MyGui.Add("DropDownList", "x10 y570 w90 vLLMType", AppSettingsValue.llmTypes)
+    llmTypeCombo := MyGui.Add("DropDownList", "x" llmTypeX " y" llmTypeY " w" llmTypeWidth " vLLMType", AppSettingsValue.llmTypes)
     llmTypeCombo.Value := SessionManagerValue.GetCurrentSessionLLMType()
     llmTypeCombo.OnEvent("Change", LLMTypeChanged)
 
     ; Add system prompt selector
-    systemPromptCombo := MyGui.Add("DropDownList", "x110 y570 w100 vSystemPrompt", AppSettingsValue.GetSystemPromptNames(SessionManagerValue.GetCurrentSessionLLMType()))
+    systemPromptCombo := MyGui.Add("DropDownList", "x" systemPromptX " y" systemPromptY " w" systemPromptWidth " vSystemPrompt", AppSettingsValue.GetSystemPromptNames(SessionManagerValue.GetCurrentSessionLLMType()))
     systemPromptCombo.Value := SessionManagerValue.GetCurrentSessionSystemPrompt()
     systemPromptCombo.OnEvent("Change", SystemPromptChanged)
 
-    askButton := MyGui.Add("Button", "x220 y570 w170 vAskLLM", "Ask LLM")
+    askButton := MyGui.Add("Button", "x" askLLMX " y" askLLMY " w" askLLMWidth " vAskLLM", "Ask LLM")
     askButton.OnEvent("Click", AskToLLM)
 
     ; Right panel uses the global variables
@@ -163,7 +176,8 @@ GuiResize(thisGui, MinMax, Width, Height) {
     global WebViewManagerValue
     global responseCtrX, responseCtrY, responseCtrWidth, responseCtrHeight
     global promptEditX, promptEditY, promptEditWidth, promptEditHeight
-
+    global llmTypeX, systemPromptX, askLLMX, bottomControlsHeight
+    
     if (MinMax = -1)  ; If window is minimized
         return
 
@@ -192,15 +206,14 @@ GuiResize(thisGui, MinMax, Width, Height) {
     }
 
     ; Resize the prompt edit control
-    bottomControlsHeight := 40  ; Height reserved for bottom controls
     promptEditHeight := Height - promptEditY - bottomControlsHeight
     thisGui["PromptEdit"].Move(promptEditX, promptEditY, promptEditWidth, promptEditHeight)
 
     ; Move bottom controls
     bottomY := Height - 35  ; 35 pixels from bottom
-    thisGui["LLMType"].Move(10, bottomY)
-    thisGui["SystemPrompt"].Move(110, bottomY)
-    thisGui["AskLLM"].Move(220, bottomY)
+    thisGui["LLMType"].Move(llmTypeX, bottomY)
+    thisGui["SystemPrompt"].Move(systemPromptX, bottomY)
+    thisGui["AskLLM"].Move(askLLMX, bottomY)
 }
 
 

@@ -39,6 +39,12 @@ global ContextManagerValue := ContextManager()
 ; Create TrayManager instance
 global TrayManagerValue := TrayManager(DisplayLLMUserInterface)
 
+; Response area positioning variables
+global responseCtrX := 400
+global responseCtrY := 10
+global responseCtrWidth := 790
+global responseCtrHeight := 580
+
 guiShown := false
 
 F3:: {
@@ -59,6 +65,8 @@ RenderMarkdown(content) {
 
 DisplayLLMUserInterface(*) {
     global MyGui, guiShown, askButton, AppSettingsValue, SessionManagerValue, WebViewManagerValue, TrayManagerValue
+    global responseCtrX, responseCtrY, responseCtrWidth, responseCtrHeight
+    
     if (guiShown) {
         MyGui.Show()
         return
@@ -131,8 +139,8 @@ DisplayLLMUserInterface(*) {
     askButton := MyGui.Add("Button", "x220 y570 w170 vAskLLM", "Ask LLM")
     askButton.OnEvent("Click", AskToLLM)
 
-    ; Right panel remains unchanged
-    responseCtr := MyGui.Add("Edit", "vResponseCtr x400 y10 w790 h580 -VScroll", "")
+    ; Right panel uses the global variables
+    responseCtr := MyGui.Add("Edit", "vResponseCtr x" responseCtrX " y" responseCtrY " w" responseCtrWidth " h" responseCtrHeight " -VScroll", "")
 
     MyGui.OnEvent("Close", GuiClose)
     MyGui.Show("w1230 h610")
@@ -142,6 +150,51 @@ DisplayLLMUserInterface(*) {
 
     UpdateChatHistoryView()
 }
+
+
+GuiResize(thisGui, MinMax, Width, Height) {
+    global WebViewManagerValue
+    global responseCtrX, responseCtrY, responseCtrWidth, responseCtrHeight
+    
+    if (MinMax = -1)  ; If window is minimized
+        return
+
+    ; Calculate new dimensions for ResponseCtr
+    responseCtrWidth := Width - 410
+    responseCtrHeight := Height - 20
+
+    ; Resize the ResponseCtr control
+    thisGui["ResponseCtr"].Move(responseCtrX, responseCtrY, responseCtrWidth, responseCtrHeight)
+
+    ; Resize the WebView2 control to match ResponseCtr
+    hCtrl := thisGui["ResponseCtr"].Hwnd
+    rect := Buffer(16, 0)  ; RECT: left, top, right, bottom
+    DllCall("GetClientRect", "ptr", hCtrl, "ptr", rect)
+
+    widthResponseCtr := NumGet(rect, 8, "Int")   ; right
+    heightResponseCtr := NumGet(rect, 12, "Int") ; bottom
+    ; Set bounds relative to the ResponseCtr — top-left is (0,0)
+    wvRect := Buffer(16, 0)
+    NumPut("Int", 0, wvRect, 0)                          ; left
+    NumPut("Int", 0, wvRect, 4)                          ; top
+    NumPut("Int", widthResponseCtr, wvRect, 8)           ; right
+    NumPut("Int", heightResponseCtr, wvRect, 12)         ; bottom
+    if guiShown {
+        WebViewManagerValue.Resize(wvRect)
+    }
+
+    ; Resize the prompt edit control
+    promptEditHeight := 140  ; Original height
+    bottomControlsHeight := 40  ; Height reserved for bottom controls
+    thisGui["PromptEdit"].Move(10, 405, 380, Height - 405 - bottomControlsHeight)
+
+    ; Move bottom controls
+    bottomY := Height - 35  ; 35 pixels from bottom
+    thisGui["LLMType"].Move(10, bottomY)
+    thisGui["SystemPrompt"].Move(110, bottomY)
+    thisGui["AskLLM"].Move(220, bottomY)
+}
+
 
 GetLabelsForContextItems() {
     context := SessionManagerValue.GetCurrentSessionContext()
@@ -567,47 +620,4 @@ DeleteSelectedMessage(*) {
 
     UpdateChatHistoryView()
     RenderMarkdown("")  ; Clear the response area
-}
-
-GuiResize(thisGui, MinMax, Width, Height) {
-    global WebViewManagerValue
-    if (MinMax = -1)  ; If window is minimized
-        return
-
-    ; Calculate new dimensions for ResponseCtr
-    responseCtrX := 400
-    responseCtrY := 10
-    responseCtrWidth := Width - 410
-    responseCtrHeight := Height - 20
-
-    ; Resize the ResponseCtr control
-    thisGui["ResponseCtr"].Move(responseCtrX, responseCtrY, responseCtrWidth, responseCtrHeight)
-
-    ; Resize the WebView2 control to match ResponseCtr
-    hCtrl := thisGui["ResponseCtr"].Hwnd
-    rect := Buffer(16, 0)  ; RECT: left, top, right, bottom
-    DllCall("GetClientRect", "ptr", hCtrl, "ptr", rect)
-
-    widthResponseCtr := NumGet(rect, 8, "Int")   ; right
-    heightResponseCtr := NumGet(rect, 12, "Int") ; bottom
-    ; Set bounds relative to the ResponseCtr — top-left is (0,0)
-    wvRect := Buffer(16, 0)
-    NumPut("Int", 0, wvRect, 0)                          ; left
-    NumPut("Int", 0, wvRect, 4)                          ; top
-    NumPut("Int", widthResponseCtr, wvRect, 8)           ; right
-    NumPut("Int", heightResponseCtr, wvRect, 12)         ; bottom
-    if guiShown {
-        WebViewManagerValue.Resize(wvRect)
-    }
-
-    ; Resize the prompt edit control
-    promptEditHeight := 140  ; Original height
-    bottomControlsHeight := 40  ; Height reserved for bottom controls
-    thisGui["PromptEdit"].Move(10, 405, 380, Height - 405 - bottomControlsHeight)
-
-    ; Move bottom controls
-    bottomY := Height - 35  ; 35 pixels from bottom
-    thisGui["LLMType"].Move(10, bottomY)
-    thisGui["SystemPrompt"].Move(110, bottomY)
-    thisGui["AskLLM"].Move(220, bottomY)
 }

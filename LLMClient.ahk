@@ -54,18 +54,26 @@ class LLMClient {
 
             ; Handle audio response
             if (InStr(selectedLLMType, "gr-audio") = 1) {
-                return { type: "audio", content: outputFile }
+                return [this.CreateMessageFromResponse({ type: "audio", content: outputFile })]
             }
 
             ; Read response for non-audio types
             if FileExist(outputFile) {
                 response := FileRead(outputFile, "UTF-8")
                 if (response != "") {
-                    return this.ParseResponse(response, selectedLLMType)
+                    responseData := this.ParseResponse(response, selectedLLMType)
+                    messages := []
+                    for data in responseData {
+                        messages.Push(this.CreateMessageFromResponse(data))
+                    }
+                    return messages
                 }
             }
             throw Error("No response received")
 
+        } catch as e {
+            newMessage := { role: "assistant", content: e.Message }
+            return [newMessage]
         } finally {
             ; Cleanup temp files but don't delete audio files
             try {
@@ -76,6 +84,34 @@ class LLMClient {
                     FileDelete(outputFile)
                 }
             }
+        }
+    }
+
+    CreateMessageFromResponse(responseData) {
+        if (responseData.type = "tool_call") {
+            ; Create proper assistant message with tool_calls
+            return {
+                role: "assistant",
+                content: "",  ; Empty content as we have tool_calls
+                tool_calls: [{
+                    id: responseData.content.id,
+                    type: "function",
+                    function: {
+                        name: responseData.content.name,
+                        arguments: responseData.content.arguments
+                    }
+                }]
+            }
+        } else if (responseData.type = "audio") {
+            return {
+                role: "assistant",
+                content: "",
+                audio: {
+                    link: responseData.content,
+                }
+            }
+        } else {
+            return { role: "assistant", content: responseData.content }
         }
     }
 

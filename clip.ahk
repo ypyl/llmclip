@@ -295,40 +295,13 @@ SendToLLM() {
         ; Create LLM client if it doesn't exist yet
         LLMClientInstance := LLMClient(AppSettingsValue.GetSelectedSettings(SessionManagerValue.GetCurrentSessionLLMType()))
 
-        assistantResponses := LLMClientInstance.Call(messages)
-        ; Process each response in the array
-        for assistantResponse in assistantResponses {
-            if (assistantResponse.Type = "tool_call") {
-                ; Create proper assistant message with tool_calls
-                newMessage := {
-                    role: "assistant",
-                    content: "",  ; Empty content as we have tool_calls
-                    tool_calls: [{
-                        id: assistantResponse.content.id,
-                        type: "function",
-                        function: {
-                            name: assistantResponse.content.name,
-                            arguments: assistantResponse.content.arguments
-                        }
-                    }]
-                }
-            } else if (assistantResponse.type = "audio") {
-                newMessage := {
-                    role: "assistant",
-                    content: "",
-                    audio: {
-                        link: assistantResponse.content,
-                    }
-                }
-            } else {
-                newMessage := { role: "assistant", content: assistantResponse.content }
-            }
-            ; Add the new message to the session
+        ; The LLM client now returns fully-formed messages
+        newMessages := LLMClientInstance.Call(messages)
+
+        ; Simply add the new messages to the session
+        for newMessage in newMessages {
             messages.Push(newMessage)
         }
-    } catch as e {
-        newMessage := { role: "assistant", content: e.Message }
-        messages.Push(newMessage)
     } finally {
         ; Re-enable Ask LLM button
         if (MyGui) {

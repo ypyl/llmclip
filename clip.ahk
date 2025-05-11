@@ -9,6 +9,7 @@
 #Include FileSystemTool.ahk
 #Include WebViewManager.ahk
 #Include ContextManager.ahk
+#Include TrayManager.ahk
 
 ; Initialize variables
 
@@ -35,38 +36,19 @@ global WebViewManagerValue := WebViewManager()
 
 global ContextManagerValue := ContextManager()
 
-isRecording := false
+; Create TrayManager instance
+global TrayManagerValue := TrayManager(DisplayLLMUserInterface)
+
 guiShown := false
 
-A_TrayMenu.Delete()  ; Remove default menu items
-A_TrayMenu.Add("Start Recording", StartRecording)
-A_TrayMenu.Add("Stop Recording", StopRecording)
-A_TrayMenu.Add("Ask LLM", DisplayLLMUserInterface)
-A_TrayMenu.Add("Exit", ExitApp)
-
 F3:: {
-    global isRecording, MyGui, guiShown
-    if (!isRecording) {
-        StartRecording()
+    global TrayManagerValue, MyGui, guiShown
+    if (!TrayManagerValue.isRecording) {
+        TrayManagerValue.StartRecording()
     } else if (!guiShown) {
         DisplayLLMUserInterface()
     } else {
-        StopRecording()
-    }
-}
-
-; Set default tray icon and tooltip
-SetTrayStatus(false)  ; Default state (not recording)
-
-OnMessage(0x404, TrayIconClick)
-
-TrayIconClick(wParam, lParam, msg, hwnd) {
-    if (lParam = 0x202) {  ; Left click
-        if (isRecording) {
-            StopRecording()  ; Stop recording
-        } else {
-            StartRecording()  ; Start recording
-        }
+        TrayManagerValue.StopRecording(MyGui, SessionManagerValue)
     }
 }
 
@@ -75,50 +57,8 @@ RenderMarkdown(content) {
     WebViewManagerValue.RenderMarkdown(content)
 }
 
-SetTrayStatus(isRecording) {
-    if (isRecording) {
-        TraySetIcon("shell32.dll", 294)  ; Red circle (recording)
-        A_IconTip := "📍 Recording Clipboard..."
-        A_TrayMenu.Disable("Start Recording")
-        A_TrayMenu.Enable("Stop Recording")
-    } else {
-        TraySetIcon("shell32.dll", 171)  ; Default clipboard icon
-        A_IconTip := ""
-        A_TrayMenu.Enable("Start Recording")
-        A_TrayMenu.Disable("Stop Recording")
-    }
-}
-
-StartRecording(*) {
-    global isRecording, MyGui
-    if (!isRecording) {
-        isRecording := true
-        SetTrayStatus(true)  ; Update icon & tooltip
-        if (guiShown) {
-            MyGui["Record"].Text := "Stop"
-        }
-    }
-}
-
-StopRecording(*) {
-    global isRecording, MyGui
-    if (isRecording) {
-        isRecording := false
-        SetTrayStatus(false)  ; Update icon & tooltip
-        recordedText := ""  ; Clear recorded text
-        context := SessionManagerValue.GetCurrentSessionContext()
-        for item in context {
-            recordedText .= GetTextFromContextItem(item)
-        }
-        A_Clipboard := recordedText  ; Copy recorded text to clipboard
-        if (guiShown) {
-            MyGui["Stop"].Text := "Record"
-        }
-    }
-}
-
 DisplayLLMUserInterface(*) {
-    global MyGui, guiShown, askButton, AppSettingsValue, SessionManagerValue, WebViewManagerValue
+    global MyGui, guiShown, askButton, AppSettingsValue, SessionManagerValue, WebViewManagerValue, TrayManagerValue
     if (guiShown) {
         MyGui.Show()
         return
@@ -136,7 +76,7 @@ DisplayLLMUserInterface(*) {
     sessionCombo.OnEvent("Change", SessionChanged)
 
     ; Add record button
-    recordButtonTitle := isRecording ? "Stop" : "Record"
+    recordButtonTitle := TrayManagerValue.isRecording ? "Stop" : "Record"
     recordButton := MyGui.Add("Button", "x90 y10 w90", recordButtonTitle)
     recordButton.OnEvent("Click", ToggleRecording)
 
@@ -285,7 +225,7 @@ UpdateChatHistoryView(*) {
 }
 
 AskToLLM(*) {
-    global isRecording
+    global TrayManagerValue
     messages := SessionManagerValue.GetCurrentSessionMessages()
     promptText := MyGui["PromptEdit"].Value
     if (promptText != "") {
@@ -294,8 +234,8 @@ AskToLLM(*) {
     SendToLLM()
     MyGui["PromptEdit"].Value := ""  ; Clear prompt field
 
-    if (isRecording) {
-        StopRecording()
+    if (TrayManagerValue.isRecording) {
+        TrayManagerValue.StopRecording(MyGui, SessionManagerValue)
     }
 }
 
@@ -542,8 +482,8 @@ HasContent(haystack, newContent) {
 OnClipboardChange ClipChanged
 
 ClipChanged(DataType) {
-    global isRecording, MyGui, guiShown, SessionManagerValue, ClipboardParserValue
-    if (isRecording) {
+    global TrayManagerValue, MyGui, guiShown, SessionManagerValue, ClipboardParserValue
+    if (TrayManagerValue.isRecording) {
         localTxtFromClipboardArray := ClipboardParserValue.Parse()
 
         ; Add non-duplicate items to context
@@ -648,12 +588,8 @@ ClearAllContext(*) {
 }
 
 ToggleRecording(*) {
-    global isRecording
-    if (isRecording) {
-        StopRecording()
-    } else {
-        StartRecording()
-    }
+    global TrayManagerValue, MyGui
+    TrayManagerValue.ToggleRecording(MyGui, SessionManagerValue)
 }
 
 DeleteSelectedMessage(*) {

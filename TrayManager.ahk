@@ -1,9 +1,10 @@
 #Requires AutoHotkey 2.0
 
 class TrayManager {
-    __New(displayLLMUserInterfaceCallback := "") {
+    __New(displayLLMUserInterfaceCallback := "", toggleCallback := "") {
         this.isRecording := false
         this.displayLLMUserInterfaceMethod := displayLLMUserInterfaceCallback
+        this.toggleCallback := toggleCallback
 
         ; Initialize tray menu
         A_TrayMenu.Delete()  ; Remove default menu items
@@ -43,19 +44,19 @@ class TrayManager {
         }
     }
 
-    StartRecording(guiRef := "") {
+    StartRecording() {
         if (!this.isRecording) {
             this.isRecording := true
             this.SetTrayStatus(true)  ; Update icon & tooltip
-            if (guiRef && guiRef.HasOwnProp("Record")) {
-                guiRef["Record"].Text := "Stop"
+            if (this.toggleCallback) {
+                this.toggleCallback()  ; Notify other components
             }
             return true
         }
         return false
     }
 
-    StopRecording(guiRef := "", sessionManager := "") {
+    StopRecording(sessionManager := "") {
         if (this.isRecording) {
             this.isRecording := false
             this.SetTrayStatus(false)  ; Update icon & tooltip
@@ -68,20 +69,19 @@ class TrayManager {
                 }
                 A_Clipboard := recordedText  ; Copy recorded text to clipboard
             }
-
-            if (guiRef && guiRef.HasOwnProp("Stop")) {
-                guiRef["Stop"].Text := "Record"
+            if (this.toggleCallback) {
+                this.toggleCallback()  ; Notify other components
             }
             return true
         }
         return false
     }
 
-    ToggleRecording(guiRef, sessionManager) {
+    ToggleRecording(sessionManager) {
         if (this.isRecording) {
-            this.StopRecording(guiRef, sessionManager)
+            this.StopRecording(sessionManager)
         } else {
-            this.StartRecording(guiRef)
+            this.StartRecording()
         }
     }
 

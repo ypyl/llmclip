@@ -37,7 +37,7 @@ global WebViewManagerValue := WebViewManager()
 global ContextManagerValue := ContextManager()
 
 ; Create TrayManager instance
-global TrayManagerValue := TrayManager(DisplayLLMUserInterface)
+global TrayManagerValue := TrayManager(DisplayLLMUserInterface, UpdateUiBasesOnRecordingStatus)
 
 ; Response area positioning variables
 global responseCtrX := 400
@@ -79,6 +79,16 @@ F3:: {
 RenderMarkdown(content) {
     global WebViewManagerValue
     WebViewManagerValue.RenderMarkdown(content)
+}
+
+UpdateUiBasesOnRecordingStatus(*) {
+    if (guiShown) {
+        if (TrayManagerValue.isRecording) {
+            MyGui["Record"].Text := "Stop"
+        } else {
+            MyGui["Stop"].Text := "Record"
+        }
+    }
 }
 
 DisplayLLMUserInterface(*) {
@@ -618,8 +628,8 @@ ClearAllContext(*) {
 }
 
 ToggleRecording(*) {
-    global TrayManagerValue, MyGui
-    TrayManagerValue.ToggleRecording(MyGui, SessionManagerValue)
+    global TrayManagerValue
+    TrayManagerValue.ToggleRecording(SessionManagerValue)
 }
 
 DeleteSelectedMessage(*) {

@@ -78,7 +78,7 @@ class TrayManager {
     }
 
     ToggleRecording(guiRef, sessionManager) {
-        if (this.IsRecording()) {
+        if (this.isRecording) {
             this.StopRecording(guiRef, sessionManager)
         } else {
             this.StartRecording(guiRef)

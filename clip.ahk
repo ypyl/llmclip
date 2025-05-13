@@ -249,7 +249,9 @@ SystemPromptChanged(*) {
         SessionManagerValue.GetCurrentSessionLLMType(),
         SessionManagerValue.GetCurrentSessionSystemPrompt()
     )
-    MyGui["PromptEdit"].Value := inputTemplate  ; Set the prompt edit value to the input template
+    if (inputTemplate) {
+        MyGui["PromptEdit"].Value := inputTemplate  ; Set the prompt edit value to the input template
+    }
     SessionManagerValue.UpdateSystemPromptContent(systemPrompt)
 }
 

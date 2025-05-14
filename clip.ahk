@@ -321,7 +321,7 @@ AskToLLM(*) {
     MyGui["PromptEdit"].Value := ""  ; Clear prompt field
 
     if (TrayManagerValue.isRecording) {
-        TrayManagerValue.StopRecording(MyGui, SessionManagerValue)
+        TrayManagerValue.StopRecording(SessionManagerValue)
     }
 }
 

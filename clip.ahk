@@ -124,8 +124,8 @@ DisplayLLMUserInterface(*) {
 
     ; Add context list with reduced height
     labels := GetLabelsForContextItems()
-    listBox := MyGui.Add("ListBox", "vListBox x10 y40 w380 h150 VScroll HScroll Multi", labels)
-    listBox.OnEvent("Change", ListBoxSelect)  ; Add this line
+    contextBox := MyGui.Add("ListBox", "vContextBox x10 y40 w380 h150 VScroll HScroll Multi", labels)
+    contextBox.OnEvent("Change", ContextBoxSelect)  ; Add this line
 
     ; Context buttons moved up
     deleteButton := MyGui.Add("Button", "x10 y190 w120", "Delete Selected")
@@ -229,7 +229,14 @@ GuiResize(thisGui, MinMax, Width, Height) {
 
 GetLabelsForContextItems() {
     context := SessionManagerValue.GetCurrentSessionContext()
+    predefinedContext := AppSettingsValue.GetContext(SessionManagerValue.GetCurrentSessionLLMType(), SessionManagerValue.GetCurrentSessionSystemPrompt())
     labels := []
+    for item in predefinedContext {
+        if (!HasVal(context, item)) {
+            context.Push(item)
+        }
+    }
+    SessionManagerValue.SetCurrentSessionContext(context)
     for item in context {
         labels.Push(ContextManagerValue.GetLabelFromContextItem(item))
     }
@@ -253,6 +260,7 @@ SystemPromptChanged(*) {
         MyGui["PromptEdit"].Value := inputTemplate  ; Set the prompt edit value to the input template
     }
     SessionManagerValue.UpdateSystemPromptContent(systemPrompt)
+    UpdateContextView()  ; Update the context view
 }
 
 LLMTypeChanged(*) {
@@ -294,9 +302,9 @@ UpdateContextView(*) {
     labels := GetLabelsForContextItems()
 
     ; Update UI
-    listBox := MyGui["ListBox"]
-    listBox.Delete()
-    listBox.Add(labels)
+    contextBox := MyGui["ContextBox"]
+    contextBox.Delete()
+    contextBox.Add(labels)
 }
 
 UpdateChatHistoryView(*) {
@@ -337,7 +345,7 @@ SendToLLM() {
 
     context := SessionManagerValue.GetCurrentSessionContext()
 
-    listBox := MyGui["ListBox"]
+    contextBox := MyGui["ContextBox"]
 
     ; Update context in system message if needed
     if (context.Length > 0) {
@@ -345,10 +353,10 @@ SendToLLM() {
         selectedIndices := []
 
         ; Get selected indices
-        if (listBox.Value is Array) {
-            selectedIndices := listBox.Value
-        } else if (listBox.Value) {
-            selectedIndices := [listBox.Value]
+        if (contextBox.Value is Array) {
+            selectedIndices := contextBox.Value
+        } else if (contextBox.Value) {
+            selectedIndices := [contextBox.Value]
         }
 
         ; Build context excluding selected items
@@ -360,7 +368,7 @@ SendToLLM() {
 
         ; Only add general context if there is any non-selected content
         if (contextText != "") {
-            messages[1].content .= "`n`nHere is the context:`n`n" contextText "`n`nPlease consider this context when answering the following question."
+            messages[1].content .= "`n`nHere is the context:`n`n" contextText "`n`nPlease consider this context when providing the answer."
         }
 
         ; Add selected items as special focus points
@@ -413,22 +421,22 @@ GuiClose(*) {
     guiShown := false
 }
 
-ListBoxSelect(*) {
+ContextBoxSelect(*) {
     global MyGui
     context := SessionManagerValue.GetCurrentSessionContext()
-    listBox := MyGui["ListBox"]
+    contextBox := MyGui["ContextBox"]
     selectedItems := []
     textContent := ""
 
     ; Handle multi-select values
-    if (listBox.Value is Array) {
+    if (contextBox.Value is Array) {
         ; Process multiple selections
-        for index in listBox.Value {
+        for index in contextBox.Value {
             selectedItems.Push(context[index])
         }
-    } else if (listBox.Value) {
+    } else if (contextBox.Value) {
         ; Single selection
-        selectedItems.Push(context[listBox.Value])
+        selectedItems.Push(context[contextBox.Value])
     }
 
     ; Process each selected item
@@ -442,17 +450,17 @@ ListBoxSelect(*) {
 DeleteSelected(*) {
     global MyGui
     context := SessionManagerValue.GetCurrentSessionContext()
-    listBox := MyGui["ListBox"]
+    contextBox := MyGui["ContextBox"]
     selectedIndices := []
 
     ; Handle multi-select values
-    if (listBox.Value is Array) {
+    if (contextBox.Value is Array) {
         ; Get indices in reverse order (to avoid index shifting when removing)
-        for index in listBox.Value {
+        for index in contextBox.Value {
             selectedIndices.InsertAt(1, index)
         }
-    } else if (listBox.Value) {
-        selectedIndices.Push(listBox.Value)
+    } else if (contextBox.Value) {
+        selectedIndices.Push(contextBox.Value)
     }
 
     ; Remove selected items
@@ -461,14 +469,14 @@ DeleteSelected(*) {
     }
 
     ; Refresh the listbox
-    listBox.Delete()
+    contextBox.Delete()
     labels := GetLabelsForContextItems()
-    listBox.Add(labels)
+    contextBox.Add(labels)
 }
 
 ResetSelection(*) {
     global MyGui
-    MyGui["ListBox"].Value := 0  ; Set selection to 0 to clear it
+    MyGui["ContextBox"].Value := 0  ; Set selection to 0 to clear it
 }
 
 ClearChatHistory(*) {
@@ -555,12 +563,9 @@ ClipChanged(DataType) {
         ; Update session contexts
         SessionManagerValue.SetCurrentSessionContext(context)
 
-        ; Update ListBox in GUI if shown
+        ; Update Context in GUI if shown
         if (guiShown) {
-            listBox := MyGui["ListBox"]
-            listBox.Delete()
-            labels := GetLabelsForContextItems()
-            listBox.Add(labels)
+            UpdateContextView()
         }
     }
 }

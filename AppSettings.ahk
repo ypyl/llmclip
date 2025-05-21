@@ -38,7 +38,7 @@ class AppSettings {
     GetSystemPromptValue(llmIndex, promptIndex) {
         defaultPrompt := "You are a helpful assistant. Be concise and direct in your responses."
         settings := this.GetSelectedSettings(llmIndex)
-        if (prompts := settings.Get("system_prompts", "")) {
+        if (prompts := settings.Get("system_prompts", [])) {
             return prompts[promptIndex]["value"]
         }
         return defaultPrompt
@@ -47,12 +47,22 @@ class AppSettings {
     GetInputTemplate(llmIndex, promptIndex) {
         defaultPrompt := ""
         settings := this.GetSelectedSettings(llmIndex)
-        if (prompts := settings.Get("system_prompts", "")) {
+        if (prompts := settings.Get("system_prompts", [])) {
             if (inputTempalte := prompts[promptIndex].Get("input_template", "")) {
                 return inputTempalte
             }
         }
         return defaultPrompt
+    }
+
+    GetContext(llmIndex, promptIndex) {
+        settings := this.GetSelectedSettings(llmIndex)
+        if (prompts := settings.Get("system_prompts", "")) {
+            if (context := prompts[promptIndex].Get("context", [])) {
+                return context
+            }
+        }
+        return []
     }
 
     GetSystemPromptNames(llmIndex) {

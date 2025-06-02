@@ -591,7 +591,10 @@ RunSelectedTool(*) {
         tool_calls := SessionManagerValue.GetToolCalls(msg)
         if (tool_calls.Length = 0) {
             ; No tool calls, just copy the message
-            A_Clipboard := msg.content
+            ClipText := StrReplace(msg.content, "`r`n", "`n")
+            ClipText := StrReplace(ClipText, "`r", "`n")
+            ClipText := StrReplace(ClipText, "`n", "`r`n")
+            A_Clipboard := ClipText
             return
         }
         try {
@@ -624,25 +627,6 @@ PromptChange(GuiCtrl, Info) {
             return true
         }
     }
-}
-
-; Ctrl+V paste override for PromptEdit
-^v:: {
-    global MyGui
-    if !MyGui
-        return
-    focused := ControlGetFocus("ahk_id " MyGui.Hwnd)
-    ; Check if PromptEdit is focused
-    if (focused && MyGui["PromptEdit"].Hwnd = ControlGetHwnd(focused, "ahk_id " MyGui.Hwnd)) {
-        ClipText := A_Clipboard
-        ; Optional normalization
-        ClipText := StrReplace(ClipText, "`r`n", "`n")
-        ClipText := StrReplace(ClipText, "`r", "`n")
-        ClipText := StrReplace(ClipText, "`n", "`r`n")
-        SendText(ClipText)
-        return
-    }
-    Send("^v") ; fallback to normal paste if not in PromptEdit
 }
 
 ClearAllContext(*) {

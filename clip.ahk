@@ -181,7 +181,6 @@ DisplayLLMUserInterface(*) {
     UpdateChatHistoryView()
 }
 
-
 GuiResize(thisGui, MinMax, Width, Height) {
     global WebViewManagerValue
     global responseCtrX, responseCtrY, responseCtrWidth, responseCtrHeight
@@ -625,6 +624,25 @@ PromptChange(GuiCtrl, Info) {
             return true
         }
     }
+}
+
+; Ctrl+V paste override for PromptEdit
+^v:: {
+    global MyGui
+    if !MyGui
+        return
+    focused := ControlGetFocus("ahk_id " MyGui.Hwnd)
+    ; Check if PromptEdit is focused
+    if (focused && MyGui["PromptEdit"].Hwnd = ControlGetHwnd(focused, "ahk_id " MyGui.Hwnd)) {
+        ClipText := A_Clipboard
+        ; Optional normalization
+        ClipText := StrReplace(ClipText, "`r`n", "`n")
+        ClipText := StrReplace(ClipText, "`r", "`n")
+        ClipText := StrReplace(ClipText, "`n", "`r`n")
+        SendText(ClipText)
+        return
+    }
+    Send("^v") ; fallback to normal paste if not in PromptEdit
 }
 
 ClearAllContext(*) {

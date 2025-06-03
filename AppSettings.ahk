@@ -39,7 +39,16 @@ class AppSettings {
         defaultPrompt := "You are a helpful assistant. Be concise and direct in your responses."
         settings := this.GetSelectedSettings(llmIndex)
         if (prompts := settings.Get("system_prompts", [])) {
-            return prompts[promptIndex]["value"]
+            prompt := prompts[promptIndex]
+            if prompt.Has("value") && prompt["value"] != "" {
+                return prompt["value"]
+            } else if prompt.Has("path") && prompt["path"] != "" && FileExist(prompt["path"]) {
+                try {
+                    return FileRead(prompt["path"])
+                } catch {
+                    return defaultPrompt
+                }
+            }
         }
         return defaultPrompt
     }

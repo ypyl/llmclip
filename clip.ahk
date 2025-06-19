@@ -72,7 +72,7 @@ F3:: {
     } else if (!guiShown) {
         DisplayLLMUserInterface()
     } else {
-        TrayManagerValue.StopRecording(MyGui, SessionManagerValue)
+        TrayManagerValue.StopRecording(SessionManagerValue)
     }
 }
 

@@ -194,7 +194,8 @@ class LLMClient {
         body["temperature"] := settings.Get("temperature", 0.7)
 
         ; Add ComSpec tool
-        body["tools"] := [this.comSpecTool.GetOpenAiToolDefinition(), this.fileSystemTool.GetOpenAiToolDefinition()]
+        if (toolEnablesd := settings.Get("tools", true))
+            body["tools"] := [this.comSpecTool.GetOpenAiToolDefinition(), this.fileSystemTool.GetOpenAiToolDefinition()]
 
         return body
     }
@@ -390,7 +391,8 @@ class LLMClient {
         }
 
         body["contents"] := contents
-        body["tools"] := [this.comSpecTool.GetGeminiToolDefinition()]
+        if (toolEnablesd := settings.Get("tools", true))
+            body["tools"] := [this.comSpecTool.GetGeminiToolDefinition()]
         body["generationConfig"] := {
             stopSequences: settings.Get("stopSequences", ["Title"]),
             temperature: settings.Get("temperature", 1.0),

@@ -118,8 +118,8 @@ class LLMClient {
     GetRequestBody(type, messages, settings) {
         if (InStr(type, "gr-audio") = 1)
             return this.GetGroqAudioBody(messages, settings)
-        else if (InStr(type, "gr") = 1 || InStr(type, "az") = 1)
-            return this.GetGroqAzureBody(messages, settings)
+        else if (InStr(type, "gr") = 1 || InStr(type, "az") = 1 || InStr(type, "git") = 1)
+            return this.GetGroqAzureGithubBody(messages, settings)
         else if (InStr(type, "ol-") = 1)
             return this.GetOllamaAILikeBody(messages, settings)
         else if (InStr(type, "go") = 1)
@@ -181,7 +181,7 @@ class LLMClient {
         return body
     }
 
-    GetGroqAzureBody(messages, settings) {
+    GetGroqAzureGithubBody(messages, settings) {
         body := Map()
         if (model := settings.Get("model", ""))
             body["model"] := model

@@ -49,7 +49,7 @@ global responseCtrHeight := 580
 global promptEditX := 10
 global promptEditY := 405
 global promptEditWidth := 380
-global promptEditHeight := 140
+global promptEditHeight := 120
 
 ; Bottom controls positioning
 global llmTypeX := 10
@@ -61,9 +61,10 @@ global systemPromptWidth := 100
 global askLLMX := 220
 global askLLMY := 570
 global askLLMWidth := 170
-global bottomControlsHeight := 40  ; Height reserved for bottom controls
+global bottomControlsHeight := 60  ; Height reserved for bottom controls
 
 guiShown := false
+DisplayLLMUserInterface()
 
 F3:: {
     global TrayManagerValue, MyGui, guiShown
@@ -156,6 +157,14 @@ DisplayLLMUserInterface(*) {
     promptEdit := MyGui.Add("Edit", "vPromptEdit x" promptEditX " y" promptEditY " w" promptEditWidth " h" promptEditHeight " Multi WantReturn", "")
     promptEdit.OnEvent("Change", PromptChange)
 
+    ; Add two checkboxes after promptEdit and above llmTypeCombo in one row
+    comSpecEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(), "comSpecTool")
+    fileSystemEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(), "fileSystemTool")
+    comSpecToolBox := MyGui.Add("CheckBox", "x" (llmTypeX) " y" (llmTypeY - 20) " w70 vComSpecToolBox", "ComSpec")
+    comSpecToolBox.Value := comSpecEnabled ? 1 : 0
+    fileSystemToolBox := MyGui.Add("CheckBox", "x" (llmTypeX + 80) " y" (llmTypeY - 20) " w120 vFileSystemToolBox", "FileSystem")
+    fileSystemToolBox.Value := fileSystemEnabled ? 1 : 0
+
     ; Add LLM type selector near Reset All button
     llmTypeCombo := MyGui.Add("DropDownList", "x" llmTypeX " y" llmTypeY " w" llmTypeWidth " vLLMType", AppSettingsValue.llmTypes)
     llmTypeCombo.Value := SessionManagerValue.GetCurrentSessionLLMType()
@@ -223,6 +232,11 @@ GuiResize(thisGui, MinMax, Width, Height) {
     thisGui["LLMType"].Move(llmTypeX, bottomY)
     thisGui["SystemPrompt"].Move(systemPromptX, bottomY)
     thisGui["AskLLM"].Move(askLLMX, bottomY)
+
+    ; Move ComSpecTool and FileSystemTool checkboxes above bottom controls
+    checkBoxY := bottomY - 20
+    thisGui["ComSpecToolBox"].Move(llmTypeX, checkBoxY)
+    thisGui["FileSystemToolBox"].Move(llmTypeX + 80, checkBoxY)
 }
 
 
@@ -271,6 +285,12 @@ LLMTypeChanged(*) {
     systemPromptCombo.Add(AppSettingsValue.GetSystemPromptNames(SessionManagerValue.GetCurrentSessionLLMType()))
     systemPromptCombo.Value := 1  ; Reset to first prompt when LLM type changes
     SessionManagerValue.SetCurrentSessionSystemPrompt(1)
+
+    ; Update tool checkboxes based on new LLM type
+    comSpecEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(), "comSpecTool")
+    fileSystemEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(), "fileSystemTool")
+    MyGui["ComSpecToolBox"].Value := comSpecEnabled ? 1 : 0
+    MyGui["FileSystemToolBox"].Value := fileSystemEnabled ? 1 : 0
 }
 
 ; Update session switching function
@@ -386,7 +406,17 @@ SendToLLM() {
 
     try {
         ; Create LLM client if it doesn't exist yet
-        LLMClientInstance := LLMClient(AppSettingsValue.GetSelectedSettings(SessionManagerValue.GetCurrentSessionLLMType()))
+        settings := AppSettingsValue.GetSelectedSettings(SessionManagerValue.GetCurrentSessionLLMType())
+
+        ; Update tools property based on checkbox values
+        enabledTools := []
+        if (MyGui["ComSpecToolBox"].Value)
+            enabledTools.Push("comSpecTool")
+        if (MyGui["FileSystemToolBox"].Value)
+            enabledTools.Push("fileSystemTool")
+        settings["tools"] := enabledTools
+
+        LLMClientInstance := LLMClient(settings)
 
         ; The LLM client now returns fully-formed messages
         newMessages := LLMClientInstance.Call(messages)

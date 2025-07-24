@@ -71,10 +71,15 @@ class AppSettings {
 
     IsToolEnabled(llmIndex, toolName) {
         settings := this.GetSelectedSettings(llmIndex)
-        if (tools := settings.Get("tools", true)) {
-            return tools
+        tools := settings.Get("tools", [])
+        if (tools is Array) {
+            for t in tools {
+                if (t = toolName)
+                    return true
+            }
+            return false
         }
-        return true
+        return false
     }
 
     GetSystemPromptNames(llmIndex) {

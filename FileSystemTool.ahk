@@ -55,6 +55,35 @@ class FileSystemTool {
             }
         }
     }
+    GetGeminiToolDefinition() {
+        return {
+            functionDeclarations: [
+                {
+                    name: "file_operation",
+                    description: "Read from, write to, or delete files on the system",
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            operation: {
+                                type: "string",
+                                description: "The operation to perform (read/write/delete)",
+                                enum: ["read", "write", "delete"]
+                            },
+                            path: {
+                                type: "string",
+                                description: "The full path to the file"
+                            },
+                            content: {
+                                type: "string",
+                                description: "The content to write (only for write operation)"
+                            }
+                        },
+                        required: ["operation", "path"]
+                    }
+                }
+            ]
+        }
+    }
 
     ExecuteToolCall(toolCall) {
         if (toolCall.function.name != "file_operation") {

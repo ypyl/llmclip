@@ -164,6 +164,9 @@ DisplayLLMUserInterface(*) {
     comSpecToolBox.Value := comSpecEnabled ? 1 : 0
     fileSystemToolBox := MyGui.Add("CheckBox", "x" (llmTypeX + 80) " y" (llmTypeY - 20) " w120 vFileSystemToolBox", "FileSystem")
     fileSystemToolBox.Value := fileSystemEnabled ? 1 : 0
+    ; Add dropdown box near fileSystemToolBox
+    answerSizeBox := MyGui.Add("DropDownList", "x" (llmTypeX + 300) " y" (llmTypeY - 20) " w80 vAnswerSizeBox", ["Small", "Medium", "Long"])
+    answerSizeBox.Value := 1 ; Default to Small
 
     ; Add LLM type selector near Reset All button
     llmTypeCombo := MyGui.Add("DropDownList", "x" llmTypeX " y" llmTypeY " w" llmTypeWidth " vLLMType", AppSettingsValue.llmTypes)
@@ -237,6 +240,7 @@ GuiResize(thisGui, MinMax, Width, Height) {
     checkBoxY := bottomY - 20
     thisGui["ComSpecToolBox"].Move(llmTypeX, checkBoxY)
     thisGui["FileSystemToolBox"].Move(llmTypeX + 80, checkBoxY)
+    thisGui["AnswerSizeBox"].Move(llmTypeX + 300, checkBoxY - 3)
 }
 
 
@@ -353,6 +357,7 @@ AskToLLM(*) {
 }
 
 SendToLLM() {
+    global MyGui
     messages := SessionManagerValue.GetCurrentSessionMessages()
 
     ; Update the system prompt content
@@ -415,11 +420,29 @@ SendToLLM() {
         if (MyGui["FileSystemToolBox"].Value)
             enabledTools.Push("fileSystemTool")
         settings["tools"] := enabledTools
+        ; Add a user message to instruct the model on answer length
+        answerSizeMsg := ""
+        answerSize := MyGui["AnswerSizeBox"].Value
+        if (answerSize = 1) {
+            answerSizeMsg := "Please answer as concisely as possible (short answer)."
+        } else if (answerSize = 2) {
+            answerSizeMsg := "Please provide a medium-length answer with some detail."
+        } else if (answerSize = 3) {
+            answerSizeMsg := "Please provide a long, detailed answer."
+        }
+        if (answerSizeMsg != "") {
+            messages.Push({ role: "user", content: answerSizeMsg })
+        }
 
         LLMClientInstance := LLMClient(settings)
 
         ; The LLM client now returns fully-formed messages
         newMessages := LLMClientInstance.Call(messages)
+
+        ; Remove the answer size instruction message after receiving the answer
+        if (answerSizeMsg != "") {
+            messages.RemoveAt(messages.Length - newMessages.Length + 1)
+        }
 
         ; Simply add the new messages to the session
         for newMessage in newMessages {

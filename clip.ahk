@@ -165,8 +165,8 @@ DisplayLLMUserInterface(*) {
     fileSystemToolBox := MyGui.Add("CheckBox", "x" (llmTypeX + 80) " y" (llmTypeY - 20) " w120 vFileSystemToolBox", "FileSystem")
     fileSystemToolBox.Value := fileSystemEnabled ? 1 : 0
     ; Add dropdown box near fileSystemToolBox
-    answerSizeBox := MyGui.Add("DropDownList", "x" (llmTypeX + 300) " y" (llmTypeY - 20) " w80 vAnswerSizeBox", ["Small", "Medium", "Long"])
-    answerSizeBox.Value := 1 ; Default to Small
+    answerSizeBox := MyGui.Add("DropDownList", "x" (llmTypeX + 300) " y" (llmTypeY - 20) " w80 vAnswerSizeBox", ["-", "Small", "Medium", "Long"])
+    answerSizeBox.Value := 1 ; Default to Nothing
 
     ; Add LLM type selector near Reset All button
     llmTypeCombo := MyGui.Add("DropDownList", "x" llmTypeX " y" llmTypeY " w" llmTypeWidth " vLLMType", AppSettingsValue.llmTypes)
@@ -423,11 +423,11 @@ SendToLLM() {
         ; Add a user message to instruct the model on answer length
         answerSizeMsg := ""
         answerSize := MyGui["AnswerSizeBox"].Value
-        if (answerSize = 1) {
+        if (answerSize = 2) {
             answerSizeMsg := "Please answer as concisely as possible (short answer)."
-        } else if (answerSize = 2) {
-            answerSizeMsg := "Please provide a medium-length answer with some detail."
         } else if (answerSize = 3) {
+            answerSizeMsg := "Please provide a medium-length answer with some detail."
+        } else if (answerSize = 4) {
             answerSizeMsg := "Please provide a long, detailed answer."
         }
         if (answerSizeMsg != "") {

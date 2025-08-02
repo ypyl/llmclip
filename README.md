@@ -1,131 +1,111 @@
-# LLMClip
+# LLMClip: Your Clipboard-Powered AI Assistant
 
-LLMClip is an AutoHotkey script that records clipboard content and provides a tray menu for controlling the recording process. It can handle plain text, file paths, and folder paths, and allows you to interact with LLMs using the collected content.
+LLMClip is an AutoHotkey v2 script that supercharges your workflow by using clipboard content as context for Large Language Models (LLMs). It records text, files, and folder paths you copy, and lets you use that information in a powerful, feature-rich chat interface.
 
 ![image](https://github.com/user-attachments/assets/795a1050-e56e-4cae-890c-52286d953979)
 
-## Features
-
-- Start and stop clipboard recording
-- Show a list of copied text and paths
-- Delete individual items from the recorded list
-- Automatically detects and processes clipboard content from Visual Studio Code
-- Smart clipboard content parsing for different data types
-- Interactive GUI for managing context and chatting with LLMs
-- Support for multiple LLM providers (Groq, Google, Ollama)
-- Multi-select context items for focused LLM queries
-- Chat history tracking and management
-- Built-in tools for file operations and command execution
-- Support for function calling in compatible LLMs
-- Markdown rendering for responses with code block management
-- Collapsible and copyable code blocks in responses
-
 ## Primary Goal
 
-The primary goal of LLMClip is to combine all copied data from the clipboard (including text, file paths, folder paths, and their content) into one text value that can be passed to a Large Language Model (LLM) as context.
+The core mission of LLMClip is to seamlessly aggregate everything you copy—text snippets, file paths, folder contents—into a unified context that can be passed to an LLM. This turns your clipboard history into a dynamic knowledge base for your AI assistant.
+
+## Features
+
+### Intelligent Clipboard & Context Management
+- **Clipboard Recording**: Start and stop clipboard monitoring with a global hotkey or from the tray menu.
+- **Smart Parsing**: Automatically captures and understands plain text, file paths, and folder paths. It intelligently extracts content from files and avoids adding duplicate information.
+- **Unified Context List**: All captured items are displayed in a clean list. Click an item to preview its content, or `Ctrl+Click` to select multiple items, focusing the LLM on the most relevant information for your query.
+- **Full Control**: Easily manage your context by deleting selected items, clearing the entire list, or resetting your selection.
+
+### Powerful LLM Interaction
+- **Rich Chat Interface**: A dual-panel UI with your controls on the left and the conversation on the right.
+- **Multi-Provider Support**: Natively supports Groq, Google, and Ollama. Easily configurable in `settings.json` to add your own providers.
+- **Dynamic Controls**: Switch between LLMs, system prompts, and even control the desired length of the AI's answer (short, medium, or long) directly from the UI.
+- **Session Management**: Organizes your chats into distinct sessions. Start a new chat or switch back to a previous one at any time.
+
+### Advanced Capabilities
+- **Tool Integration**: Empowers the LLM to interact with your system by executing shell commands (`ComSpec`) and performing file system operations like reading, writing, and deleting files.
+- **Interactive Responses**: LLM responses are rendered in Markdown. You can copy the full message or just a specific code block with a single click.
+- **One-Click Tool Execution**: If the LLM suggests a tool call (e.g., to read a file or run a command), a "Run Tool" button appears, allowing you to execute it safely and instantly.
 
 ## Installation
 
-1. Download and install [AutoHotkey v2](https://www.autohotkey.com/download/).
-2. Install cURL using one of these methods:
-   - Run `winget install cURL.cURL` in PowerShell
-   - Download from [curl.se](https://curl.se/download.html)
-3. Save the `clip.ahk` script to your desired location.
-4. Create a `settings.json` file in the same directory with your LLM configurations.
-5. Run the script by double-clicking the `clip.ahk` file.
+1.  Download and install **AutoHotkey v2** from the [official website](https://www.autohotkey.com/download/).
+2.  Install **cURL** for making API requests. You can use either method:
+    *   In PowerShell, run: `winget install cURL.cURL`
+    *   Download directly from [curl.se](https://curl.se/download.html).
+3.  Save the `clip.ahk` script and its accompanying files to a folder on your computer.
+4.  In the same folder, create a `settings.json` file (an example is provided below).
+5.  Run the script by double-clicking the `clip.ahk` file.
 
 ## Usage
 
 ### Hotkeys
 
-- **F3**: Smart toggle key
-  - First press: Start recording
-  - Second press: Open LLM chat interface
-  - Third press: Stop recording
-- **Left-click** on tray icon: Toggle recording on/off
+| Key | Action | Description |
+| :--- | :--- | :--- |
+| **F3** | Smart Toggle | Cycles through **Start Recording** -> **Show UI** -> **Stop Recording**. |
+| **F12** | Show UI | Brings the chat window to the foreground if it's hidden. |
+| **Enter** | Send Message | In the prompt input, sends your message to the LLM. |
+| **Shift+Enter** | New Line | In the prompt input, adds a new line instead of sending. |
 
 ### Tray Menu
+- **Left-click** the tray icon to quickly toggle clipboard recording on or off.
+- **Right-click** the tray icon for a full menu:
+    - **Start/Stop Recording**: Manually control the clipboard listener.
+    - **Ask LLM**: Open the main chat interface.
+    - **Exit**: Close the application.
 
-- **Start Recording**: Starts recording clipboard content
-- **Stop Recording**: Stops recording clipboard content
-- **Ask LLM**: Opens the LLM chat interface
-- **Exit**: Exits the script
+### The Chat Interface
+The main window is split into two panels:
 
-### LLM Chat Interface
+- **Left Panel (Your Controls):**
+    - **Session Dropdown**: Switch between different chat sessions.
+    - **Context List**: Your clipboard history. This is your knowledge base.
+    - **Chat History**: The log of your current conversation. Click a message to view its full content or to access the "Run Tool" / "Copy" button again.
+    - **Prompt Area**: Type your questions here. Above the LLM selector, you can find:
+        - **Tool Checkboxes**: Enable or disable `ComSpec` (command line) and `FileSystem` tools for the next query.
+        - **Answer Size Dropdown**: Hint to the LLM how long you want the response to be.
 
-The chat interface provides several features:
-- LLM provider selection dropdown
-- Context list with multi-select support
-- Chat history view
-- Response viewer
-- Interactive prompt input
-- Tool execution support for compatible models
-
-### Context Management
-
-- Select multiple context items to focus the LLM's attention
-- Clear all context or selected items
-- View raw content of selected context items
-- Delete individual context items
-
-### Tools Support
-
-LLMClip includes built-in tools that compatible LLM providers can use:
-
-#### File System Tool
-- Read file contents
-- Write content to files
-- Delete files
-- Full path support for file operations
-- Automatic error handling and reporting
-
-#### Command Line Tool
-- Execute commands in Windows Command Prompt
-- Capture command output
-- Support for complex command arguments
-- Error handling and status reporting
-
-When an LLM suggests using a tool, a "Run Tool" button will appear to execute the suggested operation.
-
-### Chat Features
-
-- Chat history tracking
-- Clear chat history
-- View full message content by selecting chat history items
-- Press Enter to send message (Shift+Enter for new line)
-- Execute suggested tools with one click
+- **Right Panel (The Conversation):**
+    - This area displays the full content of any item you select—a context item, a chat history message, or the latest LLM response, all beautifully rendered.
 
 ## LLM Configuration
 
-The `settings.json` file contains configurations for different LLM providers. The example script includes built-in support for:
+The `settings.json` file is where you configure the LLM providers. You must provide your own API keys.
 
-- Groq (using llama-3.3-70b-versatile model)
-- Google (using gemini-2.0-flash model)
-- Ollama (local models support)
-
-Each provider can be configured with:
-- Custom temperature settings
-- Model selection
-- System prompts
-- API endpoints and authentication
-
-Example `settings.json`:
+**Example `settings.json`:**
 ```json
 {
     "selectedLLMType": "groq",
     "providers": {
         "groq": {
-            "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer <<KEY>>\" -d \"@{1}\" -o \"{2}\"",
+            "curl": "curl -s -S -X POST "https://api.groq.com/openai/v1/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer <<KEY>>" -d "@{1}" -o "{2}"",
             "model": "llama-3.3-70b-versatile",
             "temperature": 0.7,
             "system_prompt": "You are a helpful assistant. Be concise and direct in your responses."
+        },
+        "google": {
+            "curl": "curl -s -S -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=<<KEY>>" -H "Content-Type: application/json" -d "@{1}" -o "{2}"",
+            "model": "gemini-1.5-flash",
+            "temperature": 0.7,
+            "system_prompt": "You are a helpful assistant. Be concise and direct in your responses."
+        },
+        "ollama": {
+            "curl": "curl -s -S -X POST "http://localhost:11434/api/chat" -H "Content-Type: application/json" -d "@{1}" -o "{2}"",
+            "model": "llama3",
+            "temperature": 0.7,
+            "system_prompt": "You are a helpful assistant. Be concise and direct in your responses."
+        },
+        "github": {
+            "curl": "curl -s -S -X POST "https://models.github.ai/inference/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer <<YOUR_GITHUB_TOKEN>>" -d "@{1}" -o "{2}"",
+            "model": "openai/gpt-4o-mini",
+            "temperature": 0.7,
+            "system_prompt": "You are a GitHub Copilot assistant. Your goal is to help with code."
         }
-        // ...other provider configurations...
     }
 }
 ```
-
-Replace `<<KEY>>` with your actual API keys for each service.
+**Important**: Replace `<<KEY>>` with your actual API key for each service.
 
 ## Contributing
 

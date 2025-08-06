@@ -111,7 +111,9 @@ class LLMClient {
                 }
             }
         } else {
-            return { role: "assistant", content: responseData.content }
+            ; Handle 'thinking' property if present
+            content := responseData.HasProp("thinking") && responseData.thinking != "" ? "``````" . responseData.thinking . "```````n`n---`n" . responseData.content : responseData.content
+            return { role: "assistant", content: content }
         }
     }
 
@@ -447,7 +449,12 @@ class LLMClient {
 
         ; Handle format with direct message object
         if (obj.Has("message") && obj["message"].Has("content")) {
-            results.Push({ type: "text", content: obj["message"]["content"] })
+            msgObj := obj["message"]
+            result := { type: "text", content: msgObj["content"] }
+            if (msgObj.Has("thinking")) {
+                result.thinking := msgObj["thinking"]
+            }
+            results.Push(result)
         }
 
         ; Handle OpenAI-style format

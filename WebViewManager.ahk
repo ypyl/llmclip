@@ -52,11 +52,12 @@ class WebViewManager {
 
         ; Wait for article to be ready (with timeout)
         startTime := A_TickCount
-        timeout := 30000  ; 30 seconds timeout
+        timeout := 5000  ; 5 seconds timeout
 
         while (!this.articleReady) {
             if (A_TickCount - startTime > timeout) {
-                throw Error("Timeout waiting for article to load")
+                this.HandleArticle("Not able to extract page content within " . (timeout / 1000) . " seconds.")  ; Handle timeout by returning empty article
+                break
             }
             Sleep(100)
         }

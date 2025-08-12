@@ -139,9 +139,10 @@ DisplayLLMUserInterface(*) {
     clearAllButton.OnEvent("Click", ClearAllContext)
 
     ; Add ListView for chat history
-    chatHistory := MyGui.Add("ListView", "vChatHistory x10 y220 w380 h150 NoSort", ["Role", "Text"])
+    chatHistory := MyGui.Add("ListView", "vChatHistory x10 y220 w380 h150 NoSort", ["Role", "Text", "⏱️"])
     chatHistory.ModifyCol(1, 30)  ; Role column width
     chatHistory.ModifyCol(2, 340) ; Text column width
+    chatHistory.ModifyCol(3, 50) ; Time column width
     chatHistory.OnEvent("ItemSelect", ChatHistorySelect)
 
     deleteMessageButton := MyGui.Add("Button", "x10 y375 w120", "Delete Selected")
@@ -336,7 +337,8 @@ UpdateChatHistoryView(*) {
     chatHistory := MyGui["ChatHistory"]
     chatHistory.Delete()
     for msg in messages {
-        chatHistory.Add(, msg.role, SubStr(msg.content, 1, 70) (StrLen(msg.content) > 70 ? "..." : ""))
+        duration := msg.HasOwnProp("duration") ? Round(msg.duration, 2) . "s" : ""
+        chatHistory.Add(, msg.role, SubStr(msg.content, 1, 70) (StrLen(msg.content) > 70 ? "..." : ""), duration)
     }
     MyGui["ChatMessageActionButton"].Visible := false  ; Hide the Run Tool button
 }
@@ -437,15 +439,18 @@ SendToLLM() {
         LLMClientInstance := LLMClient(settings)
 
         ; The LLM client now returns fully-formed messages
+        startTime := A_TickCount
         newMessages := LLMClientInstance.Call(messages)
+        duration := (A_TickCount - startTime) / 1000
 
         ; Remove the answer size instruction message after receiving the answer
         if (answerSizeMsg != "") {
-            messages.RemoveAt(messages.Length - newMessages.Length + 1)
+            messages.RemoveAt(messages.Length)
         }
 
         ; Simply add the new messages to the session
         for newMessage in newMessages {
+            newMessage.duration := duration
             messages.Push(newMessage)
         }
     } finally {

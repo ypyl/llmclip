@@ -75,7 +75,12 @@ class SessionManager {
                 message.role == "user" ? "👤" :
                 message.role == "assistant" ? "🤖" :
                 message.role == "tool" ? "🛠️" : message.role
-            messages.Push({ role: roleEmoji, content: this.GetMessageAsString(message) })
+            
+            obj := { role: roleEmoji, content: this.GetMessageAsString(message) }
+            if (message.HasOwnProp("duration")) {
+                obj.duration := message.duration
+            }
+            messages.Push(obj)
         }
         return messages
     }

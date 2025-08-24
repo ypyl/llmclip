@@ -191,8 +191,9 @@ class LLMClient {
         ; Apply message filtering and reordering
         filteredMessages := this.FilterMessages(messages)
         reorderedMessages := this.ReorderToolCallsAndResults(filteredMessages)
+        cleanedMessages := this.AdaptMessages(reorderedMessages)
 
-        body["messages"] := reorderedMessages
+        body["messages"] := cleanedMessages
         body["temperature"] := settings.Get("temperature", 0.7)
 
         ; Add ComSpec tool
@@ -267,6 +268,18 @@ class LLMClient {
         }
 
         return reorderedMessages
+    }
+
+    AdaptMessages(messages) {
+        cleanedMessages := []
+        for msg in messages {
+            cleanedMsg := msg.Clone()
+            if (cleanedMsg.HasProp("duration")) {
+                cleanedMsg.DeleteProp("duration")
+            }
+            cleanedMessages.Push(cleanedMsg)
+        }
+        return cleanedMessages
     }
 
     GetOllamaAILikeBody(messages, settings) {

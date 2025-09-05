@@ -113,7 +113,8 @@ class LLMClient {
         } else {
             ; Handle 'thinking' property if present
             content := responseData.HasProp("thinking") && responseData.thinking != "" ? "``````" . responseData.thinking . "```````n`n---`n" . responseData.content : responseData.content
-            return { role: "assistant", content: content }
+            tokens := responseData.HasProp("tokens") ? responseData.tokens : 0
+            return { role: "assistant", content: content, tokens: tokens }
         }
     }
 
@@ -277,6 +278,9 @@ class LLMClient {
             if (cleanedMsg.HasProp("duration")) {
                 cleanedMsg.DeleteProp("duration")
             }
+            if (cleanedMsg.HasProp("tokens")) {
+                cleanedMsg.DeleteProp("tokens")
+            }
             cleanedMessages.Push(cleanedMsg)
         }
         return cleanedMessages
@@ -432,6 +436,13 @@ class LLMClient {
         return body
     }
 
+    AddTokensToResult(obj, result) {
+        if (obj.Has("usage") && obj["usage"].Has("total_tokens")) {
+            result.tokens := obj["usage"]["total_tokens"]
+        }
+        return result
+    }
+
     ParseResponse(response, type := "") {
         obj := JSON.Load(response)
         results := []
@@ -445,16 +456,16 @@ class LLMClient {
                 for part in parts {
                     if (part.Has("functionCall")) {
                         functionCall := part["functionCall"]
-                        results.Push({
+                        results.Push(this.AddTokensToResult(obj, {
                             type: "tool_call",
                             content: {
                                 id: functionCall.Get("id", ""),
                                 name: functionCall["name"],
                                 arguments: JSON.Stringify(functionCall["args"])
                             }
-                        })
+                        }))
                     } else if (part.Has("text")) {
-                        results.Push({ type: "text", content: part["text"] })
+                        results.Push(this.AddTokensToResult(obj, { type: "text", content: part["text"] }))
                     }
                 }
             }
@@ -467,7 +478,7 @@ class LLMClient {
             if (msgObj.Has("thinking")) {
                 result.thinking := msgObj["thinking"]
             }
-            results.Push(result)
+            results.Push(this.AddTokensToResult(obj, result))
         }
 
         ; Handle OpenAI-style format
@@ -479,20 +490,20 @@ class LLMClient {
                 ; Check for tool calls
                 if (message.Has("tool_calls") && message["tool_calls"].Length > 0) {
                     for toolCall in message["tool_calls"] {
-                        results.Push({
+                        results.Push(this.AddTokensToResult(obj, {
                             type: "tool_call",
                             content: {
                                 id: toolCall["id"],
                                 name: toolCall["function"]["name"],
                                 arguments: toolCall["function"]["arguments"]
                             }
-                        })
+                        }))
                     }
                 }
 
                 ; Handle regular text response
                 if (message.Has("content") && message["content"] != "") {
-                    results.Push({ type: "text", content: message["content"] })
+                    results.Push(this.AddTokensToResult(obj, { type: "text", content: message["content"] }))
                 }
             }
         }

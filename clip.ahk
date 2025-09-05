@@ -139,10 +139,11 @@ DisplayLLMUserInterface(*) {
     clearAllButton.OnEvent("Click", ClearAllContext)
 
     ; Add ListView for chat history
-    chatHistory := MyGui.Add("ListView", "vChatHistory x10 y220 w380 h150 NoSort", ["Role", "Text", "⏱️"])
+    chatHistory := MyGui.Add("ListView", "vChatHistory x10 y220 w380 h150 NoSort", ["Role", "Text", "⏱️", "Tokens"])
     chatHistory.ModifyCol(1, 30)  ; Role column width
-    chatHistory.ModifyCol(2, 340) ; Text column width
-    chatHistory.ModifyCol(3, 50) ; Time column width
+    chatHistory.ModifyCol(2, 250) ; Text column width
+    chatHistory.ModifyCol(3, 50)  ; Time column width
+    chatHistory.ModifyCol(4, 50)  ; Tokens column width
     chatHistory.OnEvent("ItemSelect", ChatHistorySelect)
 
     deleteMessageButton := MyGui.Add("Button", "x10 y375 w120", "Delete Selected")
@@ -345,7 +346,8 @@ UpdateChatHistoryView(*) {
     chatHistory.Delete()
     for msg in messages {
         duration := msg.HasOwnProp("duration") ? Round(msg.duration, 2) . "s" : ""
-        chatHistory.Add(, msg.role, SubStr(msg.content, 1, 70) (StrLen(msg.content) > 70 ? "..." : ""), duration)
+        tokens := msg.HasOwnProp("tokens") ? msg.tokens : ""
+        chatHistory.Add(, msg.role, SubStr(msg.content, 1, 70) (StrLen(msg.content) > 70 ? "..." : ""), duration, tokens)
     }
     MyGui["ChatMessageActionButton"].Visible := false  ; Hide the Run Tool button
 }

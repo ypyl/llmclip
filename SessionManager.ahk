@@ -81,6 +81,9 @@ class SessionManager {
             if (message.HasOwnProp("duration")) {
                 obj.duration := message.duration
             }
+            if (message.HasOwnProp("tokens")) {
+                obj.tokens := message.tokens
+            }
             messages.Push(obj)
         }
         return messages

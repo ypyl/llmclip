@@ -17,18 +17,38 @@ class ContextManager {
             } catch as e {
                 itemText := "URL: " item "`n[Error extracting article: " e.Message "]"
             }
-        } else if (DirExist(item))
+        } else if (DirExist(item)) {
             itemText := "Folder:`n" this.ProcessFolder(item)
-        else if (FileExist(item))
-            itemText := "File:`n" this.ProcessFile(item)
-        else
+        } else if (FileExist(item)) {
+            if (this.IsImage(item)) {
+                base64Image := FileUtils.GetFileAsBase64(item)
+                if (base64Image != "") {
+                    SplitPath item, , , &ext
+                    itemText := "![Image](data:image/" . ext . ";base64," . base64Image . ")"
+                } else {
+                    itemText := "[Image not found: " . item . "]"
+                }
+            } else {
+                itemText := "File:`n" this.ProcessFile(item)
+            }
+        } else {
             itemText := "`n```````n" item "`n```````n"
+        }
         return itemText
     }
 
     ; Check if the item is an HTTP link
     IsHttpLink(item) {
         return RegExMatch(item, "i)^https?://") > 0
+    }
+
+    IsImage(item) {
+        if (FileExist(item)) {
+            SplitPath item, , , &ext
+            imageExts := "png,jpg,jpeg,gif,bmp,webp"
+            return InStr("," imageExts ",", "," ext ",")
+        }
+        return false
     }
 
     ProcessFolder(FolderPath) {
@@ -75,6 +95,9 @@ class ContextManager {
         }
         else if (FileExist(item)) {
             SplitPath item, &name, &dir
+            if (this.IsImage(item)) {
+                return "🖼️ " name " - " dir
+            }
             return "📄 " name " - " dir
         }
         else {

@@ -1,4 +1,4 @@
-#Include Base64.ahk
+#Include FileUtils.ahk
 
 class SessionManager {
     currentSessionIndex := 1
@@ -32,36 +32,37 @@ class SessionManager {
 
     GetMessageAsString(message) {
         if (message.HasOwnProp("audio")) {
-            audioBase64 := this.GetAudioFileAsBase64(message.audio.link)
+            audioBase64 := FileUtils.GetFileAsBase64(message.audio.link)
             return '<audio controls><source src="data:audio/wav;base64,' audioBase64 '" type="audio/wav"></audio>'
         }
         if (message.HasOwnProp("content") && message.content) {
-            return message.content
+            content := message.content
+            if (IsObject(content)) {
+                ; It's a multipart message
+                text_content := ""
+                has_image := false
+                for part in content {
+                    if (part.type = "text") {
+                        text_content .= part.text
+                    } else if (part.type = "image_url") {
+                        has_image := true
+                    }
+                }
+                if (has_image) {
+                    return text_content . " [Image]"
+                }
+                return text_content
+
+            } else {
+                ; It's a simple text message
+                return content
+            }
         }
         if (message.HasOwnProp("tool_calls") && message.tool_calls.Length > 0) {
             toolCall := message.tool_calls[1]  ; Get only first tool call
             return toolCall.function.name "(" toolCall.function.arguments ")"
         }
         return ""
-    }
-
-    GetAudioFileAsBase64(filePath) {
-        try {
-            if (FileExist(filePath)) {
-                fileObj := FileOpen(filePath, "r")
-                if (fileObj) {
-                    fileSize := fileObj.Length
-                    fileBuffer := Buffer(fileSize)
-                    fileObj.RawRead(fileBuffer, fileSize)
-                    fileObj.Close()
-
-                    return Base64.Encode(fileBuffer)
-                }
-            }
-            return ""
-        } catch Error as e {
-            return ""
-        }
     }
 
     GetCurrentSessionMessages() {
@@ -75,7 +76,7 @@ class SessionManager {
                 message.role == "user" ? "👤" :
                 message.role == "assistant" ? "🤖" :
                 message.role == "tool" ? "🛠️" : message.role
-            
+
             obj := { role: roleEmoji, content: this.GetMessageAsString(message) }
             if (message.HasOwnProp("duration")) {
                 obj.duration := message.duration

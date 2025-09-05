@@ -82,6 +82,12 @@ class AppSettings {
         return false
     }
 
+    IsImageInputEnabled(llmIndex) {
+        settings := this.GetSelectedSettings(llmIndex)
+        image := settings.Get("image", false)
+        return image
+    }
+
     GetSystemPromptNames(llmIndex) {
         settings := this.GetSelectedSettings(llmIndex)
         names := []

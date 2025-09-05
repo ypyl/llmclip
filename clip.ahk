@@ -163,11 +163,14 @@ DisplayLLMUserInterface(*) {
     fileSystemEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(), "fileSystemTool")
     comSpecToolBox := MyGui.Add("CheckBox", "x" (llmTypeX) " y" (llmTypeY - 20) " w70 vComSpecToolBox", "ComSpec")
     comSpecToolBox.Value := comSpecEnabled ? 1 : 0
-    fileSystemToolBox := MyGui.Add("CheckBox", "x" (llmTypeX + 80) " y" (llmTypeY - 20) " w120 vFileSystemToolBox", "FileSystem")
+    fileSystemToolBox := MyGui.Add("CheckBox", "x" (llmTypeX + 80) " y" (llmTypeY - 20) " w80 vFileSystemToolBox", "FileSystem")
     fileSystemToolBox.Value := fileSystemEnabled ? 1 : 0
-    ; Add dropdown box near fileSystemToolBox
-    answerSizeBox := MyGui.Add("DropDownList", "x" (llmTypeX + 300) " y" (llmTypeY - 20) " w80 vAnswerSizeBox", ["-", "Small", "Medium", "Long"])
+    answerSizeBox := MyGui.Add("DropDownList", "x" (llmTypeX + 290) " y" (llmTypeY - 20) " w80 vAnswerSizeBox", ["-", "Small", "Medium", "Long"])
     answerSizeBox.Value := 1 ; Default to Nothing
+
+    ; Add image selector
+    imageSelectBox := MyGui.Add("DropDownList", "x" (llmTypeX + 160) " y" (llmTypeY - 20) " w120 vImageSelectBox", ["-"])
+    imageSelectBox.Value := 1 ; Default to Nothing
 
     ; Add LLM type selector near Reset All button
     llmTypeCombo := MyGui.Add("DropDownList", "x" llmTypeX " y" llmTypeY " w" llmTypeWidth " vLLMType", AppSettingsValue.llmTypes)
@@ -192,6 +195,7 @@ DisplayLLMUserInterface(*) {
     guiShown := true
 
     UpdateChatHistoryView()
+    UpdateImageView()
 }
 
 GuiResize(thisGui, MinMax, Width, Height) {
@@ -242,6 +246,7 @@ GuiResize(thisGui, MinMax, Width, Height) {
     thisGui["ComSpecToolBox"].Move(llmTypeX, checkBoxY)
     thisGui["FileSystemToolBox"].Move(llmTypeX + 80, checkBoxY)
     thisGui["AnswerSizeBox"].Move(llmTypeX + 300, checkBoxY - 3)
+    thisGui["ImageSelectBox"].Move(llmTypeX + 160, checkBoxY - 3)
 }
 
 
@@ -296,6 +301,7 @@ LLMTypeChanged(*) {
     fileSystemEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(), "fileSystemTool")
     MyGui["ComSpecToolBox"].Value := comSpecEnabled ? 1 : 0
     MyGui["FileSystemToolBox"].Value := fileSystemEnabled ? 1 : 0
+    UpdateImageView()
 }
 
 ; Update session switching function
@@ -329,6 +335,7 @@ UpdateContextView(*) {
     contextBox := MyGui["ContextBox"]
     contextBox.Delete()
     contextBox.Add(labels)
+    UpdateImageView()
 }
 
 UpdateChatHistoryView(*) {
@@ -344,14 +351,52 @@ UpdateChatHistoryView(*) {
 }
 
 AskToLLM(*) {
-    global TrayManagerValue
+    global TrayManagerValue, MyGui, ContextManagerValue, SessionManagerValue
     messages := SessionManagerValue.GetCurrentSessionMessages()
     promptText := MyGui["PromptEdit"].Value
-    if (promptText != "") {
-        messages.Push({ role: "user", content: promptText })
+    selectedImageIndex := MyGui["ImageSelectBox"].Value
+
+    if (promptText = "" && selectedImageIndex <= 1) {
+        return ; Nothing to do
     }
-    SendToLLM()
-    MyGui["PromptEdit"].Value := ""  ; Clear prompt field
+
+    userMessageContent := ""
+    if (promptText != "") {
+        userMessageContent := promptText
+    }
+
+    if (selectedImageIndex > 1) {
+        local images := []
+        for item in SessionManagerValue.GetCurrentSessionContext() {
+            if (ContextManagerValue.IsImage(item)) {
+                images.Push(item)
+            }
+        }
+
+        if (selectedImageIndex - 1 <= images.Length) {
+            selectedImageItem := images[selectedImageIndex - 1]
+            imagePath := selectedImageItem
+
+            base64Image := FileUtils.GetFileAsBase64(imagePath)
+            if (base64Image != "") {
+                extension := SubStr(imagePath, InStr(imagePath, ".",, -1) + 1)
+
+                imageContent := {type: "image_url", image_url: { url: "data:image/" . extension . ";base64," . base64Image}}
+
+                if (userMessageContent != "") {
+                    userMessageContent := [{type: "text", text: userMessageContent}, imageContent]
+                } else {
+                    userMessageContent := [imageContent]
+                }
+            }
+        }
+    }
+
+    if (userMessageContent != "") {
+        messages.Push({ role: "user", content: userMessageContent })
+        SendToLLM()
+        MyGui["PromptEdit"].Value := ""  ; Clear prompt field
+    }
 
     if (TrayManagerValue.isRecording) {
         TrayManagerValue.StopRecording(SessionManagerValue)
@@ -577,6 +622,27 @@ HasVal(haystack, needle) {
     return false
 }
 
+UpdateImageView(*) {
+    global MyGui, ContextManagerValue, SessionManagerValue
+    images := ["-"]
+    for item in SessionManagerValue.GetCurrentSessionContext() {
+        if (ContextManagerValue.IsImage(item)) {
+            images.Push(ContextManagerValue.GetLabelFromContextItem(item))
+        }
+    }
+
+    imageSelectBox := MyGui["ImageSelectBox"]
+    imageSelectBox.Delete()
+    isImageEnabled := AppSettingsValue.IsImageInputEnabled(SessionManagerValue.GetCurrentSessionLLMType())
+    if (images.Length > 1 && isImageEnabled) {
+        imageSelectBox.Add(images)
+        imageSelectBox.Value := 1
+        imageSelectBox.Visible := true
+    } else {
+        imageSelectBox.Visible := false
+    }
+}
+
 HasContent(haystack, newContent) {
     if (newContent = "")
         return true
@@ -649,7 +715,19 @@ RunSelectedTool(*) {
         tool_calls := SessionManagerValue.GetToolCalls(msg)
         if (tool_calls.Length = 0) {
             ; No tool calls, just copy the message
-            ClipText := StrReplace(msg.content, "`r`n", "`n")
+            content := msg.content
+            textContent := ""
+            if (IsObject(content)) {
+                for part in content {
+                    if (part.type = "text") {
+                        textContent .= part.text
+                    }
+                }
+            } else {
+                textContent := content
+            }
+
+            ClipText := StrReplace(textContent, "`r`n", "`n")
             ClipText := StrReplace(ClipText, "`r", "`n")
             ClipText := StrReplace(ClipText, "`n", "`r`n")
             A_Clipboard := ClipText

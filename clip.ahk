@@ -358,10 +358,6 @@ AskToLLM(*) {
     promptText := MyGui["PromptEdit"].Value
     selectedImageIndex := MyGui["ImageSelectBox"].Value
 
-    if (promptText = "" && selectedImageIndex <= 1) {
-        return ; Nothing to do
-    }
-
     userMessageContent := ""
     if (promptText != "") {
         userMessageContent := promptText
@@ -396,9 +392,9 @@ AskToLLM(*) {
 
     if (userMessageContent != "") {
         messages.Push({ role: "user", content: userMessageContent })
-        SendToLLM()
-        MyGui["PromptEdit"].Value := ""  ; Clear prompt field
     }
+    SendToLLM()
+    MyGui["PromptEdit"].Value := ""  ; Clear prompt field
 
     if (TrayManagerValue.isRecording) {
         TrayManagerValue.StopRecording(SessionManagerValue)

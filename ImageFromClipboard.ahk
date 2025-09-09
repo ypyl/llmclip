@@ -1,43 +1,39 @@
-#Include <windows>
-
 class ClipboardUtil {
     static TryGetPngFromClipboard() {
-        BitmapDecoder := Windows.Graphics.Imaging.BitmapDecoder
-        BitmapEncoder := Windows.Graphics.Imaging.BitmapEncoder
-        SoftwareBitmap := Windows.Graphics.Imaging.SoftwareBitmap
-        CryptographicBuffer := Windows.Security.Cryptography.CryptographicBuffer
-        InMemoryRandomAccessStream := Windows.Storage.Streams.InMemoryRandomAccessStream
-        Clipboard := Windows.ApplicationModel.DataTransfer.Clipboard
-        BufferClass := Windows.Storage.Streams.Buffer
+        ; PowerShell command to read clipboard image as PNG and convert to Base64
+        psCmd := "
+(
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
 
-        content := Clipboard.GetContent()
-        if (!content.Contains('Bitmap')) {
+$img = [System.Windows.Forms.Clipboard]::GetImage()
+if ($null -eq $img) { exit 1 }
+
+$ms = New-Object System.IO.MemoryStream
+$img.Save($ms, [System.Drawing.Imaging.ImageFormat]::Png)
+
+$b64 = [Convert]::ToBase64String($ms.ToArray())
+Write-Output $b64
+)"
+
+        ; Run PowerShell in STA mode
+        output := ClipboardUtil.RunPowerShellSTA(psCmd) ; A_ScriptDir "\test.ps1")
+        if !output
             return false
+        return "data:image/png;base64," . output
+    }
+
+    ; Runs PowerShell in STA mode and returns StdOut (trimmed)
+    static RunPowerShellSTA(script) {
+        shell := ComObject("WScript.Shell")
+        exec := shell.Exec("powershell -NoProfile -Command -")
+        exec.StdIn.Write(script)
+        exec.StdIn.Close()
+        result := ""
+        while !exec.StdOut.AtEndOfStream {
+            result .= exec.StdOut.ReadLine() . "`n"
         }
-        bitmapRef := content.GetBitmapAsync().await()
-        stream := bitmapRef.OpenReadAsync().await()
-        decoder := BitmapDecoder.CreateAsync(stream).await()
-        frame := decoder.GetFrameAsync(0).await()
-        sb := frame.GetSoftwareBitmapAsync().await()
 
-        memStream := InMemoryRandomAccessStream()
-        encoder := BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, memStream).await()
-        encoder.SetSoftwareBitmap(sb)
-        encoder.FlushAsync().await()
-        memStream.Seek(0)
-
-        rawSize := memStream.Size
-        if (rawSize = 0) {
-            return false
-        }
-        size := rawSize & 0xFFFFFFFF
-        if (size > 100 * 1024 * 1024)
-            return false
-
-        b := BufferClass(size)
-        memStream.ReadAsync(b, size, 0).await()
-
-        b64 := CryptographicBuffer.EncodeToBase64String(b)
-        return "data:image/png;base64," . b64
+        return RTrim(result, "`n")
     }
 }

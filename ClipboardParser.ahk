@@ -1,8 +1,13 @@
 #Requires AutoHotkey 2.0
+#Include ImageFromClipboard.ahk
 
 class ClipboardParser {
     ; Parse clipboard content and return an array of items (text or paths)
     Parse() {
+        isImage := ClipboardUtil.TryGetPngFromClipboard()
+        if isImage
+            return [isImage]
+
         ; First try plain text from A_Clipboard
         txtFromClipboard := Trim(A_Clipboard, '"')
         localTxtFromClipboardArray := [txtFromClipboard]

@@ -31,6 +31,8 @@ class ContextManager {
             } else {
                 itemText := "File:`n" this.ProcessFile(item)
             }
+        } else if (this.IsImage(item)) {
+            itemText := "![Image](" item ")"
         } else {
             itemText := "`n```````n" item "`n```````n"
         }
@@ -46,7 +48,12 @@ class ContextManager {
         if (FileExist(item)) {
             SplitPath item, , , &ext
             imageExts := "png,jpg,jpeg,gif,bmp,webp"
-            return InStr("," imageExts ",", "," ext ",")
+            if InStr("," imageExts ",", "," ext ",")
+                return true
+        }
+        ; Check for base64 image string
+        if (RegExMatch(item, "i)^data:image/")) {
+            return true
         }
         return false
     }

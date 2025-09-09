@@ -364,6 +364,7 @@ AskToLLM(*) {
     }
 
     if (selectedImageIndex > 1) {
+        ; TODO move logic somewhere
         local images := []
         for item in SessionManagerValue.GetCurrentSessionContext() {
             if (ContextManagerValue.IsImage(item)) {
@@ -373,18 +374,25 @@ AskToLLM(*) {
 
         if (selectedImageIndex - 1 <= images.Length) {
             selectedImageItem := images[selectedImageIndex - 1]
-            imagePath := selectedImageItem
+            imageValue := selectedImageItem
 
-            base64Image := FileUtils.GetFileAsBase64(imagePath)
-            if (base64Image != "") {
-                extension := SubStr(imagePath, InStr(imagePath, ".",, -1) + 1)
-
-                imageContent := {type: "image_url", image_url: { url: "data:image/" . extension . ";base64," . base64Image}}
-
+            if (RegExMatch(imageValue, "i)^data:image/")) {
+                imageContent := {type: "image_url", image_url: { url: imageValue }}
                 if (userMessageContent != "") {
                     userMessageContent := [{type: "text", text: userMessageContent}, imageContent]
                 } else {
                     userMessageContent := [imageContent]
+                }
+            } else {
+                base64Image := FileUtils.GetFileAsBase64(imageValue)
+                if (base64Image != "") {
+                    extension := SubStr(imageValue, InStr(imageValue, ".",, -1) + 1)
+                    imageContent := {type: "image_url", image_url: { url: "data:image/" . extension . ";base64," . base64Image}}
+                    if (userMessageContent != "") {
+                        userMessageContent := [{type: "text", text: userMessageContent}, imageContent]
+                    } else {
+                        userMessageContent := [imageContent]
+                    }
                 }
             }
         }

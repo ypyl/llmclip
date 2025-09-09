@@ -26,7 +26,7 @@ Write-Output $b64
     ; Runs PowerShell in STA mode and returns StdOut (trimmed)
     static RunPowerShellSTA(script) {
         shell := ComObject("WScript.Shell")
-        exec := shell.Exec("powershell -NoProfile -Command -")
+        exec := shell.Exec("powershell -STA -NoProfile -Command -")
         exec.StdIn.Write(script)
         exec.StdIn.Close()
         result := ""

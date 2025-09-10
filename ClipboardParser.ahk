@@ -4,10 +4,6 @@
 class ClipboardParser {
     ; Parse clipboard content and return an array of items (text or paths)
     Parse() {
-        isImage := ClipboardUtil.TryGetPngFromClipboard()
-        if isImage
-            return [isImage]
-
         ; First try plain text from A_Clipboard
         txtFromClipboard := Trim(A_Clipboard, '"')
         localTxtFromClipboardArray := [txtFromClipboard]
@@ -76,6 +72,12 @@ class ClipboardParser {
             } catch as e {
                 MsgBox "Error processing clipboard: " e.Message
             }
+        }
+
+        if (localTxtFromClipboardArray.Length = 0) {
+            isImage := ClipboardUtil.TryGetPngFromClipboard()
+            if isImage
+                return [isImage]
         }
 
         return localTxtFromClipboardArray

@@ -74,7 +74,7 @@ class ClipboardParser {
             }
         }
 
-        if (localTxtFromClipboardArray.Length = 0) {
+        if (localTxtFromClipboardArray.Length = 0 || localTxtFromClipboardArray[1] = "") {
             isImage := ClipboardUtil.TryGetPngFromClipboard()
             if isImage
                 return [isImage]

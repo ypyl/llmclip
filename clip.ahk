@@ -96,7 +96,8 @@ DisplayLLMUserInterface(*) {
     global MyGui, guiShown, askButton, AppSettingsValue, SessionManagerValue, WebViewManagerValue, TrayManagerValue
     global responseCtrX, responseCtrY, responseCtrWidth, responseCtrHeight
     global promptEditX, promptEditY, promptEditWidth, promptEditHeight
-    global llmTypeX, llmTypeY, llmTypeWidth, systemPromptX, systemPromptY, systemPromptWidth, askLLMX, askLLMY, askLLMWidth
+    global llmTypeX, llmTypeY, llmTypeWidth, systemPromptX, systemPromptY, systemPromptWidth, askLLMX, askLLMY,
+        askLLMWidth
 
     if (guiShown) {
         MyGui.Show()
@@ -156,30 +157,32 @@ DisplayLLMUserInterface(*) {
     clearHistoryButton.OnEvent("Click", ClearChatHistory)
 
     ; Prompt section with increased height
-    promptEdit := MyGui.Add("Edit", "vPromptEdit x" promptEditX " y" promptEditY " w" promptEditWidth " h" promptEditHeight " Multi WantReturn", "")
+    promptEdit := MyGui.Add("Edit", "vPromptEdit x" promptEditX " y" promptEditY " w" promptEditWidth " h" promptEditHeight " Multi WantReturn",
+        "")
     promptEdit.OnEvent("Change", PromptChange)
 
     ; Add two checkboxes after promptEdit and above llmTypeCombo in one row
     comSpecEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(), "comSpecTool")
-    fileSystemEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(), "fileSystemTool")
+    fileSystemEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(),
+    "fileSystemTool")
     comSpecToolBox := MyGui.Add("CheckBox", "x" (llmTypeX) " y" (llmTypeY - 20) " w70 vComSpecToolBox", "ComSpec")
     comSpecToolBox.Value := comSpecEnabled ? 1 : 0
-    fileSystemToolBox := MyGui.Add("CheckBox", "x" (llmTypeX + 80) " y" (llmTypeY - 20) " w80 vFileSystemToolBox", "FileSystem")
+    fileSystemToolBox := MyGui.Add("CheckBox", "x" (llmTypeX + 80) " y" (llmTypeY - 20) " w80 vFileSystemToolBox",
+    "FileSystem")
     fileSystemToolBox.Value := fileSystemEnabled ? 1 : 0
-    answerSizeBox := MyGui.Add("DropDownList", "x" (llmTypeX + 290) " y" (llmTypeY - 20) " w80 vAnswerSizeBox", ["-", "Small", "Medium", "Long"])
+    answerSizeBox := MyGui.Add("DropDownList", "x" (llmTypeX + 290) " y" (llmTypeY - 20) " w80 vAnswerSizeBox", ["-",
+        "Small", "Medium", "Long"])
     answerSizeBox.Value := 1 ; Default to Nothing
 
-    ; Add image selector
-    imageSelectBox := MyGui.Add("DropDownList", "x" (llmTypeX + 160) " y" (llmTypeY - 20) " w120 vImageSelectBox", ["-"])
-    imageSelectBox.Value := 1 ; Default to Nothing
-
     ; Add LLM type selector near Reset All button
-    llmTypeCombo := MyGui.Add("DropDownList", "x" llmTypeX " y" llmTypeY " w" llmTypeWidth " vLLMType", AppSettingsValue.llmTypes)
+    llmTypeCombo := MyGui.Add("DropDownList", "x" llmTypeX " y" llmTypeY " w" llmTypeWidth " vLLMType",
+        AppSettingsValue.llmTypes)
     llmTypeCombo.Value := SessionManagerValue.GetCurrentSessionLLMType()
     llmTypeCombo.OnEvent("Change", LLMTypeChanged)
 
     ; Add system prompt selector
-    systemPromptCombo := MyGui.Add("DropDownList", "x" systemPromptX " y" systemPromptY " w" systemPromptWidth " vSystemPrompt", AppSettingsValue.GetSystemPromptNames(SessionManagerValue.GetCurrentSessionLLMType()))
+    systemPromptCombo := MyGui.Add("DropDownList", "x" systemPromptX " y" systemPromptY " w" systemPromptWidth " vSystemPrompt",
+        AppSettingsValue.GetSystemPromptNames(SessionManagerValue.GetCurrentSessionLLMType()))
     systemPromptCombo.Value := SessionManagerValue.GetCurrentSessionSystemPrompt()
     systemPromptCombo.OnEvent("Change", SystemPromptChanged)
 
@@ -187,7 +190,8 @@ DisplayLLMUserInterface(*) {
     askButton.OnEvent("Click", AskToLLM)
 
     ; Right panel uses the global variables
-    responseCtr := MyGui.Add("Edit", "vResponseCtr x" responseCtrX " y" responseCtrY " w" responseCtrWidth " h" responseCtrHeight " -VScroll", "")
+    responseCtr := MyGui.Add("Edit", "vResponseCtr x" responseCtrX " y" responseCtrY " w" responseCtrWidth " h" responseCtrHeight " -VScroll",
+        "")
 
     MyGui.OnEvent("Close", GuiClose)
     MyGui.Show("w1230 h610")
@@ -196,7 +200,6 @@ DisplayLLMUserInterface(*) {
     guiShown := true
 
     UpdateChatHistoryView()
-    UpdateImageView()
 }
 
 GuiResize(thisGui, MinMax, Width, Height) {
@@ -247,13 +250,12 @@ GuiResize(thisGui, MinMax, Width, Height) {
     thisGui["ComSpecToolBox"].Move(llmTypeX, checkBoxY)
     thisGui["FileSystemToolBox"].Move(llmTypeX + 80, checkBoxY)
     thisGui["AnswerSizeBox"].Move(llmTypeX + 300, checkBoxY - 3)
-    thisGui["ImageSelectBox"].Move(llmTypeX + 160, checkBoxY - 3)
 }
-
 
 GetLabelsForContextItems() {
     context := SessionManagerValue.GetCurrentSessionContext()
-    predefinedContext := AppSettingsValue.GetContext(SessionManagerValue.GetCurrentSessionLLMType(), SessionManagerValue.GetCurrentSessionSystemPrompt())
+    predefinedContext := AppSettingsValue.GetContext(SessionManagerValue.GetCurrentSessionLLMType(),
+    SessionManagerValue.GetCurrentSessionSystemPrompt())
     labels := []
     for item in predefinedContext {
         if (!HasVal(context, item)) {
@@ -299,10 +301,10 @@ LLMTypeChanged(*) {
 
     ; Update tool checkboxes based on new LLM type
     comSpecEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(), "comSpecTool")
-    fileSystemEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(), "fileSystemTool")
+    fileSystemEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(),
+    "fileSystemTool")
     MyGui["ComSpecToolBox"].Value := comSpecEnabled ? 1 : 0
     MyGui["FileSystemToolBox"].Value := fileSystemEnabled ? 1 : 0
-    UpdateImageView()
 }
 
 ; Update session switching function
@@ -336,7 +338,6 @@ UpdateContextView(*) {
     contextBox := MyGui["ContextBox"]
     contextBox.Delete()
     contextBox.Add(labels)
-    UpdateImageView()
 }
 
 UpdateChatHistoryView(*) {
@@ -347,7 +348,8 @@ UpdateChatHistoryView(*) {
     for msg in messages {
         duration := msg.HasOwnProp("duration") ? Round(msg.duration, 2) . "s" : ""
         tokens := msg.HasOwnProp("tokens") ? msg.tokens : ""
-        chatHistory.Add(, msg.role, SubStr(msg.content, 1, 70) (StrLen(msg.content) > 70 ? "..." : ""), duration, tokens)
+        chatHistory.Add(, msg.role, SubStr(msg.content, 1, 70) (StrLen(msg.content) > 70 ? "..." : ""), duration,
+        tokens)
     }
     MyGui["ChatMessageActionButton"].Visible := false  ; Hide the Run Tool button
 }
@@ -356,44 +358,41 @@ AskToLLM(*) {
     global TrayManagerValue, MyGui, ContextManagerValue, SessionManagerValue
     messages := SessionManagerValue.GetCurrentSessionMessages()
     promptText := MyGui["PromptEdit"].Value
-    selectedImageIndex := MyGui["ImageSelectBox"].Value
-
     userMessageContent := ""
     if (promptText != "") {
         userMessageContent := promptText
     }
 
-    if (selectedImageIndex > 1) {
-        ; TODO move logic somewhere
-        local images := []
+    isImageEnabled := AppSettingsValue.IsImageInputEnabled(SessionManagerValue.GetCurrentSessionLLMType())
+    if (isImageEnabled) {
+        images := []
         for item in SessionManagerValue.GetCurrentSessionContext() {
             if (ContextManagerValue.IsImage(item)) {
                 images.Push(item)
             }
         }
 
-        if (selectedImageIndex - 1 <= images.Length) {
-            selectedImageItem := images[selectedImageIndex - 1]
-            imageValue := selectedImageItem
+        if (images.Length > 0) {
+            contentParts := []
+            if (userMessageContent != "") {
+                contentParts.Push({ type: "text", text: userMessageContent })
+            }
 
-            if (RegExMatch(imageValue, "i)^data:image/")) {
-                imageContent := {type: "image_url", image_url: { url: imageValue }}
-                if (userMessageContent != "") {
-                    userMessageContent := [{type: "text", text: userMessageContent}, imageContent]
+            for imageValue in images {
+                if (RegExMatch(imageValue, "i)^data:image/")) {
+                    contentParts.Push({ type: "image_url", image_url: { url: imageValue } })
                 } else {
-                    userMessageContent := [imageContent]
-                }
-            } else {
-                base64Image := FileUtils.GetFileAsBase64(imageValue)
-                if (base64Image != "") {
-                    extension := SubStr(imageValue, InStr(imageValue, ".",, -1) + 1)
-                    imageContent := {type: "image_url", image_url: { url: "data:image/" . extension . ";base64," . base64Image}}
-                    if (userMessageContent != "") {
-                        userMessageContent := [{type: "text", text: userMessageContent}, imageContent]
-                    } else {
-                        userMessageContent := [imageContent]
+                    base64Image := FileUtils.GetFileAsBase64(imageValue)
+                    if (base64Image != "") {
+                        extension := SubStr(imageValue, InStr(imageValue, ".", , -1) + 1)
+                        contentParts.Push({ type: "image_url", image_url: { url: "data:image/" . extension . ";base64," .
+                            base64Image } })
                     }
                 }
+            }
+
+            if (contentParts.Length > 0) {
+                userMessageContent := contentParts
             }
         }
     }
@@ -626,27 +625,6 @@ HasVal(haystack, needle) {
             return true
     }
     return false
-}
-
-UpdateImageView(*) {
-    global MyGui, ContextManagerValue, SessionManagerValue
-    images := ["-"]
-    for item in SessionManagerValue.GetCurrentSessionContext() {
-        if (ContextManagerValue.IsImage(item)) {
-            images.Push(ContextManagerValue.GetLabelFromContextItem(item))
-        }
-    }
-
-    imageSelectBox := MyGui["ImageSelectBox"]
-    imageSelectBox.Delete()
-    isImageEnabled := AppSettingsValue.IsImageInputEnabled(SessionManagerValue.GetCurrentSessionLLMType())
-    if (images.Length > 1 && isImageEnabled) {
-        imageSelectBox.Add(images)
-        imageSelectBox.Value := 1
-        imageSelectBox.Visible := true
-    } else {
-        imageSelectBox.Visible := false
-    }
 }
 
 HasContent(haystack, newContent) {

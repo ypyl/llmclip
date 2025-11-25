@@ -112,7 +112,8 @@ class LLMClient {
             }
         } else {
             ; Handle 'thinking' property if present
-            content := responseData.HasProp("thinking") && responseData.thinking != "" ? "``````" . responseData.thinking . "```````n`n---`n" . responseData.content : responseData.content
+            content := responseData.HasProp("thinking") && responseData.thinking != "" ? "``````" . responseData.thinking .
+                "```````n`n---`n" . responseData.content : responseData.content
             tokens := responseData.HasProp("tokens") ? responseData.tokens : 0
             return { role: "assistant", content: content, tokens: tokens }
         }
@@ -137,7 +138,7 @@ class LLMClient {
 
         ; Process messages in reverse order to identify audio messages first
         i := messages.Length
-        Loop messages.Length {
+        loop messages.Length {
             msg := messages[i]
 
             ; If this is an audio message, skip it and mark to skip the next user message
@@ -165,8 +166,7 @@ class LLMClient {
     GetGroqAudioBody(messages, settings) {
         ; For audio generation, we use the last user message as input text
         lastUserMessage := ""
-        Loop messages.Length
-        {
+        loop messages.Length {
             idx := messages.Length - A_Index + 1
             if (messages[idx].role = "user") {
                 lastUserMessage := messages[idx].content
@@ -217,7 +217,7 @@ class LLMClient {
         reorderedMessages := []
 
         ; First pass: identify tool calls and build the position map
-        Loop messages.Length {
+        loop messages.Length {
             msg := messages[A_Index]
 
             ; If this is an assistant message with tool calls
@@ -237,7 +237,7 @@ class LLMClient {
         }
 
         ; Second pass: insert tool results after their corresponding tool calls
-        Loop messages.Length {
+        loop messages.Length {
             msg := messages[A_Index]
 
             ; If this is a tool result message
@@ -293,7 +293,49 @@ class LLMClient {
             "temperature", settings.Get("temperature", 0.7),
         )
         body["stream"] := JSON.False
-        body["messages"] := this.FilterMessages(messages)
+
+        filteredMessages := this.FilterMessages(messages)
+        ollamaMessages := []
+
+        for msg in filteredMessages {
+            newMsg := Map()
+            newMsg["role"] := msg.role
+
+            if (msg.HasProp("content") && msg.content is Array) {
+                ; Handle multimodal content (array)
+                textPart := ""
+                images := []
+
+                for part in msg.content {
+                    if (part.HasProp("type")) {
+                        if (part.type = "text") {
+                            textPart .= part.text
+                        } else if (part.type = "image_url") {
+                            ; Extract base64 from data URI
+                            ; Format: data:image/jpeg;base64,......
+                            imageUrl := part.image_url.url
+                            commaPos := InStr(imageUrl, ",")
+                            if (commaPos > 0) {
+                                base64Data := SubStr(imageUrl, commaPos + 1)
+                                images.Push(base64Data)
+                            }
+                        }
+                    }
+                }
+
+                newMsg["content"] := textPart
+                if (images.Length > 0) {
+                    newMsg["images"] := images
+                }
+            } else {
+                ; Handle simple string content
+                newMsg["content"] := msg.content
+            }
+
+            ollamaMessages.Push(newMsg)
+        }
+
+        body["messages"] := ollamaMessages
         return body
     }
 
@@ -450,7 +492,8 @@ class LLMClient {
         ; Handle Google's response format
         if (obj.Has("candidates") && obj["candidates"].Length > 0) {
             candidate := obj["candidates"][1]
-            if (candidate.Has("content") && candidate["content"].Has("parts") && candidate["content"]["parts"].Length > 0) {
+            if (candidate.Has("content") && candidate["content"].Has("parts") && candidate["content"]["parts"].Length >
+            0) {
                 ; Check for function calls in parts
                 parts := candidate["content"]["parts"]
                 for part in parts {

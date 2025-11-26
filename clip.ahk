@@ -363,39 +363,10 @@ AskToLLM(*) {
         userMessageContent := promptText
     }
 
+    contextItems := SessionManagerValue.GetCurrentSessionContext()
     isImageEnabled := AppSettingsValue.IsImageInputEnabled(SessionManagerValue.GetCurrentSessionLLMType())
-    if (isImageEnabled) {
-        images := []
-        for item in SessionManagerValue.GetCurrentSessionContext() {
-            if (ContextManagerValue.IsImage(item)) {
-                images.Push(item)
-            }
-        }
 
-        if (images.Length > 0) {
-            contentParts := []
-            if (userMessageContent != "") {
-                contentParts.Push({ type: "text", text: userMessageContent })
-            }
-
-            for imageValue in images {
-                if (RegExMatch(imageValue, "i)^data:image/")) {
-                    contentParts.Push({ type: "image_url", image_url: { url: imageValue } })
-                } else {
-                    base64Image := FileUtils.GetFileAsBase64(imageValue)
-                    if (base64Image != "") {
-                        extension := SubStr(imageValue, InStr(imageValue, ".", , -1) + 1)
-                        contentParts.Push({ type: "image_url", image_url: { url: "data:image/" . extension . ";base64," .
-                            base64Image } })
-                    }
-                }
-            }
-
-            if (contentParts.Length > 0) {
-                userMessageContent := contentParts
-            }
-        }
-    }
+    userMessageContent := BuildUserMessage(userMessageContent, contextItems, isImageEnabled)
 
     if (userMessageContent != "") {
         messages.Push({ role: "user", content: userMessageContent })
@@ -650,11 +621,12 @@ HasContent(haystack, newContent) {
     }
 
     ; Then check content matches for files and folders
-    newContentText := GetTextFromContextItem(newContent)
-    for item in haystack {
-        if (GetTextFromContextItem(item) = newContentText)
-            return true
-    }
+    ; Removed expensive check that reads file content
+    ; newContentText := GetTextFromContextItem(newContent)
+    ; for item in haystack {
+    ;     if (GetTextFromContextItem(item) = newContentText)
+    ;         return true
+    ; }
 
     return false
 }
@@ -786,4 +758,45 @@ DeleteSelectedMessage(*) {
 
     UpdateChatHistoryView()
     RenderMarkdown("")  ; Clear the response area
+}
+
+BuildUserMessage(userMessageContent, contextItems, isImageEnabled) {
+    global ContextManagerValue, FileUtils
+
+    if (!isImageEnabled) {
+        return userMessageContent
+    }
+
+    images := []
+    for item in contextItems {
+        if (ContextManagerValue.IsImage(item)) {
+            images.Push(item)
+        }
+    }
+
+    if (images.Length > 0) {
+        contentParts := []
+        if (userMessageContent != "") {
+            contentParts.Push({ type: "text", text: userMessageContent })
+        }
+
+        for imageValue in images {
+            if (RegExMatch(imageValue, "i)^data:image/")) {
+                contentParts.Push({ type: "image_url", image_url: { url: imageValue } })
+            } else {
+                base64Image := FileUtils.GetFileAsBase64(imageValue)
+                if (base64Image != "") {
+                    extension := SubStr(imageValue, InStr(imageValue, ".", , -1) + 1)
+                    contentParts.Push({ type: "image_url", image_url: { url: "data:image/" . extension . ";base64," .
+                        base64Image } })
+                }
+            }
+        }
+
+        if (contentParts.Length > 0) {
+            return contentParts
+        }
+    }
+
+    return userMessageContent
 }

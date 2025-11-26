@@ -1,39 +1,46 @@
+#Include Lib\CGDip.ahk
+#Include Base64.ahk
+
 class ClipboardUtil {
     static TryGetPngFromClipboard() {
-        ; PowerShell command to read clipboard image as PNG and convert to Base64
-        psCmd := "
-(
-Add-Type -AssemblyName System.Windows.Forms
-Add-Type -AssemblyName System.Drawing
-
-$img = [System.Windows.Forms.Clipboard]::GetImage()
-if ($null -eq $img) { exit 1 }
-
-$ms = New-Object System.IO.MemoryStream
-$img.Save($ms, [System.Drawing.Imaging.ImageFormat]::Png)
-
-$b64 = [Convert]::ToBase64String($ms.ToArray())
-Write-Output $b64
-)"
-
-        ; Run PowerShell in STA mode
-        output := ClipboardUtil.RunPowerShellSTA(psCmd) ; A_ScriptDir "\test.ps1")
-        if !output
+        pToken := CGdip.Startup()
+        if !pToken
             return false
-        return "data:image/png;base64," . output
-    }
 
-    ; Runs PowerShell in STA mode and returns StdOut (trimmed)
-    static RunPowerShellSTA(script) {
-        shell := ComObject("WScript.Shell")
-        exec := shell.Exec("powershell -STA -NoProfile -Command -")
-        exec.StdIn.Write(script)
-        exec.StdIn.Close()
-        result := ""
-        while !exec.StdOut.AtEndOfStream {
-            result .= exec.StdOut.ReadLine() . "`n"
+        pBitmap := CGdip.Bitmap.FromClipboard()
+        if !IsObject(pBitmap) {
+            CGdip.Shutdown()
+            return false
         }
 
-        return RTrim(result, "`n")
+        ; Save to memory stream as PNG
+        pStream := pBitmap.Save(".png")
+        if !pStream {
+            pBitmap := ""
+            CGdip.Shutdown()
+            return false
+        }
+
+        ; Get HGLOBAL from stream
+        DllCall("ole32\GetHGlobalFromStream", "Ptr", pStream, "Ptr*", &hGlobal := 0)
+        pData := DllCall("GlobalLock", "Ptr", hGlobal, "Ptr")
+        nSize := DllCall("GlobalSize", "Ptr", hGlobal, "UPtr")
+
+        ; Copy to Buffer
+        buf := Buffer(nSize)
+        DllCall("RtlMoveMemory", "Ptr", buf, "Ptr", pData, "UPtr", nSize)
+
+        ; Cleanup
+        DllCall("GlobalUnlock", "Ptr", hGlobal)
+        ObjRelease(pStream)
+        pBitmap := ""
+        CGdip.Shutdown()
+
+        ; Convert to Base64
+        b64 := Base64.Encode(buf)
+        if !b64
+            return false
+
+        return "data:image/png;base64," . b64
     }
 }

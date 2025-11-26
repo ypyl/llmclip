@@ -55,7 +55,12 @@ class SessionManager {
 
             } else {
                 ; It's a simple text message
-                return content
+                result := content
+                ; Add thinking field if present (for Ollama thinking models)
+                if (message.HasOwnProp("thinking") && message.thinking != "") {
+                    result := "``````thinking`n" . message.thinking . "`n``````" . "`n`n" . result
+                }
+                return result
             }
         }
         if (message.HasOwnProp("tool_calls") && message.tool_calls.Length > 0) {

@@ -112,10 +112,12 @@ class LLMClient {
             }
         } else {
             ; Handle 'thinking' property if present
-            content := responseData.HasProp("thinking") && responseData.thinking != "" ? "``````" . responseData.thinking .
-                "```````n`n---`n" . responseData.content : responseData.content
             tokens := responseData.HasProp("tokens") ? responseData.tokens : 0
-            return { role: "assistant", content: content, tokens: tokens }
+            result := { role: "assistant", content: responseData.content, tokens: tokens }
+            if (responseData.HasProp("thinking") && responseData.thinking != "") {
+                result.thinking := responseData.thinking
+            }
+            return result
         }
     }
 

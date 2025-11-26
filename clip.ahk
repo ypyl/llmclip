@@ -638,9 +638,15 @@ HasContent(haystack, newContent) {
     ; Also check in chat history
     messages := SessionManagerValue.GetCurrentSessionMessages()
     for msg in messages {
-        v := InStr(msg.content, newContent)
-        if (v)
-            return true
+        if (IsObject(msg.content)) {
+            for part in msg.content {
+                if (part.HasOwnProp("text") && InStr(part.text, newContent))
+                    return true
+            }
+        } else {
+            if (InStr(msg.content, newContent))
+                return true
+        }
     }
 
     ; Then check content matches for files and folders

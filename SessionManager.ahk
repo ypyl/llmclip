@@ -177,6 +177,45 @@ class SessionManager {
         return message.HasOwnProp("tool_calls") && message.tool_calls.Length > 0
     }
 
+    TruncateMessages(index) {
+        if (index > 0 && index < this.sessionMessages[this.currentSessionIndex].Length) {
+            ; Remove all messages after the specified index
+            ; We loop from the end down to index + 1
+            loopCount := this.sessionMessages[this.currentSessionIndex].Length - index
+            Loop loopCount {
+                this.sessionMessages[this.currentSessionIndex].Pop()
+            }
+            return true
+        }
+        return false
+    }
+
+    UpdateMessage(index, newContent) {
+        if (index > 0 && index <= this.sessionMessages[this.currentSessionIndex].Length) {
+            this.sessionMessages[this.currentSessionIndex][index].content := newContent
+            return true
+        }
+        return false
+    }
+
+    GetMessageText(message) {
+        if (message.HasOwnProp("content")) {
+            content := message.content
+            if (IsObject(content)) {
+                text_content := ""
+                for part in content {
+                    if (part.type = "text") {
+                        text_content .= part.text
+                    }
+                }
+                return text_content
+            } else {
+                return content
+            }
+        }
+        return ""
+    }
+
     DeleteMessage(index) {
         if (index > 1 && index <= this.sessionMessages[this.currentSessionIndex].Length) {
             this.sessionMessages[this.currentSessionIndex].RemoveAt(index)

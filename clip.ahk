@@ -358,6 +358,41 @@ AskToLLM(*) {
     global TrayManagerValue, MyGui, ContextManagerValue, SessionManagerValue
     messages := SessionManagerValue.GetCurrentSessionMessages()
     promptText := MyGui["PromptEdit"].Value
+
+    ; Check for regeneration case: Empty prompt + Selected message
+    if (promptText == "") {
+        chatHistory := MyGui["ChatHistory"]
+        focused_row := chatHistory.GetNext()
+        if (focused_row > 0) {
+            selectedMsg := messages[focused_row]
+            if (selectedMsg.role == "user") {
+                ; Load message content into prompt for editing
+                MyGui["PromptEdit"].Value := SessionManagerValue.GetMessageText(selectedMsg)
+                return
+            }
+        }
+    } else {
+        ; Check if we are in "Edit Mode" (Prompt not empty + User message selected)
+        chatHistory := MyGui["ChatHistory"]
+        focused_row := chatHistory.GetNext()
+        if (focused_row > 0) {
+            selectedMsg := messages[focused_row]
+            if (selectedMsg.role == "user") {
+                 ; Update the message with new content
+                 if (SessionManagerValue.UpdateMessage(focused_row, promptText)) {
+                     ; Truncate history after this message
+                     if (SessionManagerValue.TruncateMessages(focused_row)) {
+                         SendToLLM()
+                         MyGui["PromptEdit"].Value := ""
+                         ; Clear selection to exit "Edit Mode"
+                         chatHistory.Modify(focused_row, "-Select")
+                         return
+                     }
+                 }
+            }
+        }
+    }
+
     userMessageContent := ""
     if (promptText != "") {
         userMessageContent := promptText

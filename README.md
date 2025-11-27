@@ -2,7 +2,7 @@
 
 LLMClip is an AutoHotkey v2 script that supercharges your workflow by using clipboard content as context for Large Language Models (LLMs). It records text, files, and folder paths you copy, and lets you use that information in a powerful, feature-rich chat interface.
 
-![image](https://github.com/user-attachments/assets/795a1050-e56e-4cae-890c-52286d953979)
+![image](./screen.png)
 
 ## Primary Goal
 

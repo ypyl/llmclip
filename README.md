@@ -21,6 +21,9 @@ The core mission of LLMClip is to seamlessly aggregate everything you copy—tex
 - **Multi-Provider Support**: Natively supports Groq, Google, and Ollama. Easily configurable in `settings.json` to add your own providers.
 - **Dynamic Controls**: Switch between LLMs, system prompts, and even control the desired length of the AI's answer (short, medium, or long) directly from the UI.
 - **Session Management**: Organizes your chats into distinct sessions. Start a new chat or switch back to a previous one at any time.
+- **Regeneration & Editing**:
+    - **Regenerate**: Select a user message and click "Ask LLM" with an empty prompt to truncate the conversation and regenerate the response.
+    - **Edit & Regenerate**: Select a user message to load it into the prompt box. Edit the text and click "Ask LLM" to update the message, truncate the history, and regenerate the response.
 
 ### Advanced Capabilities
 - **Tool Integration**: Empowers the LLM to interact with your system by executing shell commands (`ComSpec`) and performing file system operations like reading, writing, and deleting files.
@@ -44,7 +47,6 @@ The core mission of LLMClip is to seamlessly aggregate everything you copy—tex
 | Key | Action | Description |
 | :--- | :--- | :--- |
 | **F3** | Smart Toggle | Cycles through **Start Recording** -> **Show UI** -> **Stop Recording**. |
-| **F12** | Show UI | Brings the chat window to the foreground if it's hidden. |
 | **Enter** | Send Message | In the prompt input, sends your message to the LLM. |
 | **Shift+Enter** | New Line | In the prompt input, adds a new line instead of sending. |
 
@@ -68,6 +70,11 @@ The main window is split into two panels:
 
 - **Right Panel (The Conversation):**
     - This area displays the full content of any item you select—a context item, a chat history message, or the latest LLM response, all beautifully rendered.
+
+### Regeneration & Editing Workflow
+You can correct mistakes or steer the conversation in a new direction using the history list:
+1.  **Regenerate**: Select a previous user message in the history list. Ensure the prompt box is empty. Click "Ask LLM". The history will be truncated after the selected message, and the LLM will generate a new response.
+2.  **Edit & Regenerate**: Select a previous user message. Its text will appear in the prompt box. Edit the text as needed. Click "Ask LLM". The original message will be updated, the history truncated, and a new response generated.
 
 ## LLM Configuration
 
@@ -114,3 +121,8 @@ Feel free to submit issues or pull requests if you have suggestions or improveme
 ## License
 
 This project is licensed under the MIT License.
+
+
+Sources:
+
+https://github.com/thqby/ahk2_lib/tree/master

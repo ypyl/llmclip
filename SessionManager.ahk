@@ -32,42 +32,54 @@ class SessionManager {
 
     GetMessageAsString(message) {
         if (message.HasOwnProp("audio")) {
-            audioBase64 := FileUtils.GetFileAsBase64(message.audio.link)
-            return '<audio controls><source src="data:audio/wav;base64,' audioBase64 '" type="audio/wav"></audio>'
+            return this.FormatAudioMessage(message)
         }
         if (message.HasOwnProp("content") && message.content) {
-            content := message.content
-            if (IsObject(content)) {
-                ; It's a multipart message
-                text_content := ""
-                has_image := false
-                for part in content {
-                    if (part.type = "text") {
-                        text_content .= part.text
-                    } else if (part.type = "image_url") {
-                        has_image := true
-                    }
-                }
-                if (has_image) {
-                    return text_content . " [Image]"
-                }
-                return text_content
-
+            if (IsObject(message.content)) {
+                return this.FormatMultipartMessage(message.content)
             } else {
-                ; It's a simple text message
-                result := content
-                ; Add thinking field if present (for Ollama thinking models)
-                if (message.HasOwnProp("thinking") && message.thinking != "") {
-                    result := "``````thinking`n" . message.thinking . "`n``````" . "`n`n" . result
-                }
-                return result
+                return this.FormatTextMessage(message)
             }
         }
         if (message.HasOwnProp("tool_calls") && message.tool_calls.Length > 0) {
-            toolCall := message.tool_calls[1]  ; Get only first tool call
-            return toolCall.function.name "(" toolCall.function.arguments ")"
+            return this.FormatToolCallMessage(message)
         }
         return ""
+    }
+
+    FormatAudioMessage(message) {
+        audioBase64 := FileUtils.GetFileAsBase64(message.audio.link)
+        return '<audio controls><source src="data:audio/wav;base64,' audioBase64 '" type="audio/wav"></audio>'
+    }
+
+    FormatMultipartMessage(content) {
+        text_content := ""
+        has_image := false
+        for part in content {
+            if (part.type = "text") {
+                text_content .= part.text
+            } else if (part.type = "image_url") {
+                has_image := true
+            }
+        }
+        if (has_image) {
+            return text_content . " [Image]"
+        }
+        return text_content
+    }
+
+    FormatTextMessage(message) {
+        result := message.content
+        ; Add thinking field if present (for Ollama thinking models)
+        if (message.HasOwnProp("thinking") && message.thinking != "") {
+            result := "``````thinking`n" . message.thinking . "`n``````" . "`n`n" . result
+        }
+        return result
+    }
+
+    FormatToolCallMessage(message) {
+        toolCall := message.tool_calls[1]  ; Get only first tool call
+        return toolCall.function.name "(" toolCall.function.arguments ")"
     }
 
     GetCurrentSessionMessages() {

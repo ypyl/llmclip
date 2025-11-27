@@ -426,40 +426,12 @@ SendToLLM() {
     SessionManagerValue.UpdateSystemPromptContent(systemPrompt)
 
     context := SessionManagerValue.GetCurrentSessionContext()
-
     contextBox := MyGui["ContextBox"]
 
-    ; Update context in system message if needed
-    if (context.Length > 0) {
-        contextText := ""
-        selectedIndices := []
-
-        ; Get selected indices
-        if (contextBox.Value is Array) {
-            selectedIndices := contextBox.Value
-        } else if (contextBox.Value) {
-            selectedIndices := [contextBox.Value]
-        }
-
-        ; Build context excluding selected items
-        for index, item in context {
-            if !HasVal(selectedIndices, index) {
-                contextText .= GetTextFromContextItem(item)
-            }
-        }
-
-        ; Only add general context if there is any non-selected content
-        if (contextText != "") {
-            messages[1].content .= "`n`nHere is the context:`n`n" contextText "`n`nPlease consider this context when providing the answer."
-        }
-
-        ; Add selected items as special focus points
-        if (selectedIndices.Length > 0) {
-            messages[1].content .= "`nThe user has selected the folloing text which may be particularly relevant:`n`n"
-            for index in selectedIndices {
-                messages[1].content .= GetTextFromContextItem(context[index]) "`n`n"
-            }
-        }
+    ; Build and append context message if needed
+    additionalContext := BuildAdditionalContextMessage(context, contextBox.Value)
+    if (additionalContext != "") {
+        messages[1].content .= additionalContext
     }
 
     ; Disable Ask LLM button while processing
@@ -472,12 +444,7 @@ SendToLLM() {
         settings := AppSettingsValue.GetSelectedSettings(SessionManagerValue.GetCurrentSessionLLMType())
 
         ; Update tools property based on checkbox values
-        enabledTools := []
-        if (MyGui["ComSpecToolBox"].Value)
-            enabledTools.Push("comSpecTool")
-        if (MyGui["FileSystemToolBox"].Value)
-            enabledTools.Push("fileSystemTool")
-        settings["tools"] := enabledTools
+        settings["tools"] := ConfigureToolSettings()
         ; Add a user message to instruct the model on answer length
         answerSizeMsg := ""
         answerSize := MyGui["AnswerSizeBox"].Value
@@ -834,4 +801,53 @@ BuildUserMessage(userMessageContent, contextItems, isImageEnabled) {
     }
 
     return userMessageContent
+}
+
+BuildAdditionalContextMessage(context, contextBoxValue) {
+    if (context.Length = 0)
+        return ""
+
+    contextText := ""
+    selectedIndices := []
+
+    ; Get selected indices
+    if (contextBoxValue is Array) {
+        selectedIndices := contextBoxValue
+    } else if (contextBoxValue) {
+        selectedIndices := [contextBoxValue]
+    }
+
+    ; Build context excluding selected items
+    for index, item in context {
+        if !HasVal(selectedIndices, index) {
+            contextText .= GetTextFromContextItem(item)
+        }
+    }
+
+    messageContent := ""
+
+    ; Only add general context if there is any non-selected content
+    if (contextText != "") {
+        messageContent .= "`n`nHere is the context:`n`n" contextText "`n`nPlease consider this context when providing the answer."
+    }
+
+    ; Add selected items as special focus points
+    if (selectedIndices.Length > 0) {
+        messageContent .= "`nThe user has selected the folloing text which may be particularly relevant:`n`n"
+        for index in selectedIndices {
+            messageContent .= GetTextFromContextItem(context[index]) "`n`n"
+        }
+    }
+
+    return messageContent
+}
+
+ConfigureToolSettings() {
+    global MyGui
+    enabledTools := []
+    if (MyGui["ComSpecToolBox"].Value)
+        enabledTools.Push("comSpecTool")
+    if (MyGui["FileSystemToolBox"].Value)
+        enabledTools.Push("fileSystemTool")
+    return enabledTools
 }

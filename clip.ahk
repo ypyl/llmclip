@@ -171,9 +171,8 @@ DisplayLLMUserInterface(*) {
     powerShellIcon := MyGui.Add("Picture", "x" (llmTypeX + 40) " y" (llmTypeY - 20) " w16 h16 Icon1 vPowerShellIcon",
     "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe")
     powerShellToolBox.Value := powerShellEnabled ? 1 : 0
-    answerSizeBox := MyGui.Add("DropDownList", "x" (llmTypeX + 290) " y" (llmTypeY - 20) " w80 vAnswerSizeBox", ["-",
-        "Small", "Medium", "Long"])
-    answerSizeBox.Value := 1 ; Default to Nothing
+    ; Add answer size slider (0=Small, 1=Default, 2=Long)
+    answerSizeBox := MyGui.Add("Slider", "x" (llmTypeX + 290) " y" (llmTypeY - 5) " w80 vAnswerSizeBox Range0-2 TickInterval1 NoTicks", 1)
 
     ; Add LLM type selector near Reset All button
     llmTypeCombo := MyGui.Add("DropDownList", "x" llmTypeX " y" llmTypeY " w" llmTypeWidth " vLLMType",
@@ -250,7 +249,7 @@ GuiResize(thisGui, MinMax, Width, Height) {
     checkBoxY := bottomY - 20
     thisGui["PowerShellIcon"].Move(llmTypeX + 40, checkBoxY)
     thisGui["PowerShellToolBox"].Move(llmTypeX, checkBoxY)
-    thisGui["AnswerSizeBox"].Move(llmTypeX + 300, checkBoxY - 3)
+    thisGui["AnswerSizeBox"].Move(llmTypeX + 290, checkBoxY - 5)
 }
 
 GetLabelsForContextItems() {
@@ -472,16 +471,15 @@ SendToLLM() {
 
         ; Update tools property based on checkbox values
         settings["tools"] := ConfigureToolSettings()
-        ; Add a user message to instruct the model on answer length
+        ; Add a user message to instruct the model on answer length based on slider position
         answerSizeMsg := ""
         answerSize := MyGui["AnswerSizeBox"].Value
-        if (answerSize = 2) {
+        if (answerSize = 0) {
             answerSizeMsg := "Please answer as concisely as possible (short answer)."
-        } else if (answerSize = 3) {
-            answerSizeMsg := "Please provide a medium-length answer with some detail."
-        } else if (answerSize = 4) {
+        } else if (answerSize = 2) {
             answerSizeMsg := "Please provide a long, detailed answer."
         }
+        ; If answerSize = 1 (middle position), no message is added (default behavior)
         if (answerSizeMsg != "") {
             messages.Push({ role: "user", content: answerSizeMsg })
         }

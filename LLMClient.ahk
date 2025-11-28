@@ -1,14 +1,12 @@
 #Requires AutoHotkey 2.0
 #Include <Json>
-#Include "ComSpecTool.ahk"
-#Include "FileSystemTool.ahk"
+#Include "PowerShellTool.ahk"
 
 class LLMClient {
     ; Private properties
     settings := {}
     tempDir := A_Temp "\llmclip"
-    comSpecTool := ComSpecTool()
-    fileSystemTool := FileSystemTool()
+    powerShellTool := PowerShellTool()
 
     __New(settings) {
         this.settings := settings
@@ -199,13 +197,11 @@ class LLMClient {
         body["messages"] := cleanedMessages
         body["temperature"] := settings.Get("temperature", 0.7)
 
-        ; Add ComSpec tool
+        ; Add PowerShell tool
         enabledTools := []
         for t in settings.Get("tools", []) {
-            if (t = "comSpecTool")
-                enabledTools.Push(this.comSpecTool.GetOpenAiToolDefinition())
-            else if (t = "fileSystemTool")
-                enabledTools.Push(this.fileSystemTool.GetOpenAiToolDefinition())
+            if (t = "powerShellTool")
+                enabledTools.Push(this.powerShellTool.GetOpenAiToolDefinition())
         }
         if (enabledTools.Length > 0)
             body["tools"] := enabledTools
@@ -463,10 +459,8 @@ class LLMClient {
         body["contents"] := contents
         enabledTools := []
         for t in settings.Get("tools", []) {
-            if (t = "comSpecTool")
-                enabledTools.Push(this.comSpecTool.GetGeminiToolDefinition())
-            else if (t = "fileSystemTool")
-                enabledTools.Push(this.fileSystemTool.GetGeminiToolDefinition())
+            if (t = "powerShellTool")
+                enabledTools.Push(this.powerShellTool.GetGeminiToolDefinition())
         }
         if (enabledTools.Length > 0)
             body["tools"] := enabledTools

@@ -5,8 +5,7 @@
 #Include LLMClient.ahk
 #Include SessionManager.ahk
 #Include ClipboardParser.ahk
-#Include ComSpecTool.ahk
-#Include FileSystemTool.ahk
+#Include PowerShellTool.ahk
 #Include WebViewManager.ahk
 #Include ContextManager.ahk
 #Include TrayManager.ahk
@@ -28,8 +27,7 @@ global SessionManagerValue := SessionManager(
 ; Create clipboard parser instance
 global ClipboardParserValue := ClipboardParser()
 
-global ComSpecToolValue := ComSpecTool()
-global FileSystemToolValue := FileSystemTool()
+global PowerShellToolValue := PowerShellTool()
 
 ; Create WebView manager instance
 global WebViewManagerValue := WebViewManager()
@@ -164,15 +162,10 @@ DisplayLLMUserInterface(*) {
         "")
     promptEdit.OnEvent("Change", PromptChange)
 
-    ; Add two checkboxes after promptEdit and above llmTypeCombo in one row
-    comSpecEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(), "comSpecTool")
-    fileSystemEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(),
-    "fileSystemTool")
-    comSpecToolBox := MyGui.Add("CheckBox", "x" (llmTypeX) " y" (llmTypeY - 20) " w70 vComSpecToolBox", "ComSpec")
-    comSpecToolBox.Value := comSpecEnabled ? 1 : 0
-    fileSystemToolBox := MyGui.Add("CheckBox", "x" (llmTypeX + 80) " y" (llmTypeY - 20) " w80 vFileSystemToolBox",
-    "FileSystem")
-    fileSystemToolBox.Value := fileSystemEnabled ? 1 : 0
+    ; Add PowerShell tool checkbox after promptEdit and above llmTypeCombo
+    powerShellEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(), "powerShellTool")
+    powerShellToolBox := MyGui.Add("CheckBox", "x" (llmTypeX) " y" (llmTypeY - 20) " w90 vPowerShellToolBox", "PowerShell")
+    powerShellToolBox.Value := powerShellEnabled ? 1 : 0
     answerSizeBox := MyGui.Add("DropDownList", "x" (llmTypeX + 290) " y" (llmTypeY - 20) " w80 vAnswerSizeBox", ["-",
         "Small", "Medium", "Long"])
     answerSizeBox.Value := 1 ; Default to Nothing
@@ -248,11 +241,10 @@ GuiResize(thisGui, MinMax, Width, Height) {
     thisGui["SystemPrompt"].Move(systemPromptX, bottomY)
     thisGui["AskLLM"].Move(askLLMX, bottomY)
 
-    ; Move ComSpecTool and FileSystemTool checkboxes above bottom controls
+    ; Move PowerShell tool checkbox above bottom controls
     checkBoxY := bottomY - 20
-    thisGui["ComSpecToolBox"].Move(llmTypeX, checkBoxY)
-    thisGui["FileSystemToolBox"].Move(llmTypeX + 80, checkBoxY)
-    thisGui["AnswerSizeBox"].Move(llmTypeX + 310, checkBoxY - 3)
+    thisGui["PowerShellToolBox"].Move(llmTypeX, checkBoxY)
+    thisGui["AnswerSizeBox"].Move(llmTypeX + 300, checkBoxY - 3)
 }
 
 GetLabelsForContextItems() {
@@ -302,12 +294,9 @@ LLMTypeChanged(*) {
     systemPromptCombo.Value := 1  ; Reset to first prompt when LLM type changes
     SessionManagerValue.SetCurrentSessionSystemPrompt(1)
 
-    ; Update tool checkboxes based on new LLM type
-    comSpecEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(), "comSpecTool")
-    fileSystemEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(),
-    "fileSystemTool")
-    MyGui["ComSpecToolBox"].Value := comSpecEnabled ? 1 : 0
-    MyGui["FileSystemToolBox"].Value := fileSystemEnabled ? 1 : 0
+    ; Update tool checkbox based on new LLM type
+    powerShellEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(), "powerShellTool")
+    MyGui["PowerShellToolBox"].Value := powerShellEnabled ? 1 : 0
 }
 
 ; Update session switching function
@@ -862,24 +851,23 @@ BuildAdditionalContextMessage(context, contextBoxValue) {
 ConfigureToolSettings() {
     global MyGui
     enabledTools := []
-    if (MyGui["ComSpecToolBox"].Value)
-        enabledTools.Push("comSpecTool")
-    if (MyGui["FileSystemToolBox"].Value)
-        enabledTools.Push("fileSystemTool")
+    if (MyGui["PowerShellToolBox"].Value)
+        enabledTools.Push("powerShellTool")
     return enabledTools
 }
 
 ExecuteToolCalls(msg) {
-    global SessionManagerValue, ComSpecToolValue, FileSystemToolValue
+    global SessionManagerValue, PowerShellToolValue
     tool_calls := SessionManagerValue.GetToolCalls(msg)
     results := []
     
     for tool_call in tool_calls {
         if (!SessionManagerValue.IsToolCallExecuted(tool_call.id)) {
-            if result := ComSpecToolValue.ExecuteToolCall(tool_call) {
-                results.Push(result)
-            }
-            if result := FileSystemToolValue.ExecuteToolCall(tool_call) {
+            ; Measure tool execution time
+            startTime := A_TickCount
+            if result := PowerShellToolValue.ExecuteToolCall(tool_call) {
+                duration := (A_TickCount - startTime) / 1000
+                result.duration := duration
                 results.Push(result)
             }
         }

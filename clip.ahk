@@ -153,7 +153,6 @@ DisplayLLMUserInterface(*) {
     chatMessageButton := MyGui.Add("Button", "vChatMessageActionButton x140 y375 w120 Hidden", "Copy")
     chatMessageButton.OnEvent("Click", CopySelectedMessage)
 
-
     clearHistoryButton := MyGui.Add("Button", "x270 y375 w120", "Clear History")
     clearHistoryButton.OnEvent("Click", ClearChatHistory)
 
@@ -163,8 +162,14 @@ DisplayLLMUserInterface(*) {
     promptEdit.OnEvent("Change", PromptChange)
 
     ; Add PowerShell tool checkbox after promptEdit and above llmTypeCombo
-    powerShellEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(), "powerShellTool")
-    powerShellToolBox := MyGui.Add("CheckBox", "x" (llmTypeX) " y" (llmTypeY - 20) " w90 vPowerShellToolBox", "PowerShell")
+    powerShellEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(),
+    "powerShellTool")
+
+    ; Add checkbox next to the icon
+    powerShellToolBox := MyGui.Add("CheckBox", "x" (llmTypeX) " y" (llmTypeY - 20) " w40 vPowerShellToolBox", "ps1")
+    ; Add PowerShell icon
+    powerShellIcon := MyGui.Add("Picture", "x" (llmTypeX + 40) " y" (llmTypeY - 20) " w16 h16 Icon1 vPowerShellIcon",
+    "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe")
     powerShellToolBox.Value := powerShellEnabled ? 1 : 0
     answerSizeBox := MyGui.Add("DropDownList", "x" (llmTypeX + 290) " y" (llmTypeY - 20) " w80 vAnswerSizeBox", ["-",
         "Small", "Medium", "Long"])
@@ -241,8 +246,9 @@ GuiResize(thisGui, MinMax, Width, Height) {
     thisGui["SystemPrompt"].Move(systemPromptX, bottomY)
     thisGui["AskLLM"].Move(askLLMX, bottomY)
 
-    ; Move PowerShell tool checkbox above bottom controls
+    ; Move PowerShell tool checkbox and icon above bottom controls
     checkBoxY := bottomY - 20
+    thisGui["PowerShellIcon"].Move(llmTypeX + 40, checkBoxY)
     thisGui["PowerShellToolBox"].Move(llmTypeX, checkBoxY)
     thisGui["AnswerSizeBox"].Move(llmTypeX + 300, checkBoxY - 3)
 }
@@ -295,7 +301,8 @@ LLMTypeChanged(*) {
     SessionManagerValue.SetCurrentSessionSystemPrompt(1)
 
     ; Update tool checkbox based on new LLM type
-    powerShellEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(), "powerShellTool")
+    powerShellEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(),
+    "powerShellTool")
     MyGui["PowerShellToolBox"].Value := powerShellEnabled ? 1 : 0
 }
 
@@ -348,11 +355,11 @@ UpdateChatHistoryView(*) {
 
 AskToLLM(*) {
     global TrayManagerValue, MyGui, ContextManagerValue, SessionManagerValue
-    
+
     ; Check if we are in "Confirm Tool Run" mode (Agent Mode tool execution)
     if (MyGui["AskLLM"].Text == "Confirm Tool Run") {
         messages := SessionManagerValue.GetCurrentSessionMessages()
-        
+
         ; Find and execute all unexecuted tool calls
         executedAny := false
         for msg in messages {
@@ -366,7 +373,7 @@ AskToLLM(*) {
                 }
             }
         }
-        
+
         if (executedAny) {
             SendToLLM()
         } else {
@@ -398,17 +405,17 @@ AskToLLM(*) {
         if (focused_row > 0) {
             selectedMsg := messages[focused_row]
             if (selectedMsg.role == "user") {
-                 ; Update the message with new content
-                 if (SessionManagerValue.UpdateMessage(focused_row, promptText)) {
-                     ; Truncate history after this message
-                     if (SessionManagerValue.TruncateMessages(focused_row)) {
-                         SendToLLM()
-                         MyGui["PromptEdit"].Value := ""
-                         ; Clear selection to exit "Edit Mode"
-                         chatHistory.Modify(focused_row, "-Select")
-                         return
-                     }
-                 }
+                ; Update the message with new content
+                if (SessionManagerValue.UpdateMessage(focused_row, promptText)) {
+                    ; Truncate history after this message
+                    if (SessionManagerValue.TruncateMessages(focused_row)) {
+                        SendToLLM()
+                        MyGui["PromptEdit"].Value := ""
+                        ; Clear selection to exit "Edit Mode"
+                        chatHistory.Modify(focused_row, "-Select")
+                        return
+                    }
+                }
             }
         }
     }
@@ -496,7 +503,7 @@ SendToLLM() {
             newMessage.duration := duration
             messages.Push(newMessage)
         }
-        
+
         ; Check for unexecuted Tool Calls
         if (SessionManagerValue.HasUnexecutedToolCalls()) {
             MyGui["AskLLM"].Text := "Confirm Tool Run"
@@ -860,7 +867,7 @@ ExecuteToolCalls(msg) {
     global SessionManagerValue, PowerShellToolValue
     tool_calls := SessionManagerValue.GetToolCalls(msg)
     results := []
-    
+
     for tool_call in tool_calls {
         if (!SessionManagerValue.IsToolCallExecuted(tool_call.id)) {
             ; Measure tool execution time

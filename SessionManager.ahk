@@ -189,6 +189,30 @@ class SessionManager {
         return message.HasOwnProp("tool_calls") && message.tool_calls.Length > 0
     }
 
+    HasUnexecutedToolCalls() {
+        messages := this.GetCurrentSessionMessages()
+        for msg in messages {
+            if (this.HasToolCalls(msg)) {
+                for toolCall in msg.tool_calls {
+                    if (!this.IsToolCallExecuted(toolCall.id)) {
+                        return true
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+    IsToolCallExecuted(toolCallId) {
+        messages := this.GetCurrentSessionMessages()
+        for m in messages {
+            if (m.HasOwnProp("role") && m.role == "tool" && m.HasOwnProp("tool_call_id") && m.tool_call_id == toolCallId) {
+                return true
+            }
+        }
+        return false
+    }
+
     TruncateMessages(index) {
         if (index > 0 && index < this.sessionMessages[this.currentSessionIndex].Length) {
             ; Remove all messages after the specified index

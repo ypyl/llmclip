@@ -150,8 +150,11 @@ DisplayLLMUserInterface(*) {
     deleteMessageButton := MyGui.Add("Button", "x10 y375 w120", "Delete Selected")
     deleteMessageButton.OnEvent("Click", DeleteSelectedMessage)
 
-    chatMessageButton := MyGui.Add("Button", "vChatMessageActionButton x140 y375 w120 Hidden", "Run Tool")
-    chatMessageButton.OnEvent("Click", RunSelectedTool)
+    deleteMessageButton.OnEvent("Click", DeleteSelectedMessage)
+
+    chatMessageButton := MyGui.Add("Button", "vChatMessageActionButton x140 y375 w120 Hidden", "Copy")
+    chatMessageButton.OnEvent("Click", CopySelectedMessage)
+
 
     clearHistoryButton := MyGui.Add("Button", "x270 y375 w120", "Clear History")
     clearHistoryButton.OnEvent("Click", ClearChatHistory)
@@ -249,7 +252,7 @@ GuiResize(thisGui, MinMax, Width, Height) {
     checkBoxY := bottomY - 20
     thisGui["ComSpecToolBox"].Move(llmTypeX, checkBoxY)
     thisGui["FileSystemToolBox"].Move(llmTypeX + 80, checkBoxY)
-    thisGui["AnswerSizeBox"].Move(llmTypeX + 300, checkBoxY - 3)
+    thisGui["AnswerSizeBox"].Move(llmTypeX + 310, checkBoxY - 3)
 }
 
 GetLabelsForContextItems() {
@@ -356,6 +359,34 @@ UpdateChatHistoryView(*) {
 
 AskToLLM(*) {
     global TrayManagerValue, MyGui, ContextManagerValue, SessionManagerValue
+    
+    ; Check if we are in "Confirm Tool Run" mode (Agent Mode tool execution)
+    if (MyGui["AskLLM"].Text == "Confirm Tool Run") {
+        messages := SessionManagerValue.GetCurrentSessionMessages()
+        
+        ; Find and execute all unexecuted tool calls
+        executedAny := false
+        for msg in messages {
+            if (SessionManagerValue.HasToolCalls(msg)) {
+                toolResults := ExecuteToolCalls(msg)
+                if (toolResults.Length > 0) {
+                    for res in toolResults {
+                        messages.Push(res)
+                    }
+                    executedAny := true
+                }
+            }
+        }
+        
+        if (executedAny) {
+            SendToLLM()
+        } else {
+            ; Should not happen if button is Confirm Tool Run, but reset just in case
+            MyGui["AskLLM"].Text := "Ask LLM"
+        }
+        return
+    }
+
     messages := SessionManagerValue.GetCurrentSessionMessages()
     promptText := MyGui["PromptEdit"].Value
 
@@ -415,7 +446,7 @@ AskToLLM(*) {
 }
 
 SendToLLM() {
-    global MyGui
+    global MyGui, SessionManagerValue, AppSettingsValue, askButton
     messages := SessionManagerValue.GetCurrentSessionMessages()
 
     ; Update the system prompt content
@@ -476,6 +507,14 @@ SendToLLM() {
             newMessage.duration := duration
             messages.Push(newMessage)
         }
+        
+        ; Check for unexecuted Tool Calls
+        if (SessionManagerValue.HasUnexecutedToolCalls()) {
+            MyGui["AskLLM"].Text := "Confirm Tool Run"
+        } else {
+            MyGui["AskLLM"].Text := "Ask LLM"
+        }
+
     } finally {
         ; Re-enable Ask LLM button
         if (MyGui) {
@@ -663,55 +702,33 @@ ChatHistorySelect(*) {
     chatHistory := MyGui["ChatHistory"]
     if (focused_row := chatHistory.GetNext()) {
         msg := messages[focused_row]
-        MyGui["ChatMessageActionButton"].Visible := true  ; Show the Run Tool button
+        MyGui["ChatMessageActionButton"].Visible := true  ; Show the Copy button
         RenderMarkdown(SessionManagerValue.GetMessageAsString(msg))  ; Render the selected message in the WebView
-
-        MyGui["ChatMessageActionButton"].Text := SessionManagerValue.HasToolCalls(msg) ? "Run Tool" : "Copy"
     }
 }
 
-RunSelectedTool(*) {
-    global MyGui
+CopySelectedMessage(*) {
+    global MyGui, SessionManagerValue
     messages := SessionManagerValue.GetCurrentSessionMessages()
     chatHistory := MyGui["ChatHistory"]
     if (focused_row := chatHistory.GetNext()) {
         msg := messages[focused_row]
-        tool_calls := SessionManagerValue.GetToolCalls(msg)
-        if (tool_calls.Length = 0) {
-            ; No tool calls, just copy the message
-            content := msg.content
-            textContent := ""
-            if (IsObject(content)) {
-                for part in content {
-                    if (part.type = "text") {
-                        textContent .= part.text
-                    }
+        content := msg.content
+        textContent := ""
+        if (IsObject(content)) {
+            for part in content {
+                if (part.type = "text") {
+                    textContent .= part.text
                 }
-            } else {
-                textContent := content
             }
+        } else {
+            textContent := content
+        }
 
-            ClipText := StrReplace(textContent, "`r`n", "`n")
-            ClipText := StrReplace(ClipText, "`r", "`n")
-            ClipText := StrReplace(ClipText, "`n", "`r`n")
-            A_Clipboard := ClipText
-            return
-        }
-        try {
-            MyGui["ChatMessageActionButton"].Enable := false
-            for tool_call in tool_calls {
-                if result := ComSpecToolValue.ExecuteToolCall(tool_call) {
-                    messages.Push(result)
-                }
-                if result := FileSystemToolValue.ExecuteToolCall(tool_call) {
-                    messages.Push(result)
-                }
-            }
-            RenderMarkdown(SessionManagerValue.GetMessageAsString(messages[messages.Length]))  ; Render the response in the WebView
-            UpdateChatHistoryView()
-        } finally {
-            MyGui["ChatMessageActionButton"].Enable := true
-        }
+        ClipText := StrReplace(textContent, "`r`n", "`n")
+        ClipText := StrReplace(ClipText, "`r", "`n")
+        ClipText := StrReplace(ClipText, "`n", "`r`n")
+        A_Clipboard := ClipText
     }
 }
 
@@ -850,4 +867,22 @@ ConfigureToolSettings() {
     if (MyGui["FileSystemToolBox"].Value)
         enabledTools.Push("fileSystemTool")
     return enabledTools
+}
+
+ExecuteToolCalls(msg) {
+    global SessionManagerValue, ComSpecToolValue, FileSystemToolValue
+    tool_calls := SessionManagerValue.GetToolCalls(msg)
+    results := []
+    
+    for tool_call in tool_calls {
+        if (!SessionManagerValue.IsToolCallExecuted(tool_call.id)) {
+            if result := ComSpecToolValue.ExecuteToolCall(tool_call) {
+                results.Push(result)
+            }
+            if result := FileSystemToolValue.ExecuteToolCall(tool_call) {
+                results.Push(result)
+            }
+        }
+    }
+    return results
 }

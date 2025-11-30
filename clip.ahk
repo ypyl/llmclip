@@ -37,6 +37,8 @@ global ContextManagerValue := ContextManager()
 ; Create TrayManager instance
 global TrayManagerValue := TrayManager(DisplayLLMUserInterface, UpdateUiBasesOnRecordingStatus)
 
+global LLMClientInstance := ""
+
 ; Response area positioning variables
 global responseCtrX := 400
 global responseCtrY := 10
@@ -357,7 +359,7 @@ UpdateChatHistoryView(*) {
 }
 
 AskToLLM(*) {
-    global TrayManagerValue, MyGui, ContextManagerValue, SessionManagerValue
+    global TrayManagerValue, MyGui, ContextManagerValue, SessionManagerValue, LLMClientInstance
 
     ; Check if we are in "Confirm Tool Run" mode (Agent Mode tool execution)
     if (MyGui["AskLLM"].Text == "Confirm Tool Run") {
@@ -382,6 +384,13 @@ AskToLLM(*) {
         } else {
             ; Should not happen if button is Confirm Tool Run, but reset just in case
             MyGui["AskLLM"].Text := "Ask LLM"
+        }
+        return
+    }
+
+    if (MyGui["AskLLM"].Text == "Cancel") {
+        if (LLMClientInstance) {
+            LLMClientInstance.Cancel()
         }
         return
     }
@@ -445,7 +454,7 @@ AskToLLM(*) {
 }
 
 SendToLLM() {
-    global MyGui, SessionManagerValue, AppSettingsValue, askButton
+    global MyGui, SessionManagerValue, AppSettingsValue, askButton, LLMClientInstance
     messages := SessionManagerValue.GetCurrentSessionMessages()
 
     ; Update the system prompt content
@@ -466,7 +475,7 @@ SendToLLM() {
 
     ; Disable Ask LLM button while processing
     if (MyGui) {
-        askButton.Enabled := false
+        askButton.Text := "Cancel"
     }
 
     try {
@@ -513,9 +522,18 @@ SendToLLM() {
             MyGui["AskLLM"].Text := "Ask LLM"
         }
 
+    } catch as e {
+        if (e.Message == "Request cancelled") {
+            ; Do nothing on cancellation
+        } else {
+            throw e
+        }
     } finally {
         ; Re-enable Ask LLM button
         if (MyGui) {
+            if (MyGui["AskLLM"].Text == "Cancel") {
+                 MyGui["AskLLM"].Text := "Ask LLM"
+            }
             askButton.Enabled := true
         }
     }

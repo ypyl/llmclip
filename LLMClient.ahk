@@ -7,6 +7,8 @@ class LLMClient {
     settings := {}
     tempDir := A_Temp "\llmclip"
     powerShellTool := PowerShellTool()
+    pid := 0
+    isCancelled := false
 
     __New(settings) {
         this.settings := settings
@@ -16,8 +18,16 @@ class LLMClient {
             DirCreate(this.tempDir)
     }
 
+    Cancel() {
+        this.isCancelled := true
+        if (this.pid > 0) {
+            try ProcessClose(this.pid)
+        }
+    }
+
     Call(messages) {
         try {
+            this.isCancelled := false
             selectedSettings := this.settings
             curl := selectedSettings["curl"]
             selectedLLMType := selectedSettings.Has("type") ? selectedSettings["type"] : "groq"
@@ -43,7 +53,20 @@ class LLMClient {
             curlCmd := Format(curl, inputFile, outputFile)
 
             ; Execute curl
-            RunWait(curlCmd, , "Hide")
+            Run(curlCmd, , "Hide", &pid)
+            this.pid := pid
+
+            ; Wait for process to finish or cancellation
+            while (ProcessExist(this.pid)) {
+                if (this.isCancelled) {
+                    throw Error("Request cancelled")
+                }
+                Sleep(100)
+            }
+
+            if (this.isCancelled) {
+                throw Error("Request cancelled")
+            }
 
             ; Show error if response file doesn't exist
             if (!FileExist(outputFile)) {
@@ -70,6 +93,9 @@ class LLMClient {
             throw Error("No response received")
 
         } catch as e {
+            if (e.Message == "Request cancelled") {
+                throw e
+            }
             newMessage := { role: "assistant", content: e.Message }
             return [newMessage]
         } finally {
@@ -82,6 +108,7 @@ class LLMClient {
                     FileDelete(outputFile)
                 }
             }
+            this.pid := 0
         }
     }
 

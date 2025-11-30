@@ -39,10 +39,23 @@ class AppSettings {
         return settings
     }
 
+    GetVisiblePrompts(llmIndex) {
+        settings := this.GetSelectedSettings(llmIndex)
+        visiblePrompts := []
+        if (prompts := settings.Get("system_prompts", [])) {
+            for prompt in prompts {
+                if (!prompt.Get("hidden", false)) {
+                    visiblePrompts.Push(prompt)
+                }
+            }
+        }
+        return visiblePrompts
+    }
+
     GetSystemPromptValue(llmIndex, promptIndex) {
         defaultPrompt := "You are a helpful assistant. Be concise and direct in your responses."
-        settings := this.GetSelectedSettings(llmIndex)
-        if (prompts := settings.Get("system_prompts", [])) {
+        prompts := this.GetVisiblePrompts(llmIndex)
+        if (prompts.Length >= promptIndex) {
             value := prompts[promptIndex]["value"]
             if (FileExist(value)) {
                 return FileRead(value)
@@ -54,8 +67,8 @@ class AppSettings {
 
     GetInputTemplate(llmIndex, promptIndex) {
         defaultPrompt := ""
-        settings := this.GetSelectedSettings(llmIndex)
-        if (prompts := settings.Get("system_prompts", [])) {
+        prompts := this.GetVisiblePrompts(llmIndex)
+        if (prompts.Length >= promptIndex) {
             if (inputTempalte := prompts[promptIndex].Get("input_template", "")) {
                 return inputTempalte
             }
@@ -64,8 +77,8 @@ class AppSettings {
     }
 
     GetContext(llmIndex, promptIndex) {
-        settings := this.GetSelectedSettings(llmIndex)
-        if (prompts := settings.Get("system_prompts", "")) {
+        prompts := this.GetVisiblePrompts(llmIndex)
+        if (prompts.Length >= promptIndex) {
             if (context := prompts[promptIndex].Get("context", [])) {
                 return context
             }
@@ -93,14 +106,11 @@ class AppSettings {
     }
 
     GetSystemPromptNames(llmIndex) {
-        settings := this.GetSelectedSettings(llmIndex)
         names := []
-        if (prompts := settings.Get("system_prompts", "")) {
-            for prompt in prompts {
-                names.Push(prompt["name"])
-            }
-            return names
+        prompts := this.GetVisiblePrompts(llmIndex)
+        for prompt in prompts {
+            names.Push(prompt["name"])
         }
-        return []
+        return names
     }
 }

@@ -11,7 +11,7 @@ class TrayManager {
         A_TrayMenu.Add("Start Recording", ObjBindMethod(this, "StartRecording"))
         A_TrayMenu.Add("Stop Recording", ObjBindMethod(this, "StopRecording"))
         A_TrayMenu.Add("Ask LLM", ObjBindMethod(this, "DisplayLLMUserInterface"))
-        A_TrayMenu.Add("Exit", ExitApp)
+        A_TrayMenu.Add("Exit", ExitApplication)
 
         ; Set default tray icon and tooltip
         this.SetTrayStatus(false)  ; Default state (not recording)

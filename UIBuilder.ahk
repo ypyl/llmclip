@@ -8,6 +8,8 @@ class UIBuilder {
         FileMenu.Add("Load Conversation", LoadConversation)
         FileMenu.Add()  ; Separator
         FileMenu.Add("Reload Settings", ReloadSettings)
+        FileMenu.Add()  ; Separator
+        FileMenu.Add("Exit", ExitApplication)
         MyMenuBar := MenuBar()
         MyMenuBar.Add("&File", FileMenu)
         gui.MenuBar := MyMenuBar

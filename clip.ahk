@@ -570,7 +570,7 @@ ResetAll(*) {
     RenderMarkdown("")  ; Clear the response area
 }
 
-ExitApp(*) {
+ExitApplication(*) {
     ExitApp
 }
 

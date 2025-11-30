@@ -251,66 +251,54 @@ UpdateChatHistoryView(*) {
     MyGui["ChatMessageActionButton"].Visible := false  ; Hide the Run Tool button
 }
 
-AskToLLM(*) {
-    global TrayManagerValue, MyGui, ContextManagerValue, SessionManagerValue, LLMClientInstance
-
-    ; Check if we are in "Confirm Tool Run" mode (Agent Mode tool execution)
-    if (MyGui["AskLLM"].Text == "Confirm Tool Run") {
-        messages := SessionManagerValue.GetCurrentSessionMessages()
-
-        ; Find and execute all unexecuted tool calls
-        executedAny := false
-        for msg in messages {
-            if (SessionManagerValue.HasToolCalls(msg)) {
-                toolResults := ExecuteToolCalls(msg)
-                if (toolResults.Length > 0) {
-                    for res in toolResults {
-                        messages.Push(res)
-                    }
-                    executedAny := true
-                }
-            }
-        }
-
-        if (executedAny) {
-            SendToLLM()
-        } else {
-            ; Should not happen if button is Confirm Tool Run, but reset just in case
-            MyGui["AskLLM"].Text := "Ask LLM"
-        }
-        return
-    }
-
-    if (MyGui["AskLLM"].Text == "Cancel") {
-        if (LLMClientInstance) {
-            LLMClientInstance.Cancel()
-        }
-        return
-    }
-
+HandleToolConfirmation() {
+    global SessionManagerValue, MyGui
     messages := SessionManagerValue.GetCurrentSessionMessages()
-    promptText := MyGui["PromptEdit"].Value
 
-    ; Check for regeneration case: Empty prompt + Selected message
-    if (promptText == "") {
-        chatHistory := MyGui["ChatHistory"]
-        focused_row := chatHistory.GetNext()
-        if (focused_row > 0) {
-            selectedMsg := messages[focused_row]
-            if (selectedMsg.role == "user") {
-                ; Load message content into prompt for editing
-                MyGui["PromptEdit"].Value := SessionManagerValue.GetMessageText(selectedMsg)
-                return
+    ; Find and execute all unexecuted tool calls
+    executedAny := false
+    for msg in messages {
+        if (SessionManagerValue.HasToolCalls(msg)) {
+            toolResults := ExecuteToolCalls(msg)
+            if (toolResults.Length > 0) {
+                for res in toolResults {
+                    messages.Push(res)
+                }
+                executedAny := true
             }
         }
+    }
+
+    if (executedAny) {
+        SendToLLM()
     } else {
-        ; Check if we are in "Edit Mode" (Prompt not empty + User message selected)
-        chatHistory := MyGui["ChatHistory"]
-        focused_row := chatHistory.GetNext()
-        if (focused_row > 0) {
-            selectedMsg := messages[focused_row]
-            if (selectedMsg.role == "user") {
-                ; Update the message with new content
+        ; Should not happen if button is Confirm Tool Run, but reset just in case
+        MyGui["AskLLM"].Text := "Ask LLM"
+    }
+}
+
+HandleCancellation() {
+    global LLMClientInstance
+    if (LLMClientInstance) {
+        LLMClientInstance.Cancel()
+    }
+}
+
+HandleRegenerationOrEdit(promptText) {
+    global MyGui, SessionManagerValue
+    messages := SessionManagerValue.GetCurrentSessionMessages()
+    chatHistory := MyGui["ChatHistory"]
+    focused_row := chatHistory.GetNext()
+
+    if (focused_row > 0) {
+        selectedMsg := messages[focused_row]
+        if (selectedMsg.role == "user") {
+            if (promptText == "") {
+                ; Regeneration case: Load message content into prompt for editing
+                MyGui["PromptEdit"].Value := SessionManagerValue.GetMessageText(selectedMsg)
+                return true
+            } else {
+                ; Edit Mode: Update the message with new content
                 if (SessionManagerValue.UpdateMessage(focused_row, promptText)) {
                     ; Truncate history after this message
                     if (SessionManagerValue.TruncateMessages(focused_row)) {
@@ -318,13 +306,37 @@ AskToLLM(*) {
                         MyGui["PromptEdit"].Value := ""
                         ; Clear selection to exit "Edit Mode"
                         chatHistory.Modify(focused_row, "-Select")
-                        return
+                        return true
                     }
                 }
             }
         }
     }
+    return false
+}
 
+AskToLLM(*) {
+    global TrayManagerValue, MyGui, ContextManagerValue, SessionManagerValue, LLMClientInstance, AppSettingsValue
+
+    ; Check if we are in "Confirm Tool Run" mode (Agent Mode tool execution)
+    if (MyGui["AskLLM"].Text == "Confirm Tool Run") {
+        HandleToolConfirmation()
+        return
+    }
+
+    if (MyGui["AskLLM"].Text == "Cancel") {
+        HandleCancellation()
+        return
+    }
+
+    promptText := MyGui["PromptEdit"].Value
+
+    ; Check for regeneration or edit case
+    if (HandleRegenerationOrEdit(promptText)) {
+        return
+    }
+
+    messages := SessionManagerValue.GetCurrentSessionMessages()
     userMessageContent := ""
     if (promptText != "") {
         userMessageContent := promptText
@@ -548,16 +560,7 @@ HasVal(haystack, needle) {
     return false
 }
 
-HasContent(haystack, newContent) {
-    if (newContent = "")
-        return true
-
-    ; First check exact matches
-    if (HasVal(haystack, newContent))
-        return true
-
-    ; Also check in chat history
-    messages := SessionManagerValue.GetCurrentSessionMessages()
+CheckContentInMessages(messages, newContent) {
     for msg in messages {
         if (IsObject(msg.content)) {
             for part in msg.content {
@@ -569,14 +572,20 @@ HasContent(haystack, newContent) {
                 return true
         }
     }
+    return false
+}
 
-    ; Then check content matches for files and folders
-    ; Removed expensive check that reads file content
-    ; newContentText := GetTextFromContextItem(newContent)
-    ; for item in haystack {
-    ;     if (GetTextFromContextItem(item) = newContentText)
-    ;         return true
-    ; }
+HasContent(haystack, newContent) {
+    if (newContent = "")
+        return true
+
+    ; First check exact matches
+    if (HasVal(haystack, newContent))
+        return true
+
+    ; Also check in chat history
+    if (CheckContentInMessages(SessionManagerValue.GetCurrentSessionMessages(), newContent))
+        return true
 
     return false
 }

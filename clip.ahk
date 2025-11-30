@@ -110,6 +110,15 @@ DisplayLLMUserInterface(*) {
 
     MyGui.OnEvent("Size", GuiResize)
 
+    ; Create MenuBar
+    FileMenu := Menu()
+    FileMenu.Add("Save Conversation", SaveConversation)
+    FileMenu.Add("Load Conversation", LoadConversation)
+    
+    MyMenuBar := MenuBar()
+    MyMenuBar.Add("&File", FileMenu)
+    MyGui.MenuBar := MyMenuBar
+
     ; Add session selector
     sessionCombo := MyGui.Add("DropDownList", "x10 y10 w70 vSessionSelect", SessionManagerValue.sessionNames)
     sessionCombo.Value := SessionManagerValue.currentSessionIndex
@@ -939,7 +948,65 @@ ReloadSettings(*) {
     }
 
     ; Update tool checkbox based on current LLM type
-    powerShellEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(),
-    "powerShellTool")
+    powerShellEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(), "powerShellTool")
     MyGui["PowerShellToolBox"].Value := powerShellEnabled ? 1 : 0
+}
+
+SaveConversation(*) {
+    global SessionManagerValue, MyGui
+    
+    state := SessionManagerValue.ExportSessionState()
+    jsonStr := JSON.Dump(state, true) ; Pretty print
+    
+    selectedFile := FileSelect("S16", "conversation.json", "Save Conversation", "JSON Files (*.json)")
+    if (selectedFile) {
+        if (FileExist(selectedFile)) {
+            FileDelete(selectedFile)
+        }
+        FileAppend(jsonStr, selectedFile)
+    }
+}
+
+LoadConversation(*) {
+    global SessionManagerValue, MyGui, AppSettingsValue
+    
+    selectedFile := FileSelect("3", , "Load Conversation", "JSON Files (*.json)")
+    if (selectedFile) {
+        try {
+            fileContent := FileRead(selectedFile)
+            state := JSON.Load(fileContent)
+            
+            SessionManagerValue.ImportSessionState(state)
+            
+            ; Update UI elements to reflect loaded state
+            
+            ; Update Session Selector (though we stay in current session index)
+            ; Update LLM Type
+            MyGui["LLMType"].Value := SessionManagerValue.GetCurrentSessionLLMType()
+            
+            ; Update System Prompt List and Selection
+            systemPromptCombo := MyGui["SystemPrompt"]
+            systemPromptCombo.Delete()
+            systemPromptCombo.Add(AppSettingsValue.GetSystemPromptNames(SessionManagerValue.GetCurrentSessionLLMType()))
+            systemPromptCombo.Value := SessionManagerValue.GetCurrentSessionSystemPrompt()
+            
+            ; Update System Prompt Content
+            systemPrompt := AppSettingsValue.GetSystemPromptValue(
+                SessionManagerValue.GetCurrentSessionLLMType(),
+                SessionManagerValue.GetCurrentSessionSystemPrompt()
+            )
+            SessionManagerValue.UpdateSystemPromptContent(systemPrompt)
+            
+            ; Update Context View
+            UpdateContextView()
+            
+            ; Update Chat History View
+            UpdateChatHistoryView()
+            
+            ; Clear Response Area
+            RenderMarkdown("")
+        } catch as e {
+            MsgBox("Failed to load conversation: " . e.Message, "Error", "Iconx")
+        }
+    }
 }

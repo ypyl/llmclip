@@ -259,4 +259,61 @@ class SessionManager {
         }
         return false
     }
+
+    ExportSessionState() {
+        return {
+            messages: this.sessionMessages[this.currentSessionIndex],
+            context: this.sessionContexts[this.currentSessionIndex],
+            llmType: this.sessionLLMTypes[this.currentSessionIndex],
+            systemPrompt: this.sessionSystemPrompts[this.currentSessionIndex]
+        }
+    }
+
+    ; Helper method to convert Map objects (from JSON parser) to regular objects
+    ConvertMapToObject(value) {
+        if (Type(value) = "Map") {
+            obj := {}
+            for key, val in value {
+                obj.%key% := this.ConvertMapToObject(val)
+            }
+            return obj
+        } else if (Type(value) = "Array") {
+            arr := []
+            for item in value {
+                arr.Push(this.ConvertMapToObject(item))
+            }
+            return arr
+        } else {
+            return value
+        }
+    }
+
+    ImportSessionState(state) {
+        ; Check if state is a Map (from JSON parser) or an Object
+        isMap := Type(state) = "Map"
+        
+        ; Validate required properties exist
+        hasMessages := isMap ? state.Has("messages") : state.HasOwnProp("messages")
+        hasContext := isMap ? state.Has("context") : state.HasOwnProp("context")
+        hasLLMType := isMap ? state.Has("llmType") : state.HasOwnProp("llmType")
+        hasSystemPrompt := isMap ? state.Has("systemPrompt") : state.HasOwnProp("systemPrompt")
+        
+        if (!hasMessages || !hasContext || !hasLLMType || !hasSystemPrompt) {
+            throw Error("Invalid session state file")
+        }
+
+        ; Get values and convert Maps to Objects if needed
+        messages := isMap ? state["messages"] : state.messages
+        context := isMap ? state["context"] : state.context
+        llmType := isMap ? state["llmType"] : state.llmType
+        systemPrompt := isMap ? state["systemPrompt"] : state.systemPrompt
+        
+        ; Convert Maps to Objects for compatibility with rest of codebase
+        this.sessionMessages[this.currentSessionIndex] := this.ConvertMapToObject(messages)
+        this.sessionContexts[this.currentSessionIndex] := this.ConvertMapToObject(context)
+        this.sessionLLMTypes[this.currentSessionIndex] := llmType
+        this.sessionSystemPrompts[this.currentSessionIndex] := systemPrompt
+        
+        return true
+    }
 }

@@ -41,30 +41,6 @@ global TrayManagerValue := TrayManager(DisplayLLMUserInterface, UpdateUiBasesOnR
 
 global LLMClientInstance := ""
 
-; Response area positioning variables
-global responseCtrX := 400
-global responseCtrY := 10
-global responseCtrWidth := 790
-global responseCtrHeight := 580
-
-; PromptEdit positioning variables
-global promptEditX := 10
-global promptEditY := 405
-global promptEditWidth := 380
-global promptEditHeight := 120
-
-; Bottom controls positioning
-global llmTypeX := 10
-global llmTypeY := 570
-global llmTypeWidth := 90
-global systemPromptX := 110
-global systemPromptY := 570
-global systemPromptWidth := 100
-global askLLMX := 220
-global askLLMY := 570
-global askLLMWidth := 170
-global bottomControlsHeight := 60  ; Height reserved for bottom controls
-
 guiShown := false
 DisplayLLMUserInterface()
 
@@ -96,10 +72,6 @@ UpdateUiBasesOnRecordingStatus(*) {
 
 DisplayLLMUserInterface(*) {
     global MyGui, guiShown, askButton, AppSettingsValue, SessionManagerValue, WebViewManagerValue, TrayManagerValue
-    global responseCtrX, responseCtrY, responseCtrWidth, responseCtrHeight
-    global promptEditX, promptEditY, promptEditWidth, promptEditHeight
-    global llmTypeX, llmTypeY, llmTypeWidth, systemPromptX, systemPromptY, systemPromptWidth, askLLMX, askLLMY,
-        askLLMWidth
 
     if (guiShown) {
         MyGui.Show()
@@ -138,19 +110,12 @@ DisplayLLMUserInterface(*) {
 
 GuiResize(thisGui, MinMax, Width, Height) {
     global WebViewManagerValue
-    global responseCtrX, responseCtrY, responseCtrWidth, responseCtrHeight
-    global promptEditX, promptEditY, promptEditWidth, promptEditHeight
-    global llmTypeX, systemPromptX, askLLMX, bottomControlsHeight
 
     if (MinMax = -1)  ; If window is minimized
         return
 
-    ; Calculate new dimensions for ResponseCtr
-    responseCtrWidth := Width - 410
-    responseCtrHeight := Height - 20
-
     ; Resize the ResponseCtr control
-    thisGui["ResponseCtr"].Move(responseCtrX, responseCtrY, responseCtrWidth, responseCtrHeight)
+    thisGui["ResponseCtr"].Move(UIConfig.responseCtrX, UIConfig.responseCtrY, Width - 410, Height - 20)
 
     ; Resize the WebView2 control to match ResponseCtr
     hCtrl := thisGui["ResponseCtr"].Hwnd
@@ -170,20 +135,20 @@ GuiResize(thisGui, MinMax, Width, Height) {
     }
 
     ; Resize the prompt edit control
-    promptEditHeight := Height - promptEditY - bottomControlsHeight
-    thisGui["PromptEdit"].Move(promptEditX, promptEditY, promptEditWidth, promptEditHeight)
+    promptEditHeight := Height - UIConfig.promptEditY - UIConfig.bottomControlsHeight
+    thisGui["PromptEdit"].Move(UIConfig.promptEditX, UIConfig.promptEditY, UIConfig.promptEditWidth, promptEditHeight)
 
     ; Move bottom controls
     bottomY := Height - 35  ; 35 pixels from bottom
-    thisGui["LLMType"].Move(llmTypeX, bottomY)
-    thisGui["SystemPrompt"].Move(systemPromptX, bottomY)
-    thisGui["AskLLM"].Move(askLLMX, bottomY)
+    thisGui["LLMType"].Move(UIConfig.llmTypeX, bottomY)
+    thisGui["SystemPrompt"].Move(UIConfig.systemPromptX, bottomY)
+    thisGui["AskLLM"].Move(UIConfig.askLLMX, bottomY)
 
     ; Move PowerShell tool checkbox and icon above bottom controls
     checkBoxY := bottomY - 20
-    thisGui["PowerShellIcon"].Move(llmTypeX + 40, checkBoxY)
-    thisGui["PowerShellToolBox"].Move(llmTypeX, checkBoxY)
-    thisGui["AnswerSizeBox"].Move(llmTypeX + 290, checkBoxY - 5)
+    thisGui["PowerShellIcon"].Move(UIConfig.llmTypeX + 40, checkBoxY)
+    thisGui["PowerShellToolBox"].Move(UIConfig.llmTypeX, checkBoxY)
+    thisGui["AnswerSizeBox"].Move(UIConfig.llmTypeX + 290, checkBoxY - 5)
 }
 
 GetLabelsForContextItems() {

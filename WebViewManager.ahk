@@ -6,6 +6,7 @@ class WebViewManager {
     wvc := ""
     clipboardHost := {}
     articleHost := {}
+    inputHost := {}
     cache := Map()  ; Cache to store loaded articles by URL
     articleReady := false
     currentArticle := ""
@@ -17,7 +18,14 @@ class WebViewManager {
         this.articleHost := {
             OnArticle: (article) => this.HandleArticle(article)
         }
+        this.inputHost := {
+            Append: (text) => MsgBox(text) ; Default placeholder
+        }
         this.cache := Map()  ; Initialize the cache
+    }
+
+    SetInputCallback(callback) {
+        this.inputHost.Append := callback
     }
 
     Init(responseCtr) {
@@ -26,6 +34,7 @@ class WebViewManager {
         this.wv.NavigateToString(this.GetHtmlContent())
         this.wv.AddHostObjectToScript("clipboard", this.clipboardHost)
         this.wv.AddHostObjectToScript("article", this.articleHost)
+        this.wv.AddHostObjectToScript("input", this.inputHost)
     }
 
     InitArticleMode() {
@@ -143,10 +152,27 @@ class WebViewManager {
                     margin: 4px;
                     padding: 4px 8px;
                 }
+                .quote-button {
+                    position: fixed;
+                    display: none;
+                    background-color: #0078d4;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    padding: 6px 12px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                    z-index: 1000;
+                }
+                .quote-button:hover {
+                    background-color: #0063b1;
+                }
             </style>
         </head>
         <body>
             <div id="content"></div>
+            <button id="quoteBtn" class="quote-button">Quote</button>
             <script>
                 // Configure marked to customize code block rendering
                 marked.setOptions({
@@ -182,6 +208,52 @@ class WebViewManager {
                 function renderMarkdown(content) {
                     document.getElementById("content").innerHTML = marked.parse(content, { renderer: renderer });
                 }
+
+                // Quote button logic
+                const quoteBtn = document.getElementById('quoteBtn');
+
+                document.addEventListener('selectionchange', () => {
+                    const selection = window.getSelection();
+                    if (selection.isCollapsed) {
+                        quoteBtn.style.display = 'none';
+                    }
+                });
+
+                document.addEventListener('mouseup', (e) => {
+                    const selection = window.getSelection();
+                    const text = selection.toString().trim();
+
+                    if (text) {
+                        const range = selection.getRangeAt(0);
+                        const rect = range.getBoundingClientRect();
+
+                        // Position button above the selection
+                        let top = rect.top - 40;
+                        let left = rect.left + (rect.width / 2) - (quoteBtn.offsetWidth / 2);
+
+                        // Ensure button stays within viewport
+                        if (top < 0) top = rect.bottom + 10;
+                        if (left < 0) left = 10;
+                        if (left + quoteBtn.offsetWidth > window.innerWidth) {
+                            left = window.innerWidth - quoteBtn.offsetWidth - 10;
+                        }
+
+                        quoteBtn.style.top = ``${top}px``;
+                        quoteBtn.style.left = ``${left}px``;
+                        quoteBtn.style.display = 'block';
+                    } else {
+                        quoteBtn.style.display = 'none';
+                    }
+                });
+
+                quoteBtn.addEventListener('click', () => {
+                    const text = window.getSelection().toString().trim();
+                    if (text) {
+                        window.chrome.webview.hostObjects.sync.input.Append(text);
+                        window.getSelection().removeAllRanges();
+                        quoteBtn.style.display = 'none';
+                    }
+                });
             </script>
         </body>
         </html>

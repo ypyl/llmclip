@@ -130,6 +130,7 @@ DisplayLLMUserInterface(*) {
     MyGui.Show("w1230 h610")
 
     WebViewManagerValue.Init(responseCtr)
+    WebViewManagerValue.SetInputCallback(AppendToPrompt)
     guiShown := true
 
     UpdateChatHistoryView()
@@ -673,6 +674,15 @@ CopySelectedMessage(*) {
         ClipText := StrReplace(ClipText, "`n", "`r`n")
         A_Clipboard := ClipText
     }
+}
+
+AppendToPrompt(text) {
+    global MyGui
+    currentText := MyGui["PromptEdit"].Value
+    if (currentText != "") {
+        currentText .= "`n"
+    }
+    MyGui["PromptEdit"].Value := currentText . "> " . text . "`n"
 }
 
 PromptChange(GuiCtrl, Info) {

@@ -9,6 +9,8 @@
 #Include WebViewManager.ahk
 #Include ContextManager.ahk
 #Include TrayManager.ahk
+#Include UIConfig.ahk
+#Include UIBuilder.ahk
 
 ; Initialize variables
 
@@ -110,102 +112,19 @@ DisplayLLMUserInterface(*) {
 
     MyGui.OnEvent("Size", GuiResize)
 
-    ; Create MenuBar
-    FileMenu := Menu()
-    FileMenu.Add("Save Conversation", SaveConversation)
-    FileMenu.Add("Load Conversation", LoadConversation)
-    
-    FileMenu.Add()  ; Separator
-    FileMenu.Add("Reload Settings", ReloadSettings)
-    MyMenuBar := MenuBar()
-    MyMenuBar.Add("&File", FileMenu)
-    MyGui.MenuBar := MyMenuBar
+    UIBuilder.CreateMenuBar(MyGui)
 
-    ; Add session selector
-    sessionCombo := MyGui.Add("DropDownList", "x10 y10 w70 vSessionSelect", SessionManagerValue.sessionNames)
-    sessionCombo.Value := SessionManagerValue.currentSessionIndex
-    sessionCombo.OnEvent("Change", SessionChanged)
+    UIBuilder.CreateTopControls(MyGui, SessionManagerValue, TrayManagerValue)
 
-    ; Add record button
-    recordButtonTitle := TrayManagerValue.isRecording ? "Stop" : "Record"
-    recordButton := MyGui.Add("Button", "x90 y10 w90", recordButtonTitle)
-    recordButton.OnEvent("Click", ToggleRecording)
+    UIBuilder.CreateContextSection(MyGui)
 
-    ; Button section moved down
-    resetButton := MyGui.Add("Button", "x300 y10 w90", "Reset All")
-    resetButton.OnEvent("Click", ResetAll)
+    UIBuilder.CreateChatHistorySection(MyGui)
 
-    ; Add context list with reduced height
-    labels := GetLabelsForContextItems()
-    contextBox := MyGui.Add("ListBox", "vContextBox x10 y40 w380 h150 VScroll HScroll Multi", labels)
-    contextBox.OnEvent("Change", ContextBoxSelect)  ; Add this line
+    UIBuilder.CreatePromptSection(MyGui, SessionManagerValue, AppSettingsValue)
 
-    ; Context buttons moved up
-    deleteButton := MyGui.Add("Button", "x10 y190 w120", "Delete Selected")
-    deleteButton.OnEvent("Click", DeleteSelected)
+    askButton := UIBuilder.CreateBottomControls(MyGui, SessionManagerValue, AppSettingsValue)
 
-    clearSelectionButton := MyGui.Add("Button", "x140 y190 w120", "Reset Selection")
-    clearSelectionButton.OnEvent("Click", ResetSelection)
-
-    clearAllButton := MyGui.Add("Button", "x270 y190 w120", "Clear Context")
-    clearAllButton.OnEvent("Click", ClearAllContext)
-
-    ; Add ListView for chat history
-    chatHistory := MyGui.Add("ListView", "vChatHistory x10 y220 w380 h150 NoSort", ["Role", "Text", "⏱️", "Tokens"])
-    chatHistory.ModifyCol(1, 30)  ; Role column width
-    chatHistory.ModifyCol(2, 250) ; Text column width
-    chatHistory.ModifyCol(3, 50)  ; Time column width
-    chatHistory.ModifyCol(4, 50)  ; Tokens column width
-    chatHistory.OnEvent("ItemSelect", ChatHistorySelect)
-
-    deleteMessageButton := MyGui.Add("Button", "x10 y375 w120", "Delete Selected")
-    deleteMessageButton.OnEvent("Click", DeleteSelectedMessage)
-
-    deleteMessageButton.OnEvent("Click", DeleteSelectedMessage)
-
-    chatMessageButton := MyGui.Add("Button", "vChatMessageActionButton x140 y375 w120 Hidden", "Copy")
-    chatMessageButton.OnEvent("Click", CopySelectedMessage)
-
-    clearHistoryButton := MyGui.Add("Button", "x270 y375 w120", "Clear History")
-    clearHistoryButton.OnEvent("Click", ClearChatHistory)
-
-    ; Prompt section with increased height
-    promptEdit := MyGui.Add("Edit", "vPromptEdit x" promptEditX " y" promptEditY " w" promptEditWidth " h" promptEditHeight " Multi WantReturn",
-        "")
-    promptEdit.OnEvent("Change", PromptChange)
-
-    ; Add PowerShell tool checkbox after promptEdit and above llmTypeCombo
-    powerShellEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(),
-    "powerShellTool")
-
-    ; Add checkbox next to the icon
-    powerShellToolBox := MyGui.Add("CheckBox", "x" (llmTypeX) " y" (llmTypeY - 20) " w40 vPowerShellToolBox", "ps1")
-    ; Add PowerShell icon
-    powerShellIcon := MyGui.Add("Picture", "x" (llmTypeX + 40) " y" (llmTypeY - 20) " w16 h16 Icon1 vPowerShellIcon",
-    "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe")
-    powerShellToolBox.Value := powerShellEnabled ? 1 : 0
-    ; Add answer size slider (0=Small, 1=Default, 2=Long)
-    answerSizeBox := MyGui.Add("Slider", "x" (llmTypeX + 290) " y" (llmTypeY - 5) " w80 vAnswerSizeBox Range0-2 TickInterval1 NoTicks",
-    1)
-
-    ; Add LLM type selector near Reset All button
-    llmTypeCombo := MyGui.Add("DropDownList", "x" llmTypeX " y" llmTypeY " w" llmTypeWidth " vLLMType",
-        AppSettingsValue.llmTypes)
-    llmTypeCombo.Value := SessionManagerValue.GetCurrentSessionLLMType()
-    llmTypeCombo.OnEvent("Change", LLMTypeChanged)
-
-    ; Add system prompt selector
-    systemPromptCombo := MyGui.Add("DropDownList", "x" systemPromptX " y" systemPromptY " w" systemPromptWidth " vSystemPrompt",
-        AppSettingsValue.GetSystemPromptNames(SessionManagerValue.GetCurrentSessionLLMType()))
-    systemPromptCombo.Value := SessionManagerValue.GetCurrentSessionSystemPrompt()
-    systemPromptCombo.OnEvent("Change", SystemPromptChanged)
-
-    askButton := MyGui.Add("Button", "x" askLLMX " y" askLLMY " w" askLLMWidth " vAskLLM", "Ask LLM")
-    askButton.OnEvent("Click", AskToLLM)
-
-    ; Right panel uses the global variables
-    responseCtr := MyGui.Add("Edit", "vResponseCtr x" responseCtrX " y" responseCtrY " w" responseCtrWidth " h" responseCtrHeight " -VScroll",
-        "")
+    responseCtr := UIBuilder.CreateResponseArea(MyGui)
 
     MyGui.OnEvent("Close", GuiClose)
     MyGui.Show("w1230 h610")
@@ -804,7 +723,7 @@ DeleteSelectedMessage(*) {
 }
 
 BuildUserMessage(userMessageContent, contextItems, isImageEnabled) {
-    global ContextManagerValue, FileUtils
+    global ContextManagerValue
 
     if (!isImageEnabled) {
         return userMessageContent
@@ -953,10 +872,10 @@ ReloadSettings(*) {
 
 SaveConversation(*) {
     global SessionManagerValue, MyGui
-    
+
     state := SessionManagerValue.ExportSessionState()
     jsonStr := JSON.Dump(state, true) ; Pretty print
-    
+
     selectedFile := FileSelect("S16", "conversation.json", "Save Conversation", "JSON Files (*.json)")
     if (selectedFile) {
         if (FileExist(selectedFile)) {
@@ -968,40 +887,40 @@ SaveConversation(*) {
 
 LoadConversation(*) {
     global SessionManagerValue, MyGui, AppSettingsValue
-    
+
     selectedFile := FileSelect("3", , "Load Conversation", "JSON Files (*.json)")
     if (selectedFile) {
         try {
             fileContent := FileRead(selectedFile)
             state := JSON.Load(fileContent)
-            
+
             SessionManagerValue.ImportSessionState(state)
-            
+
             ; Update UI elements to reflect loaded state
-            
+
             ; Update Session Selector (though we stay in current session index)
             ; Update LLM Type
             MyGui["LLMType"].Value := SessionManagerValue.GetCurrentSessionLLMType()
-            
+
             ; Update System Prompt List and Selection
             systemPromptCombo := MyGui["SystemPrompt"]
             systemPromptCombo.Delete()
             systemPromptCombo.Add(AppSettingsValue.GetSystemPromptNames(SessionManagerValue.GetCurrentSessionLLMType()))
             systemPromptCombo.Value := SessionManagerValue.GetCurrentSessionSystemPrompt()
-            
+
             ; Update System Prompt Content
             systemPrompt := AppSettingsValue.GetSystemPromptValue(
                 SessionManagerValue.GetCurrentSessionLLMType(),
                 SessionManagerValue.GetCurrentSessionSystemPrompt()
             )
             SessionManagerValue.UpdateSystemPromptContent(systemPrompt)
-            
+
             ; Update Context View
             UpdateContextView()
-            
+
             ; Update Chat History View
             UpdateChatHistoryView()
-            
+
             ; Clear Response Area
             RenderMarkdown("")
         } catch as e {

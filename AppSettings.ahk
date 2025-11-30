@@ -8,6 +8,10 @@ class AppSettings {
     llmTypes := []
 
     __New() {
+        this.Reload()
+    }
+
+    Reload() {
         settings := JSON.LoadFile("settings.json")
         this.providers := Map()
         for provider in settings["providers"] {

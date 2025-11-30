@@ -118,6 +118,9 @@ DisplayLLMUserInterface(*) {
     recordButton := MyGui.Add("Button", "x90 y10 w90", recordButtonTitle)
     recordButton.OnEvent("Click", ToggleRecording)
 
+    reloadSettingsButton := MyGui.Add("Button", "x200 y10 w90", "Reload Settings")
+    reloadSettingsButton.OnEvent("Click", ReloadSettings)
+
     ; Button section moved down
     resetButton := MyGui.Add("Button", "x300 y10 w90", "Reset All")
     resetButton.OnEvent("Click", ResetAll)
@@ -172,7 +175,8 @@ DisplayLLMUserInterface(*) {
     "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe")
     powerShellToolBox.Value := powerShellEnabled ? 1 : 0
     ; Add answer size slider (0=Small, 1=Default, 2=Long)
-    answerSizeBox := MyGui.Add("Slider", "x" (llmTypeX + 290) " y" (llmTypeY - 5) " w80 vAnswerSizeBox Range0-2 TickInterval1 NoTicks", 1)
+    answerSizeBox := MyGui.Add("Slider", "x" (llmTypeX + 290) " y" (llmTypeY - 5) " w80 vAnswerSizeBox Range0-2 TickInterval1 NoTicks",
+    1)
 
     ; Add LLM type selector near Reset All button
     llmTypeCombo := MyGui.Add("DropDownList", "x" llmTypeX " y" llmTypeY " w" llmTypeWidth " vLLMType",
@@ -878,4 +882,46 @@ ExecuteToolCalls(msg) {
         }
     }
     return results
+}
+
+ReloadSettings(*) {
+    global MyGui, AppSettingsValue, SessionManagerValue
+
+    ; Reload settings from disk
+    AppSettingsValue.Reload()
+
+    ; Refresh LLM Type dropdown
+    llmTypeCombo := MyGui["LLMType"]
+    currentLLMType := SessionManagerValue.GetCurrentSessionLLMType()
+
+    llmTypeCombo.Delete()
+    llmTypeCombo.Add(AppSettingsValue.llmTypes)
+
+    ; Try to preserve current selection, otherwise default to first
+    try {
+        llmTypeCombo.Value := currentLLMType
+    } catch {
+        llmTypeCombo.Value := 1
+        SessionManagerValue.SetCurrentSessionLLMType(1)
+    }
+
+    ; Refresh System Prompt dropdown
+    systemPromptCombo := MyGui["SystemPrompt"]
+    currentSystemPrompt := SessionManagerValue.GetCurrentSessionSystemPrompt()
+
+    systemPromptCombo.Delete()
+    systemPromptCombo.Add(AppSettingsValue.GetSystemPromptNames(SessionManagerValue.GetCurrentSessionLLMType()))
+
+    ; Try to preserve current selection, otherwise default to first
+    try {
+        systemPromptCombo.Value := currentSystemPrompt
+    } catch {
+        systemPromptCombo.Value := 1
+        SessionManagerValue.SetCurrentSessionSystemPrompt(1)
+    }
+
+    ; Update tool checkbox based on current LLM type
+    powerShellEnabled := AppSettingsValue.IsToolEnabled(SessionManagerValue.GetCurrentSessionLLMType(),
+    "powerShellTool")
+    MyGui["PowerShellToolBox"].Value := powerShellEnabled ? 1 : 0
 }

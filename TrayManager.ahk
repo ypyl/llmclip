@@ -1,17 +1,19 @@
 #Requires AutoHotkey 2.0
 
 class TrayManager {
-    __New(displayLLMUserInterfaceCallback := "", toggleCallback := "") {
+    __New(displayLLMUserInterfaceCallback := "", toggleCallback := "", exitCallback := "", contextManager := "") {
         this.isRecording := false
         this.displayLLMUserInterfaceMethod := displayLLMUserInterfaceCallback
         this.toggleCallback := toggleCallback
+        this.exitCallback := exitCallback
+        this.contextManager := contextManager
 
         ; Initialize tray menu
         A_TrayMenu.Delete()  ; Remove default menu items
         A_TrayMenu.Add("Start Recording", ObjBindMethod(this, "StartRecording"))
         A_TrayMenu.Add("Stop Recording", ObjBindMethod(this, "StopRecording"))
         A_TrayMenu.Add("Ask LLM", ObjBindMethod(this, "DisplayLLMUserInterface"))
-        A_TrayMenu.Add("Exit", ExitApplication)
+        A_TrayMenu.Add("Exit", ObjBindMethod(this, "ExitApp"))
 
         ; Set default tray icon and tooltip
         this.SetTrayStatus(false)  ; Default state (not recording)
@@ -65,7 +67,9 @@ class TrayManager {
                 recordedText := ""  ; Clear recorded text
                 context := sessionManager.GetCurrentSessionContext()
                 for item in context {
-                    recordedText .= ContextManagerValue.GetTextFromContextItem(item)
+                    if (this.contextManager) {
+                        recordedText .= this.contextManager.GetTextFromContextItem(item)
+                    }
                 }
                 A_Clipboard := recordedText  ; Copy recorded text to clipboard
             }
@@ -87,5 +91,13 @@ class TrayManager {
 
     DisplayLLMUserInterface(*) {
         this.displayLLMUserInterfaceMethod()
+    }
+
+    ExitApp(*) {
+        if (this.exitCallback) {
+            this.exitCallback()
+        } else {
+            ExitApp
+        }
     }
 }

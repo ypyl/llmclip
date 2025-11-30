@@ -115,6 +115,8 @@ DisplayLLMUserInterface(*) {
     FileMenu.Add("Save Conversation", SaveConversation)
     FileMenu.Add("Load Conversation", LoadConversation)
     
+    FileMenu.Add()  ; Separator
+    FileMenu.Add("Reload Settings", ReloadSettings)
     MyMenuBar := MenuBar()
     MyMenuBar.Add("&File", FileMenu)
     MyGui.MenuBar := MyMenuBar
@@ -128,9 +130,6 @@ DisplayLLMUserInterface(*) {
     recordButtonTitle := TrayManagerValue.isRecording ? "Stop" : "Record"
     recordButton := MyGui.Add("Button", "x90 y10 w90", recordButtonTitle)
     recordButton.OnEvent("Click", ToggleRecording)
-
-    reloadSettingsButton := MyGui.Add("Button", "x200 y10 w90", "Reload Settings")
-    reloadSettingsButton.OnEvent("Click", ReloadSettings)
 
     ; Button section moved down
     resetButton := MyGui.Add("Button", "x300 y10 w90", "Reset All")

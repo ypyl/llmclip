@@ -16,6 +16,7 @@ class AppController {
     guiShown := false
     ModelMenu := ""  ; Store reference to Model menu
     MyMenuBar := ""  ; Store reference to MenuBar
+    currentAnswerSize := "Default"  ; Track current answer size (Small, Default, Long)
     
     AppSettingsValue := ""
     SessionManagerValue := ""
@@ -156,7 +157,6 @@ class AppController {
         checkBoxY := bottomY - 20
         thisGui["PowerShellIcon"].Move(UIConfig.llmTypeX + 40, checkBoxY)
         thisGui["PowerShellToolBox"].Move(UIConfig.llmTypeX, checkBoxY)
-        thisGui["AnswerSizeBox"].Move(UIConfig.llmTypeX + 290, checkBoxY - 5)
     }
 
     GetLabelsForContextItems() {
@@ -227,6 +227,20 @@ class AppController {
         powerShellEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(),
         "powerShellTool")
         this.MyGui["PowerShellToolBox"].Value := powerShellEnabled ? 1 : 0
+    }
+
+    SelectAnswerSize(ItemName, ItemPos, MyMenu) {
+        ; Update checkmarks
+        for _, size in ["Small", "Default", "Long"] {
+            if (size = ItemName) {
+                MyMenu.Check(size)
+            } else {
+                MyMenu.Uncheck(size)
+            }
+        }
+        
+        ; Store current answer size
+        this.currentAnswerSize := ItemName
     }
 
     SessionChanged(*) {
@@ -423,15 +437,14 @@ class AppController {
 
             ; Update tools property based on checkbox values
             settings["tools"] := this.ConfigureToolSettings()
-            ; Add a user message to instruct the model on answer length based on slider position
+            ; Add a user message to instruct the model on answer length based on menu selection
             answerSizeMsg := ""
-            answerSize := this.MyGui["AnswerSizeBox"].Value
-            if (answerSize = 0) {
+            if (this.currentAnswerSize = "Small") {
                 answerSizeMsg := "Please answer as concisely as possible (short answer)."
-            } else if (answerSize = 2) {
+            } else if (this.currentAnswerSize = "Long") {
                 answerSizeMsg := "Please provide a long, detailed answer."
             }
-            ; If answerSize = 1 (middle position), no message is added (default behavior)
+            ; If currentAnswerSize = "Default", no message is added (default behavior)
             if (answerSizeMsg != "") {
                 messages.Push({ role: "user", content: answerSizeMsg })
             }

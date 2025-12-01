@@ -27,12 +27,22 @@ class UIBuilder {
             }
         }
 
+        ; Create Answer Size menu
+        AnswerSizeMenu := Menu()
+        AnswerSizeMenu.Add("Small", ObjBindMethod(controller, "SelectAnswerSize"))
+        AnswerSizeMenu.Add("Default", ObjBindMethod(controller, "SelectAnswerSize"))
+        AnswerSizeMenu.Add("Long", ObjBindMethod(controller, "SelectAnswerSize"))
+        
+        ; Set initial checkmark (Default = index 2)
+        AnswerSizeMenu.Check("Default")
+
         MyMenuBar := MenuBar()
         MyMenuBar.Add("&File", FileMenu)
         MyMenuBar.Add(currentModelName, ModelMenu)  ; Use model name instead of "&Model"
+        MyMenuBar.Add("Answer Size", AnswerSizeMenu)
         gui.MenuBar := MyMenuBar
         
-        return {menuBar: MyMenuBar, modelMenu: ModelMenu}  ; Return both
+        return {menuBar: MyMenuBar, modelMenu: ModelMenu}  ; Return menuBar and modelMenu
     }
 
     static CreateTopControls(gui, sessionManagerValue, trayManagerValue, controller) {
@@ -88,6 +98,7 @@ class UIBuilder {
         clearHistoryButton.OnEvent("Click", ObjBindMethod(controller, "ClearChatHistory"))
     }
 
+
     static CreatePromptSection(gui, sessionManagerValue, appSettingsValue, controller) {
 
         ; Prompt edit control
@@ -100,9 +111,6 @@ class UIBuilder {
         powerShellToolBox := gui.Add("CheckBox", "x" UIConfig.llmTypeX " y" (UIConfig.llmTypeY - 20) " w40 vPowerShellToolBox", "ps1")
         powerShellIcon := gui.Add("Picture", "x" (UIConfig.llmTypeX + 40) " y" (UIConfig.llmTypeY - 20) " w16 h16 Icon1 vPowerShellIcon", "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe")
         powerShellToolBox.Value := powerShellEnabled ? 1 : 0
-
-        ; Answer size slider (0=Small, 1=Default, 2=Long)
-        answerSizeBox := gui.Add("Slider", "x" (UIConfig.llmTypeX + 290) " y" (UIConfig.llmTypeY - 5) " w80 vAnswerSizeBox Range0-2 TickInterval1 NoTicks", 1)
     }
 
     static CreateBottomControls(gui, sessionManagerValue, appSettingsValue, controller) {

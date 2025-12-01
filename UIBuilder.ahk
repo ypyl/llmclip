@@ -2,7 +2,7 @@
 #Include UIConfig.ahk
 
 class UIBuilder {
-    static CreateMenuBar(gui, controller) {
+    static CreateMenuBar(gui, controller, appSettingsValue, sessionManagerValue) {
         FileMenu := Menu()
         FileMenu.Add("Save Conversation", ObjBindMethod(controller, "SaveConversation"))
         FileMenu.Add("Load Conversation", ObjBindMethod(controller, "LoadConversation"))
@@ -10,9 +10,29 @@ class UIBuilder {
         FileMenu.Add("Reload Settings", ObjBindMethod(controller, "ReloadSettings"))
         FileMenu.Add()  ; Separator
         FileMenu.Add("Exit", ObjBindMethod(controller, "ExitApplication"))
+
+        ModelMenu := Menu()
+        for index, modelName in appSettingsValue.llmTypes {
+            ModelMenu.Add(modelName, ObjBindMethod(controller, "SelectModel"))
+        }
+
+        ; Get current model name for menu label
+        currentModelIndex := sessionManagerValue.GetCurrentSessionLLMType()
+        currentModelName := "Model: " . appSettingsValue.llmTypes[currentModelIndex]
+
+        ; Set initial checkmark in Model menu
+        for index, modelName in appSettingsValue.llmTypes {
+            if (index = currentModelIndex) {
+                ModelMenu.Check(modelName)
+            }
+        }
+
         MyMenuBar := MenuBar()
         MyMenuBar.Add("&File", FileMenu)
+        MyMenuBar.Add(currentModelName, ModelMenu)  ; Use model name instead of "&Model"
         gui.MenuBar := MyMenuBar
+        
+        return {menuBar: MyMenuBar, modelMenu: ModelMenu}  ; Return both
     }
 
     static CreateTopControls(gui, sessionManagerValue, trayManagerValue, controller) {
@@ -86,10 +106,10 @@ class UIBuilder {
     }
 
     static CreateBottomControls(gui, sessionManagerValue, appSettingsValue, controller) {
-        ; Add LLM type selector
-        llmTypeCombo := gui.Add("DropDownList", "x" UIConfig.llmTypeX " y" UIConfig.llmTypeY " w" UIConfig.llmTypeWidth " vLLMType", appSettingsValue.llmTypes)
-        llmTypeCombo.Value := sessionManagerValue.GetCurrentSessionLLMType()
-        llmTypeCombo.OnEvent("Change", ObjBindMethod(controller, "LLMTypeChanged"))
+        ; Add LLM type selector - REMOVED
+        ; llmTypeCombo := gui.Add("DropDownList", "x" UIConfig.llmTypeX " y" UIConfig.llmTypeY " w" UIConfig.llmTypeWidth " vLLMType", appSettingsValue.llmTypes)
+        ; llmTypeCombo.Value := sessionManagerValue.GetCurrentSessionLLMType()
+        ; llmTypeCombo.OnEvent("Change", ObjBindMethod(controller, "LLMTypeChanged"))
 
         ; Add system prompt selector
         systemPromptCombo := gui.Add("DropDownList", "x" UIConfig.systemPromptX " y" UIConfig.systemPromptY " w" UIConfig.systemPromptWidth " vSystemPrompt", appSettingsValue.GetSystemPromptNames(sessionManagerValue.GetCurrentSessionLLMType()))

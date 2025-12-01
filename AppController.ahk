@@ -14,6 +14,8 @@ class AppController {
     askButton := ""
     MyGui := ""
     guiShown := false
+    ModelMenu := ""  ; Store reference to Model menu
+    MyMenuBar := ""  ; Store reference to MenuBar
     
     AppSettingsValue := ""
     SessionManagerValue := ""
@@ -92,7 +94,9 @@ class AppController {
         this.MyGui.OnEvent("Size", ObjBindMethod(this, "GuiResize"))
         this.MyGui.OnEvent("Close", ObjBindMethod(this, "GuiClose"))
 
-        UIBuilder.CreateMenuBar(this.MyGui, this)
+        menuObjects := UIBuilder.CreateMenuBar(this.MyGui, this, this.AppSettingsValue, this.SessionManagerValue)
+        this.MyMenuBar := menuObjects.menuBar
+        this.ModelMenu := menuObjects.modelMenu
 
         UIBuilder.CreateTopControls(this.MyGui, this.SessionManagerValue, this.TrayManagerValue, this)
 
@@ -145,7 +149,6 @@ class AppController {
 
         ; Move bottom controls
         bottomY := Height - 35  ; 35 pixels from bottom
-        thisGui["LLMType"].Move(UIConfig.llmTypeX, bottomY)
         thisGui["SystemPrompt"].Move(UIConfig.systemPromptX, bottomY)
         thisGui["AskLLM"].Move(UIConfig.askLLMX, bottomY)
 
@@ -192,9 +195,28 @@ class AppController {
         this.UpdateContextView()  ; Update the context view
     }
 
-    LLMTypeChanged(*) {
-        this.SessionManagerValue.SetCurrentSessionLLMType(this.MyGui["LLMType"].Value)
+    SelectModel(ItemName, ItemPos, MyMenu) {
+        ; Get old model name for renaming menu
+        oldModelIndex := this.SessionManagerValue.GetCurrentSessionLLMType()
+        oldModelName := "Model: " . this.AppSettingsValue.llmTypes[oldModelIndex]
 
+        ; Update session with new model index
+        this.SessionManagerValue.SetCurrentSessionLLMType(ItemPos)
+
+        ; Update menu checkmarks
+        for index, modelName in this.AppSettingsValue.llmTypes {
+            if (index = ItemPos) {
+                MyMenu.Check(modelName)
+            } else {
+                MyMenu.Uncheck(modelName)
+            }
+        }
+
+        ; Update menu bar label to show new model name
+        newModelName := "Model: " . this.AppSettingsValue.llmTypes[ItemPos]
+        this.MyMenuBar.Rename(oldModelName, newModelName)
+
+        ; Update system prompts for the new model
         systemPromptCombo := this.MyGui["SystemPrompt"]
         systemPromptCombo.Delete()
         systemPromptCombo.Add(this.AppSettingsValue.GetSystemPromptNames(this.SessionManagerValue.GetCurrentSessionLLMType()))
@@ -208,14 +230,33 @@ class AppController {
     }
 
     SessionChanged(*) {
+        ; Update LLM type and system prompt selections
+        ; Update Model menu checkmarks and menu bar label
+        oldModelIndex := this.SessionManagerValue.GetCurrentSessionLLMType()
+        oldModelName := "Model: " . this.AppSettingsValue.llmTypes[oldModelIndex]
+
         ; Switch to new session
         this.SessionManagerValue.SwitchSession(this.MyGui["SessionSelect"].Value)
 
         this.UpdateContextView()
         this.UpdateChatHistoryView()
 
-        ; Update LLM type and system prompt selections
-        this.MyGui["LLMType"].Value := this.SessionManagerValue.GetCurrentSessionLLMType()
+        currentModelIndex := this.SessionManagerValue.GetCurrentSessionLLMType()
+        newModelName := "Model: " . this.AppSettingsValue.llmTypes[currentModelIndex]
+
+        ; Update menu checkmarks
+        for index, modelName in this.AppSettingsValue.llmTypes {
+            if (index = currentModelIndex) {
+                this.ModelMenu.Check(modelName)
+            } else {
+                this.ModelMenu.Uncheck(modelName)
+            }
+        }
+
+        ; Update menu bar label if model changed
+        if (oldModelName != newModelName) {
+            this.MyMenuBar.Rename(oldModelName, newModelName)
+        }
 
         ; Update system prompts for the selected LLM type
         systemPromptCombo := this.MyGui["SystemPrompt"]

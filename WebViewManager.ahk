@@ -206,6 +206,10 @@ class WebViewManager {
                 };
 
                 function renderMarkdown(content) {
+                    const quoteBtn = document.getElementById('quoteBtn');
+                    if (quoteBtn) {
+                        quoteBtn.style.display = 'none';
+                    }
                     document.getElementById("content").innerHTML = marked.parse(content, { renderer: renderer });
                 }
 

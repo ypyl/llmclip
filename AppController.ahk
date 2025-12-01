@@ -150,7 +150,7 @@ class AppController {
 
         ; Move bottom controls
         bottomY := Height - 35  ; 35 pixels from bottom
-        thisGui["SystemPrompt"].Move(UIConfig.systemPromptX, bottomY)
+        thisGui["SystemPrompt"].Move(UIConfig.systemPromptX, bottomY + 2)
         thisGui["AskLLM"].Move(UIConfig.askLLMX, bottomY)
 
         ; Move PowerShell tool checkbox and icon above bottom controls

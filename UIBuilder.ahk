@@ -47,7 +47,7 @@ class UIBuilder {
 
     static CreateTopControls(gui, sessionManagerValue, trayManagerValue, controller) {
         ; Add session selector
-        sessionCombo := gui.Add("DropDownList", "x10 y10 w70 vSessionSelect", sessionManagerValue.sessionNames)
+        sessionCombo := gui.Add("DropDownList", "x10 y12 w70 vSessionSelect", sessionManagerValue.sessionNames)
         sessionCombo.Value := sessionManagerValue.currentSessionIndex
         sessionCombo.OnEvent("Change", ObjBindMethod(controller, "SessionChanged"))
 
@@ -114,7 +114,7 @@ class UIBuilder {
         powerShellToolBox.Value := powerShellEnabled ? 1 : 0
 
         ; Add system prompt selector
-        systemPromptCombo := gui.Add("DropDownList", "x" UIConfig.systemPromptX " y" UIConfig.systemPromptY " w" UIConfig.systemPromptWidth " vSystemPrompt", appSettingsValue.GetSystemPromptNames(sessionManagerValue.GetCurrentSessionLLMType()))
+        systemPromptCombo := gui.Add("DropDownList", "x" UIConfig.systemPromptX " y" (UIConfig.systemPromptY + 2) " w" UIConfig.systemPromptWidth " vSystemPrompt", appSettingsValue.GetSystemPromptNames(sessionManagerValue.GetCurrentSessionLLMType()))
         systemPromptCombo.Value := sessionManagerValue.GetCurrentSessionSystemPrompt()
         systemPromptCombo.OnEvent("Change", ObjBindMethod(controller, "SystemPromptChanged"))
 

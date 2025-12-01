@@ -154,9 +154,9 @@ class AppController {
         thisGui["AskLLM"].Move(UIConfig.askLLMX, bottomY)
 
         ; Move PowerShell tool checkbox and icon above bottom controls
-        checkBoxY := bottomY - 20
-        thisGui["PowerShellIcon"].Move(UIConfig.llmTypeX + 40, checkBoxY)
-        thisGui["PowerShellToolBox"].Move(UIConfig.llmTypeX, checkBoxY)
+        checkBoxY := Height - 30
+        thisGui["PowerShellIcon"].Move(UIConfig.llmTypeX, checkBoxY)
+        thisGui["PowerShellToolBox"].Move(UIConfig.llmTypeX + 20, checkBoxY)
     }
 
     GetLabelsForContextItems() {

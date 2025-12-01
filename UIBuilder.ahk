@@ -38,8 +38,8 @@ class UIBuilder {
 
         MyMenuBar := MenuBar()
         MyMenuBar.Add("&File", FileMenu)
-        MyMenuBar.Add(currentModelName, ModelMenu)  ; Use model name instead of "&Model"
         MyMenuBar.Add("Answer Size", AnswerSizeMenu)
+        MyMenuBar.Add(currentModelName, ModelMenu)  ; Use model name instead of "&Model"
         gui.MenuBar := MyMenuBar
         
         return {menuBar: MyMenuBar, modelMenu: ModelMenu}  ; Return menuBar and modelMenu
@@ -100,24 +100,18 @@ class UIBuilder {
 
 
     static CreatePromptSection(gui, sessionManagerValue, appSettingsValue, controller) {
-
         ; Prompt edit control
         promptEdit := gui.Add("Edit", "vPromptEdit x" UIConfig.promptEditX " y" UIConfig.promptEditY " w" UIConfig.promptEditWidth " h" UIConfig.promptEditHeight " Multi WantReturn", "")
         promptEdit.OnEvent("Change", ObjBindMethod(controller, "PromptChange"))
-
-        ; PowerShell tool checkbox and icon
-        powerShellEnabled := appSettingsValue.IsToolEnabled(sessionManagerValue.GetCurrentSessionLLMType(), "powerShellTool")
-
-        powerShellToolBox := gui.Add("CheckBox", "x" UIConfig.llmTypeX " y" (UIConfig.llmTypeY - 20) " w40 vPowerShellToolBox", "ps1")
-        powerShellIcon := gui.Add("Picture", "x" (UIConfig.llmTypeX + 40) " y" (UIConfig.llmTypeY - 20) " w16 h16 Icon1 vPowerShellIcon", "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe")
-        powerShellToolBox.Value := powerShellEnabled ? 1 : 0
     }
 
     static CreateBottomControls(gui, sessionManagerValue, appSettingsValue, controller) {
-        ; Add LLM type selector - REMOVED
-        ; llmTypeCombo := gui.Add("DropDownList", "x" UIConfig.llmTypeX " y" UIConfig.llmTypeY " w" UIConfig.llmTypeWidth " vLLMType", appSettingsValue.llmTypes)
-        ; llmTypeCombo.Value := sessionManagerValue.GetCurrentSessionLLMType()
-        ; llmTypeCombo.OnEvent("Change", ObjBindMethod(controller, "LLMTypeChanged"))
+        ; PowerShell tool checkbox and icon
+        powerShellEnabled := appSettingsValue.IsToolEnabled(sessionManagerValue.GetCurrentSessionLLMType(), "powerShellTool")
+
+        powerShellToolBox := gui.Add("CheckBox", "x" (UIConfig.llmTypeX + 20) " y" UIConfig.llmTypeY " w40 vPowerShellToolBox", "ps1")
+        powerShellIcon := gui.Add("Picture", "x" (UIConfig.llmTypeX) " y" UIConfig.llmTypeY " w16 h16 Icon1 vPowerShellIcon", "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe")
+        powerShellToolBox.Value := powerShellEnabled ? 1 : 0
 
         ; Add system prompt selector
         systemPromptCombo := gui.Add("DropDownList", "x" UIConfig.systemPromptX " y" UIConfig.systemPromptY " w" UIConfig.systemPromptWidth " vSystemPrompt", appSettingsValue.GetSystemPromptNames(sessionManagerValue.GetCurrentSessionLLMType()))

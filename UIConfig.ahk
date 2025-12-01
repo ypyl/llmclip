@@ -10,7 +10,7 @@ class UIConfig {
     static promptEditX := 10
     static promptEditY := 405
     static promptEditWidth := 380
-    static promptEditHeight := 120
+    static promptEditHeight := 150
     
     ; Bottom controls positioning
     static llmTypeX := 10
@@ -22,7 +22,7 @@ class UIConfig {
     static askLLMX := 220
     static askLLMY := 570
     static askLLMWidth := 170
-    static bottomControlsHeight := 60
+    static bottomControlsHeight := 40
     
     ; Window settings
     static defaultWidth := 1230

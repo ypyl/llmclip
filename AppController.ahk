@@ -17,6 +17,7 @@ class AppController {
     ModelMenu := ""  ; Store reference to Model menu
     MyMenuBar := ""  ; Store reference to MenuBar
     currentAnswerSize := "Default"  ; Track current answer size (Small, Default, Long)
+    currentModelName := ""  ; Track current model name for MenuBar updates
     
     AppSettingsValue := ""
     SessionManagerValue := ""
@@ -98,6 +99,10 @@ class AppController {
         menuObjects := UIBuilder.CreateMenuBar(this.MyGui, this, this.AppSettingsValue, this.SessionManagerValue)
         this.MyMenuBar := menuObjects.menuBar
         this.ModelMenu := menuObjects.modelMenu
+        
+        ; Initialize current model name
+        currentModelIndex := this.SessionManagerValue.GetCurrentSessionLLMType()
+        this.currentModelName := "Model: " . this.AppSettingsValue.llmTypes[currentModelIndex]
 
         UIBuilder.CreateTopControls(this.MyGui, this.SessionManagerValue, this.TrayManagerValue, this)
 
@@ -197,8 +202,7 @@ class AppController {
 
     SelectModel(ItemName, ItemPos, MyMenu) {
         ; Get old model name for renaming menu
-        oldModelIndex := this.SessionManagerValue.GetCurrentSessionLLMType()
-        oldModelName := "Model: " . this.AppSettingsValue.llmTypes[oldModelIndex]
+        oldModelName := this.currentModelName
 
         ; Update session with new model index
         this.SessionManagerValue.SetCurrentSessionLLMType(ItemPos)
@@ -214,7 +218,8 @@ class AppController {
 
         ; Update menu bar label to show new model name
         newModelName := "Model: " . this.AppSettingsValue.llmTypes[ItemPos]
-        this.MyMenuBar.Rename(oldModelName, newModelName)
+        try this.MyMenuBar.Rename(oldModelName, newModelName)
+        this.currentModelName := newModelName
 
         ; Update system prompts for the new model
         systemPromptCombo := this.MyGui["SystemPrompt"]
@@ -246,8 +251,8 @@ class AppController {
     SessionChanged(*) {
         ; Update LLM type and system prompt selections
         ; Update Model menu checkmarks and menu bar label
-        oldModelIndex := this.SessionManagerValue.GetCurrentSessionLLMType()
-        oldModelName := "Model: " . this.AppSettingsValue.llmTypes[oldModelIndex]
+        ; Update Model menu checkmarks and menu bar label
+        oldModelName := this.currentModelName
 
         ; Switch to new session
         this.SessionManagerValue.SwitchSession(this.MyGui["SessionSelect"].Value)
@@ -269,7 +274,8 @@ class AppController {
 
         ; Update menu bar label if model changed
         if (oldModelName != newModelName) {
-            this.MyMenuBar.Rename(oldModelName, newModelName)
+            try this.MyMenuBar.Rename(oldModelName, newModelName)
+            this.currentModelName := newModelName
         }
 
         ; Update system prompts for the selected LLM type
@@ -861,11 +867,24 @@ class AppController {
 
                 this.SessionManagerValue.ImportSessionState(state)
 
-                ; Update UI elements to reflect loaded state
-
-                ; Update Session Selector (though we stay in current session index)
                 ; Update LLM Type
-                this.MyGui["LLMType"].Value := this.SessionManagerValue.GetCurrentSessionLLMType()
+                currentLLMType := this.SessionManagerValue.GetCurrentSessionLLMType()
+                newModelName := "Model: " . this.AppSettingsValue.llmTypes[currentLLMType]
+                
+                ; Update checkmarks
+                for index, modelName in this.AppSettingsValue.llmTypes {
+                    if (index = currentLLMType) {
+                        this.ModelMenu.Check(modelName)
+                    } else {
+                        this.ModelMenu.Uncheck(modelName)
+                    }
+                }
+                
+                ; Update MenuBar label
+                if (this.currentModelName != newModelName) {
+                    try this.MyMenuBar.Rename(this.currentModelName, newModelName)
+                    this.currentModelName := newModelName
+                }
 
                 ; Update System Prompt List and Selection
                 systemPromptCombo := this.MyGui["SystemPrompt"]
@@ -899,18 +918,28 @@ class AppController {
         this.AppSettingsValue.Reload()
 
         ; Refresh LLM Type dropdown
-        llmTypeCombo := this.MyGui["LLMType"]
+        ; Refresh Model Menu
+        this.ModelMenu.Delete() ; Delete all items
+        for index, modelName in this.AppSettingsValue.llmTypes {
+            this.ModelMenu.Add(modelName, ObjBindMethod(this, "SelectModel"))
+        }
+
         currentLLMType := this.SessionManagerValue.GetCurrentSessionLLMType()
-
-        llmTypeCombo.Delete()
-        llmTypeCombo.Add(this.AppSettingsValue.llmTypes)
-
-        ; Try to preserve current selection, otherwise default to first
-        try {
-            llmTypeCombo.Value := currentLLMType
-        } catch {
-            llmTypeCombo.Value := 1
+        
+        ; Validate index
+        if (currentLLMType > this.AppSettingsValue.llmTypes.Length) {
+            currentLLMType := 1
             this.SessionManagerValue.SetCurrentSessionLLMType(1)
+        }
+        
+        ; Check the current model
+        newModelName := "Model: " . this.AppSettingsValue.llmTypes[currentLLMType]
+        this.ModelMenu.Check(this.AppSettingsValue.llmTypes[currentLLMType])
+        
+        ; Update MenuBar label
+        if (this.currentModelName != newModelName) {
+            try this.MyMenuBar.Rename(this.currentModelName, newModelName)
+            this.currentModelName := newModelName
         }
 
         ; Refresh System Prompt dropdown

@@ -515,8 +515,7 @@ class LLMClient {
         ; Handle Google's response format
         if (obj.Has("candidates") && obj["candidates"].Length > 0) {
             candidate := obj["candidates"][1]
-            if (candidate.Has("content") && candidate["content"].Has("parts") && candidate["content"]["parts"].Length >
-            0) {
+            if (candidate.Has("content") && candidate["content"].Has("parts") && candidate["content"]["parts"].Length > 0) {
                 ; Check for function calls in parts
                 parts := candidate["content"]["parts"]
                 for part in parts {

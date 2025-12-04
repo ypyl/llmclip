@@ -129,4 +129,43 @@ class UIBuilder {
         responseCtr := gui.Add("Edit", "vResponseCtr x" UIConfig.responseCtrX " y" UIConfig.responseCtrY " w" UIConfig.responseCtrWidth " h" UIConfig.responseCtrHeight " -VScroll", "")
         return responseCtr
     }
+
+    static GuiResize(thisGui, MinMax, Width, Height, controller) {
+        if (MinMax = -1)  ; If window is minimized
+            return
+
+        ; Resize the ResponseCtr control
+        thisGui["ResponseCtr"].Move(UIConfig.responseCtrX, UIConfig.responseCtrY, Width - 410, Height - 20)
+
+        ; Resize the WebView2 control to match ResponseCtr
+        hCtrl := thisGui["ResponseCtr"].Hwnd
+        rect := Buffer(16, 0)  ; RECT: left, top, right, bottom
+        DllCall("GetClientRect", "ptr", hCtrl, "ptr", rect)
+
+        widthResponseCtr := NumGet(rect, 8, "Int")   ; right
+        heightResponseCtr := NumGet(rect, 12, "Int") ; bottom
+        ; Set bounds relative to the ResponseCtr — top-left is (0,0)
+        wvRect := Buffer(16, 0)
+        NumPut("Int", 0, wvRect, 0)                          ; left
+        NumPut("Int", 0, wvRect, 4)                          ; top
+        NumPut("Int", widthResponseCtr, wvRect, 8)           ; right
+        NumPut("Int", heightResponseCtr, wvRect, 12)         ; bottom
+        if controller.guiShown {
+            controller.WebViewManagerValue.Resize(wvRect)
+        }
+
+        ; Resize the prompt edit control
+        promptEditHeight := Height - UIConfig.promptEditY - UIConfig.bottomControlsHeight
+        thisGui["PromptEdit"].Move(UIConfig.promptEditX, UIConfig.promptEditY, UIConfig.promptEditWidth, promptEditHeight)
+
+        ; Move bottom controls
+        bottomY := Height - 35  ; 35 pixels from bottom
+        thisGui["SystemPrompt"].Move(UIConfig.systemPromptX, bottomY + 2)
+        thisGui["AskLLM"].Move(UIConfig.askLLMX, bottomY)
+
+        ; Move PowerShell tool checkbox and icon above bottom controls
+        checkBoxY := Height - 30
+        thisGui["PowerShellIcon"].Move(UIConfig.llmTypeX, checkBoxY)
+        thisGui["PowerShellToolBox"].Move(UIConfig.llmTypeX + 20, checkBoxY)
+    }
 }

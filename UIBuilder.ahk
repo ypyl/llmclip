@@ -36,8 +36,13 @@ class UIBuilder {
         ; Set initial checkmark (Default = index 2)
         AnswerSizeMenu.Check("Default")
 
+        ; Create History menu
+        HistoryMenu := Menu()
+        HistoryMenu.Add("Compress", ObjBindMethod(controller, "CompressHistory"))
+
         MyMenuBar := MenuBar()
         MyMenuBar.Add("&File", FileMenu)
+        MyMenuBar.Add("History", HistoryMenu)
         MyMenuBar.Add("Answer Size", AnswerSizeMenu)
         MyMenuBar.Add(currentModelName, ModelMenu)  ; Use model name instead of "&Model"
         gui.MenuBar := MyMenuBar

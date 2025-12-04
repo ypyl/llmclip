@@ -73,6 +73,30 @@ class SessionManager {
         return toolCall.Name "(" JSON.Stringify(toolCall.Arguments) ")"
     }
 
+    /**
+     * Format messages for compression by creating a conversation transcript
+     * @returns String representation of all messages for compression
+     */
+    FormatMessagesForCompression() {
+        messages := this.GetCurrentSessionMessages()
+        formattedText := ""
+        
+        ; Skip the system message (index 1) and format the rest
+        i := 2
+        loop messages.Length - 1 {
+            msg := messages[i]
+            roleLabel := msg.Role == "user" ? "User" : 
+                msg.Role == "assistant" ? "Assistant" : 
+                msg.Role == "tool" ? "Tool" : msg.Role
+            
+            messageText := this.GetMessageAsString(msg)
+            formattedText .= roleLabel ": " messageText "`n`n"
+            i++
+        }
+        
+        return formattedText
+    }
+
     GetCurrentSessionMessages() {
         return this.sessionMessages[this.currentSessionIndex]
     }

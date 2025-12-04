@@ -560,6 +560,78 @@ class AppController {
         this.RenderMarkdown("")  ; Clear the response area
     }
 
+    CompressHistory(*) {
+        messages := this.SessionManagerValue.GetCurrentSessionMessages()
+        
+        ; Check if there are enough messages to compress (at least 3: system + 2 others)
+        if (messages.Length < 3) {
+            MsgBox("Not enough messages to compress. Need at least 2 messages besides the system message.", "Info", "Iconi")
+            return
+        }
+        
+        ; Format the conversation history for compression
+        conversationText := this.SessionManagerValue.FormatMessagesForCompression()
+        
+        if (conversationText == "") {
+            MsgBox("No conversation history to compress.", "Info", "Iconi")
+            return
+        }
+        
+        ; Build compression prompt
+        compressionPrompt := "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble.`n`n"
+        compressionPrompt .= "CONVERSATION:`n" conversationText
+        
+        ; Create a temporary message array with just system message and compression request
+        tempMessages := [
+            messages[1],  ; Keep system message
+            ChatMessage("user", compressionPrompt)
+        ]
+        
+        ; Disable Ask LLM button while processing
+        if (this.MyGui) {
+            this.askButton.Text := "Compressing..."
+            this.askButton.Enabled := false
+        }
+        
+        try {
+            ; Create LLM client
+            settings := this.AppSettingsValue.GetSelectedSettings(this.SessionManagerValue.GetCurrentSessionLLMType())
+            settings["tools"] := []  ; No tools for compression
+            
+            this.LLMClientInstance := LLMClient(settings)
+            
+            ; Call LLM with compression prompt
+            startTime := A_TickCount
+            newMessages := this.LLMClientInstance.Call(tempMessages)
+            duration := (A_TickCount - startTime) / 1000
+            
+            ; Replace all messages with system message + compressed summary
+            if (newMessages.Length > 0) {
+                compressedMsg := newMessages[1]
+                compressedMsg.AdditionalProperties["duration"] := duration
+                
+                ; Replace session messages
+                this.SessionManagerValue.sessionMessages[this.SessionManagerValue.currentSessionIndex] := [
+                    messages[1],  ; Keep original system message
+                    compressedMsg  ; Add compressed summary
+                ]
+                
+                ; Update UI
+                this.UpdateChatHistoryView()
+                this.RenderMarkdown(this.SessionManagerValue.GetMessageAsString(compressedMsg))
+            }
+            
+        } catch as e {
+            MsgBox("Compression failed: " . e.Message, "Error", "Iconx")
+        } finally {
+            ; Re-enable Ask LLM button
+            if (this.MyGui) {
+                this.askButton.Text := "Ask LLM"
+                this.askButton.Enabled := true
+            }
+        }
+    }
+
     ExitApplication(*) {
         ExitApp
     }

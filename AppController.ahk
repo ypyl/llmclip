@@ -310,6 +310,9 @@ class AppController {
             tokens)
         }
         this.MyGui["ChatMessageActionButton"].Visible := false  ; Hide the Run Tool button
+        if (chatHistory.GetCount() > 0) {
+            chatHistory.Modify(chatHistory.GetCount(), "Vis")  ; Scroll to bottom
+        }
     }
 
     HandleToolConfirmation() {

@@ -1,4 +1,5 @@
 #Include FileUtils.ahk
+#Include LLM\Types.ahk
 
 class SessionManager {
     currentSessionIndex := 1
@@ -18,12 +19,11 @@ class SessionManager {
         if (defaultSystemPrompt)
             this.defaultSystemPrompt := defaultSystemPrompt
 
-        ; Initialize session arrays
+        ; Initialize session arrays with ChatMessage instances
         Loop this.MAX_SESSIONS {
-            this.sessionMessages.Push([{
-                role: "system",
-                content: this.defaultSystemPrompt
-            }])
+            this.sessionMessages.Push([
+                ChatMessage("system", this.defaultSystemPrompt)
+            ])
             this.sessionContexts.Push([])
             this.sessionLLMTypes.Push(this.defaultLLMType)
             this.sessionSystemPrompts.Push(1)
@@ -31,55 +31,46 @@ class SessionManager {
     }
 
     GetMessageAsString(message) {
-        if (message.HasOwnProp("audio")) {
-            return this.FormatAudioMessage(message)
+        ; Check for audio content
+        audioData := message.GetAudio()
+        if (audioData != "") {
+            return this.FormatAudioMessage(audioData)
         }
-        if (message.HasOwnProp("content") && message.content) {
-            if (IsObject(message.content)) {
-                return this.FormatMultipartMessage(message.content)
-            } else {
-                return this.FormatTextMessage(message)
+        
+        ; Check for tool calls
+        for part in message.Contents {
+            if (part is FunctionCallContent) {
+                return this.FormatToolCallMessage(part)
             }
         }
-        if (message.HasOwnProp("tool_calls") && message.tool_calls.Length > 0) {
-            return this.FormatToolCallMessage(message)
+        
+        ; Get text content and check for thinking
+        text := message.GetText()
+        if (message.AdditionalProperties.Has("thinking") && message.AdditionalProperties["thinking"] != "") {
+            text := "``````thinking`n" . message.AdditionalProperties["thinking"] . "`n``````" . "`n`n" . text
         }
-        return ""
+        
+        ; Check if has images
+        hasImage := false
+        for part in message.Contents {
+            if (part is ImageContent) {
+                hasImage := true
+                break
+            }
+        }
+        
+        return hasImage ? text . " [Image]" : text
     }
 
-    FormatAudioMessage(message) {
-        audioBase64 := FileUtils.GetFileAsBase64(message.audio.link)
+    FormatAudioMessage(audioLink) {
+        audioBase64 := FileUtils.GetFileAsBase64(audioLink)
         return '<audio controls><source src="data:audio/wav;base64,' audioBase64 '" type="audio/wav"></audio>'
     }
 
-    FormatMultipartMessage(content) {
-        text_content := ""
-        has_image := false
-        for part in content {
-            if (part.type = "text") {
-                text_content .= part.text
-            } else if (part.type = "image_url") {
-                has_image := true
-            }
-        }
-        if (has_image) {
-            return text_content . " [Image]"
-        }
-        return text_content
-    }
 
-    FormatTextMessage(message) {
-        result := message.content
-        ; Add thinking field if present (for Ollama thinking models)
-        if (message.HasOwnProp("thinking") && message.thinking != "") {
-            result := "``````thinking`n" . message.thinking . "`n``````" . "`n`n" . result
-        }
-        return result
-    }
 
-    FormatToolCallMessage(message) {
-        toolCall := message.tool_calls[1]  ; Get only first tool call
-        return toolCall.function.name "(" toolCall.function.arguments ")"
+    FormatToolCallMessage(toolCall) {
+        return toolCall.Name "(" JSON.Stringify(toolCall.Arguments) ")"
     }
 
     GetCurrentSessionMessages() {
@@ -89,19 +80,21 @@ class SessionManager {
     GetCurrentSessionMessagesAsStrings() {
         messages := []
         for message in this.GetCurrentSessionMessages() {
-            roleEmoji := message.role == "system" ? "⚙️" :
-                message.role == "user" ? "👤" :
-                message.role == "assistant" ? "🤖" :
-                message.role == "tool" ? "🛠️" : message.role
+            roleEmoji := message.Role == "system" ? "⚙️" :
+                message.Role == "user" ? "👤" :
+                message.Role == "assistant" ? "🤖" :
+                message.Role == "tool" ? "🛠️" : message.Role
 
-            obj := { role: roleEmoji, content: this.GetMessageAsString(message) }
-            if (message.HasOwnProp("duration")) {
-                obj.duration := message.duration
+            result := { role: roleEmoji, content: this.GetMessageAsString(message) }
+
+            ; Add additional properties from ChatMessage
+            if (message.AdditionalProperties.Has("duration")) {
+                result.duration := message.AdditionalProperties["duration"]
             }
-            if (message.HasOwnProp("tokens")) {
-                obj.tokens := message.tokens
+            if (message.AdditionalProperties.Has("tokens")) {
+                result.tokens := message.AdditionalProperties["tokens"]
             }
-            messages.Push(obj)
+            messages.Push(result)
         }
         return messages
     }
@@ -139,9 +132,12 @@ class SessionManager {
     }
 
     UpdateSystemPromptContent(systemPromptContent) {
-        if (this.sessionMessages[this.currentSessionIndex].Length > 0 &&
-            this.sessionMessages[this.currentSessionIndex][1].role == "system") {
-            this.sessionMessages[this.currentSessionIndex][1].content := systemPromptContent
+        if (this.sessionMessages[this.currentSessionIndex].Length > 0) {
+            firstMsg := this.sessionMessages[this.currentSessionIndex][1]
+            if (firstMsg.Role == "system") {
+                ; Update the text content
+                firstMsg.Contents := [TextContent(systemPromptContent)]
+            }
         }
     }
 
@@ -151,10 +147,9 @@ class SessionManager {
     }
 
     ClearCurrentMessages() {
-        this.sessionMessages[this.currentSessionIndex] := [{
-            role: "system",
-            content: this.defaultSystemPrompt
-        }]
+        this.sessionMessages[this.currentSessionIndex] := [
+            ChatMessage("system", this.defaultSystemPrompt)
+        ]
     }
 
     ClearCurrentContext() {
@@ -228,28 +223,15 @@ class SessionManager {
 
     UpdateMessage(index, newContent) {
         if (index > 0 && index <= this.sessionMessages[this.currentSessionIndex].Length) {
-            this.sessionMessages[this.currentSessionIndex][index].content := newContent
+            msg := this.sessionMessages[this.currentSessionIndex][index]
+            msg.Contents := [TextContent(newContent)]
             return true
         }
         return false
     }
 
     GetMessageText(message) {
-        if (message.HasOwnProp("content")) {
-            content := message.content
-            if (IsObject(content)) {
-                text_content := ""
-                for part in content {
-                    if (part.type = "text") {
-                        text_content .= part.text
-                    }
-                }
-                return text_content
-            } else {
-                return content
-            }
-        }
-        return ""
+        return message.GetText()
     }
 
     DeleteMessage(index) {
@@ -261,8 +243,14 @@ class SessionManager {
     }
 
     ExportSessionState() {
+        ; Convert ChatMessage instances to plain objects for JSON serialization
+        messages := []
+        for msg in this.sessionMessages[this.currentSessionIndex] {
+            messages.Push(msg.ToObject())
+        }
+
         return {
-            messages: this.sessionMessages[this.currentSessionIndex],
+            messages: messages,
             context: this.sessionContexts[this.currentSessionIndex],
             llmType: this.sessionLLMTypes[this.currentSessionIndex],
             systemPrompt: this.sessionSystemPrompts[this.currentSessionIndex]
@@ -291,13 +279,13 @@ class SessionManager {
     ImportSessionState(state) {
         ; Check if state is a Map (from JSON parser) or an Object
         isMap := Type(state) = "Map"
-        
+
         ; Validate required properties exist
         hasMessages := isMap ? state.Has("messages") : state.HasOwnProp("messages")
         hasContext := isMap ? state.Has("context") : state.HasOwnProp("context")
         hasLLMType := isMap ? state.Has("llmType") : state.HasOwnProp("llmType")
         hasSystemPrompt := isMap ? state.Has("systemPrompt") : state.HasOwnProp("systemPrompt")
-        
+
         if (!hasMessages || !hasContext || !hasLLMType || !hasSystemPrompt) {
             throw Error("Invalid session state file")
         }
@@ -307,13 +295,19 @@ class SessionManager {
         context := isMap ? state["context"] : state.context
         llmType := isMap ? state["llmType"] : state.llmType
         systemPrompt := isMap ? state["systemPrompt"] : state.systemPrompt
-        
-        ; Convert Maps to Objects for compatibility with rest of codebase
-        this.sessionMessages[this.currentSessionIndex] := this.ConvertMapToObject(messages)
+
+        ; Convert messages to ChatMessage instances
+        chatMessages := []
+        for msg in messages {
+            plainObj := this.ConvertMapToObject(msg)
+            chatMessages.Push(ChatMessage.FromObject(plainObj))
+        }
+
+        this.sessionMessages[this.currentSessionIndex] := chatMessages
         this.sessionContexts[this.currentSessionIndex] := this.ConvertMapToObject(context)
         this.sessionLLMTypes[this.currentSessionIndex] := llmType
         this.sessionSystemPrompts[this.currentSessionIndex] := systemPrompt
-        
+
         return true
     }
 }

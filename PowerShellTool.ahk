@@ -1,4 +1,4 @@
-#Include <JSON>
+#Include <Json>
 
 class PowerShellTool {
     /**

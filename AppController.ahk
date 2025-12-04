@@ -9,6 +9,7 @@
 #Include TrayManager.ahk
 #Include UIConfig.ahk
 #Include UIBuilder.ahk
+#Include LLM\Types.ahk
 
 class AppController {
     askButton := ""
@@ -18,7 +19,7 @@ class AppController {
     MyMenuBar := ""  ; Store reference to MenuBar
     currentAnswerSize := "Default"  ; Track current answer size (Small, Default, Long)
     currentModelName := ""  ; Track current model name for MenuBar updates
-    
+
     AppSettingsValue := ""
     SessionManagerValue := ""
     ClipboardParserValue := ""
@@ -50,7 +51,7 @@ class AppController {
 
         ; Create TrayManager instance
         this.TrayManagerValue := TrayManager(ObjBindMethod(this, "DisplayLLMUserInterface"), ObjBindMethod(this, "UpdateUiBasesOnRecordingStatus"), ObjBindMethod(this, "ExitApplication"), this.ContextManagerValue)
-        
+
         this.LLMClientInstance := ""
     }
 
@@ -99,7 +100,7 @@ class AppController {
         menuObjects := UIBuilder.CreateMenuBar(this.MyGui, this, this.AppSettingsValue, this.SessionManagerValue)
         this.MyMenuBar := menuObjects.menuBar
         this.ModelMenu := menuObjects.modelMenu
-        
+
         ; Initialize current model name
         currentModelIndex := this.SessionManagerValue.GetCurrentSessionLLMType()
         this.currentModelName := "Model: " . this.AppSettingsValue.llmTypes[currentModelIndex]
@@ -243,7 +244,7 @@ class AppController {
                 MyMenu.Uncheck(size)
             }
         }
-        
+
         ; Store current answer size
         this.currentAnswerSize := ItemName
     }
@@ -313,7 +314,7 @@ class AppController {
 
     HandleToolConfirmation() {
         messages := this.SessionManagerValue.GetCurrentSessionMessages()
-    
+
         ; Find and execute all unexecuted tool calls
         executedAny := false
         for msg in messages {
@@ -327,7 +328,7 @@ class AppController {
                 }
             }
         }
-    
+
         if (executedAny) {
             this.SendToLLM()
         } else {
@@ -335,21 +336,22 @@ class AppController {
             this.MyGui["AskLLM"].Text := "Ask LLM"
         }
     }
-    
+
     HandleCancellation() {
         if (this.LLMClientInstance) {
             this.LLMClientInstance.Cancel()
         }
     }
-    
+
     HandleRegenerationOrEdit(promptText) {
         messages := this.SessionManagerValue.GetCurrentSessionMessages()
         chatHistory := this.MyGui["ChatHistory"]
         focused_row := chatHistory.GetNext()
-    
+
         if (focused_row > 0) {
             selectedMsg := messages[focused_row]
-            if (selectedMsg.role == "user") {
+
+            if (selectedMsg.Role == "user") {
                 if (promptText == "") {
                     ; Regeneration case: Load message content into prompt for editing
                     this.MyGui["PromptEdit"].Value := this.SessionManagerValue.GetMessageText(selectedMsg)
@@ -371,43 +373,43 @@ class AppController {
         }
         return false
     }
-    
+
     AskToLLM(*) {
         ; Check if we are in "Confirm Tool Run" mode (Agent Mode tool execution)
         if (this.MyGui["AskLLM"].Text == "Confirm Tool Run") {
             this.HandleToolConfirmation()
             return
         }
-    
+
         if (this.MyGui["AskLLM"].Text == "Cancel") {
             this.HandleCancellation()
             return
         }
-    
+
         promptText := this.MyGui["PromptEdit"].Value
-    
+
         ; Check for regeneration or edit case
         if (this.HandleRegenerationOrEdit(promptText)) {
             return
         }
-    
+
         messages := this.SessionManagerValue.GetCurrentSessionMessages()
         userMessageContent := ""
         if (promptText != "") {
             userMessageContent := promptText
         }
-    
+
         contextItems := this.SessionManagerValue.GetCurrentSessionContext()
         isImageEnabled := this.AppSettingsValue.IsImageInputEnabled(this.SessionManagerValue.GetCurrentSessionLLMType())
-    
+
         userMessageContent := this.BuildUserMessage(userMessageContent, contextItems, isImageEnabled)
-    
+
         if (userMessageContent != "") {
-            messages.Push({ role: "user", content: userMessageContent })
+            messages.Push(ChatMessage("user", userMessageContent))
         }
         this.SendToLLM()
         this.MyGui["PromptEdit"].Value := ""  ; Clear prompt field
-    
+
         if (this.TrayManagerValue.isRecording) {
             this.TrayManagerValue.StopRecording(this.SessionManagerValue)
         }
@@ -429,7 +431,7 @@ class AppController {
         ; Build and append context message if needed
         additionalContext := this.BuildAdditionalContextMessage(context, contextBox.Value)
         if (additionalContext != "") {
-            messages[1].content .= additionalContext
+            messages[1].AddText(additionalContext)
         }
 
         ; Disable Ask LLM button while processing
@@ -452,7 +454,7 @@ class AppController {
             }
             ; If currentAnswerSize = "Default", no message is added (default behavior)
             if (answerSizeMsg != "") {
-                messages.Push({ role: "user", content: answerSizeMsg })
+                messages.Push(ChatMessage("user", answerSizeMsg))
             }
 
             this.LLMClientInstance := LLMClient(settings)
@@ -469,7 +471,7 @@ class AppController {
 
             ; Simply add the new messages to the session
             for newMessage in newMessages {
-                newMessage.duration := duration
+                newMessage.AdditionalProperties["duration"] := duration
                 messages.Push(newMessage)
             }
 
@@ -516,7 +518,7 @@ class AppController {
         context := this.SessionManagerValue.GetCurrentSessionContext()
         contextBox := this.MyGui["ContextBox"]
         selectedItems := []
-        textContent := ""
+        contextText := ""
 
         ; Handle multi-select values
         if (contextBox.Value is Array) {
@@ -531,10 +533,10 @@ class AppController {
 
         ; Process each selected item
         for item in selectedItems {
-            textContent .= this.GetTextFromContextItem(item) "`n"
+            contextText .= this.GetTextFromContextItem(item) "`n"
         }
 
-        this.RenderMarkdown(textContent)  ; Render the selected item(s) in the WebView
+        this.RenderMarkdown(contextText)  ; Render the selected item(s) in the WebView
     }
 
     DeleteSelected(*) {
@@ -607,31 +609,24 @@ class AppController {
 
     CheckContentInMessages(messages, newContent) {
         for msg in messages {
-            if (IsObject(msg.content)) {
-                for part in msg.content {
-                    if (part.HasOwnProp("text") && InStr(part.text, newContent))
-                        return true
-                }
-            } else {
-                if (InStr(msg.content, newContent))
-                    return true
-            }
+            if (InStr(msg.GetText(), newContent))
+                return true
         }
         return false
     }
-    
+
     HasContent(haystack, newContent) {
         if (newContent = "")
             return true
-    
+
         ; First check exact matches
         if (this.HasVal(haystack, newContent))
             return true
-    
+
         ; Also check in chat history
         if (this.CheckContentInMessages(this.SessionManagerValue.GetCurrentSessionMessages(), newContent))
             return true
-    
+
         return false
     }
 
@@ -671,19 +666,9 @@ class AppController {
         chatHistory := this.MyGui["ChatHistory"]
         if (focused_row := chatHistory.GetNext()) {
             msg := messages[focused_row]
-            content := msg.content
-            textContent := ""
-            if (IsObject(content)) {
-                for part in content {
-                    if (part.type = "text") {
-                        textContent .= part.text
-                    }
-                }
-            } else {
-                textContent := content
-            }
+            messageText := msg.GetText()
 
-            ClipText := StrReplace(textContent, "`r`n", "`n")
+            ClipText := StrReplace(messageText, "`r`n", "`n")
             ClipText := StrReplace(ClipText, "`r", "`n")
             ClipText := StrReplace(ClipText, "`n", "`r`n")
             A_Clipboard := ClipText
@@ -805,15 +790,16 @@ class AppController {
 
         ; Only add general context if there is any non-selected content
         if (contextText != "") {
-            messageContent .= "`n`nHere is the context:`n`n" contextText "`n`nPlease consider this context when providing the answer."
+            messageContent .= "`n`n<CONTEXT>`n" contextText "`n<CONTEXT>"
         }
 
         ; Add selected items as special focus points
         if (selectedIndices.Length > 0) {
-            messageContent .= "`nThe user has selected the folloing text which may be particularly relevant:`n`n"
+            messageContent .= "`n`n<SELECTED_CONTEXT>`n"
             for index in selectedIndices {
-                messageContent .= this.GetTextFromContextItem(context[index]) "`n`n"
+                messageContent .= this.GetTextFromContextItem(context[index])
             }
+            messageContent .= "`n<SELECTED_CONTEXT>"
         }
 
         return messageContent
@@ -838,13 +824,12 @@ class AppController {
                     duration := (A_TickCount - startTime) / 1000
                     result.duration := duration
                     results.Push(result)
-                    this.SessionManagerValue.MarkToolCallAsExecuted(tool_call.id)
                 }
             }
         }
         return results
     }
-    
+
     SaveConversation(*) {
         state := this.SessionManagerValue.ExportSessionState()
         jsonStr := JSON.Dump(state, true) ; Pretty print
@@ -857,7 +842,7 @@ class AppController {
             FileAppend(jsonStr, selectedFile)
         }
     }
-    
+
     LoadConversation(*) {
         selectedFile := FileSelect("3", , "Load Conversation", "JSON Files (*.json)")
         if (selectedFile) {
@@ -870,7 +855,7 @@ class AppController {
                 ; Update LLM Type
                 currentLLMType := this.SessionManagerValue.GetCurrentSessionLLMType()
                 newModelName := "Model: " . this.AppSettingsValue.llmTypes[currentLLMType]
-                
+
                 ; Update checkmarks
                 for index, modelName in this.AppSettingsValue.llmTypes {
                     if (index = currentLLMType) {
@@ -879,7 +864,7 @@ class AppController {
                         this.ModelMenu.Uncheck(modelName)
                     }
                 }
-                
+
                 ; Update MenuBar label
                 if (this.currentModelName != newModelName) {
                     try this.MyMenuBar.Rename(this.currentModelName, newModelName)
@@ -912,7 +897,7 @@ class AppController {
             }
         }
     }
-    
+
     ReloadSettings(*) {
         ; Reload settings from disk
         this.AppSettingsValue.Reload()
@@ -925,17 +910,17 @@ class AppController {
         }
 
         currentLLMType := this.SessionManagerValue.GetCurrentSessionLLMType()
-        
+
         ; Validate index
         if (currentLLMType > this.AppSettingsValue.llmTypes.Length) {
             currentLLMType := 1
             this.SessionManagerValue.SetCurrentSessionLLMType(1)
         }
-        
+
         ; Check the current model
         newModelName := "Model: " . this.AppSettingsValue.llmTypes[currentLLMType]
         this.ModelMenu.Check(this.AppSettingsValue.llmTypes[currentLLMType])
-        
+
         ; Update MenuBar label
         if (this.currentModelName != newModelName) {
             try this.MyMenuBar.Rename(this.currentModelName, newModelName)

@@ -369,7 +369,7 @@ class AppController {
 
         userMessageContent := this.BuildUserMessage(userMessageContent, contextItems, isImageEnabled)
 
-        if (userMessageContent != "") {
+        if (userMessageContent.Length > 0) {
             messages.Push(ChatMessage("user", userMessageContent))
         }
         this.SendToLLM()
@@ -419,7 +419,7 @@ class AppController {
             }
             ; If currentAnswerSize = "Default", no message is added (default behavior)
             if (answerSizeMsg != "") {
-                messages.Push(ChatMessage("user", answerSizeMsg))
+                messages.Push(ChatMessage("user", [TextContent(answerSizeMsg)]))
             }
 
             this.LLMClientInstance := LLMClient(settings)
@@ -584,7 +584,7 @@ class AppController {
         ; Create a temporary message array with just system message and compression request
         tempMessages := [
             messages[1],  ; Keep system message
-            ChatMessage("user", compressionPrompt)
+            ChatMessage("user", [TextContent(compressionPrompt)])
         ]
         
         ; Disable Ask LLM button while processing
@@ -764,8 +764,13 @@ class AppController {
     }
 
     BuildUserMessage(userMessageContent, contextItems, isImageEnabled) {
+        contentParts := []
+
         if (!isImageEnabled) {
-            return userMessageContent
+            if (userMessageContent != "") {
+                contentParts.Push(TextContent(userMessageContent))
+            }
+            return contentParts
         }
 
         images := []
@@ -776,30 +781,32 @@ class AppController {
         }
 
         if (images.Length > 0) {
-            contentParts := []
             if (userMessageContent != "") {
-                contentParts.Push({ type: "text", text: userMessageContent })
+                contentParts.Push(TextContent(userMessageContent))
             }
 
             for imageValue in images {
                 if (RegExMatch(imageValue, "i)^data:image/")) {
-                    contentParts.Push({ type: "image_url", image_url: { url: imageValue } })
+                    ; Already data URI
+                    contentParts.Push(ImageContent(imageValue))
+                } else if (InStr(imageValue, "http") == 1) {
+                    contentParts.Push(ImageContent(imageValue))
                 } else {
                     base64Image := FileUtils.GetFileAsBase64(imageValue)
                     if (base64Image != "") {
                         extension := SubStr(imageValue, InStr(imageValue, ".", , -1) + 1)
-                        contentParts.Push({ type: "image_url", image_url: { url: "data:image/" . extension . ";base64," .
-                            base64Image } })
+                        mimeType := "image/" . extension
+                        contentParts.Push(ImageContent(base64Image, mimeType))
                     }
                 }
             }
-
-            if (contentParts.Length > 0) {
-                return contentParts
+        } else {
+             if (userMessageContent != "") {
+                contentParts.Push(TextContent(userMessageContent))
             }
         }
 
-        return userMessageContent
+        return contentParts
     }
 
     BuildAdditionalContextMessage(context, contextBoxValue) {

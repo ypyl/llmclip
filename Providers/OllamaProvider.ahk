@@ -54,7 +54,7 @@ class OllamaProvider extends BaseProvider {
         ; Handle format with direct message object (Ollama often returns this)
         if (obj.Has("message") && obj["message"].Has("content")) {
             msgObj := obj["message"]
-            chatMsg := ChatMessage("assistant", msgObj["content"])
+            chatMsg := ChatMessage("assistant", [TextContent(msgObj["content"])])
             
             if (msgObj.Has("thinking")) {
                 chatMsg.AdditionalProperties["thinking"] := msgObj["thinking"]
@@ -73,7 +73,7 @@ class OllamaProvider extends BaseProvider {
         if (obj.Has("choices") && obj["choices"].Length > 0) {
              choice := obj["choices"][1]
              if (choice.Has("message") && choice["message"].Has("content")) {
-                 chatMsg := ChatMessage("assistant", choice["message"]["content"])
+                 chatMsg := ChatMessage("assistant", [TextContent(choice["message"]["content"])])
                  
                  ; Add token usage
                  if (obj.Has("usage") && obj["usage"].Has("total_tokens")) {

@@ -97,12 +97,10 @@ class ChatMessage {
     __New(role, content := "") {
         this.Role := role
         if (content != "") {
-            if (IsObject(content) && HasProp(content, "__Class") && (content is ChatContent)) {
-                this.Contents.Push(content)
-            } else if (Type(content) == "String") {
-                this.Contents.Push(TextContent(content))
-            } else if (Type(content) == "Array") {
+            if (Type(content) == "Array") {
                 this.Contents := content
+            } else {
+                throw Error("ChatMessage content must be an Array of ChatContent objects.")
             }
         }
     }

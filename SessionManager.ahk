@@ -22,7 +22,7 @@ class SessionManager {
         ; Initialize session arrays with ChatMessage instances
         Loop this.MAX_SESSIONS {
             this.sessionMessages.Push([
-                ChatMessage("system", this.defaultSystemPrompt)
+                ChatMessage("system", [TextContent(this.defaultSystemPrompt)])
             ])
             this.sessionContexts.Push([])
             this.sessionLLMTypes.Push(this.defaultLLMType)
@@ -175,7 +175,7 @@ class SessionManager {
 
     ClearCurrentMessages() {
         this.sessionMessages[this.currentSessionIndex] := [
-            ChatMessage("system", this.defaultSystemPrompt)
+            ChatMessage("system", [TextContent(this.defaultSystemPrompt)])
         ]
     }
 

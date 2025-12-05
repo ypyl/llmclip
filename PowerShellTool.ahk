@@ -121,19 +121,17 @@ class PowerShellTool {
      * @returns The tool response message
      */
     ExecuteToolCall(toolCall) {
-        if (toolCall.function.name != "execute_powershell") {
+        if (toolCall.Name != "execute_powershell") {
             return
         }
 
         try {
-            args := JSON.parse(toolCall.function.arguments)
+            args := toolCall.Arguments
 
             if (!args.Has("script")) {
-                return {
-                    role: "tool",
-                    content: "Error: Missing required parameter 'script'",
-                    tool_call_id: toolCall.id
-                }
+                msg := ChatMessage("tool")
+                msg.Contents.Push(FunctionResultContent(toolCall.Id, "Error: Missing required parameter 'script'"))
+                return msg
             }
 
             ; Get working directory if provided, otherwise use default
@@ -142,18 +140,14 @@ class PowerShellTool {
             ; Execute the PowerShell script
             result := this.ExecuteScript(args["script"], workingDir)
 
-            return {
-                role: "tool",
-                content: result,
-                tool_call_id: toolCall.id
-            }
+            msg := ChatMessage("tool")
+            msg.Contents.Push(FunctionResultContent(toolCall.Id, result))
+            return msg
 
         } catch as e {
-            return {
-                role: "tool",
-                content: "Error: " . e.Message,
-                tool_call_id: toolCall.id
-            }
+            msg := ChatMessage("tool")
+            msg.Contents.Push(FunctionResultContent(toolCall.Id, "Error: " . e.Message))
+            return msg
         }
     }
 }

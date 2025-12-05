@@ -37,10 +37,13 @@ class SessionManager {
             return this.FormatAudioMessage(audioData)
         }
         
-        ; Check for tool calls
+        ; Check for tool calls and results
         for part in message.Contents {
             if (part is FunctionCallContent) {
                 return this.FormatToolCallMessage(part)
+            }
+            if (part is FunctionResultContent) {
+                return part.Result
             }
         }
         
@@ -181,15 +184,19 @@ class SessionManager {
     }
 
     HasToolResponse(message) {
-        if (!message.HasOwnProp("tool_calls") || message.tool_calls.Length = 0)
+        toolCalls := this.GetToolCalls(message)
+        if (toolCalls.Length = 0)
             return false
 
         messages := this.GetCurrentSessionMessages()
-        for toolCall in message.tool_calls {
+        for toolCall in toolCalls {
             for msg in messages {
-                if (msg.HasOwnProp("role") && msg.role = "tool" &&
-                    msg.HasOwnProp("tool_call_id") && msg.tool_call_id = toolCall.id) {
-                    return true
+                if (msg.Role = "tool") {
+                    for part in msg.Contents {
+                        if (part is FunctionResultContent && part.CallId = toolCall.Id) {
+                            return true
+                        }
+                    }
                 }
             }
         }
@@ -197,23 +204,29 @@ class SessionManager {
     }
 
     GetToolCalls(msg) {
-        if (msg.HasOwnProp("tool_calls")) {
-            return msg.tool_calls
+        toolCalls := []
+        for part in msg.Contents {
+            if (part is FunctionCallContent)
+                toolCalls.Push(part)
         }
-
-        return []
+        return toolCalls
     }
 
     HasToolCalls(message) {
-        return message.HasOwnProp("tool_calls") && message.tool_calls.Length > 0
+        for part in message.Contents {
+            if (part is FunctionCallContent)
+                return true
+        }
+        return false
     }
 
     HasUnexecutedToolCalls() {
         messages := this.GetCurrentSessionMessages()
         for msg in messages {
             if (this.HasToolCalls(msg)) {
-                for toolCall in msg.tool_calls {
-                    if (!this.IsToolCallExecuted(toolCall.id)) {
+                toolCalls := this.GetToolCalls(msg)
+                for toolCall in toolCalls {
+                    if (!this.IsToolCallExecuted(toolCall.Id)) {
                         return true
                     }
                 }
@@ -225,8 +238,12 @@ class SessionManager {
     IsToolCallExecuted(toolCallId) {
         messages := this.GetCurrentSessionMessages()
         for m in messages {
-            if (m.HasOwnProp("role") && m.role == "tool" && m.HasOwnProp("tool_call_id") && m.tool_call_id == toolCallId) {
-                return true
+            if (m.Role == "tool") {
+                for part in m.Contents {
+                    if (part is FunctionResultContent && part.CallId == toolCallId) {
+                        return true
+                    }
+                }
             }
         }
         return false

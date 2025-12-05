@@ -257,8 +257,15 @@ class AppController {
 
         ; Update UI
         contextBox := this.MyGui["ContextBox"]
-        contextBox.Delete()
-        contextBox.Add(labels)
+        contextBox.Delete() ; Clear ListView
+
+        ; Add items and check them by default
+        for label in labels {
+            contextBox.Add("Check", label)
+        }
+
+        ; Modify column width to avoid horizontal scrollbar if possible or auto-size
+        contextBox.ModifyCol(1, 350)
     }
 
     UpdateChatHistoryView(*) {
@@ -322,16 +329,21 @@ class AppController {
                     this.MyGui["PromptEdit"].Value := this.SessionManagerValue.GetMessageText(selectedMsg)
                     return true
                 } else {
-                    ; Edit Mode: Update the message with new content
-                    if (this.SessionManagerValue.UpdateMessage(focused_row, promptText)) {
-                        ; Truncate history after this message
-                        if (this.SessionManagerValue.TruncateMessages(focused_row)) {
-                            this.SendToLLM()
-                            this.MyGui["PromptEdit"].Value := ""
-                            ; Clear selection to exit "Edit Mode"
-                            chatHistory.Modify(focused_row, "-Select")
-                            return true
-                        }
+                    ; Edit Mode: Build new message with text and images
+                    contextItems := this.SessionManagerValue.GetCurrentSessionContext()
+                    isImageEnabled := this.AppSettingsValue.IsImageInputEnabled(this.SessionManagerValue.GetCurrentSessionLLMType())
+                    newContent := this.BuildUserMessage(promptText, contextItems, isImageEnabled)
+
+                    ; Replace the message contents
+                    selectedMsg.Contents := newContent
+
+                    ; Truncate history after this message
+                    if (this.SessionManagerValue.TruncateMessages(focused_row)) {
+                        this.SendToLLM()
+                        this.MyGui["PromptEdit"].Value := ""
+                        ; Clear selection to exit "Edit Mode"
+                        chatHistory.Modify(focused_row, "-Select")
+                        return true
                     }
                 }
             }
@@ -464,9 +476,26 @@ class AppController {
         }
         this.UpdateChatHistoryView()  ; Update the chat history view
 
-        ; Render the last message in the series of responses
         if (messages.Length > 0) {
             this.RenderMarkdown(this.SessionManagerValue.GetMessageAsString(messages[messages.Length]))
+        }
+
+        ; Uncheck images after sending
+        this.UncheckSentImages()
+    }
+
+    UncheckSentImages() {
+        contextBox := this.MyGui["ContextBox"]
+        context := this.SessionManagerValue.GetCurrentSessionContext()
+
+        loop contextBox.GetCount() {
+            ; Check if the item corresponds to an image
+            if (A_Index <= context.Length) {
+                item := context[A_Index]
+                if (this.ContextManagerValue.IsImage(item)) {
+                    contextBox.Modify(A_Index, "-Check")
+                }
+            }
         }
     }
 
@@ -482,23 +511,14 @@ class AppController {
     ContextBoxSelect(*) {
         context := this.SessionManagerValue.GetCurrentSessionContext()
         contextBox := this.MyGui["ContextBox"]
-        selectedItems := []
         contextText := ""
 
-        ; Handle multi-select values
-        if (contextBox.Value is Array) {
-            ; Process multiple selections
-            for index in contextBox.Value {
-                selectedItems.Push(context[index])
-            }
-        } else if (contextBox.Value) {
-            ; Single selection
-            selectedItems.Push(context[contextBox.Value])
-        }
+        ; Get focused row
+        focusedRow := contextBox.GetNext()
 
-        ; Process each selected item
-        for item in selectedItems {
-            contextText .= this.GetTextFromContextItem(item) "`n"
+        if (focusedRow > 0 && focusedRow <= context.Length) {
+            item := context[focusedRow]
+            contextText := this.GetTextFromContextItem(item)
         }
 
         this.RenderMarkdown(contextText)  ; Render the selected item(s) in the WebView
@@ -509,14 +529,10 @@ class AppController {
         contextBox := this.MyGui["ContextBox"]
         selectedIndices := []
 
-        ; Handle multi-select values
-        if (contextBox.Value is Array) {
-            ; Get indices in reverse order (to avoid index shifting when removing)
-            for index in contextBox.Value {
-                selectedIndices.InsertAt(1, index)
-            }
-        } else if (contextBox.Value) {
-            selectedIndices.Push(contextBox.Value)
+        ; Get selected rows (highlighted, not necessarily checked)
+        row := 0
+        while (row := contextBox.GetNext(row)) {
+            selectedIndices.InsertAt(1, row) ; Insert at beginning to keep reverse order
         }
 
         ; Remove selected items
@@ -524,14 +540,13 @@ class AppController {
             context.RemoveAt(index)
         }
 
-        ; Refresh the listbox
-        contextBox.Delete()
-        labels := this.GetLabelsForContextItems()
-        contextBox.Add(labels)
+        ; Refresh the listview
+        this.UpdateContextView()
     }
 
     ResetSelection(*) {
-        this.MyGui["ContextBox"].Value := 0  ; Set selection to 0 to clear it
+        contextBox := this.MyGui["ContextBox"]
+        contextBox.Modify(0, "-Select")  ; Deselect all
     }
 
     ClearChatHistory(*) {
@@ -562,65 +577,65 @@ class AppController {
 
     CompressHistory(*) {
         messages := this.SessionManagerValue.GetCurrentSessionMessages()
-        
+
         ; Check if there are enough messages to compress (at least 3: system + 2 others)
         if (messages.Length < 3) {
             MsgBox("Not enough messages to compress. Need at least 2 messages besides the system message.", "Info", "Iconi")
             return
         }
-        
+
         ; Format the conversation history for compression
         conversationText := this.SessionManagerValue.FormatMessagesForCompression()
-        
+
         if (conversationText == "") {
             MsgBox("No conversation history to compress.", "Info", "Iconi")
             return
         }
-        
+
         ; Build compression prompt
         compressionPrompt := "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble.`n`n"
         compressionPrompt .= "CONVERSATION:`n" conversationText
-        
+
         ; Create a temporary message array with just system message and compression request
         tempMessages := [
             messages[1],  ; Keep system message
             ChatMessage("user", [TextContent(compressionPrompt)])
         ]
-        
+
         ; Disable Ask LLM button while processing
         if (this.MyGui) {
             this.askButton.Text := "Compressing..."
             this.askButton.Enabled := false
         }
-        
+
         try {
             ; Create LLM client
             settings := this.AppSettingsValue.GetSelectedSettings(this.SessionManagerValue.GetCurrentSessionLLMType())
             settings["tools"] := []  ; No tools for compression
-            
+
             this.LLMClientInstance := LLMClient(settings)
-            
+
             ; Call LLM with compression prompt
             startTime := A_TickCount
             newMessages := this.LLMClientInstance.Call(tempMessages)
             duration := (A_TickCount - startTime) / 1000
-            
+
             ; Replace all messages with system message + compressed summary
             if (newMessages.Length > 0) {
                 compressedMsg := newMessages[1]
                 compressedMsg.AdditionalProperties["duration"] := duration
-                
+
                 ; Replace session messages
                 this.SessionManagerValue.sessionMessages[this.SessionManagerValue.currentSessionIndex] := [
                     messages[1],  ; Keep original system message
                     compressedMsg  ; Add compressed summary
                 ]
-                
+
                 ; Update UI
                 this.UpdateChatHistoryView()
                 this.RenderMarkdown(this.SessionManagerValue.GetMessageAsString(compressedMsg))
             }
-            
+
         } catch as e {
             MsgBox("Compression failed: " . e.Message, "Error", "Iconx")
         } finally {
@@ -774,9 +789,12 @@ class AppController {
         }
 
         images := []
-        for item in contextItems {
-            if (this.ContextManagerValue.IsImage(item)) {
-                images.Push(item)
+        for index, item in contextItems {
+            ; Check if item is checked in UI
+            if (this.IsItemChecked(index)) {
+                if (this.ContextManagerValue.IsImage(item)) {
+                    images.Push(item)
+                }
             }
         }
 
@@ -809,6 +827,42 @@ class AppController {
         return contentParts
     }
 
+    ; Helper to check if an item is checked in the ListView
+    IsItemChecked(index) {
+        if (!this.MyGui)
+            return true ; Default to true if GUI not available
+
+        try {
+            contextBox := this.MyGui["ContextBox"]
+            ; SendMessage 0x102C, index-1, 0xF000, contextBox.Hwnd ; LVM_GETITEMSTATE
+            ; AutoHotkey ListView has no direct property for "Checked" state without valid row number?
+            ; Actually, we can use SendMessage or loop?
+            ; No, AutoHotkey v2 ListView:
+            ; "To retrieve the state of a row's check box, use the following:"
+            ; isChecked := ListView.GetText(RowNumber) ; No not text
+            ; The built-in way is tricky with just properties.
+            ; Actually: IsChecked := (SendMessage(0x102C, Row-1, 0x2000, ListViewHwnd) >> 12) - 1
+            ; Or simpler: SendMessage(LVM_GETITEMSTATE, ..., LVIS_STATEIMAGEMASK)
+
+            ; Let's use the standard `TopIndex`, `GetCount` etc? No.
+            ; Wait, AutoHotkey v2 docs say:
+            ; "Checked: The row has a check mark." implies it might be a state.
+            ; But there's no built-in `IsChecked` method on the object easily.
+            ; Wait, there is no `GetChecked` method?
+            ; Commonly used:
+            ; Result := SendMessage(0x102C, Row-1, 0xF000, LV) ; LVM_GETITEMSTATE, LVIS_STATEIMAGEMASK
+            ; State := (Result >> 12) - 1  ; 0=No state image, 1=Unchecked, 2=Checked
+
+            Result := SendMessage(0x102C, index-1, 0xF000, contextBox.Hwnd)
+            State := (Result >> 12) - 1
+            ; Microsoft docs: 1 = Unchecked, 2 = Checked.
+            ; So:
+            return State == 1
+        } catch {
+            return true ; Fallback
+        }
+    }
+
     BuildAdditionalContextMessage(context, contextBoxValue) {
         if (context.Length = 0)
             return ""
@@ -823,9 +877,9 @@ class AppController {
             selectedIndices := [contextBoxValue]
         }
 
-        ; Build context excluding selected items
+        ; Build context excluding selected items AND unchecked items AND images
         for index, item in context {
-            if !this.HasVal(selectedIndices, index) {
+            if (this.IsItemChecked(index) && !this.HasVal(selectedIndices, index) && !this.ContextManagerValue.IsImage(item)) {
                 contextText .= this.GetTextFromContextItem(item)
             }
         }
@@ -837,11 +891,13 @@ class AppController {
             messageContent .= "`n`n<CONTEXT>`n" contextText "`n<CONTEXT>"
         }
 
-        ; Add selected items as special focus points
+        ; Add selected items as special focus points (excluding images)
         if (selectedIndices.Length > 0) {
             messageContent .= "`n`n<SELECTED_CONTEXT>`n"
             for index in selectedIndices {
-                messageContent .= this.GetTextFromContextItem(context[index])
+                if (this.IsItemChecked(index) && !this.ContextManagerValue.IsImage(context[index])) {
+                    messageContent .= this.GetTextFromContextItem(context[index])
+                }
             }
             messageContent .= "`n<SELECTED_CONTEXT>"
         }

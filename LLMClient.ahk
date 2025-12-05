@@ -21,7 +21,7 @@ class LLMClient {
         ; Ensure temp directory exists
         if !DirExist(this.tempDir)
             DirCreate(this.tempDir)
-            
+
         ; Initialize providers
         this.providers["openai"] := OpenAIProvider()
         this.providers["ollama"] := OllamaProvider()
@@ -108,7 +108,7 @@ class LLMClient {
             if (e.Message == "Request cancelled") {
                 throw e
             }
-            errorMsg := ChatMessage("assistant", e.Message)
+            errorMsg := ChatMessage("assistant", [TextContent(e.Message)])
             return [errorMsg]
         } finally {
             ; Cleanup temp files but don't delete audio files

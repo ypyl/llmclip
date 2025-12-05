@@ -67,10 +67,11 @@ class UIBuilder {
     }
 
     static CreateContextSection(gui, controller) {
-        ; Add context list with reduced height
+        ; Add context list with reduced height - ListView with Checkboxes
         labels := controller.GetLabelsForContextItems()
-        contextBox := gui.Add("ListBox", "vContextBox x10 y40 w380 h150 VScroll HScroll Multi", labels)
-        contextBox.OnEvent("Change", ObjBindMethod(controller, "ContextBoxSelect"))
+        contextBox := gui.Add("ListView", "vContextBox x10 y40 w380 h150 Checked -Hdr", ["Item"]) ; -Hdr to hide header
+        contextBox.OnEvent("ItemSelect", ObjBindMethod(controller, "ContextBoxSelect"))
+        ; We will populate it in AppController.UpdateContextView
 
         ; Context buttons
         deleteButton := gui.Add("Button", "x10 y190 w120", "Delete Selected")

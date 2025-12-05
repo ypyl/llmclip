@@ -157,11 +157,16 @@ class ChatMessage {
                 } else if (part is ImageContent) {
                     imageObj := {type: "image_url"}
                     if (part.Url != "") {
-                        imageObj.image_url := {url: part.Url}
+                        imageObj.image_url := {url: part.Url, detail: "auto"}
                     } else if (part.Data != "") {
-                        ; Construct data URI
-                        mimeType := part.MimeType != "" ? part.MimeType : "image/jpeg"
-                        imageObj.image_url := {url: "data:" . mimeType . ";base64," . part.Data}
+                        ; Check if Data already contains data URI prefix
+                        if (InStr(part.Data, "data:") == 1) {
+                            imageObj.image_url := {url: part.Data, detail: "auto"}
+                        } else {
+                            ; Construct data URI from base64 data
+                            mimeType := part.MimeType != "" ? part.MimeType : "image/jpeg"
+                            imageObj.image_url := {url: "data:" . mimeType . ";base64," . part.Data, detail: "auto"}
+                        }
                     }
                     obj.content.Push(imageObj)
                 } else if (part is AudioContent) {

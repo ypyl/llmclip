@@ -174,12 +174,19 @@ class ChatMessage {
                 } else if (part is FunctionCallContent) {
                     if (!obj.HasOwnProp("tool_calls"))
                         obj.tool_calls := []
+                    
+                    ; Convert Map to Object for JSON serialization
+                    argsObj := {}
+                    for key, value in part.Arguments {
+                        argsObj.%key% := value
+                    }
+                    
                     obj.tool_calls.Push({
                         id: part.Id,
                         type: "function",
                         function: {
                             name: part.Name,
-                            arguments: JSON.Stringify(part.Arguments)
+                            arguments: JSON.Stringify(argsObj)
                         }
                     })
                 } else if (part is FunctionResultContent) {

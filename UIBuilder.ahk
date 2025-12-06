@@ -39,6 +39,7 @@ class UIBuilder {
         ; Create History menu
         HistoryMenu := Menu()
         HistoryMenu.Add("Compress", ObjBindMethod(controller, "CompressHistory"))
+        HistoryMenu.Add("Extract Notes", ObjBindMethod(controller, "ExtractLearnings"))
 
         MyMenuBar := MenuBar()
         MyMenuBar.Add("&File", FileMenu)

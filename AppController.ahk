@@ -560,6 +560,84 @@ class AppController {
         }
     }
 
+    ExtractLearnings(*) {
+        messages := this.SessionManagerValue.GetCurrentSessionMessages()
+
+        ; Check if there are enough messages (at least 2: system + 1 user/assistant)
+        if (messages.Length < 2) {
+            MsgBox("Not enough conversation history to extract notes.", "Info", "Iconi")
+            return
+        }
+
+        ; Format the conversation history
+        conversationText := this.SessionManagerValue.FormatMessagesForCompression()
+
+        if (conversationText == "") {
+            MsgBox("No conversation history to extract from.", "Info", "Iconi")
+            return
+        }
+
+        ; Get learnings prompt
+        learningsPrompt := this.AppSettingsValue.GetLearningsPrompt(this.SessionManagerValue.GetCurrentSessionLLMType())
+        learningsPrompt .= "`n`nCONVERSATION:`n" conversationText
+
+        ; Create temporary messages for the extraction request
+        tempMessages := [
+            messages[1],  ; Keep system message
+            ChatMessage("user", [TextContent(learningsPrompt)])
+        ]
+
+        ; Disable Ask LLM button while processing
+        if (this.MyGui) {
+            originalButtonText := this.askButton.Text
+            this.askButton.Text := "Extracting..."
+            this.askButton.Enabled := false
+        }
+
+        try {
+            ; Create LLM client
+            settings := this.AppSettingsValue.GetSelectedSettings(this.SessionManagerValue.GetCurrentSessionLLMType())
+            settings["tools"] := []  ; No tools for extraction
+
+            this.LLMClientInstance := LLMClient(settings)
+
+            ; Call LLM
+            newMessages := this.LLMClientInstance.Call(tempMessages)
+
+            if (newMessages.Length > 0) {
+                extractedNotes := this.SessionManagerValue.GetMessageAsString(newMessages[1])
+                this.ShowNotesWindow(extractedNotes)
+            }
+
+        } catch as e {
+            MsgBox("Extraction failed: " . e.Message, "Error", "Iconx")
+        } finally {
+            ; Re-enable Ask LLM button
+            if (this.MyGui) {
+                this.askButton.Text := "Ask LLM" ; Reset to default
+                this.askButton.Enabled := true
+            }
+        }
+    }
+
+    ShowNotesWindow(notesContent) {
+        notesGui := Gui()
+        notesGui.Title := "Extracted Notes"
+        notesGui.SetFont("s10", "Segoe UI")
+        
+        notesGui.Add("Text", "x10 y10 w580 h20", "Here are the extracted notes from your conversation:")
+        
+        notesEdit := notesGui.Add("Edit", "x10 y40 w580 h350 Multi ReadOnly vNotesEdit", notesContent)
+        
+        copyBtn := notesGui.Add("Button", "x10 y400 w150 h30", "Copy to Clipboard")
+        copyBtn.OnEvent("Click", (*) => (A_Clipboard := notesContent, MsgBox("Copied to clipboard!", "Info", "T1")))
+        
+        closeBtn := notesGui.Add("Button", "x490 y400 w100 h30", "Close")
+        closeBtn.OnEvent("Click", (*) => notesGui.Destroy())
+        
+        notesGui.Show("w600 h450")
+    }
+
     ExitApplication(*) {
         ExitApp
     }

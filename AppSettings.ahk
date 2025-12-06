@@ -107,7 +107,14 @@ class AppSettings {
 
     GetCompressionPrompt(llmIndex) {
         settings := this.GetSelectedSettings(llmIndex)
-        return settings.Get("compression_prompt", "")
+        defaultPrompt := "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+        return settings.Get("compression_prompt", defaultPrompt)
+    }
+
+    GetLearningsPrompt(llmIndex) {
+        settings := this.GetSelectedSettings(llmIndex)
+        defaultPrompt := "Extract valuable learnings and facts from the following conversation.`nReturn a bulleted list of notes.`nFocus on technical details, solutions, and key decisions."
+        return settings.Get("learnings_prompt", defaultPrompt)
     }
 
     GetSystemPromptNames(llmIndex) {

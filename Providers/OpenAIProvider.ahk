@@ -2,7 +2,6 @@
 #Include "..\PowerShellTool.ahk"
 
 class OpenAIProvider extends BaseProvider {
-    powerShellTool := PowerShellTool()
 
     GetRequestBody(messages, settings) {
         body := Map()
@@ -21,7 +20,7 @@ class OpenAIProvider extends BaseProvider {
         enabledTools := []
         for t in settings.Get("tools", []) {
             if (t = "powerShellTool")
-                enabledTools.Push(this.powerShellTool.GetOpenAiToolDefinition())
+                enabledTools.Push(PowerShellTool.GetOpenAiToolDefinition())
         }
         if (enabledTools.Length > 0)
             body["tools"] := enabledTools

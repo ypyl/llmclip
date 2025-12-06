@@ -7,7 +7,7 @@ class PowerShellTool {
      * @param workingDirectory - The working directory for the script (optional)
      * @returns The output from the PowerShell script
      */
-    ExecuteScript(script, workingDirectory := A_ScriptDir) {
+    static ExecuteScript(script, workingDirectory := A_ScriptDir) {
         try {
             shell := ComObject("WScript.Shell")
 
@@ -65,7 +65,7 @@ class PowerShellTool {
     /**
      * Get the OpenAI tool definition for this tool
      */
-    GetOpenAiToolDefinition() {
+    static GetOpenAiToolDefinition() {
         return {
             type: "function",
             function: {
@@ -92,7 +92,7 @@ class PowerShellTool {
     /**
      * Get the Gemini tool definition for this tool
      */
-    GetGeminiToolDefinition() {
+    static GetGeminiToolDefinition() {
         return {
             functionDeclarations: [{
                 name: "execute_powershell",
@@ -120,7 +120,7 @@ class PowerShellTool {
      * @param toolCall - The tool call object from the LLM
      * @returns The tool response message
      */
-    ExecuteToolCall(toolCall) {
+    static ExecuteToolCall(toolCall) {
         if (toolCall.Name != "execute_powershell") {
             return
         }
@@ -138,7 +138,7 @@ class PowerShellTool {
             workingDir := args.Has("working_directory") ? args["working_directory"] : A_ScriptDir
 
             ; Execute the PowerShell script
-            result := this.ExecuteScript(args["script"], workingDir)
+            result := PowerShellTool.ExecuteScript(args["script"], workingDir)
 
             msg := ChatMessage("tool")
             msg.Contents.Push(FunctionResultContent(toolCall.Id, result))

@@ -26,7 +26,6 @@ class AppController {
     AppSettingsValue := ""
     SessionManagerValue := ""
     ClipboardParserValue := ""
-    PowerShellToolValue := ""
     WebViewManagerValue := ""
     ContextManagerValue := ""
     TrayManagerValue := ""
@@ -47,8 +46,6 @@ class AppController {
 
         ; Create clipboard parser instance
         this.ClipboardParserValue := ClipboardParser()
-
-        this.PowerShellToolValue := PowerShellTool()
 
         ; Create WebView manager instance
         this.WebViewManagerValue := WebViewManager()
@@ -715,7 +712,7 @@ class AppController {
             if (!this.SessionManagerValue.IsToolCallExecuted(tool_call.id)) {
                 ; Measure tool execution time
                 startTime := A_TickCount
-                if result := this.PowerShellToolValue.ExecuteToolCall(tool_call) {
+                if result := PowerShellTool.ExecuteToolCall(tool_call) {
                     duration := (A_TickCount - startTime) / 1000
                     result.duration := duration
                     results.Push(result)

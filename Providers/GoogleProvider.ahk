@@ -2,7 +2,6 @@
 #Include "..\PowerShellTool.ahk"
 
 class GoogleProvider extends BaseProvider {
-    powerShellTool := PowerShellTool()
 
     GetRequestBody(messages, settings) {
         body := Map()

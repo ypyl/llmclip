@@ -47,7 +47,7 @@ class UIBuilder {
         MyMenuBar.Add(currentModelName, ModelMenu)  ; Use model name instead of "&Model"
         gui.MenuBar := MyMenuBar
         
-        return {menuBar: MyMenuBar, modelMenu: ModelMenu}  ; Return menuBar and modelMenu
+        return {menuBar: MyMenuBar, modelMenu: ModelMenu, historyMenu: HistoryMenu}  ; Return menuBar, modelMenu and historyMenu
     }
 
     static CreateTopControls(gui, sessionManagerValue, trayManagerValue, controller) {

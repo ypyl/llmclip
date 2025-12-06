@@ -16,6 +16,7 @@ class AppController {
     MyGui := ""
     guiShown := false
     ModelMenu := ""  ; Store reference to Model menu
+    HistoryMenu := ""  ; Store reference to History menu
     MyMenuBar := ""  ; Store reference to MenuBar
     currentAnswerSize := "Default"  ; Track current answer size (Small, Default, Long)
     currentModelName := ""  ; Track current model name for MenuBar updates
@@ -97,9 +98,12 @@ class AppController {
         this.MyGui.OnEvent("Size", (gui, minMax, width, height) => UIBuilder.GuiResize(gui, minMax, width, height, this))
         this.MyGui.OnEvent("Close", ObjBindMethod(this, "GuiClose"))
 
-        menuObjects := UIBuilder.CreateMenuBar(this.MyGui, this, this.AppSettingsValue, this.SessionManagerValue)
-        this.MyMenuBar := menuObjects.menuBar
-        this.ModelMenu := menuObjects.modelMenu
+        menus := UIBuilder.CreateMenuBar(this.MyGui, this, this.AppSettingsValue, this.SessionManagerValue)
+        this.MyMenuBar := menus.menuBar
+        this.ModelMenu := menus.modelMenu
+        this.HistoryMenu := menus.historyMenu
+
+        this.UpdateCompressionMenuState()
 
         ; Initialize current model name
         currentModelIndex := this.SessionManagerValue.GetCurrentSessionLLMType()
@@ -195,6 +199,8 @@ class AppController {
         powerShellEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(),
         "powerShellTool")
         this.MyGui["PowerShellToolBox"].Value := powerShellEnabled ? 1 : 0
+
+        this.UpdateCompressionMenuState()
     }
 
     SelectAnswerSize(ItemName, ItemPos, MyMenu) {
@@ -249,6 +255,8 @@ class AppController {
 
         ; Clear response field
         this.RenderMarkdown("")  ; Clear the response area
+        
+        this.UpdateCompressionMenuState()
     }
 
     UpdateContextView(*) {
@@ -593,8 +601,14 @@ class AppController {
         }
 
         ; Build compression prompt
-        compressionPrompt := "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble.`n`n"
-        compressionPrompt .= "CONVERSATION:`n" conversationText
+        compressionPrompt := this.AppSettingsValue.GetCompressionPrompt(this.SessionManagerValue.GetCurrentSessionLLMType())
+        
+        if (compressionPrompt == "") {
+             MsgBox("Compression prompt not configured for this provider.", "Info", "Iconi")
+             return
+        }
+        
+        compressionPrompt .= "`n`nCONVERSATION:`n" conversationText
 
         ; Create a temporary message array with just system message and compression request
         tempMessages := [
@@ -1009,6 +1023,8 @@ class AppController {
             this.ModelMenu.Add(modelName, ObjBindMethod(this, "SelectModel"))
         }
 
+        this.UpdateCompressionMenuState()
+
         currentLLMType := this.SessionManagerValue.GetCurrentSessionLLMType()
 
         ; Validate index
@@ -1044,6 +1060,22 @@ class AppController {
 
         ; Update tool checkbox based on current LLM type
         powerShellEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "powerShellTool")
-        this.MyGui["PowerShellToolBox"].Value := powerShellEnabled ? 1 : 0
+        this.MyGui["PowerShellToolBox"].Value := powerShellEnabled ? 1 : 0   
+        
+        this.UpdateCompressionMenuState()
+    }
+
+    UpdateCompressionMenuState() {
+        if (!this.HistoryMenu)
+            return
+
+        currentLLMIndex := this.SessionManagerValue.GetCurrentSessionLLMType()
+        compressionPrompt := this.AppSettingsValue.GetCompressionPrompt(currentLLMIndex)
+
+        if (compressionPrompt == "") {
+            this.HistoryMenu.Disable("Compress")
+        } else {
+            this.HistoryMenu.Enable("Compress")
+        }
     }
 }

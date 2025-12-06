@@ -105,6 +105,11 @@ class AppSettings {
         return image
     }
 
+    GetCompressionPrompt(llmIndex) {
+        settings := this.GetSelectedSettings(llmIndex)
+        return settings.Get("compression_prompt", "")
+    }
+
     GetSystemPromptNames(llmIndex) {
         names := []
         prompts := this.GetVisiblePrompts(llmIndex)

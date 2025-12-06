@@ -10,6 +10,8 @@
 #Include UIConfig.ahk
 #Include UIBuilder.ahk
 #Include LLM\Types.ahk
+#Include ContextViewController.ahk
+#Include HistoryViewController.ahk
 
 class AppController {
     askButton := ""
@@ -29,6 +31,9 @@ class AppController {
     ContextManagerValue := ""
     TrayManagerValue := ""
     LLMClientInstance := ""
+    
+    ContextViewControllerValue := ""
+    HistoryViewControllerValue := ""
 
     __New() {
         ; Create settings instance
@@ -52,6 +57,9 @@ class AppController {
 
         ; Create TrayManager instance
         this.TrayManagerValue := TrayManager(ObjBindMethod(this, "DisplayLLMUserInterface"), ObjBindMethod(this, "UpdateUiBasesOnRecordingStatus"), ObjBindMethod(this, "ExitApplication"), this.ContextManagerValue)
+
+        this.ContextViewControllerValue := ContextViewController(this.SessionManagerValue, this.AppSettingsValue, this.ContextManagerValue, this.WebViewManagerValue)
+        this.HistoryViewControllerValue := HistoryViewController(this.SessionManagerValue, this.WebViewManagerValue)
 
         this.LLMClientInstance := ""
     }
@@ -98,6 +106,9 @@ class AppController {
         this.MyGui.OnEvent("Size", (gui, minMax, width, height) => UIBuilder.GuiResize(gui, minMax, width, height, this))
         this.MyGui.OnEvent("Close", ObjBindMethod(this, "GuiClose"))
 
+        this.ContextViewControllerValue.SetGui(this.MyGui)
+        this.HistoryViewControllerValue.SetGui(this.MyGui)
+
         menus := UIBuilder.CreateMenuBar(this.MyGui, this, this.AppSettingsValue, this.SessionManagerValue)
         this.MyMenuBar := menus.menuBar
         this.ModelMenu := menus.modelMenu
@@ -111,9 +122,9 @@ class AppController {
 
         UIBuilder.CreateTopControls(this.MyGui, this.SessionManagerValue, this.TrayManagerValue, this)
 
-        UIBuilder.CreateContextSection(this.MyGui, this)
+        UIBuilder.CreateContextSection(this.MyGui, this.ContextViewControllerValue)
 
-        UIBuilder.CreateChatHistorySection(this.MyGui, this)
+        UIBuilder.CreateChatHistorySection(this.MyGui, this.HistoryViewControllerValue)
 
         UIBuilder.CreatePromptSection(this.MyGui, this.SessionManagerValue, this.AppSettingsValue, this)
 
@@ -127,25 +138,7 @@ class AppController {
         this.WebViewManagerValue.SetInputCallback(ObjBindMethod(this, "AppendToPrompt"))
         this.guiShown := true
 
-        this.UpdateChatHistoryView()
-    }
-
-
-    GetLabelsForContextItems() {
-        context := this.SessionManagerValue.GetCurrentSessionContext()
-        predefinedContext := this.AppSettingsValue.GetContext(this.SessionManagerValue.GetCurrentSessionLLMType(),
-        this.SessionManagerValue.GetCurrentSessionSystemPrompt())
-        labels := []
-        for item in predefinedContext {
-            if (!this.HasVal(context, item)) {
-                context.Push(item)
-            }
-        }
-        this.SessionManagerValue.SetCurrentSessionContext(context)
-        for item in context {
-            labels.Push(this.ContextManagerValue.GetLabelFromContextItem(item))
-        }
-        return labels
+        this.HistoryViewControllerValue.UpdateChatHistoryView()
     }
 
     SystemPromptChanged(*) {
@@ -164,7 +157,7 @@ class AppController {
             this.MyGui["PromptEdit"].Value := inputTemplate  ; Set the prompt edit value to the input template
         }
         this.SessionManagerValue.UpdateSystemPromptContent(systemPrompt)
-        this.UpdateContextView()  ; Update the context view
+        this.ContextViewControllerValue.UpdateContextView()  ; Update the context view
     }
 
     SelectModel(ItemName, ItemPos, MyMenu) {
@@ -226,8 +219,8 @@ class AppController {
         ; Switch to new session
         this.SessionManagerValue.SwitchSession(this.MyGui["SessionSelect"].Value)
 
-        this.UpdateContextView()
-        this.UpdateChatHistoryView()
+        this.ContextViewControllerValue.UpdateContextView()
+        this.HistoryViewControllerValue.UpdateChatHistoryView()
 
         currentModelIndex := this.SessionManagerValue.GetCurrentSessionLLMType()
         newModelName := "Model: " . this.AppSettingsValue.llmTypes[currentModelIndex]
@@ -257,39 +250,6 @@ class AppController {
         this.RenderMarkdown("")  ; Clear the response area
         
         this.UpdateCompressionMenuState()
-    }
-
-    UpdateContextView(*) {
-        ; Update local references
-        labels := this.GetLabelsForContextItems()
-
-        ; Update UI
-        contextBox := this.MyGui["ContextBox"]
-        contextBox.Delete() ; Clear ListView
-
-        ; Add items and check them by default
-        for label in labels {
-            contextBox.Add("Check", label)
-        }
-
-        ; Modify column width to avoid horizontal scrollbar if possible or auto-size
-        contextBox.ModifyCol(1, 350)
-    }
-
-    UpdateChatHistoryView(*) {
-        messages := this.SessionManagerValue.GetCurrentSessionMessagesAsStrings()
-        chatHistory := this.MyGui["ChatHistory"]
-        chatHistory.Delete()
-        for msg in messages {
-            duration := msg.HasOwnProp("duration") ? Round(msg.duration, 2) . "s" : ""
-            tokens := msg.HasOwnProp("tokens") ? msg.tokens : ""
-            chatHistory.Add(, msg.role, SubStr(msg.content, 1, 70) (StrLen(msg.content) > 70 ? "..." : ""), duration,
-            tokens)
-        }
-        this.MyGui["ChatMessageActionButton"].Visible := false  ; Hide the Run Tool button
-        if (chatHistory.GetCount() > 0) {
-            chatHistory.Modify(chatHistory.GetCount(), "Vis")  ; Scroll to bottom
-        }
     }
 
     HandleToolConfirmation() {
@@ -414,7 +374,7 @@ class AppController {
         contextBox := this.MyGui["ContextBox"]
 
         ; Build and append context message if needed
-        additionalContext := this.BuildAdditionalContextMessage(context, contextBox.Value)
+        additionalContext := this.ContextViewControllerValue.BuildAdditionalContextMessage(context, contextBox.Value)
         if (additionalContext != "") {
             messages[1].AddText(additionalContext)
         }
@@ -482,33 +442,14 @@ class AppController {
                 this.askButton.Enabled := true
             }
         }
-        this.UpdateChatHistoryView()  ; Update the chat history view
+        this.HistoryViewControllerValue.UpdateChatHistoryView()  ; Update the chat history view
 
         if (messages.Length > 0) {
             this.RenderMarkdown(this.SessionManagerValue.GetMessageAsString(messages[messages.Length]))
         }
 
         ; Uncheck images after sending
-        this.UncheckSentImages()
-    }
-
-    UncheckSentImages() {
-        contextBox := this.MyGui["ContextBox"]
-        context := this.SessionManagerValue.GetCurrentSessionContext()
-
-        loop contextBox.GetCount() {
-            ; Check if the item corresponds to an image
-            if (A_Index <= context.Length) {
-                item := context[A_Index]
-                if (this.ContextManagerValue.IsImage(item)) {
-                    contextBox.Modify(A_Index, "-Check")
-                }
-            }
-        }
-    }
-
-    GetTextFromContextItem(item) {
-        return this.ContextManagerValue.GetTextFromContextItem(item, (url) => this.WebViewManagerValue.LoadArticle(url))
+        this.ContextViewControllerValue.UncheckSentImages()
     }
 
     GuiClose(*) {
@@ -516,46 +457,7 @@ class AppController {
         this.guiShown := false
     }
 
-    ContextBoxSelect(*) {
-        context := this.SessionManagerValue.GetCurrentSessionContext()
-        contextBox := this.MyGui["ContextBox"]
-        contextText := ""
 
-        ; Get focused row
-        focusedRow := contextBox.GetNext()
-
-        if (focusedRow > 0 && focusedRow <= context.Length) {
-            item := context[focusedRow]
-            contextText := this.GetTextFromContextItem(item)
-        }
-
-        this.RenderMarkdown(contextText)  ; Render the selected item(s) in the WebView
-    }
-
-    DeleteSelected(*) {
-        context := this.SessionManagerValue.GetCurrentSessionContext()
-        contextBox := this.MyGui["ContextBox"]
-        selectedIndices := []
-
-        ; Get selected rows (highlighted, not necessarily checked)
-        row := 0
-        while (row := contextBox.GetNext(row)) {
-            selectedIndices.InsertAt(1, row) ; Insert at beginning to keep reverse order
-        }
-
-        ; Remove selected items
-        for index in selectedIndices {
-            context.RemoveAt(index)
-        }
-
-        ; Refresh the listview
-        this.UpdateContextView()
-    }
-
-    ResetSelection(*) {
-        contextBox := this.MyGui["ContextBox"]
-        contextBox.Modify(0, "-Select")  ; Deselect all
-    }
 
     ClearChatHistory(*) {
         this.SessionManagerValue.ClearCurrentMessages()
@@ -567,7 +469,7 @@ class AppController {
         )
         this.SessionManagerValue.UpdateSystemPromptContent(systemPrompt)
 
-        this.UpdateChatHistoryView()  ; Update the chat history view
+        this.HistoryViewControllerValue.UpdateChatHistoryView()  ; Update the chat history view
         this.RenderMarkdown("")  ; Clear the response area
     }
 
@@ -576,8 +478,8 @@ class AppController {
         this.SessionManagerValue.ResetCurrentSession()
 
         ; Update UI
-        this.UpdateChatHistoryView()
-        this.UpdateContextView()
+        this.HistoryViewControllerValue.UpdateChatHistoryView()
+        this.ContextViewControllerValue.UpdateContextView()
 
         ; Clear response and prompt
         this.RenderMarkdown("")  ; Clear the response area
@@ -646,7 +548,7 @@ class AppController {
                 ]
 
                 ; Update UI
-                this.UpdateChatHistoryView()
+                this.HistoryViewControllerValue.UpdateChatHistoryView()
                 this.RenderMarkdown(this.SessionManagerValue.GetMessageAsString(compressedMsg))
             }
 
@@ -712,32 +614,8 @@ class AppController {
 
             ; Update Context in GUI if shown
             if (this.guiShown) {
-                this.UpdateContextView()
+                this.ContextViewControllerValue.UpdateContextView()
             }
-        }
-    }
-
-    ChatHistorySelect(*) {
-        messages := this.SessionManagerValue.GetCurrentSessionMessages()
-        chatHistory := this.MyGui["ChatHistory"]
-        if (focused_row := chatHistory.GetNext()) {
-            msg := messages[focused_row]
-            this.MyGui["ChatMessageActionButton"].Visible := true  ; Show the Copy button
-            this.RenderMarkdown(this.SessionManagerValue.GetMessageAsString(msg))  ; Render the selected message in the WebView
-        }
-    }
-
-    CopySelectedMessage(*) {
-        messages := this.SessionManagerValue.GetCurrentSessionMessages()
-        chatHistory := this.MyGui["ChatHistory"]
-        if (focused_row := chatHistory.GetNext()) {
-            msg := messages[focused_row]
-            messageText := msg.GetText()
-
-            ClipText := StrReplace(messageText, "`r`n", "`n")
-            ClipText := StrReplace(ClipText, "`r", "`n")
-            ClipText := StrReplace(ClipText, "`n", "`r`n")
-            A_Clipboard := ClipText
         }
     }
 
@@ -765,32 +643,13 @@ class AppController {
 
     ClearAllContext(*) {
         this.SessionManagerValue.SetCurrentSessionContext([])
-        this.UpdateContextView()
+        this.ContextViewControllerValue.UpdateContextView()
     }
 
     ToggleRecording(*) {
         this.TrayManagerValue.ToggleRecording(this.SessionManagerValue)
     }
 
-    DeleteSelectedMessage(*) {
-        messages := this.SessionManagerValue.GetCurrentSessionMessages()
-        chatHistory := this.MyGui["ChatHistory"]
-
-        selectedIndices := []
-        focused_row := 0
-
-        ; Collect all selected rows
-        while (focused_row := chatHistory.GetNext(focused_row))
-            if (focused_row > 1)  ; Don't include system message
-                selectedIndices.InsertAt(1, focused_row)
-
-        ; Remove messages in reverse order to maintain correct indices
-        for index in selectedIndices
-            messages.RemoveAt(index)
-
-        this.UpdateChatHistoryView()
-        this.RenderMarkdown("")  ; Clear the response area
-    }
 
     BuildUserMessage(userMessageContent, contextItems, isImageEnabled) {
         contentParts := []
@@ -805,7 +664,7 @@ class AppController {
         images := []
         for index, item in contextItems {
             ; Check if item is checked in UI
-            if (this.IsItemChecked(index)) {
+            if (this.ContextViewControllerValue.IsItemChecked(index)) {
                 if (this.ContextManagerValue.IsImage(item)) {
                     images.Push(item)
                 }
@@ -839,84 +698,6 @@ class AppController {
         }
 
         return contentParts
-    }
-
-    ; Helper to check if an item is checked in the ListView
-    IsItemChecked(index) {
-        if (!this.MyGui)
-            return true ; Default to true if GUI not available
-
-        try {
-            contextBox := this.MyGui["ContextBox"]
-            ; SendMessage 0x102C, index-1, 0xF000, contextBox.Hwnd ; LVM_GETITEMSTATE
-            ; AutoHotkey ListView has no direct property for "Checked" state without valid row number?
-            ; Actually, we can use SendMessage or loop?
-            ; No, AutoHotkey v2 ListView:
-            ; "To retrieve the state of a row's check box, use the following:"
-            ; isChecked := ListView.GetText(RowNumber) ; No not text
-            ; The built-in way is tricky with just properties.
-            ; Actually: IsChecked := (SendMessage(0x102C, Row-1, 0x2000, ListViewHwnd) >> 12) - 1
-            ; Or simpler: SendMessage(LVM_GETITEMSTATE, ..., LVIS_STATEIMAGEMASK)
-
-            ; Let's use the standard `TopIndex`, `GetCount` etc? No.
-            ; Wait, AutoHotkey v2 docs say:
-            ; "Checked: The row has a check mark." implies it might be a state.
-            ; But there's no built-in `IsChecked` method on the object easily.
-            ; Wait, there is no `GetChecked` method?
-            ; Commonly used:
-            ; Result := SendMessage(0x102C, Row-1, 0xF000, LV) ; LVM_GETITEMSTATE, LVIS_STATEIMAGEMASK
-            ; State := (Result >> 12) - 1  ; 0=No state image, 1=Unchecked, 2=Checked
-
-            Result := SendMessage(0x102C, index-1, 0xF000, contextBox.Hwnd)
-            State := (Result >> 12) - 1
-            ; Microsoft docs: 1 = Unchecked, 2 = Checked.
-            ; So:
-            return State == 1
-        } catch {
-            return true ; Fallback
-        }
-    }
-
-    BuildAdditionalContextMessage(context, contextBoxValue) {
-        if (context.Length = 0)
-            return ""
-
-        contextText := ""
-        selectedIndices := []
-
-        ; Get selected indices
-        if (contextBoxValue is Array) {
-            selectedIndices := contextBoxValue
-        } else if (contextBoxValue) {
-            selectedIndices := [contextBoxValue]
-        }
-
-        ; Build context excluding selected items AND unchecked items AND images
-        for index, item in context {
-            if (this.IsItemChecked(index) && !this.HasVal(selectedIndices, index) && !this.ContextManagerValue.IsImage(item)) {
-                contextText .= this.GetTextFromContextItem(item)
-            }
-        }
-
-        messageContent := ""
-
-        ; Only add general context if there is any non-selected content
-        if (contextText != "") {
-            messageContent .= "`n`n<CONTEXT>`n" contextText "`n<CONTEXT>"
-        }
-
-        ; Add selected items as special focus points (excluding images)
-        if (selectedIndices.Length > 0) {
-            messageContent .= "`n`n<SELECTED_CONTEXT>`n"
-            for index in selectedIndices {
-                if (this.IsItemChecked(index) && !this.ContextManagerValue.IsImage(context[index])) {
-                    messageContent .= this.GetTextFromContextItem(context[index])
-                }
-            }
-            messageContent .= "`n<SELECTED_CONTEXT>"
-        }
-
-        return messageContent
     }
 
     ConfigureToolSettings() {
@@ -999,10 +780,10 @@ class AppController {
                 this.SessionManagerValue.UpdateSystemPromptContent(systemPrompt)
 
                 ; Update Context View
-                this.UpdateContextView()
+                this.ContextViewControllerValue.UpdateContextView()
 
                 ; Update Chat History View
-                this.UpdateChatHistoryView()
+                this.HistoryViewControllerValue.UpdateChatHistoryView()
 
                 ; Clear Response Area
                 this.RenderMarkdown("")

@@ -66,42 +66,42 @@ class UIBuilder {
         resetButton.OnEvent("Click", ObjBindMethod(controller, "ResetAll"))
     }
 
-    static CreateContextSection(gui, controller) {
+    static CreateContextSection(gui, contextViewController) {
         ; Add context list with reduced height - ListView with Checkboxes
-        labels := controller.GetLabelsForContextItems()
+        labels := contextViewController.GetLabelsForContextItems()
         contextBox := gui.Add("ListView", "vContextBox x10 y40 w380 h150 Checked -Hdr", ["Item"]) ; -Hdr to hide header
-        contextBox.OnEvent("ItemSelect", ObjBindMethod(controller, "ContextBoxSelect"))
-        ; We will populate it in AppController.UpdateContextView
+        contextBox.OnEvent("ItemSelect", ObjBindMethod(contextViewController, "ContextBoxSelect"))
+        ; We will populate it in ContextViewController.UpdateContextView
 
         ; Context buttons
         deleteButton := gui.Add("Button", "x10 y190 w120", "Delete Selected")
-        deleteButton.OnEvent("Click", ObjBindMethod(controller, "DeleteSelected"))
+        deleteButton.OnEvent("Click", ObjBindMethod(contextViewController, "DeleteSelected"))
 
         clearSelectionButton := gui.Add("Button", "x140 y190 w120", "Reset Selection")
-        clearSelectionButton.OnEvent("Click", ObjBindMethod(controller, "ResetSelection"))
+        clearSelectionButton.OnEvent("Click", ObjBindMethod(contextViewController, "ResetSelection"))
 
         clearAllButton := gui.Add("Button", "x270 y190 w120", "Clear Context")
-        clearAllButton.OnEvent("Click", ObjBindMethod(controller, "ClearAllContext"))
+        clearAllButton.OnEvent("Click", ObjBindMethod(contextViewController, "ClearAllContext"))
     }
 
-    static CreateChatHistorySection(gui, controller) {
+    static CreateChatHistorySection(gui, historyViewController) {
         ; Add ListView for chat history
         chatHistory := gui.Add("ListView", "vChatHistory x10 y220 w380 h150 NoSort", ["Role", "Text", "⏱️", "Tokens"])
         chatHistory.ModifyCol(1, 30)  ; Role column width
         chatHistory.ModifyCol(2, 250) ; Text column width
         chatHistory.ModifyCol(3, 50)  ; Time column width
         chatHistory.ModifyCol(4, 50)  ; Tokens column width
-        chatHistory.OnEvent("ItemSelect", ObjBindMethod(controller, "ChatHistorySelect"))
+        chatHistory.OnEvent("ItemSelect", ObjBindMethod(historyViewController, "ChatHistorySelect"))
 
         ; Chat history buttons
         deleteMessageButton := gui.Add("Button", "x10 y375 w120", "Delete Selected")
-        deleteMessageButton.OnEvent("Click", ObjBindMethod(controller, "DeleteSelectedMessage"))
+        deleteMessageButton.OnEvent("Click", ObjBindMethod(historyViewController, "DeleteSelectedMessage"))
 
         chatMessageButton := gui.Add("Button", "vChatMessageActionButton x140 y375 w120 Hidden", "Copy")
-        chatMessageButton.OnEvent("Click", ObjBindMethod(controller, "CopySelectedMessage"))
+        chatMessageButton.OnEvent("Click", ObjBindMethod(historyViewController, "CopySelectedMessage"))
 
         clearHistoryButton := gui.Add("Button", "x270 y375 w120", "Clear History")
-        clearHistoryButton.OnEvent("Click", ObjBindMethod(controller, "ClearChatHistory"))
+        clearHistoryButton.OnEvent("Click", ObjBindMethod(historyViewController, "ClearChatHistory"))
     }
 
 

@@ -150,23 +150,35 @@ class WebViewManager {
                 }
                 .copy-button, .toggle-button {
                     margin: 4px;
-                    padding: 4px 8px;
+                    padding: 6px 12px;
+                    background-color: #ffffff;
+                    color: #333333;
+                    border: 1px solid #cccccc;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    box-shadow: none;
+                }
+                .copy-button:hover, .toggle-button:hover {
+                    background-color: #e6f2fa;
+                    border-color: #0078d4;
                 }
                 .quote-button {
                     position: fixed;
                     display: none;
-                    background-color: #0078d4;
-                    color: white;
-                    border: none;
+                    background-color: #ffffff;
+                    color: #333333;
+                    border: 1px solid #cccccc;
                     border-radius: 4px;
                     padding: 6px 12px;
                     cursor: pointer;
                     font-size: 14px;
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
                     z-index: 1000;
                 }
                 .quote-button:hover {
-                    background-color: #0063b1;
+                    background-color: #e6f2fa;
+                    border-color: #0078d4;
                 }
             </style>
         </head>

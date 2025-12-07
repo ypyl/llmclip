@@ -606,7 +606,7 @@ class AppController {
 
             if (newMessages.Length > 0) {
                 extractedNotes := this.SessionManagerValue.GetMessageAsString(newMessages[1])
-                this.ShowNotesWindow(extractedNotes)
+                UIBuilder.ShowNotesWindow(extractedNotes)
             }
 
         } catch as e {
@@ -618,24 +618,6 @@ class AppController {
                 this.askButton.Enabled := true
             }
         }
-    }
-
-    ShowNotesWindow(notesContent) {
-        notesGui := Gui()
-        notesGui.Title := "Extracted Notes"
-        notesGui.SetFont("s10", "Segoe UI")
-        
-        notesGui.Add("Text", "x10 y10 w580 h20", "Here are the extracted notes from your conversation:")
-        
-        notesEdit := notesGui.Add("Edit", "x10 y40 w580 h350 Multi ReadOnly vNotesEdit", notesContent)
-        
-        copyBtn := notesGui.Add("Button", "x10 y400 w150 h30", "Copy to Clipboard")
-        copyBtn.OnEvent("Click", (*) => (A_Clipboard := notesContent, MsgBox("Copied to clipboard!", "Info", "T1")))
-        
-        closeBtn := notesGui.Add("Button", "x490 y400 w100 h30", "Close")
-        closeBtn.OnEvent("Click", (*) => notesGui.Destroy())
-        
-        notesGui.Show("w600 h450")
     }
 
     ExitApplication(*) {

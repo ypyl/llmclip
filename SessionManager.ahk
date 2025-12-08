@@ -38,13 +38,24 @@ class SessionManager {
         }
         
         ; Check for tool calls and results
+        toolCallTexts := []
         for part in message.Contents {
             if (part is FunctionCallContent) {
-                return this.FormatToolCallMessage(part)
+                toolCallTexts.Push(this.FormatToolCallMessage(part))
             }
             if (part is FunctionResultContent) {
                 return part.Result
             }
+        }
+        
+        if (toolCallTexts.Length > 0) {
+            finalText := ""
+            for text in toolCallTexts {
+                if (finalText != "")
+                    finalText .= "`n"
+                finalText .= text
+            }
+            return finalText
         }
         
         ; Get text content and check for thinking

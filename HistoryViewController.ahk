@@ -5,9 +5,12 @@ class HistoryViewController {
     WebViewManagerValue := ""
     MyGui := ""
 
-    __New(sessionManager, webViewManager) {
+    AppSettingsValue := ""
+
+    __New(sessionManager, webViewManager, appSettings) {
         this.SessionManagerValue := sessionManager
         this.WebViewManagerValue := webViewManager
+        this.AppSettingsValue := appSettings
     }
 
     SetGui(gui) {
@@ -74,6 +77,20 @@ class HistoryViewController {
             messages.RemoveAt(index)
 
         this.UpdateChatHistoryView()
+        this.WebViewManagerValue.RenderMarkdown("")  ; Clear the response area
+    }
+
+    ClearChatHistory(*) {
+        this.SessionManagerValue.ClearCurrentMessages()
+
+        ; Update the system prompt content after clearing
+        systemPrompt := this.AppSettingsValue.GetSystemPromptValue(
+            this.SessionManagerValue.GetCurrentSessionLLMType(),
+            this.SessionManagerValue.GetCurrentSessionSystemPrompt()
+        )
+        this.SessionManagerValue.UpdateSystemPromptContent(systemPrompt)
+
+        this.UpdateChatHistoryView()  ; Update the chat history view
         this.WebViewManagerValue.RenderMarkdown("")  ; Clear the response area
     }
 }

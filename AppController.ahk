@@ -30,7 +30,7 @@ class AppController {
     ContextManagerValue := ""
     TrayManagerValue := ""
     LLMClientInstance := ""
-    
+
     ContextViewControllerValue := ""
     HistoryViewControllerValue := ""
 
@@ -53,10 +53,11 @@ class AppController {
         this.ContextManagerValue := ContextManager()
 
         ; Create TrayManager instance
-        this.TrayManagerValue := TrayManager(ObjBindMethod(this, "DisplayLLMUserInterface"), ObjBindMethod(this, "UpdateUiBasesOnRecordingStatus"), ObjBindMethod(this, "ExitApplication"), this.ContextManagerValue)
+        this.TrayManagerValue := TrayManager(ObjBindMethod(this, "DisplayLLMUserInterface"), ObjBindMethod(this, "UpdateUiBasesOnRecordingStatus"), ObjBindMethod(this,
+            "ExitApplication"), this.ContextManagerValue)
 
         this.ContextViewControllerValue := ContextViewController(this.SessionManagerValue, this.AppSettingsValue, this.ContextManagerValue, this.WebViewManagerValue)
-        this.HistoryViewControllerValue := HistoryViewController(this.SessionManagerValue, this.WebViewManagerValue)
+        this.HistoryViewControllerValue := HistoryViewController(this.SessionManagerValue, this.WebViewManagerValue, this.AppSettingsValue)
 
         this.LLMClientInstance := ""
     }
@@ -245,7 +246,7 @@ class AppController {
 
         ; Clear response field
         this.RenderMarkdown("")  ; Clear the response area
-        
+
         this.UpdateCompressionMenuState()
     }
 
@@ -434,7 +435,7 @@ class AppController {
             ; Re-enable Ask LLM button
             if (this.MyGui) {
                 if (this.MyGui["AskLLM"].Text == "Cancel") {
-                     this.MyGui["AskLLM"].Text := "Ask LLM"
+                    this.MyGui["AskLLM"].Text := "Ask LLM"
                 }
                 this.askButton.Enabled := true
             }
@@ -452,22 +453,6 @@ class AppController {
     GuiClose(*) {
         this.MyGui.Destroy()
         this.guiShown := false
-    }
-
-
-
-    ClearChatHistory(*) {
-        this.SessionManagerValue.ClearCurrentMessages()
-
-        ; Update the system prompt content after clearing
-        systemPrompt := this.AppSettingsValue.GetSystemPromptValue(
-            this.SessionManagerValue.GetCurrentSessionLLMType(),
-            this.SessionManagerValue.GetCurrentSessionSystemPrompt()
-        )
-        this.SessionManagerValue.UpdateSystemPromptContent(systemPrompt)
-
-        this.HistoryViewControllerValue.UpdateChatHistoryView()  ; Update the chat history view
-        this.RenderMarkdown("")  ; Clear the response area
     }
 
     ResetAll(*) {
@@ -501,12 +486,12 @@ class AppController {
 
         ; Build compression prompt
         compressionPrompt := this.AppSettingsValue.GetCompressionPrompt(this.SessionManagerValue.GetCurrentSessionLLMType())
-        
+
         if (compressionPrompt == "") {
-             MsgBox("Compression prompt not configured for this provider.", "Info", "Iconi")
-             return
+            MsgBox("Compression prompt not configured for this provider.", "Info", "Iconi")
+            return
         }
-        
+
         compressionPrompt .= "`n`nCONVERSATION:`n" conversationText
 
         ; Create a temporary message array with just system message and compression request
@@ -707,7 +692,6 @@ class AppController {
         this.TrayManagerValue.ToggleRecording(this.SessionManagerValue)
     }
 
-
     BuildUserMessage(userMessageContent, contextItems, isImageEnabled) {
         contentParts := []
 
@@ -749,7 +733,7 @@ class AppController {
                 }
             }
         } else {
-             if (userMessageContent != "") {
+            if (userMessageContent != "") {
                 contentParts.Push(TextContent(userMessageContent))
             }
         }
@@ -898,8 +882,8 @@ class AppController {
 
         ; Update tool checkbox based on current LLM type
         powerShellEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "powerShellTool")
-        this.MyGui["PowerShellToolBox"].Value := powerShellEnabled ? 1 : 0   
-        
+        this.MyGui["PowerShellToolBox"].Value := powerShellEnabled ? 1 : 0
+
         this.UpdateCompressionMenuState()
     }
 

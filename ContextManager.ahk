@@ -51,9 +51,17 @@ class ContextManager {
             if InStr("," imageExts ",", "," ext ",")
                 return true
         }
-        ; Check for base64 image string
         if (RegExMatch(item, "i)^data:image/")) {
             return true
+        }
+        return false
+    }
+
+    IsPdf(item) {
+        if (FileExist(item)) {
+            SplitPath item, , , &ext
+            if (ext = "pdf")
+                return true
         }
         return false
     }
@@ -104,6 +112,9 @@ class ContextManager {
             SplitPath item, &name, &dir
             if (this.IsImage(item)) {
                 return "🖼️ " name " - " dir
+            }
+            if (this.IsPdf(item)) {
+                return "📕 " name " - " dir
             }
             return "📄 " name " - " dir
         }

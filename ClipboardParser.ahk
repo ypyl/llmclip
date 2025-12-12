@@ -35,7 +35,7 @@ class ClipboardParser {
         }
 
         ; Check for VS Code using class and title
-        isVsCodeActive := (activeClass = "Chrome_WidgetWin_1" && InStr(activeTitle, "Visual Studio Code"))
+        isVsCodeActive := (activeClass = "Chrome_WidgetWin_1" && (InStr(activeTitle, "Visual Studio Code") || InStr(activeTitle, "Antigravity")))
 
         ; If empty, check raw clipboard for file URI
         if (isVsCodeActive && txtFromClipboard = "") {

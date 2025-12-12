@@ -10,6 +10,7 @@ class WebViewManager {
     cache := Map()  ; Cache to store loaded articles by URL
     articleReady := false
     currentArticle := ""
+    isHtmlLoaded := false
 
     __New() {
         this.clipboardHost := {
@@ -32,6 +33,7 @@ class WebViewManager {
         this.wvc := WebView2.CreateControllerAsync(responseCtr.Hwnd).await2()
         this.wv := this.wvc.CoreWebView2
         this.wv.NavigateToString(this.GetHtmlContent())
+        this.isHtmlLoaded := true
         this.wv.AddHostObjectToScript("clipboard", this.clipboardHost)
         this.wv.AddHostObjectToScript("article", this.articleHost)
         this.wv.AddHostObjectToScript("input", this.inputHost)
@@ -58,6 +60,7 @@ class WebViewManager {
         this.currentUrl := url  ; Store the URL for caching
         this.InitArticleMode()
         this.wv.Navigate(url)
+        this.isHtmlLoaded := false
 
         ; Wait for article to be ready (with timeout)
         startTime := A_TickCount
@@ -72,6 +75,11 @@ class WebViewManager {
         }
 
         return this.currentArticle
+    }
+
+    Navigate(url) {
+        this.wv.Navigate(url)
+        this.isHtmlLoaded := false
     }
 
     OnNavigationCompleted() {
@@ -109,9 +117,10 @@ class WebViewManager {
             this.wv.RemoveScriptToExecuteOnDocumentCreated(this.scriptId)
 
         this.wv.NavigateToString(this.GetHtmlContent())
+        this.isHtmlLoaded := true
     }
 
-    GetHtmlContent() {
+    GetHtmlContent(initialContent := "") {
         markedJS := FileRead(A_ScriptDir . "\marked.min.js")
         var := "
         (
@@ -274,10 +283,15 @@ class WebViewManager {
         </body>
         </html>
         )"
+
+        if (initialContent != "") {
+             var .= "<script> renderMarkdown(``" . initialContent . "``); </script>"
+        }
+
         return var
     }
 
-    RenderMarkdown(content) {
+    EscapeForJs(content) {
         escapedMd := StrReplace(content, "\", "\\")       ; escape backslashes first
         escapedMd := StrReplace(escapedMd, "`"", '\"')     ; escape double quotes
         escapedMd := StrReplace(escapedMd, "$", '\$')     ; escape double quotes
@@ -296,8 +310,19 @@ class WebViewManager {
         escapedMd := Trim(escapedMd)                    ; Remove leading/trailing whitespace
         escapedMd := RegExReplace(escapedMd, "\n\n+", "\n\n")  ; Replace multiple newlines with double newline
         escapedMd := RegExReplace(escapedMd, "\t+", " ")        ; Remove tabs
+        
+        return escapedMd
+    }
 
-        this.wv.ExecuteScript("renderMarkdown(``" escapedMd "``)")
+    RenderMarkdown(content) {
+        escapedMd := this.EscapeForJs(content)
+        
+        if (this.isHtmlLoaded) {
+            this.wv.ExecuteScript("renderMarkdown(``" escapedMd "``)")
+        } else {
+            this.wv.NavigateToString(this.GetHtmlContent(escapedMd))
+            this.isHtmlLoaded := true
+        }
     }
 
     Resize(rect) {

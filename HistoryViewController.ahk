@@ -36,11 +36,17 @@ class HistoryViewController {
         }
     }
 
-    ChatHistorySelect(*) {
+    ChatHistorySelect(GuiCtrl, Item, Selected) {
+        if (!Selected)
+            return
+
+        ; Deselect ContextBox to ensure mutual exclusion
+        this.MyGui["ContextBox"].Modify(0, "-Select")
+
         messages := this.SessionManagerValue.GetCurrentSessionMessages()
-        chatHistory := this.MyGui["ChatHistory"]
-        if (focused_row := chatHistory.GetNext()) {
-            msg := messages[focused_row]
+        
+        if (Item > 0 && Item <= messages.Length) {
+            msg := messages[Item]
             this.MyGui["ChatMessageActionButton"].Visible := true  ; Show the Copy button
             this.WebViewManagerValue.RenderMarkdown(this.SessionManagerValue.GetMessageAsString(msg))  ; Render the selected message in the WebView
         }

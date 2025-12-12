@@ -55,16 +55,22 @@ class ContextViewController {
         contextBox.ModifyCol(1, 350)
     }
 
-    ContextBoxSelect(*) {
+    ContextBoxSelect(GuiCtrl, Item, Selected) {
+        if (!Selected)
+            return
+
+        ; Deselect ChatHistory to ensure mutual exclusion
+        this.MyGui["ChatHistory"].Modify(0, "-Select")
+
         context := this.SessionManagerValue.GetCurrentSessionContext()
-        contextBox := this.MyGui["ContextBox"]
         contextText := ""
 
-        ; Get focused row
-        focusedRow := contextBox.GetNext()
-
-        if (focusedRow > 0 && focusedRow <= context.Length) {
-            item := context[focusedRow]
+        if (Item > 0 && Item <= context.Length) {
+            item := context[Item]
+            if (this.ContextManagerValue.IsPdf(item)) {
+                this.WebViewManagerValue.Navigate(item)
+                return
+            }
             contextText := this.GetTextFromContextItem(item)
         }
 

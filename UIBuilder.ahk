@@ -69,7 +69,6 @@ class UIBuilder {
 
     static CreateContextSection(gui, contextViewController) {
         ; Add context list with reduced height - ListView with Checkboxes
-        labels := contextViewController.GetLabelsForContextItems()
         contextBox := gui.Add("ListView", "vContextBox x10 y40 w380 h150 Checked -Hdr", ["Item"]) ; -Hdr to hide header
         contextBox.OnEvent("ItemSelect", ObjBindMethod(contextViewController, "ContextBoxSelect"))
         ; We will populate it in ContextViewController.UpdateContextView

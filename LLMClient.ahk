@@ -6,21 +6,18 @@
 #Include "Providers\OllamaProvider.ahk"
 #Include "Providers\GoogleProvider.ahk"
 #Include "Providers\GroqAudioProvider.ahk"
+#Include "TempFileManager.ahk"
 
 class LLMClient {
     ; Private properties
     settings := {}
-    tempDir := A_Temp "\llmclip"
+    tempDir := TempFileManager.TempDir
     pid := 0
     isCancelled := false
     providers := Map()
 
     __New(settings) {
         this.settings := settings
-
-        ; Ensure temp directory exists
-        if !DirExist(this.tempDir)
-            DirCreate(this.tempDir)
 
         ; Initialize providers
         this.providers["openai"] := OpenAIProvider()
@@ -113,12 +110,12 @@ class LLMClient {
         } finally {
             ; Cleanup temp files but don't delete audio files
             try {
-                FileDelete(inputFile)
+                ; FileDelete(inputFile)
 
                 ; Only delete JSON response files, not audio files
-                if (!InStr(selectedLLMType, "gr-audio") = 1) {
-                    FileDelete(outputFile)
-                }
+                ; if (!InStr(selectedLLMType, "gr-audio") = 1) {
+                ;    FileDelete(outputFile)
+                ; }
             }
             this.pid := 0
         }

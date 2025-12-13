@@ -168,7 +168,7 @@ class GoogleProvider extends BaseProvider {
         enabledTools := []
         for t in settings.Get("tools", []) {
             if (t = "powerShellTool")
-                enabledTools.Push(this.powerShellTool.GetGeminiToolDefinition())
+                enabledTools.Push(PowerShellTool.GetGeminiToolDefinition())
         }
         if (enabledTools.Length > 0)
             body["tools"] := enabledTools

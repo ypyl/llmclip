@@ -12,6 +12,8 @@
 #Include LLM\Types.ahk
 #Include ContextViewController.ahk
 #Include HistoryViewController.ahk
+#Include PdfProcessor.ahk
+#Include TempFileManager.ahk
 
 class AppController {
     askButton := ""
@@ -63,6 +65,7 @@ class AppController {
     }
 
     Start() {
+        TempFileManager.CleanUp()
         this.DisplayLLMUserInterface()
         OnClipboardChange ObjBindMethod(this, "ClipChanged")
     }
@@ -646,9 +649,29 @@ class AppController {
 
             ; Add non-duplicate items to context
             context := this.SessionManagerValue.GetCurrentSessionContext()
+            
             for item in localTxtFromClipboardArray {
-                if !this.HasContent(context, item)
+                ; Add the original item first
+                if !this.HasContent(context, item) {
                     context.Push(item)
+                    
+                    ; Check if it's a PDF and process it
+                    if (this.ContextManagerValue.IsPdf(item)) {
+                        ; Extract Text
+                        extractedTextFile := PdfProcessor.ExtractText(item)
+                        if (extractedTextFile && !this.HasContent(context, extractedTextFile)) {
+                            context.Push(extractedTextFile)
+                        }
+                        
+                        ; Extract Images
+                        ; extractedImages := PdfProcessor.ExtractImages(item)
+                        ; for imgPath in extractedImages {
+                        ;      if !this.HasContent(context, imgPath) {
+                        ;         context.Push(imgPath)
+                        ;      }
+                        ; }
+                    }
+                }
             }
 
             ; Update session contexts

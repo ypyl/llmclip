@@ -46,13 +46,38 @@ class ContextViewController {
         contextBox := this.MyGui["ContextBox"]
         contextBox.Delete() ; Clear ListView
 
-        ; Add items and check them by default
+        ; Add items and check them by default (except specific types)
         for label in labels {
-            contextBox.Add("Check", label)
+            row := contextBox.Add("Check", label)
+            ; Check if the underlying item is a PDF, if so, remove checkbox
+            currentContext := this.SessionManagerValue.GetCurrentSessionContext()
+            if (A_Index <= currentContext.Length) {
+                item := currentContext[A_Index]
+                if (this.ContextManagerValue.IsPdf(item)) {
+                     this.RemoveCheckbox(contextBox, row)
+                }
+            }
         }
 
         ; Modify column width to avoid horizontal scrollbar if possible or auto-size
         contextBox.ModifyCol(1, 350)
+    }
+
+    RemoveCheckbox(contextBox, row) {
+        ; Remove state image (checkbox) by setting state image index to 0
+        ; LVM_SETITEMSTATE = 0x102B
+        ; LVITEM structure needed. 
+        ; Mask coordinates might vary by architecture but simplified struct:
+        ; UINT mask (0); int iItem (4); int iSubItem (8); UINT state (12); UINT stateMask (16)
+        
+        LVITEM := Buffer(60, 0) ; Sufficient size
+        NumPut("UInt", 0x8, LVITEM, 0) ; mask = LVIF_STATE (0x0008)
+        NumPut("Int", row - 1, LVITEM, 4) ; iItem (0-based)
+        NumPut("Int", 0, LVITEM, 8) ; iSubItem
+        NumPut("UInt", 0, LVITEM, 12) ; state (0 = no image)
+        NumPut("UInt", 0xF000, LVITEM, 16) ; stateMask = LVIS_STATEIMAGEMASK (0xF000)
+
+        SendMessage(0x102B, row - 1, LVITEM.Ptr, contextBox.Hwnd)
     }
 
     ContextBoxSelect(GuiCtrl, Item, Selected) {
@@ -143,9 +168,9 @@ class ContextViewController {
             selectedIndices := [contextBoxValue]
         }
 
-        ; Build context excluding selected items AND unchecked items AND images
+        ; Build context excluding selected items AND unchecked items AND images AND PDFs
         for index, item in context {
-            if (this.IsItemChecked(index) && !this.HasVal(selectedIndices, index) && !this.ContextManagerValue.IsImage(item)) {
+            if (this.IsItemChecked(index) && !this.HasVal(selectedIndices, index) && !this.ContextManagerValue.IsImage(item) && !this.ContextManagerValue.IsPdf(item)) {
                 contextText .= this.GetTextFromContextItem(item)
             }
         }

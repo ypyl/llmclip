@@ -70,7 +70,7 @@ class ContextManager {
         folderText := FolderPath "`n"
 
         if (DirExist(FolderPath)) {
-            Loop Files, FolderPath "\*.*", "R"  ; Recursively loop through all files
+            loop files, FolderPath "\*.*", "R"  ; Recursively loop through all files
             {
                 folderText .= "File:`n" this.ProcessFile(A_LoopFileFullPath)
             }
@@ -96,7 +96,8 @@ class ContextManager {
 
     CanUseFileRead(filePath) {
         SplitPath filePath, , , &ext
-        allowedExts := "txt,csv,log,ini,json,xml,html,md,ahk,bat,sh,ps1,yml,toml,cs,ts,js,jsx,tsx,py,java,kt,go,rs,php,rb,pl,swift,c,cpp,h,hpp,m,mm,elm,erl,ex,exs,clj,cljc,cljx,cl,scala,sql,css,scss,sass,yaml,yml,tf"
+        allowedExts :=
+            "txt,csv,log,ini,json,xml,html,md,ahk,bat,sh,ps1,yml,toml,cs,ts,js,jsx,tsx,py,java,kt,go,rs,php,rb,pl,swift,c,cpp,h,hpp,m,mm,elm,erl,ex,exs,clj,cljc,cljx,cl,scala,sql,css,scss,sass,yaml,yml,tf"
         return ext && InStr("," allowedExts ",", "," ext ",")
     }
 

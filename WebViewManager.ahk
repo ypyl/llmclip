@@ -90,7 +90,29 @@ class WebViewManager {
         try {
             this.wv.ExecuteScriptAsync('
             (
-                var article = new Readability(document).parse();
+                var contentType = document.contentType;
+                var article = null;
+                
+                // Check if content type is text or xml based
+                if (contentType && (
+                    contentType.indexOf("text/plain") !== -1 || 
+                    contentType.indexOf("text/xml") !== -1 || 
+                    contentType.indexOf("application/xml") !== -1 || 
+                    contentType.indexOf("application/rss+xml") !== -1 ||
+                    contentType.indexOf("application/json") !== -1)) {
+                     // For text/xml, manually construct structure matching Readability output
+                     article = {
+                        title: document.title || "No Title",
+                        textContent: document.body ? document.body.innerText : (document.documentElement ? document.documentElement.textContent : ""),
+                        content: document.documentElement ? document.documentElement.outerHTML : "",
+                        byline: "",
+                        dir: ""
+                     };
+                } else {
+                     // Use Readability for HTML
+                     article = new Readability(document).parse();
+                }
+
                 var obj = window.chrome.webview.hostObjects.sync.article;
                 obj.OnArticle(article);
             )')

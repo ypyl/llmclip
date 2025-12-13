@@ -138,7 +138,7 @@ class ChatMessage {
      * Convert ChatMessage to plain object for API calls or serialization
      * @returns Plain object representation
      */
-    ToObject() {
+    ToObject(includeInternal := false) {
         obj := {}
         obj.role := this.Role
 
@@ -198,8 +198,21 @@ class ChatMessage {
         }
 
         ; Copy additional properties
+        ; Internal properties that should not be sent to API unless requested
+        internalProps := ["isContext"] 
+        
         for key, value in this.AdditionalProperties {
-            obj.%key% := value
+            isInternal := false
+            for prop in internalProps {
+                if (key == prop) {
+                    isInternal := true
+                    break
+                }
+            }
+            
+            if (includeInternal || !isInternal) {
+                obj.%key% := value
+            }
         }
 
         return obj

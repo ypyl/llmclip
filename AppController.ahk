@@ -374,10 +374,39 @@ class AppController {
         context := this.SessionManagerValue.GetCurrentSessionContext()
         contextBox := this.MyGui["ContextBox"]
 
-        ; Build and append context message if needed
+        ; Build context message content
         additionalContext := this.ContextViewControllerValue.BuildAdditionalContextMessage(context, contextBox.Value)
+        
+        ; Find existing context message
+        contextMsgIndex := -1
+        for i, msg in messages {
+            if (msg.AdditionalProperties.Has("isContext") && msg.AdditionalProperties["isContext"]) {
+                contextMsgIndex := i
+                break
+            }
+        }
+
         if (additionalContext != "") {
-            messages[1].AddText(additionalContext)
+            if (contextMsgIndex != -1) {
+                ; Update existing context message
+                messages[contextMsgIndex].Contents := [TextContent(additionalContext)]
+            } else {
+                ; Create new context message
+                contextMsg := ChatMessage("user", [TextContent(additionalContext)])
+                contextMsg.AdditionalProperties["isContext"] := true
+                
+                ; Insert after system prompt (index 1) if possible
+                if (messages.Length >= 1) {
+                    messages.InsertAt(2, contextMsg)
+                } else {
+                    messages.Push(contextMsg)
+                }
+            }
+        } else {
+            ; Remove context message if exists and empty context
+            if (contextMsgIndex != -1) {
+                messages.RemoveAt(contextMsgIndex)
+            }
         }
 
         ; Disable Ask LLM button while processing
@@ -657,10 +686,14 @@ class AppController {
                     
                     ; Check if it's a PDF and process it
                     if (this.ContextManagerValue.IsPdf(item)) {
-                        ; Extract Text
-                        extractedTextFile := PdfProcessor.ExtractText(item)
-                        if (extractedTextFile && !this.HasContent(context, extractedTextFile)) {
-                            context.Push(extractedTextFile)
+                        ; Check if pdftotext exists
+                        pdftotextPath := PdfProcessor.PdfToolsDir . "\pdftotext.exe"
+                        if FileExist(pdftotextPath) {
+                            ; Extract Text
+                            extractedTextFile := PdfProcessor.ExtractText(pdftotextPath, item)
+                            if (extractedTextFile && !this.HasContent(context, extractedTextFile)) {
+                                context.Push(extractedTextFile)
+                            }
                         }
                         
                         ; Extract Images

@@ -4,7 +4,9 @@
 class PdfProcessor {
     static PdfToolsDir := "pdf"
 
-    static ExtractText(pdfPath) {
+    static ExtractText(toolPath, pdfPath) {
+        if !FileExist(toolPath)
+            return ""
         if !FileExist(pdfPath)
             return ""
 
@@ -15,15 +17,6 @@ class PdfProcessor {
         
         outputFile := outputDir . "\" . name_no_ext . ".txt"
         
-        ; pdftotext tool path
-        toolPath := this.PdfToolsDir . "\pdftotext.exe"
-        
-        if !FileExist(toolPath)
-            return ""
-
-        ; Run pdftotext
-        ; -simple preserves layout somewhat better for reading line by line
-        ; or default is fine. Let's stick to default for now.
         command := Format('"{1}" "{2}" "{3}"', toolPath, pdfPath, outputFile)
         RunWait(command, , "Hide")
 
@@ -41,7 +34,6 @@ class PdfProcessor {
         if !DirExist(outputDir)
             DirCreate(outputDir)
 
-        ; pdfimages tool path
         toolPath := this.PdfToolsDir . "\pdfimages.exe"
         
         if !FileExist(toolPath)

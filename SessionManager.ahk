@@ -298,7 +298,7 @@ class SessionManager {
         ; Convert ChatMessage instances to plain objects for JSON serialization
         messages := []
         for msg in this.sessionMessages[this.currentSessionIndex] {
-            messages.Push(msg.ToObject())
+            messages.Push(msg.ToObject(true))
         }
 
         return {

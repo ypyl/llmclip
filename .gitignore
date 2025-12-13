@@ -4,3 +4,6 @@ settings.ahk
 settings.json
 .github
 splitter.ahk
+temp
+*.pdf
+*.exe

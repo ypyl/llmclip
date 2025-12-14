@@ -179,7 +179,7 @@ class ContextViewController {
 
         ; Only add general context if there is any non-selected content
         if (contextText != "") {
-            messageContent .= "`n`n<CONTEXT>`n" contextText "`n<CONTEXT>"
+            messageContent .= "Use information from the following context to answer the user's question. If the information is not relevant, do not use it. If you need more information, ask the user.`n`n<CONTEXT>`n" contextText "`n<CONTEXT>"
         }
 
         ; Add selected items as special focus points (excluding images)

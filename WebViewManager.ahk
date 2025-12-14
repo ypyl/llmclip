@@ -37,6 +37,7 @@ class WebViewManager {
         this.wv.AddHostObjectToScript("clipboard", this.clipboardHost)
         this.wv.AddHostObjectToScript("article", this.articleHost)
         this.wv.AddHostObjectToScript("input", this.inputHost)
+        this.navStartingToken := this.wv.add_NavigationStarting((sender, args) => this.OnNavigationStarting(args))
     }
 
     InitArticleMode() {
@@ -82,6 +83,15 @@ class WebViewManager {
         this.isHtmlLoaded := false
     }
 
+    OnNavigationStarting(args) {
+        try {
+            uri := args.Uri
+            if (SubStr(uri, 1, 4) = "http") {
+                this.isHtmlLoaded := false
+            }
+        }
+    }
+
     OnNavigationCompleted() {
         this.ExtractArticle()
     }
@@ -100,17 +110,17 @@ class WebViewManager {
                     contentType.indexOf("application/xml") !== -1 || 
                     contentType.indexOf("application/rss+xml") !== -1 ||
                     contentType.indexOf("application/json") !== -1)) {
-                     // For text/xml, manually construct structure matching Readability output
-                     article = {
+                    // For text/xml, manually construct structure matching Readability output
+                    article = {
                         title: document.title || "No Title",
                         textContent: document.body ? document.body.innerText : (document.documentElement ? document.documentElement.textContent : ""),
                         content: document.documentElement ? document.documentElement.outerHTML : "",
                         byline: "",
                         dir: ""
-                     };
+                    };
                 } else {
-                     // Use Readability for HTML
-                     article = new Readability(document).parse();
+                    // Use Readability for HTML
+                    article = new Readability(document).parse();
                 }
 
                 var obj = window.chrome.webview.hostObjects.sync.article;

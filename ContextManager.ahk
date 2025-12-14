@@ -7,10 +7,12 @@ class ContextManager {
         if (articleExtract && this.IsHttpLink(item)) {
             try {
                 article := articleExtract.Call(item)  ; Use .Call() method to properly invoke the function
-                if (article) {
+                if (IsObject(article)) {
                     ; Normalize whitespace in textContent
                     normalizedText := RegExReplace(article.textContent, "\s+", " ")
                     itemText := "URL: " item "`n`nTitle: " article.title "`n`n" normalizedText
+                } else if (article != "") {
+                    itemText := "URL: " item "`n[" article "]"
                 } else {
                     itemText := "URL: " item
                 }

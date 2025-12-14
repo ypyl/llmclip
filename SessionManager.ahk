@@ -362,4 +362,36 @@ class SessionManager {
 
         return true
     }
+
+    BuildUserMessage(userMessageContent, imagePaths) {
+        contentParts := []
+
+        if (imagePaths.Length > 0) {
+            if (userMessageContent != "") {
+                contentParts.Push(TextContent(userMessageContent))
+            }
+
+            for imageValue in imagePaths {
+                if (RegExMatch(imageValue, "i)^data:image/")) {
+                    ; Already data URI
+                    contentParts.Push(ImageContent(imageValue))
+                } else if (InStr(imageValue, "http") == 1) {
+                    contentParts.Push(ImageContent(imageValue))
+                } else {
+                    base64Image := FileUtils.GetFileAsBase64(imageValue)
+                    if (base64Image != "") {
+                        extension := SubStr(imageValue, InStr(imageValue, ".", , -1) + 1)
+                        mimeType := "image/" . extension
+                        contentParts.Push(ImageContent(base64Image, mimeType))
+                    }
+                }
+            }
+        } else {
+            if (userMessageContent != "") {
+                contentParts.Push(TextContent(userMessageContent))
+            }
+        }
+
+        return contentParts
+    }
 }

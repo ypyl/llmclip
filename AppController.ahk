@@ -1,9 +1,7 @@
 #Requires AutoHotkey 2.0
 #Include AppSettings.ahk
-#Include LLMClient.ahk
-#Include SessionManager.ahk
+#Include LLMService.ahk
 #Include ClipboardParser.ahk
-#Include PowerShellTool.ahk
 #Include WebViewManager.ahk
 #Include ContextManager.ahk
 #Include TrayManager.ahk
@@ -31,7 +29,7 @@ class AppController {
     WebViewManagerValue := ""
     ContextManagerValue := ""
     TrayManagerValue := ""
-    LLMClientInstance := ""
+    LLMServiceValue := ""
 
     ContextViewControllerValue := ""
     HistoryViewControllerValue := ""
@@ -61,7 +59,7 @@ class AppController {
         this.ContextViewControllerValue := ContextViewController(this.SessionManagerValue, this.AppSettingsValue, this.ContextManagerValue, this.WebViewManagerValue)
         this.HistoryViewControllerValue := HistoryViewController(this.SessionManagerValue, this.WebViewManagerValue, this.AppSettingsValue)
 
-        this.LLMClientInstance := ""
+        this.LLMServiceValue := LLMService(this.AppSettingsValue)
     }
 
     Start() {
@@ -260,7 +258,7 @@ class AppController {
         executedAny := false
         for msg in messages {
             if (this.SessionManagerValue.HasToolCalls(msg)) {
-                toolResults := this.ExecuteToolCalls(msg)
+                toolResults := this.LLMServiceValue.ExecuteToolCalls(this.SessionManagerValue, msg)
                 if (toolResults.Length > 0) {
                     for res in toolResults {
                         messages.Push(res)
@@ -279,8 +277,8 @@ class AppController {
     }
 
     HandleCancellation() {
-        if (this.LLMClientInstance) {
-            this.LLMClientInstance.Cancel()
+        if (this.LLMServiceValue) {
+            this.LLMServiceValue.Cancel()
         }
     }
 
@@ -299,9 +297,9 @@ class AppController {
                     return true
                 } else {
                     ; Edit Mode: Build new message with text and images
-                    contextItems := this.SessionManagerValue.GetCurrentSessionContext()
                     isImageEnabled := this.AppSettingsValue.IsImageInputEnabled(this.SessionManagerValue.GetCurrentSessionLLMType())
-                    newContent := this.BuildUserMessage(promptText, contextItems, isImageEnabled)
+                    images := isImageEnabled ? this.ContextViewControllerValue.GetCheckedImages() : []
+                    newContent := this.SessionManagerValue.BuildUserMessage(promptText, images)
 
                     ; Replace the message contents
                     selectedMsg.Contents := newContent
@@ -348,7 +346,8 @@ class AppController {
         contextItems := this.SessionManagerValue.GetCurrentSessionContext()
         isImageEnabled := this.AppSettingsValue.IsImageInputEnabled(this.SessionManagerValue.GetCurrentSessionLLMType())
 
-        userMessageContent := this.BuildUserMessage(userMessageContent, contextItems, isImageEnabled)
+        images := isImageEnabled ? this.ContextViewControllerValue.GetCheckedImages() : []
+        userMessageContent := this.SessionManagerValue.BuildUserMessage(userMessageContent, images)
 
         if (userMessageContent.Length > 0) {
             messages.Push(ChatMessage("user", userMessageContent))
@@ -415,40 +414,10 @@ class AppController {
         }
 
         try {
-            ; Create LLM client if it doesn't exist yet
-            settings := this.AppSettingsValue.GetSelectedSettings(this.SessionManagerValue.GetCurrentSessionLLMType())
-
-            ; Update tools property based on checkbox values
-            settings["tools"] := this.ConfigureToolSettings()
-            ; Add a user message to instruct the model on answer length based on menu selection
-            answerSizeMsg := ""
-            if (this.currentAnswerSize = "Small") {
-                answerSizeMsg := "Please answer as concisely as possible (short answer)."
-            } else if (this.currentAnswerSize = "Long") {
-                answerSizeMsg := "Please provide a long, detailed answer."
-            }
-            ; If currentAnswerSize = "Default", no message is added (default behavior)
-            if (answerSizeMsg != "") {
-                messages.Push(ChatMessage("user", [TextContent(answerSizeMsg)]))
-            }
-
-            this.LLMClientInstance := LLMClient(settings)
-
-            ; The LLM client now returns fully-formed messages
-            startTime := A_TickCount
-            newMessages := this.LLMClientInstance.Call(messages)
-            duration := (A_TickCount - startTime) / 1000
-
-            ; Remove the answer size instruction message after receiving the answer
-            if (answerSizeMsg != "") {
-                messages.RemoveAt(messages.Length)
-            }
-
-            ; Simply add the new messages to the session
-            for newMessage in newMessages {
-                newMessage.AdditionalProperties["duration"] := duration
-                messages.Push(newMessage)
-            }
+            ; Check tool enabled
+            powerShellEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "powerShellTool")
+            
+            newMessages := this.LLMServiceValue.SendToLLM(this.SessionManagerValue, this.currentAnswerSize, powerShellEnabled)
 
             ; Check for unexecuted Tool Calls
             if (this.SessionManagerValue.HasUnexecutedToolCalls()) {
@@ -539,31 +508,12 @@ class AppController {
         }
 
         try {
-            ; Create LLM client
-            settings := this.AppSettingsValue.GetSelectedSettings(this.SessionManagerValue.GetCurrentSessionLLMType())
-            settings["tools"] := []  ; No tools for compression
+            compressedMsg := this.LLMServiceValue.CompressHistory(this.SessionManagerValue)
 
-            this.LLMClientInstance := LLMClient(settings)
-
-            ; Call LLM with compression prompt
-            startTime := A_TickCount
-            newMessages := this.LLMClientInstance.Call(tempMessages)
-            duration := (A_TickCount - startTime) / 1000
-
-            ; Replace all messages with system message + compressed summary
-            if (newMessages.Length > 0) {
-                compressedMsg := newMessages[1]
-                compressedMsg.AdditionalProperties["duration"] := duration
-
-                ; Replace session messages
-                this.SessionManagerValue.sessionMessages[this.SessionManagerValue.currentSessionIndex] := [
-                    messages[1],  ; Keep original system message
-                    compressedMsg  ; Add compressed summary
-                ]
-
-                ; Update UI
-                this.HistoryViewControllerValue.UpdateChatHistoryView()
-                this.RenderMarkdown(this.SessionManagerValue.GetMessageAsString(compressedMsg))
+            if (compressedMsg != "") {
+                 ; Update UI
+                 this.HistoryViewControllerValue.UpdateChatHistoryView()
+                 this.RenderMarkdown(this.SessionManagerValue.GetMessageAsString(compressedMsg))
             }
 
         } catch as e {
@@ -612,17 +562,9 @@ class AppController {
         }
 
         try {
-            ; Create LLM client
-            settings := this.AppSettingsValue.GetSelectedSettings(this.SessionManagerValue.GetCurrentSessionLLMType())
-            settings["tools"] := []  ; No tools for extraction
+            extractedNotes := this.LLMServiceValue.ExtractLearnings(this.SessionManagerValue)
 
-            this.LLMClientInstance := LLMClient(settings)
-
-            ; Call LLM
-            newMessages := this.LLMClientInstance.Call(tempMessages)
-
-            if (newMessages.Length > 0) {
-                extractedNotes := this.SessionManagerValue.GetMessageAsString(newMessages[1])
+            if (extractedNotes != "") {
                 UIBuilder.ShowNotesWindow(extractedNotes)
             }
 
@@ -746,80 +688,6 @@ class AppController {
 
     ToggleRecording(*) {
         this.TrayManagerValue.ToggleRecording(this.SessionManagerValue)
-    }
-
-    BuildUserMessage(userMessageContent, contextItems, isImageEnabled) {
-        contentParts := []
-
-        if (!isImageEnabled) {
-            if (userMessageContent != "") {
-                contentParts.Push(TextContent(userMessageContent))
-            }
-            return contentParts
-        }
-
-        images := []
-        for index, item in contextItems {
-            ; Check if item is checked in UI
-            if (this.ContextViewControllerValue.IsItemChecked(index)) {
-                if (this.ContextManagerValue.IsImage(item)) {
-                    images.Push(item)
-                }
-            }
-        }
-
-        if (images.Length > 0) {
-            if (userMessageContent != "") {
-                contentParts.Push(TextContent(userMessageContent))
-            }
-
-            for imageValue in images {
-                if (RegExMatch(imageValue, "i)^data:image/")) {
-                    ; Already data URI
-                    contentParts.Push(ImageContent(imageValue))
-                } else if (InStr(imageValue, "http") == 1) {
-                    contentParts.Push(ImageContent(imageValue))
-                } else {
-                    base64Image := FileUtils.GetFileAsBase64(imageValue)
-                    if (base64Image != "") {
-                        extension := SubStr(imageValue, InStr(imageValue, ".", , -1) + 1)
-                        mimeType := "image/" . extension
-                        contentParts.Push(ImageContent(base64Image, mimeType))
-                    }
-                }
-            }
-        } else {
-            if (userMessageContent != "") {
-                contentParts.Push(TextContent(userMessageContent))
-            }
-        }
-
-        return contentParts
-    }
-
-    ConfigureToolSettings() {
-        enabledTools := []
-        if (this.MyGui["PowerShellToolBox"].Value)
-            enabledTools.Push("powerShellTool")
-        return enabledTools
-    }
-
-    ExecuteToolCalls(msg) {
-        tool_calls := this.SessionManagerValue.GetToolCalls(msg)
-        results := []
-
-        for tool_call in tool_calls {
-            if (!this.SessionManagerValue.IsToolCallExecuted(tool_call.id)) {
-                ; Measure tool execution time
-                startTime := A_TickCount
-                if result := PowerShellTool.ExecuteToolCall(tool_call) {
-                    duration := (A_TickCount - startTime) / 1000
-                    result.duration := duration
-                    results.Push(result)
-                }
-            }
-        }
-        return results
     }
 
     SaveConversation(*) {

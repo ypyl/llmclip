@@ -211,6 +211,17 @@ class ContextViewController {
         }
     }
 
+    GetCheckedImages() {
+        images := []
+        context := this.SessionManagerValue.GetCurrentSessionContext()
+        for index, item in context {
+            if (this.IsItemChecked(index) && this.ContextManagerValue.IsImage(item)) {
+                images.Push(item)
+            }
+        }
+        return images
+    }
+
     HasVal(haystack, needle) {
         for index, value in haystack {
             if (value = needle)

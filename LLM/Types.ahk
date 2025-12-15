@@ -120,8 +120,11 @@ class ChatMessage {
     GetText() {
         text := ""
         for part in this.Contents {
-            if (part is TextContent)
+            if (part is TextContent) {
+                if (text != "")
+                    text .= "`n"
                 text .= part.Text
+            }
         }
         return text
     }
@@ -199,7 +202,7 @@ class ChatMessage {
 
         ; Copy additional properties
         ; Internal properties that should not be sent to API unless requested
-        internalProps := ["isContext"] 
+        internalProps := ["hasContext"] 
         
         for key, value in this.AdditionalProperties {
             isInternal := false

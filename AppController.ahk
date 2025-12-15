@@ -376,35 +376,35 @@ class AppController {
         ; Build context message content
         additionalContext := this.ContextViewControllerValue.BuildAdditionalContextMessage(context, contextBox.Value)
         
-        ; Find existing context message
-        contextMsgIndex := -1
+        ; Find first user message
+        firstUserMsg := ""
         for i, msg in messages {
-            if (msg.AdditionalProperties.Has("isContext") && msg.AdditionalProperties["isContext"]) {
-                contextMsgIndex := i
+            if (msg.Role == "user") {
+                firstUserMsg := msg
                 break
             }
         }
 
-        if (additionalContext != "") {
-            if (contextMsgIndex != -1) {
-                ; Update existing context message
-                messages[contextMsgIndex].Contents := [TextContent(additionalContext)]
-            } else {
-                ; Create new context message
-                contextMsg := ChatMessage("user", [TextContent(additionalContext)])
-                contextMsg.AdditionalProperties["isContext"] := true
-                
-                ; Insert after system prompt (index 1) if possible
-                if (messages.Length >= 1) {
-                    messages.InsertAt(2, contextMsg)
+        if (firstUserMsg) {
+            ; Check if message has existing context
+            if (firstUserMsg.AdditionalProperties.Has("hasContext") && firstUserMsg.AdditionalProperties["hasContext"]) {
+                if (additionalContext != "") {
+                    ; Update existing context (first item in Contents)
+                    if (firstUserMsg.Contents.Length > 0 && (firstUserMsg.Contents[1] is TextContent)) {
+                        firstUserMsg.Contents[1].Text := additionalContext
+                    }
                 } else {
-                    messages.Push(contextMsg)
+                    ; Remove existing context
+                    firstUserMsg.Contents.RemoveAt(1)
+                    firstUserMsg.AdditionalProperties["hasContext"] := false
                 }
-            }
-        } else {
-            ; Remove context message if exists and empty context
-            if (contextMsgIndex != -1) {
-                messages.RemoveAt(contextMsgIndex)
+            } else {
+                ; No existing context
+                if (additionalContext != "") {
+                    ; Insert new context at the beginning
+                    firstUserMsg.Contents.InsertAt(1, TextContent(additionalContext))
+                    firstUserMsg.AdditionalProperties["hasContext"] := true
+                }
             }
         }
 

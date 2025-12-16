@@ -117,13 +117,71 @@ class SessionManager {
 
     GetCurrentSessionMessagesAsStrings() {
         messages := []
-        for message in this.GetCurrentSessionMessages() {
+        allMessages := this.GetCurrentSessionMessages()
+        
+        ; Find first user message and check for context
+        firstUserMsg := ""
+        firstUserIndex := 0
+        for i, message in allMessages {
+            if (message.Role == "user") {
+                firstUserMsg := message
+                firstUserIndex := i
+                break
+            }
+        }
+        
+        ; Check if context exists in first user message
+        hasContext := false
+        contextText := ""
+        if (firstUserMsg && firstUserMsg.AdditionalProperties.Has("hasContext") 
+            && firstUserMsg.AdditionalProperties["hasContext"]) {
+            hasContext := true
+            if (firstUserMsg.Contents.Length > 0 && (firstUserMsg.Contents[1] is TextContent)) {
+                contextText := firstUserMsg.Contents[1].Text
+            }
+        }
+        
+        ; Build messages array
+        for i, message in allMessages {
             roleEmoji := message.Role == "system" ? "⚙️" :
                 message.Role == "user" ? "👤" :
                 message.Role == "assistant" ? "🤖" :
                 message.Role == "tool" ? "🛠️" : message.Role
 
-            result := { role: roleEmoji, content: this.GetMessageAsString(message) }
+            ; If this is the first user message with context, insert context row first
+            if (hasContext && i == firstUserIndex) {
+                ; Add context entry
+                contextResult := { role: "📎", content: contextText }
+                messages.Push(contextResult)
+                
+                ; Add user message without context
+                userContent := ""
+                for j, part in message.Contents {
+                    if (j > 1 && part is TextContent) {
+                        if (userContent != "")
+                            userContent .= "`n"
+                        userContent .= part.Text
+                    }
+                }
+                
+                ; Check if has images
+                hasImage := false
+                for part in message.Contents {
+                    if (part is ImageContent) {
+                        hasImage := true
+                        break
+                    }
+                }
+                
+                if (userContent == "" && !hasImage) {
+                    userContent := "(empty message)"
+                }
+                
+                result := { role: roleEmoji, content: hasImage ? userContent . " [Image]" : userContent }
+            } else {
+                ; Regular message
+                result := { role: roleEmoji, content: this.GetMessageAsString(message) }
+            }
 
             ; Add additional properties from ChatMessage
             if (message.AdditionalProperties.Has("duration")) {

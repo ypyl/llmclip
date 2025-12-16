@@ -44,11 +44,87 @@ class HistoryViewController {
         this.MyGui["ContextBox"].Modify(0, "-Select")
 
         messages := this.SessionManagerValue.GetCurrentSessionMessages()
+        chatHistory := this.MyGui["ChatHistory"]
         
-        if (Item > 0 && Item <= messages.Length) {
-            msg := messages[Item]
-            this.MyGui["ChatMessageActionButton"].Visible := true  ; Show the Copy button
-            this.WebViewManagerValue.RenderMarkdown(this.SessionManagerValue.GetMessageAsString(msg))  ; Render the selected message in the WebView
+        ; Get the role of the selected item to check if it's a context row
+        rowRole := chatHistory.GetText(Item, 1)
+        
+        if (rowRole == "📎") {
+            ; This is a context row - find first user message and extract context
+            firstUserMsg := ""
+            for msg in messages {
+                if (msg.Role == "user") {
+                    firstUserMsg := msg
+                    break
+                }
+            }
+            
+            if (firstUserMsg && firstUserMsg.AdditionalProperties.Has("hasContext") 
+                && firstUserMsg.AdditionalProperties["hasContext"]
+                && firstUserMsg.Contents.Length > 0 && (firstUserMsg.Contents[1] is TextContent)) {
+                contextText := firstUserMsg.Contents[1].Text
+                this.MyGui["ChatMessageActionButton"].Visible := true
+                this.WebViewManagerValue.RenderMarkdown(contextText)
+            }
+        } else {
+            ; Regular message - need to map ListView index to message index
+            ; Count how many context rows exist before this item
+            contextRowsBefore := 0
+            Loop Item - 1 {
+                if (chatHistory.GetText(A_Index, 1) == "📎")
+                    contextRowsBefore++
+            }
+            
+            messageIndex := Item - contextRowsBefore
+            
+            if (messageIndex > 0 && messageIndex <= messages.Length) {
+                msg := messages[messageIndex]
+                
+                ; Check if this is the first user message with context
+                isFirstUserMsg := false
+                for i, m in messages {
+                    if (m.Role == "user") {
+                        isFirstUserMsg := (i == messageIndex)
+                        break
+                    }
+                }
+                
+                ; Get message content
+                messageContent := ""
+                if (isFirstUserMsg && msg.AdditionalProperties.Has("hasContext") 
+                    && msg.AdditionalProperties["hasContext"]) {
+                    ; First user message with context - exclude first TextContent
+                    text := ""
+                    for i, part in msg.Contents {
+                        if (i > 1 && part is TextContent) {
+                            if (text != "")
+                                text .= "`n"
+                            text .= part.Text
+                        }
+                    }
+                    
+                    ; Check if has images
+                    hasImage := false
+                    for part in msg.Contents {
+                        if (part is ImageContent) {
+                            hasImage := true
+                            break
+                        }
+                    }
+                    
+                    if (text == "" && !hasImage) {
+                        text := "(empty message)"
+                    }
+                    
+                    messageContent := hasImage ? text . " [Image]" : text
+                } else {
+                    ; Regular message - use normal display
+                    messageContent := this.SessionManagerValue.GetMessageAsString(msg)
+                }
+                
+                this.MyGui["ChatMessageActionButton"].Visible := true  ; Show the Copy button
+                this.WebViewManagerValue.RenderMarkdown(messageContent)  ; Render the selected message in the WebView
+            }
         }
     }
 
@@ -73,10 +149,22 @@ class HistoryViewController {
         selectedIndices := []
         focused_row := 0
 
-        ; Collect all selected rows
-        while (focused_row := chatHistory.GetNext(focused_row))
-            if (focused_row > 1)  ; Don't include system message
-                selectedIndices.InsertAt(1, focused_row)
+        ; Collect all selected rows, excluding system message and context rows
+        while (focused_row := chatHistory.GetNext(focused_row)) {
+            if (focused_row > 1) {  ; Don't include system message
+                rowRole := chatHistory.GetText(focused_row, 1)
+                if (rowRole != "📎") {  ; Don't include context rows
+                    ; Map ListView index to message index
+                    contextRowsBefore := 0
+                    Loop focused_row - 1 {
+                        if (chatHistory.GetText(A_Index, 1) == "📎")
+                            contextRowsBefore++
+                    }
+                    messageIndex := focused_row - contextRowsBefore
+                    selectedIndices.InsertAt(1, messageIndex)
+                }
+            }
+        }
 
         ; Remove messages in reverse order to maintain correct indices
         for index in selectedIndices

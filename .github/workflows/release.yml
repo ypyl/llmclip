@@ -32,7 +32,7 @@ jobs:
           out: ${{ env.EXE_NAME }} 
           
           # Optional: Specify the icon file if you have one. 
-          # icon: assets/icon.ico 
+          icon: icon.ico 
           
           # Optional: Target architecture (x64 is default and recommended)
           # target: x64 
@@ -40,10 +40,10 @@ jobs:
           # Optional: Use UPX compression (default)
           # compression: upx 
 
-      - name: 📁 Prepare for Release (Zip the executable)
+      - name: 📁 Prepare for Release (Zip the executable and dependencies)
         # Create a ZIP file for easy downloading and distribution
         run: |
-          Compress-Archive -Path ${{ env.EXE_NAME }} -DestinationPath ${{ github.event.repository.name }}-${{ github.ref_name }}.zip
+          Compress-Archive -Path ${{ env.EXE_NAME }},marked.min.js,readability.min.js,WebView2Loader.dll -DestinationPath ${{ github.event.repository.name }}-${{ github.ref_name }}.zip
 
       - name: 🚀 Create GitHub Release
         uses: softprops/action-gh-release@v2

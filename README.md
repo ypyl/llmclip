@@ -6,80 +6,118 @@ An AutoHotkey v2 clipboard manager that transforms your clipboard history into c
 
 ## Overview
 
-LLMClip monitors your clipboard and aggregates copied text, files, and folders into a unified context for AI chat. Your clipboard history becomes a dynamic knowledge base for your LLM assistant.
+LLMClip monitors your clipboard and aggregates copied text, files, and folders into a unified context for AI chat. It seamlessly integrates with various LLM providers (Groq, Ollama, Google Gemini, OpenAI) to allow you to chat with your clipboard content.
 
 ## Features
 
-- **Clipboard Monitoring**: Toggle recording via hotkey (F3) or tray menu
-- **Smart Parsing**: Auto-captures text, file paths, and folder contents; avoids duplicates
-- **Context Selection**: Click to preview items, Ctrl+Click to select multiple for focused queries
-- **Multi-Provider Support**: Works with Groq, Google, Ollama, and GitHub Models (configurable via `settings.json`)
-- **Session Management**: Organize conversations into separate sessions
-- **Message Regeneration**: Select any user message and regenerate from that point
-- **Message Editing**: Edit previous messages and regenerate responses
-- **Tool Integration**: LLM can execute PowerShell commands and file operations (read/write/delete)
-- **Markdown Rendering**: Interactive responses with copy buttons for code blocks
-- **One-Click Tool Execution**: Run LLM-suggested tool calls with a single button
+### 📋 Clipboard Monitoring & Context Management
+- **Smart Capture**: Automatically captures copied text, file paths, and folder contents.
+- **Context Awareness**:
+    - **Files & Folders**: Reads content of text-based files and lists folder contents.
+    - **PDF Support**: Auto-extracts text and images from PDF files (requires `pdftotext` and `pdfimages`).
+    - **Images**: Supports clipboard images and image files for multimodal LLMs.
+    - **URLs**: Extracts content and metadata from web links.
+- **Selection Control**: Checkboxes allow you to select specific items from your history to send as context.
+
+### 🤖 LLM Integration
+- **Multi-Provider**: Pre-configured support for **Groq**, **Ollama**, **Google (Gemini)**, and **OpenAI**.
+- **Customizable**: Easy `settings.json` configuration for models, system prompts, and API keys.
+- **Tools**: Capable of executing **PowerShell** commands for file system operations when enabled.
+
+### 💬 Advanced Chat Interface
+- **Markdown Rendering**: chat history is rendered with Markdown, including syntax highlighting for code blocks.
+- **History Management**:
+    - **Compression**: "Compress" feature to summarize long conversations and save tokens.
+    - **Extract Notes**: "Extract Learnings" to summarize key information from a session.
+    - **Editing**: Edit previous user messages and regenerate responses.
+- **Session Management**: Switch between multiple independent chat sessions.
 
 ## Installation
 
-1. Install [AutoHotkey v2](https://www.autohotkey.com/download/)
-2. Install cURL: `winget install cURL.cURL` or download from [curl.se](https://curl.se/download.html)
-3. Clone/download this repository
-4. Create `settings.json` (see example below)
-5. Run `clip.ahk`
+1.  **Install AutoHotkey v2**: Download from [autohotkey.com](https://www.autohotkey.com/).
+2.  **Install cURL**: Ensure `curl` is installed (`winget install cURL.cURL` or via [curl.se](https://curl.se/)).
+3.  **PDF Tools (Optional)**: For PDF support, place `pdftotext.exe` and `pdfimages.exe` in a `pdf/` folder within the project directory. (These are part of Xpdf or Poppler utils).
+4.  **Clone Repository**: Clone or download this project.
+5.  **Configuration**: Create a `settings.json` file (see below).
+6.  **Run**: Execute `clip.ahk`.
 
-## Usage
+## Configuration (`settings.json`)
 
-### Hotkeys
-- **F3**: Cycle through Start Recording → Show UI → Stop Recording
-- **Enter**: Send message (in prompt)
-- **Shift+Enter**: New line (in prompt)
-
-### Tray Menu
-- **Left-click**: Toggle clipboard recording
-- **Right-click**: Access full menu (Start/Stop Recording, Ask LLM, Exit)
-
-### Interface
-
-**Left Panel:**
-- Session dropdown
-- Context list (clipboard history)
-- Chat history (click messages to view/interact)
-- Prompt area with tool toggles and answer length selector
-
-**Right Panel:**
-- Displays selected content (context items, messages, LLM responses)
-
-### Regeneration & Editing
-1. **Regenerate**: Select a user message, leave prompt empty, click "Ask LLM"
-2. **Edit & Regenerate**: Select a user message, edit in prompt box, click "Ask LLM"
-
-## Configuration
-
-Create `settings.json` with your API keys:
+Create a `settings.json` file in the project root. Here is a comprehensive example:
 
 ```json
 {
     "selectedLLMType": "groq",
     "providers": {
         "groq": {
-            "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer <<KEY>>\" -d \"@{1}\" -o \"{2}\"",
+            "provider": "openai",
+            "base_url": "https://api.groq.com/openai/v1/chat/completions",
+            "api_key": "YOUR_GROQ_API_KEY",
             "model": "llama-3.3-70b-versatile",
             "temperature": 0.7,
-            "system_prompt": "You are a helpful assistant. Be concise and direct in your responses."
+            "max_tokens": 8000
         },
         "ollama": {
-            "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer <<KEY>>\" -d \"@{1}\" -o \"{2}\"",
+            "provider": "ollama",
+            "base_url": "http://localhost:11434/api/chat",
             "model": "llama3",
-            "temperature": 0.7,
-            "system_prompt": "You are a helpful assistant. Be concise and direct in your responses."
+            "temperature": 0.7
+        },
+        "gemini": {
+            "provider": "google",
+            "api_key": "YOUR_GEMINI_API_KEY",
+            "model": "gemini-2.0-flash-exp",
+            "temperature": 0.7
+        },
+        "openai": {
+            "provider": "openai",
+            "base_url": "https://api.openai.com/v1/chat/completions",
+            "api_key": "YOUR_OPENAI_API_KEY",
+            "model": "gpt-4o",
+            "temperature": 0.7
+        }
+    },
+    "systemPrompts": {
+        "default": {
+            "prompt": "You are a helpful assistant. Be concise."
+        },
+        "coder": {
+            "prompt": "You are an expert software engineer. Provide clean, efficient code."
+        }
+    },
+    "tools": {
+        "powerShellTool": {
+            "enabled": true
         }
     }
 }
 ```
 
-Replace `<<KEY>>` with your actual API keys.
+## Project Structure
+
+- **`clip.ahk`**: Application entry point.
+- **`AppController.ahk`**: Main application logic and orchestration.
+- **`Managers/`**:
+    - `SessionManager.ahk`: Handles chat sessions and message history.
+    - `ContextManager.ahk`: Processes clipboard items (files, text, images).
+    - `WebViewManager.ahk`: Manages the GUI WebView.
+    - `TrayManager.ahk`: Handles system tray interactions.
+- **`LLM/`**:
+    - `LLMService.ahk`: Handles communication logic with LLM providers.
+    - `LLMClient.ahk`: Generic HTTP client for LLM APIs.
+- **`Providers/`**: Specific implementations for different LLM APIs (Ollama, OpenAI, Google, etc.).
+
+## Usage
+
+### Hotkeys
+- **F3**: Toggle Recording / Show Window / Stop Recording cycle.
+- **Enter**: Send message.
+- **Shift+Enter**: Insert newline.
+
+### Interface Tips
+- **Context List**: Uncheck items you don't want to send to the LLM.
+- **Images**: If an image is in the clipboard or selected context, it will be sent to multimodal models (like Gemini or GPT-4o).
+- **Tools**: Enable the `ps1` checkbox to allow the LLM to write and execute PowerShell scripts (Use with caution!).
 
 ## License
 

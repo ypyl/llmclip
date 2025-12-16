@@ -293,7 +293,7 @@ class AppController {
             if (selectedMsg.Role == "user") {
                 if (promptText == "") {
                     ; Regeneration case: Load message content into prompt for editing
-                    this.MyGui["PromptEdit"].Value := this.SessionManagerValue.GetMessageText(selectedMsg)
+                    this.MyGui["PromptEdit"].Value := this.SessionManagerValue.GetUserMessageTextWithoutContext(selectedMsg)
                     return true
                 } else {
                     ; Edit Mode: Build new message with text and images
@@ -301,8 +301,31 @@ class AppController {
                     images := isImageEnabled ? this.ContextViewControllerValue.GetCheckedImages() : []
                     newContent := this.SessionManagerValue.BuildUserMessage(promptText, images)
 
-                    ; Replace the message contents
-                    selectedMsg.Contents := newContent
+                    ; Check if this is the first user message with context
+                    messages := this.SessionManagerValue.GetCurrentSessionMessages()
+                    isFirstUserMsg := false
+                    for i, msg in messages {
+                        if (msg.Role == "user") {
+                            isFirstUserMsg := (msg == selectedMsg)
+                            break
+                        }
+                    }
+
+                    ; If first user message with context, preserve the context
+                    if (isFirstUserMsg && selectedMsg.AdditionalProperties.Has("hasContext") 
+                        && selectedMsg.AdditionalProperties["hasContext"]
+                        && selectedMsg.Contents.Length > 0 && (selectedMsg.Contents[1] is TextContent)) {
+                        ; Keep the context (first TextContent) and add new content after it
+                        contextText := selectedMsg.Contents[1]
+                        newContentWithContext := [contextText]
+                        for part in newContent {
+                            newContentWithContext.Push(part)
+                        }
+                        selectedMsg.Contents := newContentWithContext
+                    } else {
+                        ; Replace the message contents normally
+                        selectedMsg.Contents := newContent
+                    }
 
                     ; Truncate history after this message
                     if (this.SessionManagerValue.TruncateMessages(focused_row)) {

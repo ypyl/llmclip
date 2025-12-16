@@ -132,13 +132,9 @@ class SessionManager {
         
         ; Check if context exists in first user message
         hasContext := false
-        contextText := ""
         if (firstUserMsg && firstUserMsg.AdditionalProperties.Has("hasContext") 
             && firstUserMsg.AdditionalProperties["hasContext"]) {
             hasContext := true
-            if (firstUserMsg.Contents.Length > 0 && (firstUserMsg.Contents[1] is TextContent)) {
-                contextText := firstUserMsg.Contents[1].Text
-            }
         }
         
         ; Build messages array
@@ -148,12 +144,8 @@ class SessionManager {
                 message.Role == "assistant" ? "🤖" :
                 message.Role == "tool" ? "🛠️" : message.Role
 
-            ; If this is the first user message with context, insert context row first
+            ; If this is the first user message with context, exclude context from display
             if (hasContext && i == firstUserIndex) {
-                ; Add context entry
-                contextResult := { role: "📎", content: contextText }
-                messages.Push(contextResult)
-                
                 ; Add user message without context
                 userContent := ""
                 for j, part in message.Contents {
@@ -343,6 +335,44 @@ class SessionManager {
     GetMessageText(message) {
         return message.GetText()
     }
+
+    /**
+     * Get user message text without context
+     * @param message - ChatMessage instance
+     * @returns String content without context
+     */
+    GetUserMessageTextWithoutContext(message) {
+        ; Check if this is a user message with context
+        if (message.Role == "user" && message.AdditionalProperties.Has("hasContext") 
+            && message.AdditionalProperties["hasContext"]) {
+            ; Check if this is the first user message
+            messages := this.GetCurrentSessionMessages()
+            isFirstUserMsg := false
+            for msg in messages {
+                if (msg.Role == "user") {
+                    isFirstUserMsg := (msg == message)
+                    break
+                }
+            }
+            
+            if (isFirstUserMsg) {
+                ; Extract text without first TextContent (context)
+                text := ""
+                for i, part in message.Contents {
+                    if (i > 1 && part is TextContent) {
+                        if (text != "")
+                            text .= "`n"
+                        text .= part.Text
+                    }
+                }
+                return text
+            }
+        }
+        
+        ; Not first user message or no context - return all text
+        return message.GetText()
+    }
+
 
     DeleteMessage(index) {
         if (index > 1 && index <= this.sessionMessages[this.currentSessionIndex].Length) {

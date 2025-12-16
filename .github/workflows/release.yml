@@ -1,0 +1,56 @@
+name: AutoHotkey Release Build
+
+on:
+  # This workflow triggers when a new tag is pushed (e.g., git push --tags)
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+' # Matches tags like v1.0.0, v1.2.3, etc.
+
+jobs:
+  build_and_release:
+    # Use a standard Windows runner since Ahk2Exe is a Windows tool
+    runs-on: windows-latest
+    
+    # Define a variable for the output executable filename
+    env:
+      EXE_NAME: llmclip.exe
+      
+    steps:
+      - name: 🛎️ Checkout code
+        uses: actions/checkout@v4
+        
+      - name: 📦 Compile AutoHotkey Script
+        uses: benmusson/ahk2exe-action@v1.2.0
+        with:
+          # REQUIRED: The path and name of your AHK v2 script.
+          in: clip.ahk 
+          
+          # Optional: The name for the output executable. Using the env variable.
+          out: ${{ env.EXE_NAME }} 
+          
+          # Optional: Specify the icon file if you have one. 
+          # icon: assets/icon.ico 
+          
+          # Optional: Target architecture (x64 is default and recommended)
+          # target: x64 
+          
+          # Optional: Use UPX compression (default)
+          # compression: upx 
+
+      - name: 📁 Prepare for Release (Zip the executable)
+        # Create a ZIP file for easy downloading and distribution
+        run: |
+          Compress-Archive -Path ${{ env.EXE_NAME }} -DestinationPath ${{ github.event.repository.name }}-${{ github.ref_name }}.zip
+
+      - name: 🚀 Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          # Tag name is automatically used from the push event
+          name: Release ${{ github.ref_name }}
+          # Use the tag message as the release body (optional)
+          body: ${{ github.event.head_commit.message }}
+          draft: false
+          prerelease: false
+          # Upload the compiled and zipped asset
+          files: ${{ github.event.repository.name }}-${{ github.ref_name }}.zip

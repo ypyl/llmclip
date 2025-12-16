@@ -10,6 +10,9 @@ jobs:
   build_and_release:
     # Use a standard Windows runner since Ahk2Exe is a Windows tool
     runs-on: windows-latest
+
+    permissions:
+      contents: write
     
     # Define a variable for the output executable filename
     env:

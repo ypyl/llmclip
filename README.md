@@ -50,62 +50,22 @@ Create a `settings.json` file in the project root. Here is a comprehensive examp
     "selectedLLMType": "groq",
     "providers": {
         "groq": {
-            "provider": "openai",
-            "base_url": "https://api.groq.com/openai/v1/chat/completions",
-            "api_key": "YOUR_GROQ_API_KEY",
+            "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer <<KEY>>\" -d \"@{1}\" -o \"{2}\"",
             "model": "llama-3.3-70b-versatile",
             "temperature": 0.7,
-            "max_tokens": 8000
+            "system_prompt": "You are a helpful assistant. Be concise and direct in your responses."
         },
         "ollama": {
-            "provider": "ollama",
-            "base_url": "http://localhost:11434/api/chat",
+            "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer <<KEY>>\" -d \"@{1}\" -o \"{2}\"",
             "model": "llama3",
-            "temperature": 0.7
-        },
-        "gemini": {
-            "provider": "google",
-            "api_key": "YOUR_GEMINI_API_KEY",
-            "model": "gemini-2.0-flash-exp",
-            "temperature": 0.7
-        },
-        "openai": {
-            "provider": "openai",
-            "base_url": "https://api.openai.com/v1/chat/completions",
-            "api_key": "YOUR_OPENAI_API_KEY",
-            "model": "gpt-4o",
-            "temperature": 0.7
-        }
-    },
-    "systemPrompts": {
-        "default": {
-            "prompt": "You are a helpful assistant. Be concise."
-        },
-        "coder": {
-            "prompt": "You are an expert software engineer. Provide clean, efficient code."
-        }
-    },
-    "tools": {
-        "powerShellTool": {
-            "enabled": true
+            "temperature": 0.7,
+            "system_prompt": "You are a helpful assistant. Be concise and direct in your responses."
         }
     }
 }
 ```
 
-## Project Structure
-
-- **`clip.ahk`**: Application entry point.
-- **`AppController.ahk`**: Main application logic and orchestration.
-- **`Managers/`**:
-    - `SessionManager.ahk`: Handles chat sessions and message history.
-    - `ContextManager.ahk`: Processes clipboard items (files, text, images).
-    - `WebViewManager.ahk`: Manages the GUI WebView.
-    - `TrayManager.ahk`: Handles system tray interactions.
-- **`LLM/`**:
-    - `LLMService.ahk`: Handles communication logic with LLM providers.
-    - `LLMClient.ahk`: Generic HTTP client for LLM APIs.
-- **`Providers/`**: Specific implementations for different LLM APIs (Ollama, OpenAI, Google, etc.).
+Replace `<<KEY>>` with your actual API keys.
 
 ## Usage
 

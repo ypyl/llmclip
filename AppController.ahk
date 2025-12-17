@@ -372,7 +372,11 @@ class AppController {
         images := isImageEnabled ? this.ContextViewControllerValue.GetCheckedImages() : []
         userMessageContent := this.SessionManagerValue.BuildUserMessage(userMessageContent, images)
 
-        if (userMessageContent.Length > 0) {
+        ; Allow empty user message if there's context to attach
+        contextBox := this.MyGui["ContextBox"]
+        hasContext := (contextItems.Length > 0 && contextBox.Value)
+        
+        if (userMessageContent.Length > 0 || hasContext) {
             messages.Push(ChatMessage("user", userMessageContent))
         }
         this.SendToLLM()

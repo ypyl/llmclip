@@ -222,6 +222,16 @@ class ContextViewController {
         return images
     }
 
+    HasAnyCheckedItem() {
+        context := this.SessionManagerValue.GetCurrentSessionContext()
+        loop context.Length {
+            if (this.IsItemChecked(A_Index)) {
+                return true
+            }
+        }
+        return false
+    }
+
     HasVal(haystack, needle) {
         for index, value in haystack {
             if (value = needle)

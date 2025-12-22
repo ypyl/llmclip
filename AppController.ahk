@@ -212,7 +212,6 @@ class AppController {
     SessionChanged(*) {
         ; Update LLM type and system prompt selections
         ; Update Model menu checkmarks and menu bar label
-        ; Update Model menu checkmarks and menu bar label
         oldModelName := this.currentModelName
 
         ; Switch to new session
@@ -312,7 +311,7 @@ class AppController {
                     }
 
                     ; If first user message with context, preserve the context
-                    if (isFirstUserMsg && selectedMsg.AdditionalProperties.Has("hasContext") 
+                    if (isFirstUserMsg && selectedMsg.AdditionalProperties.Has("hasContext")
                         && selectedMsg.AdditionalProperties["hasContext"]
                         && selectedMsg.Contents.Length > 0 && (selectedMsg.Contents[1] is TextContent)) {
                         ; Keep the context (first TextContent) and add new content after it
@@ -374,8 +373,7 @@ class AppController {
 
         ; Allow empty user message if there's context to attach
         contextBox := this.MyGui["ContextBox"]
-        hasContext := (contextItems.Length > 0 && contextBox.Value)
-        
+        hasContext := this.ContextViewControllerValue.HasAnyCheckedItem()
         if (userMessageContent.Length > 0 || hasContext) {
             messages.Push(ChatMessage("user", userMessageContent))
         }
@@ -402,7 +400,7 @@ class AppController {
 
         ; Build context message content
         additionalContext := this.ContextViewControllerValue.BuildAdditionalContextMessage(context, contextBox.Value)
-        
+
         ; Find first user message
         firstUserMsg := ""
         for i, msg in messages {
@@ -443,7 +441,7 @@ class AppController {
         try {
             ; Check tool enabled
             powerShellEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "powerShellTool")
-            
+
             newMessages := this.LLMServiceValue.SendToLLM(this.SessionManagerValue, this.currentAnswerSize, powerShellEnabled)
 
             ; Check for unexecuted Tool Calls
@@ -647,12 +645,12 @@ class AppController {
 
             ; Add non-duplicate items to context
             context := this.SessionManagerValue.GetCurrentSessionContext()
-            
+
             for item in localTxtFromClipboardArray {
                 ; Add the original item first
                 if !this.HasContent(context, item) {
                     context.Push(item)
-                    
+
                     ; Check if it's a PDF and process it
                     if (this.ContextManagerValue.IsPdf(item)) {
                         ; Check if pdftotext exists
@@ -664,7 +662,7 @@ class AppController {
                                 context.Push(extractedTextFile)
                             }
                         }
-                        
+
                         ; Extract Images
                         ; extractedImages := PdfProcessor.ExtractImages(item)
                         ; for imgPath in extractedImages {

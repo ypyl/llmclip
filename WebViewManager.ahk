@@ -32,7 +32,7 @@ class WebViewManager {
     Init(responseCtr) {
         this.wvc := WebView2.CreateControllerAsync(responseCtr.Hwnd).await2()
         this.wv := this.wvc.CoreWebView2
-        this.wv.NavigateToString(this.GetHtmlContent())
+        this.NavigateToHtml(this.GetHtmlContent())
         this.isHtmlLoaded := true
         this.wv.AddHostObjectToScript("clipboard", this.clipboardHost)
         this.wv.AddHostObjectToScript("article", this.articleHost)
@@ -148,20 +148,27 @@ class WebViewManager {
         if HasProp(this, "scriptId")
             this.wv.RemoveScriptToExecuteOnDocumentCreated(this.scriptId)
 
-        this.wv.NavigateToString(this.GetHtmlContent())
+        this.NavigateToHtml(this.GetHtmlContent())
         this.isHtmlLoaded := true
     }
 
+    NavigateToHtml(htmlContent) {
+        tempFile := A_ScriptDir . "\ui.html"
+        try FileDelete(tempFile)
+        FileAppend(htmlContent, tempFile, "UTF-8")
+        this.wv.Navigate("file:///" . StrReplace(tempFile, "\", "/"))
+    }
+
     GetHtmlContent(initialContent := "") {
-        markedJS := FileRead(A_ScriptDir . "\marked.min.js")
         var := "
         (
         <!DOCTYPE html>
         <html>
         <head>
-            <script>
+            <script src="marked.min.js"></script>
+            <script src="mermaid.min.js"></script>
+             <script>
         )"
-        var .= markedJS
         var .= "
         (
         </script>
@@ -255,8 +262,13 @@ class WebViewManager {
                 // Override the code block renderer to include copy and toggle buttons
                 const renderer = new marked.Renderer();
                 renderer.code = function(code, infostring, escaped) {
+                    if (code.lang === 'mermaid') {
+                        return '<div class="mermaid">' + code.text + '</div>';
+                    }
                     return ``<div class="code-block-wrapper"><pre><code>${code.text}</code><br /><button class="copy-button" onclick="copyCode(this)">Copy</button><button class="toggle-button" onclick="toggle(this)">Collapse</button></pre></div>``;
                 };
+
+                mermaid.initialize({ startOnLoad: false });
 
                 function renderMarkdown(content) {
                     const quoteBtn = document.getElementById('quoteBtn');
@@ -264,6 +276,9 @@ class WebViewManager {
                         quoteBtn.style.display = 'none';
                     }
                     document.getElementById("content").innerHTML = marked.parse(content, { renderer: renderer });
+                    mermaid.run({
+                        nodes: document.querySelectorAll('.mermaid')
+                    });
                 }
 
                 // Quote button logic
@@ -352,7 +367,7 @@ class WebViewManager {
         if (this.isHtmlLoaded) {
             this.wv.ExecuteScript("renderMarkdown(``" escapedMd "``)")
         } else {
-            this.wv.NavigateToString(this.GetHtmlContent(escapedMd))
+            this.NavigateToHtml(this.GetHtmlContent(escapedMd))
             this.isHtmlLoaded := true
         }
     }

@@ -652,16 +652,16 @@ class AppController {
                     context.Push(item)
 
                     ; Check if it's a PDF and process it
-                    if (this.ContextManagerValue.IsPdf(item)) {
-                        ; Check if pdftotext exists
-                        pdftotextPath := PdfProcessor.PdfToolsDir . "\pdftotext.exe"
-                        if FileExist(pdftotextPath) {
-                            ; Extract Text
-                            extractedTextFile := PdfProcessor.ExtractText(pdftotextPath, item)
-                            if (extractedTextFile && !this.HasContent(context, extractedTextFile)) {
-                                context.Push(extractedTextFile)
-                            }
-                        }
+                    ; if (this.ContextManagerValue.IsPdf(item)) {
+                    ;     ; Check if pdftotext exists
+                    ;     pdftotextPath := PdfProcessor.PdfToolsDir . "\pdftotext.exe"
+                    ;     if FileExist(pdftotextPath) {
+                    ;         ; Extract Text
+                    ;         extractedTextFile := PdfProcessor.ExtractText(pdftotextPath, item)
+                    ;         if (extractedTextFile && !this.HasContent(context, extractedTextFile)) {
+                    ;             context.Push(extractedTextFile)
+                    ;         }
+                    ;     }
 
                         ; Extract Images
                         ; extractedImages := PdfProcessor.ExtractImages(item)
@@ -670,7 +670,7 @@ class AppController {
                         ;         context.Push(imgPath)
                         ;      }
                         ; }
-                    }
+                    ; }
                 }
             }
 

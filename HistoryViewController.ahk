@@ -100,7 +100,32 @@ class HistoryViewController {
         chatHistory := this.MyGui["ChatHistory"]
         if (focused_row := chatHistory.GetNext()) {
             msg := messages[focused_row]
-            messageText := msg.GetText()
+            
+            ; Check if this is the first user message with context
+            isFirstUserMsg := false
+            for i, m in messages {
+                if (m.Role == "user") {
+                    isFirstUserMsg := (i == focused_row)
+                    break
+                }
+            }
+            
+            ; Get message content, excluding context if present
+            messageText := ""
+            if (isFirstUserMsg && msg.AdditionalProperties.Has("hasContext") 
+                && msg.AdditionalProperties["hasContext"]) {
+                ; First user message with context - exclude first TextContent
+                for i, part in msg.Contents {
+                    if (i > 1 && part is TextContent) {
+                        if (messageText != "")
+                            messageText .= "`n"
+                        messageText .= part.Text
+                    }
+                }
+            } else {
+                ; Regular message - use normal GetText
+                messageText := msg.GetText()
+            }
 
             ClipText := StrReplace(messageText, "`r`n", "`n")
             ClipText := StrReplace(ClipText, "`r", "`n")

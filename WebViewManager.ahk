@@ -14,7 +14,8 @@ class WebViewManager {
 
     __New() {
         this.clipboardHost := {
-            Copy: (text) => A_Clipboard := text
+            Copy: (text) => A_Clipboard := text,
+            SaveDiagram: (svgData) => this.SaveMermaidDiagram(svgData)
         }
         this.articleHost := {
             OnArticle: (article) => this.HandleArticle(article)
@@ -228,6 +229,27 @@ class WebViewManager {
                     background-color: #e6f2fa;
                     border-color: #0078d4;
                 }
+                .mermaid-wrapper {
+                    margin: 16px 0;
+                    padding: 16px;
+                    background-color: #f6f8fa;
+                    border-radius: 6px;
+                }
+                .save-diagram-button {
+                    margin: 8px 0 0 0;
+                    padding: 6px 12px;
+                    background-color: #ffffff;
+                    color: #333333;
+                    border: 1px solid #cccccc;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    box-shadow: none;
+                }
+                .save-diagram-button:hover {
+                    background-color: #e6f2fa;
+                    border-color: #0078d4;
+                }
             </style>
         </head>
         <body>
@@ -259,11 +281,24 @@ class WebViewManager {
                     button.textContent = wrapper.classList.contains("collapsed") ? "Expand" : "Collapse";
                 }
 
+                // Function to save Mermaid diagram as SVG
+                function saveMermaidDiagram(button) {
+                    const wrapper = button.closest('.mermaid-wrapper');
+                    const svgElement = wrapper.querySelector('svg');
+                    if (!svgElement) return;
+                    
+                    // Get the SVG as a string
+                    const svgData = new XMLSerializer().serializeToString(svgElement);
+                    
+                    // Send to AutoHotkey host for saving
+                    window.chrome.webview.hostObjects.sync.clipboard.SaveDiagram(svgData);
+                }
+
                 // Override the code block renderer to include copy and toggle buttons
                 const renderer = new marked.Renderer();
                 renderer.code = function(code, infostring, escaped) {
                     if (code.lang === 'mermaid') {
-                        return '<div class="mermaid">' + code.text + '</div>';
+                        return '<div class="mermaid-wrapper"><div class="mermaid">' + code.text + '</div><button class="save-diagram-button" onclick="saveMermaidDiagram(this)">Save as SVG</button></div>';
                     }
                     return ``<div class="code-block-wrapper"><pre><code>${code.text}</code><br /><button class="copy-button" onclick="copyCode(this)">Copy</button><button class="toggle-button" onclick="toggle(this)">Collapse</button></pre></div>``;
                 };
@@ -375,6 +410,23 @@ class WebViewManager {
     Resize(rect) {
         if (this.wvc) {
             this.wvc.Bounds := rect
+        }
+    }
+
+    SaveMermaidDiagram(svgData) {
+        ; Generate a unique filename with timestamp
+        timestamp := FormatTime(, "yyyyMMdd_HHmmss")
+        filename := A_ScriptDir . "\mermaid_" . timestamp . ".svg"
+        
+        ; Save SVG directly to file
+        try FileDelete(filename)
+        FileAppend(svgData, filename, "UTF-8")
+        
+        ; Show success message
+        if FileExist(filename) {
+            MsgBox("Mermaid diagram saved to:`n" . filename, "Success", 64)
+        } else {
+            MsgBox("Failed to save diagram.", "Error", 16)
         }
     }
 }

@@ -414,19 +414,25 @@ class WebViewManager {
     }
 
     SaveMermaidDiagram(svgData) {
-        ; Generate a unique filename with timestamp
+        ; Generate a default filename with timestamp
         timestamp := FormatTime(, "yyyyMMdd_HHmmss")
-        filename := A_ScriptDir . "\mermaid_" . timestamp . ".svg"
+        defaultFilename := "mermaid_" . timestamp . ".svg"
         
-        ; Save SVG directly to file
-        try FileDelete(filename)
-        FileAppend(svgData, filename, "UTF-8")
+        ; Show save dialog
+        selectedFile := FileSelect("S16", defaultFilename, "Save Mermaid Diagram", "SVG Files (*.svg)")
         
-        ; Show success message
-        if FileExist(filename) {
-            MsgBox("Mermaid diagram saved to:`n" . filename, "Success", 64)
-        } else {
-            MsgBox("Failed to save diagram.", "Error", 16)
+        ; Check if user cancelled
+        if (selectedFile = "") {
+            return
         }
+        
+        ; Ensure .svg extension
+        if (!RegExMatch(selectedFile, "i)\.svg$")) {
+            selectedFile .= ".svg"
+        }
+        
+        ; Save SVG to selected file
+        try FileDelete(selectedFile)
+        FileAppend(svgData, selectedFile, "UTF-8")
     }
 }

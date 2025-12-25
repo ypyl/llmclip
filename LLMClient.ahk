@@ -124,7 +124,7 @@ class LLMClient {
     GetProvider(type) {
         if (InStr(type, "gr-audio") = 1)
             return this.providers["audio"]
-        else if (InStr(type, "gr") = 1 || InStr(type, "az") = 1 || InStr(type, "git") = 1)
+        else if (InStr(type, "gr") = 1 || InStr(type, "az") = 1 || InStr(type, "git") = 1 || InStr(type, "or") = 1)
             return this.providers["openai"]
         else if (InStr(type, "ol-") = 1)
             return this.providers["ollama"]

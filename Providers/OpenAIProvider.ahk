@@ -38,6 +38,10 @@ class OpenAIProvider extends BaseProvider {
                 message := choice["message"]
                 chatMsg := ChatMessage("assistant")
 
+                if (message.Has("reasoning")) {
+                    chatMsg.AdditionalProperties["thinking"] := message["reasoning"]
+                }
+
                 ; Check for tool calls
                 if (message.Has("tool_calls") && message["tool_calls"].Length > 0) {
                     for toolCall in message["tool_calls"] {

@@ -197,58 +197,64 @@ class WebViewManager {
                     -webkit-box-orient: vertical;
                     overflow: hidden;
                 }
-                .copy-button, .toggle-button {
-                    margin: 4px;
-                    padding: 6px 12px;
-                    background-color: #ffffff;
-                    color: #333333;
-                    border: 1px solid #cccccc;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    font-size: 14px;
-                    box-shadow: none;
-                }
-                .copy-button:hover, .toggle-button:hover {
-                    background-color: #e6f2fa;
-                    border-color: #0078d4;
-                }
                 .quote-button {
                     position: fixed;
                     display: none;
                     background-color: #ffffff;
-                    color: #333333;
-                    border: 1px solid #cccccc;
+                    color: #666;
+                    border: 1px solid #ccc;
                     border-radius: 4px;
-                    padding: 6px 12px;
+                    padding: 4px 10px;
                     cursor: pointer;
-                    font-size: 14px;
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                    font-size: 12px;
+                    box-shadow: none;
                     z-index: 1000;
                 }
                 .quote-button:hover {
                     background-color: #e6f2fa;
-                    border-color: #0078d4;
+                    border-color: #999;
                 }
-                .mermaid-wrapper {
-                    margin: 16px 0;
+                .mermaid-wrapper > .mermaid {
                     padding: 16px;
                     background-color: #f6f8fa;
                     border-radius: 6px;
+                    margin-bottom: 8px;
                 }
-                .save-diagram-button {
-                    margin: 8px 0 0 0;
-                    padding: 6px 12px;
+                .custom-button {
+                    padding: 4px 10px;
+                    margin-left: 4px;
                     background-color: #ffffff;
-                    color: #333333;
-                    border: 1px solid #cccccc;
+                    color: #666;
+                    border: 1px solid #ccc;
                     border-radius: 4px;
                     cursor: pointer;
-                    font-size: 14px;
-                    box-shadow: none;
+                    font-size: 12px;
+                    font-style: normal;
                 }
-                .save-diagram-button:hover {
+                .custom-button:hover {
                     background-color: #e6f2fa;
-                    border-color: #0078d4;
+                    border-color: #999;
+                }
+                .thinking-block-wrapper {
+                    margin: 16px 0;
+                }
+                .thinking-block {
+                    padding: 12px;
+                    background-color: #f9f9f9;
+                    border-left: 3px solid #999;
+                    border-radius: 4px;
+                    font-size: 0.85em;
+                    font-style: italic;
+                    color: #666;
+                    white-space: pre-wrap;
+                    word-wrap: break-word;
+                    margin-bottom: 8px;
+                }
+                .thinking-block-wrapper.collapsed .thinking-block {
+                    display: -webkit-box;
+                    -webkit-line-clamp: 1;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
                 }
             </style>
         </head>
@@ -281,6 +287,13 @@ class WebViewManager {
                     button.textContent = wrapper.classList.contains("collapsed") ? "Expand" : "Collapse";
                 }
 
+                // Function to toggle thinking block visibility
+                function toggleThinking(button) {
+                    const wrapper = button.closest(".thinking-block-wrapper");
+                    wrapper.classList.toggle("collapsed");
+                    button.textContent = wrapper.classList.contains("collapsed") ? "Expand" : "Collapse";
+                }
+
                 // Function to save Mermaid diagram as SVG
                 function saveMermaidDiagram(button) {
                     const wrapper = button.closest('.mermaid-wrapper');
@@ -298,9 +311,12 @@ class WebViewManager {
                 const renderer = new marked.Renderer();
                 renderer.code = function(code, infostring, escaped) {
                     if (code.lang === 'mermaid') {
-                        return '<div class="mermaid-wrapper"><div class="mermaid">' + code.text + '</div><button class="save-diagram-button" onclick="saveMermaidDiagram(this)">Save as SVG</button></div>';
+                        return '<div class="mermaid-wrapper"><div class="mermaid">' + code.text + '</div><button class="custom-button" onclick="saveMermaidDiagram(this)">Save as SVG</button></div>';
                     }
-                    return ``<div class="code-block-wrapper"><pre><code>${code.text}</code><br /><button class="copy-button" onclick="copyCode(this)">Copy</button><button class="toggle-button" onclick="toggle(this)">Collapse</button></pre></div>``;
+                    if (code.lang === 'thinking') {
+                        return ``<div class="thinking-block-wrapper collapsed"><div class="thinking-block">${code.text}</div><button class="custom-button" onclick="toggleThinking(this)">Expand</button></div>``;
+                    }
+                    return ``<div class="code-block-wrapper"><pre><code>${code.text}</code></pre><button class="custom-button" onclick="copyCode(this)">Copy</button><button class="custom-button" onclick="toggle(this)">Collapse</button></div>``;
                 };
 
                 mermaid.initialize({ startOnLoad: false });
@@ -335,7 +351,7 @@ class WebViewManager {
                         const rect = range.getBoundingClientRect();
 
                         // Position button above the selection
-                        let top = rect.top - 40;
+                        let top = rect.top - 30;
                         let left = rect.left + (rect.width / 2) - (quoteBtn.offsetWidth / 2);
 
                         // Ensure button stays within viewport

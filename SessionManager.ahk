@@ -61,7 +61,10 @@ class SessionManager {
         ; Get text content and check for thinking
         text := message.GetText()
         if (message.AdditionalProperties.Has("thinking") && message.AdditionalProperties["thinking"] != "") {
-            text := "``````thinking`n" . message.AdditionalProperties["thinking"] . "`n``````" . "`n`n" . text
+            ; Use 4 backticks for fence if content contains 3 backticks (to prevent breaking markdown rendering)
+            thinkingContent := message.AdditionalProperties["thinking"]
+            fence := InStr(thinkingContent, "``````") ? "````````" : "``````"
+            text := fence . "thinking`n" . thinkingContent . "`n" . fence . "`n`n" . text
         }
         
         ; Check if has images

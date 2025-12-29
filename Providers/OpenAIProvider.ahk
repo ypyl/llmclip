@@ -144,15 +144,8 @@ class OpenAIProvider extends BaseProvider {
         cleanedMessages := []
         for msg in messages {
             ; Convert ChatMessage to plain object and remove additional properties
+            ; ToObject(false) (default) now excludes internal properties like duration and tokens
             obj := msg.ToObject()
-            
-            ; Remove duration and tokens properties if present
-            if (obj.HasOwnProp("duration")) {
-                obj.DeleteProp("duration")
-            }
-            if (obj.HasOwnProp("tokens")) {
-                obj.DeleteProp("tokens")
-            }
             cleanedMessages.Push(obj)
         }
         return cleanedMessages

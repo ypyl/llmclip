@@ -1,5 +1,5 @@
 #Requires AutoHotkey 2.0
-#Include TempFileManager.ahk
+#Include LLM/TempFileManager.ahk
 
 class PdfProcessor {
     static PdfToolsDir := "pdf"

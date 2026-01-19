@@ -1,7 +1,7 @@
 #Requires AutoHotkey 2.0
 #Include LLMClient.ahk
 #Include PowerShellTool.ahk
-#Include SessionManager.ahk
+#Include ..\SessionManager.ahk
 
 class LLMService {
     appSettings := ""
@@ -38,14 +38,14 @@ class LLMService {
 
     SendToLLM(sessionManager, answerSize, powerShellEnabled) {
         messages := sessionManager.GetCurrentSessionMessages()
-        
+
         try {
             ; Create LLM client if it doesn't exist yet
             settings := this.appSettings.GetSelectedSettings(sessionManager.GetCurrentSessionLLMType())
 
             ; Update tools property based on checkbox values
             settings["tools"] := this.ConfigureToolSettings(powerShellEnabled)
-            
+
             ; Add a user message to instruct the model on answer length based on menu selection
             answerSizeMsg := ""
             if (answerSize = "Small") {
@@ -90,7 +90,7 @@ class LLMService {
 
     CompressHistory(sessionManager) {
         messages := sessionManager.GetCurrentSessionMessages()
-        
+
         ; Check if there are enough messages to compress (at least 3: system + 2 others)
         if (messages.Length < 3) {
             throw Error("Not enough messages to compress. Need at least 2 messages besides the system message.")
@@ -133,13 +133,13 @@ class LLMService {
             if (newMessages.Length > 0) {
                 compressedMsg := newMessages[1]
                 compressedMsg.AdditionalProperties["duration"] := duration
-                
+
                 ; Replace session messages
                 currentSystemMsg := messages[1]
                 sessionManager.ClearCurrentMessages()
                 sessionManager.sessionMessages[sessionManager.currentSessionIndex].Push(currentSystemMsg)
                 sessionManager.sessionMessages[sessionManager.currentSessionIndex].Push(compressedMsg)
-                
+
                 return compressedMsg
             }
             return ""

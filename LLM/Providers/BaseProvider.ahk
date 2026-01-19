@@ -1,5 +1,5 @@
-#Include <Json>
-#Include "..\LLM\Types.ahk"
+#Include ..\..\Lib\Json.ahk
+#Include "..\Types.ahk"
 
 class BaseProvider {
     /**

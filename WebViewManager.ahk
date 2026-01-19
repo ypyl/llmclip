@@ -11,6 +11,12 @@ class WebViewManager {
     articleReady := false
     currentArticle := ""
     isHtmlLoaded := false
+    settingsHost := {}
+    OnSaveSettings := (json) => ""
+    OnCancelSettings := () => ""
+    uiFilePath := A_ScriptDir . "\ui.html"
+    pendingRenderType := ""
+    pendingRenderContent := ""
 
     __New() {
         this.clipboardHost := {
@@ -23,7 +29,18 @@ class WebViewManager {
         this.inputHost := {
             Append: (text) => MsgBox(text) ; Default placeholder
         }
+        this.settingsHost := {
+            Save: (json) => this.SaveSettingsWrapper(json),
+        }
         this.cache := Map()  ; Initialize the cache
+    }
+
+    SetSettingsCallbacks(saveCallback) {
+        this.OnSaveSettings := saveCallback
+    }
+
+    SaveSettingsWrapper(json) {
+        this.OnSaveSettings.Call(json)
     }
 
     SetInputCallback(callback) {
@@ -33,18 +50,26 @@ class WebViewManager {
     Init(responseCtr) {
         this.wvc := WebView2.CreateControllerAsync(responseCtr.Hwnd).await2()
         this.wv := this.wvc.CoreWebView2
-        this.NavigateToHtml(this.GetHtmlContent())
-        this.isHtmlLoaded := true
+
         this.wv.AddHostObjectToScript("clipboard", this.clipboardHost)
         this.wv.AddHostObjectToScript("article", this.articleHost)
         this.wv.AddHostObjectToScript("input", this.inputHost)
+        this.wv.AddHostObjectToScript("settings", this.settingsHost)
+
         this.navStartingToken := this.wv.add_NavigationStarting((sender, args) => this.OnNavigationStarting(args))
+        this.navCompletedToken := this.wv.add_NavigationCompleted((sender, args) => this.OnNavigationCompleted(sender, args))
+
+        this.NavigateToUi()
+    }
+
+    NavigateToUi() {
+        this.wv.Navigate("file:///" . StrReplace(this.uiFilePath, "\", "/"))
     }
 
     InitArticleMode() {
         readabilityJS := FileRead(A_ScriptDir . "\readability.min.js")
         this.scriptId := this.wv.AddScriptToExecuteOnDocumentCreatedAsync(readabilityJS).await()
-        this.navCompletedToken := this.wv.add_NavigationCompleted(WebView2.Handler((handler, ICoreWebView2, NavigationCompletedEventArgs) => this.OnNavigationCompleted()))
+        ; We use the main navigation completed handler now
     }
 
     LoadArticle(url) {
@@ -93,8 +118,24 @@ class WebViewManager {
         }
     }
 
-    OnNavigationCompleted() {
-        this.ExtractArticle()
+    OnNavigationCompleted(sender, args) {
+        if (args.IsSuccess) {
+            uri := ""
+            try uri := this.wv.Source
+
+            if (InStr(uri, "ui.html")) {
+                this.isHtmlLoaded := true
+                if (this.pendingRenderType == "markdown") {
+                    this.RenderMarkdown(this.pendingRenderContent)
+                } else if (this.pendingRenderType == "settings") {
+                    this.RenderSettings(this.pendingRenderContent)
+                }
+                this.pendingRenderType := ""
+                this.pendingRenderContent := ""
+            } else if (InStr(uri, "http")) {
+                this.ExtractArticle()
+            }
+        }
     }
 
     ExtractArticle() {
@@ -103,12 +144,12 @@ class WebViewManager {
             (
                 var contentType = document.contentType;
                 var article = null;
-                
+
                 // Check if content type is text or xml based
                 if (contentType && (
-                    contentType.indexOf("text/plain") !== -1 || 
-                    contentType.indexOf("text/xml") !== -1 || 
-                    contentType.indexOf("application/xml") !== -1 || 
+                    contentType.indexOf("text/plain") !== -1 ||
+                    contentType.indexOf("text/xml") !== -1 ||
+                    contentType.indexOf("application/xml") !== -1 ||
                     contentType.indexOf("application/rss+xml") !== -1 ||
                     contentType.indexOf("application/json") !== -1)) {
                     // For text/xml, manually construct structure matching Readability output
@@ -144,249 +185,14 @@ class WebViewManager {
         this.articleReady := true
 
         ; Clean up
-        if HasProp(this, "navCompletedToken")
-            this.wv.remove_NavigationCompleted(this.navCompletedToken)
         if HasProp(this, "scriptId")
             this.wv.RemoveScriptToExecuteOnDocumentCreated(this.scriptId)
 
-        this.NavigateToHtml(this.GetHtmlContent())
-        this.isHtmlLoaded := true
-    }
-
-    NavigateToHtml(htmlContent) {
-        tempFile := A_ScriptDir . "\ui.html"
-        try FileDelete(tempFile)
-        FileAppend(htmlContent, tempFile, "UTF-8")
-        this.wv.Navigate("file:///" . StrReplace(tempFile, "\", "/"))
-    }
-
-    GetHtmlContent(initialContent := "") {
-        var := "
-        (
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <script src="marked.min.js"></script>
-            <script src="mermaid.min.js"></script>
-             <script>
-        )"
-        var .= "
-        (
-        </script>
-            <style>
-                body {
-                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-                    margin: 0 auto;
-                    padding: 0px 5px;
-                }
-                .code-block-wrapper {
-                    margin: 16px 0;
-                }
-                pre {
-                    background-color: #f6f8fa;
-                    padding: 16px;
-                    border-radius: 6px;
-                    margin: 0;
-                }
-                code {
-                    font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
-                }
-                .collapsed code {
-                    display: -webkit-box;
-                    -webkit-line-clamp: 1;
-                    -webkit-box-orient: vertical;
-                    overflow: hidden;
-                }
-                .quote-button {
-                    position: fixed;
-                    display: none;
-                    background-color: #ffffff;
-                    color: #666;
-                    border: 1px solid #ccc;
-                    border-radius: 4px;
-                    padding: 4px 10px;
-                    cursor: pointer;
-                    font-size: 12px;
-                    box-shadow: none;
-                    z-index: 1000;
-                }
-                .quote-button:hover {
-                    background-color: #e6f2fa;
-                    border-color: #999;
-                }
-                .mermaid-wrapper > .mermaid {
-                    padding: 16px;
-                    background-color: #f6f8fa;
-                    border-radius: 6px;
-                    margin-bottom: 8px;
-                }
-                .custom-button {
-                    padding: 4px 10px;
-                    margin-left: 4px;
-                    background-color: #ffffff;
-                    color: #666;
-                    border: 1px solid #ccc;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    font-size: 12px;
-                    font-style: normal;
-                }
-                .custom-button:hover {
-                    background-color: #e6f2fa;
-                    border-color: #999;
-                }
-                .thinking-block-wrapper {
-                    margin: 16px 0;
-                }
-                .thinking-block {
-                    padding: 12px;
-                    background-color: #f9f9f9;
-                    border-left: 3px solid #999;
-                    border-radius: 4px;
-                    font-size: 0.85em;
-                    font-style: italic;
-                    color: #666;
-                    white-space: pre-wrap;
-                    word-wrap: break-word;
-                    margin-bottom: 8px;
-                }
-                .thinking-block-wrapper.collapsed .thinking-block {
-                    display: -webkit-box;
-                    -webkit-line-clamp: 1;
-                    -webkit-box-orient: vertical;
-                    overflow: hidden;
-                }
-            </style>
-        </head>
-        <body>
-            <div id="content"></div>
-            <button id="quoteBtn" class="quote-button">Quote</button>
-            <script>
-                // Configure marked to customize code block rendering
-                marked.setOptions({
-                    renderer: new marked.Renderer(),
-                    highlight: function(code, lang) {
-                        return code; // No syntax highlighting for simplicity
-                    },
-                    gfm: true,
-                    breaks: true,
-                    sanitize: false, // This must be false to allow HTML
-                });
-
-                // Function to copy code to clipboard
-                function copyCode(button) {
-                    const codeElement = button.previousElementSibling.previousElementSibling;
-                    const text = codeElement.textContent;
-                    window.chrome.webview.hostObjects.sync.clipboard.Copy(text);
-                }
-
-                // Function to toggle code block visibility
-                function toggle(button) {
-                    const wrapper = button.closest(".code-block-wrapper");
-                    wrapper.classList.toggle("collapsed");
-                    button.textContent = wrapper.classList.contains("collapsed") ? "Expand" : "Collapse";
-                }
-
-                // Function to toggle thinking block visibility
-                function toggleThinking(button) {
-                    const wrapper = button.closest(".thinking-block-wrapper");
-                    wrapper.classList.toggle("collapsed");
-                    button.textContent = wrapper.classList.contains("collapsed") ? "Expand" : "Collapse";
-                }
-
-                // Function to save Mermaid diagram as SVG
-                function saveMermaidDiagram(button) {
-                    const wrapper = button.closest('.mermaid-wrapper');
-                    const svgElement = wrapper.querySelector('svg');
-                    if (!svgElement) return;
-                    
-                    // Get the SVG as a string
-                    const svgData = new XMLSerializer().serializeToString(svgElement);
-                    
-                    // Send to AutoHotkey host for saving
-                    window.chrome.webview.hostObjects.sync.clipboard.SaveDiagram(svgData);
-                }
-
-                // Override the code block renderer to include copy and toggle buttons
-                const renderer = new marked.Renderer();
-                renderer.code = function(code, infostring, escaped) {
-                    if (code.lang === 'mermaid') {
-                        return '<div class="mermaid-wrapper"><div class="mermaid">' + code.text + '</div><button class="custom-button" onclick="saveMermaidDiagram(this)">Save as SVG</button></div>';
-                    }
-                    if (code.lang === 'thinking') {
-                        return ``<div class="thinking-block-wrapper collapsed"><div class="thinking-block">${code.text}</div><button class="custom-button" onclick="toggleThinking(this)">Expand</button></div>``;
-                    }
-                    return ``<div class="code-block-wrapper"><pre><code>${code.text}</code></pre><button class="custom-button" onclick="copyCode(this)">Copy</button><button class="custom-button" onclick="toggle(this)">Collapse</button></div>``;
-                };
-
-                mermaid.initialize({ startOnLoad: false });
-
-                function renderMarkdown(content) {
-                    const quoteBtn = document.getElementById('quoteBtn');
-                    if (quoteBtn) {
-                        quoteBtn.style.display = 'none';
-                    }
-                    document.getElementById("content").innerHTML = marked.parse(content, { renderer: renderer });
-                    mermaid.run({
-                        nodes: document.querySelectorAll('.mermaid')
-                    });
-                }
-
-                // Quote button logic
-                const quoteBtn = document.getElementById('quoteBtn');
-
-                document.addEventListener('selectionchange', () => {
-                    const selection = window.getSelection();
-                    if (selection.isCollapsed) {
-                        quoteBtn.style.display = 'none';
-                    }
-                });
-
-                document.addEventListener('mouseup', (e) => {
-                    const selection = window.getSelection();
-                    const text = selection.toString().trim();
-
-                    if (text) {
-                        const range = selection.getRangeAt(0);
-                        const rect = range.getBoundingClientRect();
-
-                        // Position button above the selection
-                        let top = rect.top - 30;
-                        let left = rect.left + (rect.width / 2) - (quoteBtn.offsetWidth / 2);
-
-                        // Ensure button stays within viewport
-                        if (top < 0) top = rect.bottom + 10;
-                        if (left < 0) left = 10;
-                        if (left + quoteBtn.offsetWidth > window.innerWidth) {
-                            left = window.innerWidth - quoteBtn.offsetWidth - 10;
-                        }
-
-                        quoteBtn.style.top = ``${top}px``;
-                        quoteBtn.style.left = ``${left}px``;
-                        quoteBtn.style.display = 'block';
-                    } else {
-                        quoteBtn.style.display = 'none';
-                    }
-                });
-
-                quoteBtn.addEventListener('click', () => {
-                    const text = window.getSelection().toString().trim();
-                    if (text) {
-                        window.chrome.webview.hostObjects.sync.input.Append(text);
-                        window.getSelection().removeAllRanges();
-                        quoteBtn.style.display = 'none';
-                    }
-                });
-            </script>
-        </body>
-        </html>
-        )"
-
-        if (initialContent != "") {
-             var .= "<script> renderMarkdown(``" . initialContent . "``); </script>"
-        }
-
-        return var
+        this.NavigateToUi()
+        ; We don't set isHtmlLoaded here immediately, it will be set in OnNavigationCompleted
+        ; But we probably want to trigger a render of the article content once UI loads?
+        ; For now, just navigating back to UI empty or default state is expected behavior based on previous code
+        ; Actually, previous code called NavigateToHtml(GetHtmlContent()) which resets everything.
     }
 
     EscapeForJs(content) {
@@ -401,25 +207,34 @@ class WebViewManager {
 
         escapedMd := StrReplace(escapedMd, "``", "\``")     ; escape double backticks (optional)
         if (InStr(escapedMd, "<audio") != 1) {
-           escapedMd := StrReplace(escapedMd, "<", "&lt;")     ; escape less than sign (optional)
+            escapedMd := StrReplace(escapedMd, "<", "&lt;")     ; escape less than sign (optional)
             escapedMd := StrReplace(escapedMd, ">", "&gt;")     ; escape greater than sign (optional)
         }
 
         escapedMd := Trim(escapedMd)                    ; Remove leading/trailing whitespace
         escapedMd := RegExReplace(escapedMd, "\n\n+", "\n\n")  ; Replace multiple newlines with double newline
         escapedMd := RegExReplace(escapedMd, "\t+", " ")        ; Remove tabs
-        
+
         return escapedMd
     }
 
     RenderMarkdown(content) {
-        escapedMd := this.EscapeForJs(content)
-        
         if (this.isHtmlLoaded) {
-            this.wv.ExecuteScript("renderMarkdown(``" escapedMd "``)")
+            this.wv.ExecuteScript("renderMarkdown(``" . this.EscapeForJs(content) . "``)")
         } else {
-            this.NavigateToHtml(this.GetHtmlContent(escapedMd))
-            this.isHtmlLoaded := true
+            this.pendingRenderType := "markdown"
+            this.pendingRenderContent := content
+            this.NavigateToUi()
+        }
+    }
+
+    RenderSettings(settingsJson) {
+        if (this.isHtmlLoaded) {
+            this.wv.ExecuteScript("showSettings(``" . this.EscapeForJs(settingsJson) . "``)")
+        } else {
+            this.pendingRenderType := "settings"
+            this.pendingRenderContent := settingsJson
+            this.NavigateToUi()
         }
     }
 
@@ -429,24 +244,33 @@ class WebViewManager {
         }
     }
 
+    NavigateBackToMarkdown(contentToRender := "") {
+        ; Navigate back to the markdown HTML and render content if provided
+        if (contentToRender != "") {
+            this.RenderMarkdown(contentToRender)
+        } else {
+            this.NavigateToUi()
+        }
+    }
+
     SaveMermaidDiagram(svgData) {
         ; Generate a default filename with timestamp
         timestamp := FormatTime(, "yyyyMMdd_HHmmss")
         defaultFilename := "mermaid_" . timestamp . ".svg"
-        
+
         ; Show save dialog
         selectedFile := FileSelect("S16", defaultFilename, "Save Mermaid Diagram", "SVG Files (*.svg)")
-        
+
         ; Check if user cancelled
         if (selectedFile = "") {
             return
         }
-        
+
         ; Ensure .svg extension
         if (!RegExMatch(selectedFile, "i)\.svg$")) {
             selectedFile .= ".svg"
         }
-        
+
         ; Save SVG to selected file
         try FileDelete(selectedFile)
         FileAppend(svgData, selectedFile, "UTF-8")

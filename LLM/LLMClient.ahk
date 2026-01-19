@@ -1,6 +1,6 @@
 #Requires AutoHotkey 2.0
-#Include <Json>
-#Include "LLM\Types.ahk"
+#Include ..\Lib\Json.ahk
+#Include "Types.ahk"
 #Include "PowerShellTool.ahk"
 #Include "Providers\OpenAIProvider.ahk"
 #Include "Providers\OllamaProvider.ahk"

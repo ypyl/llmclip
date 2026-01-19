@@ -1,6 +1,6 @@
 #Requires AutoHotkey 2.0
 #Include AppSettings.ahk
-#Include LLMService.ahk
+#Include LLM\LLMService.ahk
 #Include ClipboardParser.ahk
 #Include WebViewManager.ahk
 #Include ContextManager.ahk
@@ -11,7 +11,7 @@
 #Include ContextViewController.ahk
 #Include HistoryViewController.ahk
 #Include PdfProcessor.ahk
-#Include TempFileManager.ahk
+#Include LLM\TempFileManager.ahk
 
 class AppController {
     askButton := ""
@@ -135,6 +135,9 @@ class AppController {
 
         this.WebViewManagerValue.Init(responseCtr)
         this.WebViewManagerValue.SetInputCallback(ObjBindMethod(this, "AppendToPrompt"))
+        this.WebViewManagerValue.SetSettingsCallbacks(
+            ObjBindMethod(this, "HandleSettingsSave")
+        )
         this.guiShown := true
 
         this.HistoryViewControllerValue.UpdateChatHistoryView()
@@ -183,8 +186,15 @@ class AppController {
         ; Update system prompts for the new model
         systemPromptCombo := this.MyGui["SystemPrompt"]
         systemPromptCombo.Delete()
-        systemPromptCombo.Add(this.AppSettingsValue.GetSystemPromptNames(this.SessionManagerValue.GetCurrentSessionLLMType()))
-        systemPromptCombo.Value := 1  ; Reset to first prompt when LLM type changes
+        systemPromptNames := this.AppSettingsValue.GetSystemPromptNames(this.SessionManagerValue.GetCurrentSessionLLMType())
+        systemPromptCombo.Add(systemPromptNames)
+
+        if (systemPromptNames.Length > 0) {
+            systemPromptCombo.Value := 1
+            systemPromptCombo.Enabled := true
+        } else {
+            systemPromptCombo.Enabled := false
+        }
         this.SessionManagerValue.SetCurrentSessionSystemPrompt(1)
 
         ; Update tool checkbox based on new LLM type
@@ -848,5 +858,31 @@ class AppController {
         } else {
             this.HistoryMenu.Enable("Compress")
         }
+    }
+
+    OpenSettings(*) {
+        ; Reset selections in list views
+        this.MyGui["ChatHistory"].Modify(0, "-Select")
+        this.MyGui["ContextBox"].Modify(0, "-Select")
+
+        try {
+            settingsJson := FileRead(A_ScriptDir . "\settings.json")
+            this.WebViewManagerValue.RenderSettings(settingsJson)
+        } catch as e {
+            MsgBox("Could not open settings.json: " . e.Message, "Error", "Iconx")
+        }
+    }
+
+    HandleSettingsSave(updatedJson) {
+        if FileExist(A_ScriptDir . "\settings.json")
+            FileDelete(A_ScriptDir . "\settings.json")
+
+        FileAppend(updatedJson, A_ScriptDir . "\settings.json", "UTF-8")
+
+        ; Reload settings in memory
+        this.AppSettingsValue.Reload()
+
+        ; Update UI elements that might depend on settings
+        this.ReloadSettings() ; This updates the ModelMenu etc.
     }
 }

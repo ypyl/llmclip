@@ -1,4 +1,4 @@
-#Include <Json>
+#Include ..\Lib\Json.ahk
 
 class PowerShellTool {
     /**

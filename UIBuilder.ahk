@@ -45,11 +45,19 @@ class UIBuilder {
         MyMenuBar := MenuBar()
         MyMenuBar.Add("&File", FileMenu)
         MyMenuBar.Add("History", HistoryMenu)
+        
+        ; Create Tools menu
+        ToolsMenu := Menu()
+        ToolsMenu.Add("PowerShell", ObjBindMethod(controller, "ToggleTool", "powerShellTool"))
+        ToolsMenu.Add("Web Search", ObjBindMethod(controller, "ToggleTool", "webSearch"))
+        ToolsMenu.Add("Web Fetch", ObjBindMethod(controller, "ToggleTool", "webFetch"))
+        MyMenuBar.Add("Tools", ToolsMenu)
+
         MyMenuBar.Add("Answer Size", AnswerSizeMenu)
         MyMenuBar.Add(currentModelName, ModelMenu)  ; Use model name instead of "&Model"
         gui.MenuBar := MyMenuBar
 
-        return {menuBar: MyMenuBar, modelMenu: ModelMenu, historyMenu: HistoryMenu}  ; Return menuBar, modelMenu and historyMenu
+        return {menuBar: MyMenuBar, modelMenu: ModelMenu, historyMenu: HistoryMenu, toolsMenu: ToolsMenu}  ; Return menuBar, modelMenu, historyMenu and toolsMenu
     }
 
     static CreateTopControls(gui, sessionManagerValue, trayManagerValue, controller) {
@@ -113,12 +121,7 @@ class UIBuilder {
     }
 
     static CreateBottomControls(gui, sessionManagerValue, appSettingsValue, controller) {
-        ; PowerShell tool checkbox and icon
-        powerShellEnabled := appSettingsValue.IsToolEnabled(sessionManagerValue.GetCurrentSessionLLMType(), "powerShellTool")
-
-        powerShellToolBox := gui.Add("CheckBox", "x" (UIConfig.llmTypeX + 20) " y" UIConfig.llmTypeY " w40 vPowerShellToolBox", "ps1")
-        powerShellIcon := gui.Add("Picture", "x" (UIConfig.llmTypeX) " y" UIConfig.llmTypeY " w16 h16 Icon1 vPowerShellIcon", "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe")
-        powerShellToolBox.Value := powerShellEnabled ? 1 : 0
+        ; PowerShell tool checkbox and icon removed
 
         ; Add system prompt selector
         systemPromptCombo := gui.Add("DropDownList", "x" UIConfig.systemPromptX " y" (UIConfig.systemPromptY + 2) " w" UIConfig.systemPromptWidth " vSystemPrompt", appSettingsValue.GetSystemPromptNames(sessionManagerValue.GetCurrentSessionLLMType()))
@@ -169,11 +172,6 @@ class UIBuilder {
         bottomY := Height - 35  ; 35 pixels from bottom
         thisGui["SystemPrompt"].Move(UIConfig.systemPromptX, bottomY + 2)
         thisGui["AskLLM"].Move(UIConfig.askLLMX, bottomY)
-
-        ; Move PowerShell tool checkbox and icon above bottom controls
-        checkBoxY := Height - 30
-        thisGui["PowerShellIcon"].Move(UIConfig.llmTypeX, checkBoxY)
-        thisGui["PowerShellToolBox"].Move(UIConfig.llmTypeX + 20, checkBoxY)
     }
 
     static ShowNotesWindow(notesContent) {

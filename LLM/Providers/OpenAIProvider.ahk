@@ -1,5 +1,7 @@
 #Include "BaseProvider.ahk"
 #Include "..\PowerShellTool.ahk"
+#Include "..\WebSearchTool.ahk"
+#Include "..\WebFetchTool.ahk"
 
 class OpenAIProvider extends BaseProvider {
 
@@ -16,11 +18,15 @@ class OpenAIProvider extends BaseProvider {
         body["messages"] := cleanedMessages
         body["temperature"] := settings.Get("temperature", 0.7)
 
-        ; Add PowerShell tool
+        ; Add tools
         enabledTools := []
         for t in settings.Get("tools", []) {
             if (t = "powerShellTool")
                 enabledTools.Push(PowerShellTool.GetOpenAiToolDefinition())
+            else if (t = "web_search")
+                enabledTools.Push(WebSearchTool.GetOpenAiToolDefinition())
+            else if (t = "web_fetch")
+                enabledTools.Push(WebFetchTool.GetOpenAiToolDefinition())
         }
         if (enabledTools.Length > 0)
             body["tools"] := enabledTools

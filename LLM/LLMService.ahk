@@ -1,6 +1,8 @@
 #Requires AutoHotkey 2.0
 #Include LLMClient.ahk
 #Include PowerShellTool.ahk
+#Include WebSearchTool.ahk
+#Include WebFetchTool.ahk
 #Include ..\SessionManager.ahk
 
 class LLMService {
@@ -11,10 +13,19 @@ class LLMService {
         this.appSettings := appSettings
     }
 
-    ConfigureToolSettings(powerShellEnabled) {
+    ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled) {
         enabledTools := []
         if (powerShellEnabled)
             enabledTools.Push("powerShellTool")
+        
+        ; Enable web tools if API key is present
+        if (webSearchEnabled && this.appSettings.ollamaApiKey != "") {
+            enabledTools.Push("web_search")
+        }
+        if (webFetchEnabled && this.appSettings.ollamaApiKey != "") {
+            enabledTools.Push("web_fetch")
+        }
+            
         return enabledTools
     }
 
@@ -26,7 +37,17 @@ class LLMService {
             if (!sessionManager.IsToolCallExecuted(tool_call.id)) {
                 ; Measure tool execution time
                 startTime := A_TickCount
-                if result := PowerShellTool.ExecuteToolCall(tool_call) {
+                result := ""
+                
+                if (tool_call.Name == "execute_powershell") {
+                     result := PowerShellTool.ExecuteToolCall(tool_call)
+                } else if (tool_call.Name == "web_search") {
+                     result := WebSearchTool.ExecuteToolCall(tool_call, this.appSettings.ollamaApiKey)
+                } else if (tool_call.Name == "web_fetch") {
+                     result := WebFetchTool.ExecuteToolCall(tool_call, this.appSettings.ollamaApiKey)
+                }
+
+                if (result) {
                     duration := (A_TickCount - startTime) / 1000
                     result.duration := duration
                     results.Push(result)
@@ -36,7 +57,7 @@ class LLMService {
         return results
     }
 
-    SendToLLM(sessionManager, answerSize, powerShellEnabled) {
+    SendToLLM(sessionManager, answerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled) {
         messages := sessionManager.GetCurrentSessionMessages()
 
         try {
@@ -44,7 +65,7 @@ class LLMService {
             settings := this.appSettings.GetSelectedSettings(sessionManager.GetCurrentSessionLLMType())
 
             ; Update tools property based on checkbox values
-            settings["tools"] := this.ConfigureToolSettings(powerShellEnabled)
+            settings["tools"] := this.ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled)
 
             ; Add a user message to instruct the model on answer length based on menu selection
             answerSizeMsg := ""

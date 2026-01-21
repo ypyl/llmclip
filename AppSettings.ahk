@@ -6,6 +6,7 @@ class AppSettings {
     selectedLLMType := ""
     selectedLLMTypeIndex := 1
     llmTypes := []
+    ollamaApiKey := ""
 
     __New() {
         this.Reload()
@@ -21,6 +22,11 @@ class AppSettings {
                 this.providers[provider][k] := v
         }
         this.selectedLLMType := settings["selectedLLMType"]
+        if (settings.Has("ollama_api_key")) {
+            this.ollamaApiKey := settings["ollama_api_key"]
+        } else {
+            this.ollamaApiKey := ""
+        }
 
         ; Initialize LLM types
         this.llmTypes := []
@@ -98,6 +104,38 @@ class AppSettings {
         }
         return false
     }
+
+    SetToolEnabled(llmIndex, toolName, enabled) {
+        settings := this.GetSelectedSettings(llmIndex)
+        if (!settings.Has("tools")) {
+            settings["tools"] := []
+        }
+        currentTools := settings["tools"]
+        
+        if (enabled) {
+            ; Add if not present
+            hasTool := false
+            for t in currentTools {
+                if (t = toolName) {
+                    hasTool := true
+                    break
+                }
+            }
+            if (!hasTool) {
+                currentTools.Push(toolName)
+            }
+        } else {
+            ; Remove if present
+            newTools := []
+            for t in currentTools {
+                if (t != toolName) {
+                    newTools.Push(t)
+                }
+            }
+            settings["tools"] := newTools
+        }
+    }
+
 
     IsImageInputEnabled(llmIndex) {
         settings := this.GetSelectedSettings(llmIndex)

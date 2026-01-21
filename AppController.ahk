@@ -19,6 +19,7 @@ class AppController {
     guiShown := false
     ModelMenu := ""  ; Store reference to Model menu
     HistoryMenu := ""  ; Store reference to History menu
+    ToolsMenu := "" ; Store reference to Tools menu
     MyMenuBar := ""  ; Store reference to MenuBar
     currentAnswerSize := "Default"  ; Track current answer size (Small, Default, Long)
     currentModelName := ""  ; Track current model name for MenuBar updates
@@ -112,6 +113,10 @@ class AppController {
         this.MyMenuBar := menus.menuBar
         this.ModelMenu := menus.modelMenu
         this.HistoryMenu := menus.historyMenu
+        this.ToolsMenu := menus.toolsMenu
+
+        this.UpdateCompressionMenuState()
+        this.UpdateToolsMenuState()
 
         this.UpdateCompressionMenuState()
 
@@ -197,10 +202,9 @@ class AppController {
         }
         this.SessionManagerValue.SetCurrentSessionSystemPrompt(1)
 
-        ; Update tool checkbox based on new LLM type
-        powerShellEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(),
-        "powerShellTool")
-        this.MyGui["PowerShellToolBox"].Value := powerShellEnabled ? 1 : 0
+        this.SessionManagerValue.SetCurrentSessionSystemPrompt(1)
+
+        this.UpdateToolsMenuState()
 
         this.UpdateCompressionMenuState()
     }
@@ -451,8 +455,10 @@ class AppController {
         try {
             ; Check tool enabled
             powerShellEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "powerShellTool")
+            webSearchEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "webSearch")
+            webFetchEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "webFetch")
 
-            newMessages := this.LLMServiceValue.SendToLLM(this.SessionManagerValue, this.currentAnswerSize, powerShellEnabled)
+            newMessages := this.LLMServiceValue.SendToLLM(this.SessionManagerValue, this.currentAnswerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled)
 
             ; Check for unexecuted Tool Calls
             if (this.SessionManagerValue.HasUnexecutedToolCalls()) {
@@ -784,6 +790,9 @@ class AppController {
 
                 ; Update Chat History View
                 this.HistoryViewControllerValue.UpdateChatHistoryView()
+                
+                ; Update Tools Menu
+                this.UpdateToolsMenuState()
 
                 ; Clear Response Area
                 this.RenderMarkdown("")
@@ -858,6 +867,48 @@ class AppController {
         } else {
             this.HistoryMenu.Enable("Compress")
         }
+    }
+
+    UpdateToolsMenuState() {
+        if (!this.ToolsMenu)
+            return
+
+        currentLLMIndex := this.SessionManagerValue.GetCurrentSessionLLMType()
+        
+        ; Update PowerShell
+        powerShellEnabled := this.AppSettingsValue.IsToolEnabled(currentLLMIndex, "powerShellTool")
+        if (powerShellEnabled) {
+            this.ToolsMenu.Check("PowerShell")
+        } else {
+            this.ToolsMenu.Uncheck("PowerShell")
+        }
+
+        ; Update Web Search
+        webSearchEnabled := this.AppSettingsValue.IsToolEnabled(currentLLMIndex, "webSearch")
+        if (webSearchEnabled) {
+            this.ToolsMenu.Check("Web Search")
+        } else {
+            this.ToolsMenu.Uncheck("Web Search")
+        }
+
+        ; Update Web Fetch
+        webFetchEnabled := this.AppSettingsValue.IsToolEnabled(currentLLMIndex, "webFetch")
+        if (webFetchEnabled) {
+            this.ToolsMenu.Check("Web Fetch")
+        } else {
+            this.ToolsMenu.Uncheck("Web Fetch")
+        }
+    }
+
+    ToggleTool(toolName, *) {
+        currentLLMIndex := this.SessionManagerValue.GetCurrentSessionLLMType()
+        isEnabled := this.AppSettingsValue.IsToolEnabled(currentLLMIndex, toolName)
+        
+        ; Toggle state
+        this.AppSettingsValue.SetToolEnabled(currentLLMIndex, toolName, !isEnabled)
+        
+        ; Update UI
+        this.UpdateToolsMenuState()
     }
 
     OpenSettings(*) {

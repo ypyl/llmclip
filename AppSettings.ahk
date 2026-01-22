@@ -64,11 +64,16 @@ class AppSettings {
         if (prompts.Length >= promptIndex) {
             value := prompts[promptIndex]["value"]
             if (FileExist(value)) {
-                return FileRead(value)
+                value := FileRead(value)
             }
+            
+            ; Add current date and time
+            currentTime := FormatTime(, "yyyy-MM-dd HH:mm:ss")
+            value .= "`n`nCurrent Date and Time: " . currentTime
+            
             return value
         }
-        return defaultPrompt
+        return defaultPrompt . "`n`nCurrent Date and Time: " . FormatTime(, "yyyy-MM-dd HH:mm:ss")
     }
 
     GetInputTemplate(llmIndex, promptIndex) {

@@ -848,9 +848,7 @@ class AppController {
             this.SessionManagerValue.SetCurrentSessionSystemPrompt(1)
         }
 
-        ; Update tool checkbox based on current LLM type
-        powerShellEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "powerShellTool")
-        this.MyGui["PowerShellToolBox"].Value := powerShellEnabled ? 1 : 0
+        this.UpdateToolsMenuState()
 
         this.UpdateCompressionMenuState()
     }

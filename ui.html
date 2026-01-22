@@ -212,7 +212,8 @@
 
       // Function to copy code to clipboard
       function copyCode(button) {
-        const codeElement = button.previousElementSibling.previousElementSibling;
+        const wrapper = button.closest(".code-block-wrapper");
+        const codeElement = wrapper.querySelector("code");
         const text = codeElement.textContent;
         window.chrome.webview.hostObjects.sync.clipboard.Copy(text);
       }

@@ -455,10 +455,11 @@ class AppController {
         try {
             ; Check tool enabled
             powerShellEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "powerShellTool")
+            fileSystemEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "fileSystemTool")
             webSearchEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "webSearch")
             webFetchEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "webFetch")
 
-            newMessages := this.LLMServiceValue.SendToLLM(this.SessionManagerValue, this.currentAnswerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled)
+            newMessages := this.LLMServiceValue.SendToLLM(this.SessionManagerValue, this.currentAnswerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled)
 
             ; Check for unexecuted Tool Calls
             if (this.SessionManagerValue.HasUnexecutedToolCalls()) {
@@ -879,6 +880,14 @@ class AppController {
             this.ToolsMenu.Check("PowerShell")
         } else {
             this.ToolsMenu.Uncheck("PowerShell")
+        }
+
+        ; Update File System
+        fileSystemEnabled := this.AppSettingsValue.IsToolEnabled(currentLLMIndex, "fileSystemTool")
+        if (fileSystemEnabled) {
+            this.ToolsMenu.Check("File System")
+        } else {
+            this.ToolsMenu.Uncheck("File System")
         }
 
         ; Update Web Search

@@ -1,6 +1,7 @@
 #Requires AutoHotkey 2.0
 #Include LLMClient.ahk
 #Include PowerShellTool.ahk
+#Include FileSystemTool.ahk
 #Include WebSearchTool.ahk
 #Include WebFetchTool.ahk
 #Include ..\SessionManager.ahk
@@ -13,11 +14,14 @@ class LLMService {
         this.appSettings := appSettings
     }
 
-    ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled) {
+    ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled) {
         enabledTools := []
         if (powerShellEnabled)
             enabledTools.Push("powerShellTool")
         
+        if (fileSystemEnabled)
+             enabledTools.Push("fileSystemTool")
+
         ; Enable web tools if API key is present
         if (webSearchEnabled && this.appSettings.ollamaApiKey != "") {
             enabledTools.Push("web_search")
@@ -41,6 +45,8 @@ class LLMService {
                 
                 if (tool_call.Name == "execute_powershell") {
                      result := PowerShellTool.ExecuteToolCall(tool_call)
+                } else if (tool_call.Name == "file_system") {
+                     result := FileSystemTool.ExecuteToolCall(tool_call)
                 } else if (tool_call.Name == "web_search") {
                      result := WebSearchTool.ExecuteToolCall(tool_call, this.appSettings.ollamaApiKey)
                 } else if (tool_call.Name == "web_fetch") {
@@ -57,7 +63,7 @@ class LLMService {
         return results
     }
 
-    SendToLLM(sessionManager, answerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled) {
+    SendToLLM(sessionManager, answerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled) {
         messages := sessionManager.GetCurrentSessionMessages()
 
         try {
@@ -65,7 +71,7 @@ class LLMService {
             settings := this.appSettings.GetSelectedSettings(sessionManager.GetCurrentSessionLLMType())
 
             ; Update tools property based on checkbox values
-            settings["tools"] := this.ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled)
+            settings["tools"] := this.ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled)
 
             ; Add a user message to instruct the model on answer length based on menu selection
             answerSizeMsg := ""

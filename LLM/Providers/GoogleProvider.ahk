@@ -1,5 +1,6 @@
 #Include "BaseProvider.ahk"
 #Include "..\PowerShellTool.ahk"
+#Include "..\FileSystemTool.ahk"
 #Include "..\WebSearchTool.ahk"
 #Include "..\WebFetchTool.ahk"
 
@@ -171,6 +172,8 @@ class GoogleProvider extends BaseProvider {
         for t in settings.Get("tools", []) {
             if (t = "powerShellTool")
                 enabledTools.Push(PowerShellTool.GetGeminiToolDefinition())
+            else if (t = "fileSystemTool")
+                enabledTools.Push(FileSystemTool.GetGeminiToolDefinition())
             else if (t = "web_search")
                 enabledTools.Push(WebSearchTool.GetGeminiToolDefinition())
             else if (t = "web_fetch")

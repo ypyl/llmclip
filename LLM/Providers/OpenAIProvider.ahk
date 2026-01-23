@@ -1,5 +1,6 @@
 #Include "BaseProvider.ahk"
 #Include "..\PowerShellTool.ahk"
+#Include "..\FileSystemTool.ahk"
 #Include "..\WebSearchTool.ahk"
 #Include "..\WebFetchTool.ahk"
 
@@ -23,6 +24,8 @@ class OpenAIProvider extends BaseProvider {
         for t in settings.Get("tools", []) {
             if (t = "powerShellTool")
                 enabledTools.Push(PowerShellTool.GetOpenAiToolDefinition())
+            else if (t = "fileSystemTool")
+                enabledTools.Push(FileSystemTool.GetOpenAiToolDefinition())
             else if (t = "web_search")
                 enabledTools.Push(WebSearchTool.GetOpenAiToolDefinition())
             else if (t = "web_fetch")

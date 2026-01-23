@@ -8,7 +8,6 @@ class UIBuilder {
         FileMenu.Add("Load Conversation", ObjBindMethod(controller, "LoadConversation"))
         FileMenu.Add()  ; Separator
         FileMenu.Add("Reload Settings", ObjBindMethod(controller, "ReloadSettings"))
-        FileMenu.Add("System Prompt Settings", ObjBindMethod(controller, "OpenSettings"))  ; New menu item
         FileMenu.Add()  ; Separator
         FileMenu.Add("Exit", ObjBindMethod(controller, "ExitApplication"))
 
@@ -49,6 +48,7 @@ class UIBuilder {
         ; Create Tools menu
         ToolsMenu := Menu()
         ToolsMenu.Add("PowerShell", ObjBindMethod(controller, "ToggleTool", "powerShellTool"))
+        ToolsMenu.Add("File System", ObjBindMethod(controller, "ToggleTool", "fileSystemTool"))
         ToolsMenu.Add("Web Search", ObjBindMethod(controller, "ToggleTool", "webSearch"))
         ToolsMenu.Add("Web Fetch", ObjBindMethod(controller, "ToggleTool", "webFetch"))
         MyMenuBar.Add("Tools", ToolsMenu)

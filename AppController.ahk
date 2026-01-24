@@ -140,9 +140,7 @@ class AppController {
 
         this.WebViewManagerValue.Init(responseCtr)
         this.WebViewManagerValue.SetInputCallback(ObjBindMethod(this, "AppendToPrompt"))
-        this.WebViewManagerValue.SetSettingsCallbacks(
-            ObjBindMethod(this, "HandleSettingsSave")
-        )
+
         this.guiShown := true
 
         this.HistoryViewControllerValue.UpdateChatHistoryView()
@@ -814,8 +812,6 @@ class AppController {
             this.ModelMenu.Add(modelName, ObjBindMethod(this, "SelectModel"))
         }
 
-        this.UpdateCompressionMenuState()
-
         currentLLMType := this.SessionManagerValue.GetCurrentSessionLLMType()
 
         ; Validate index
@@ -916,31 +912,5 @@ class AppController {
         
         ; Update UI
         this.UpdateToolsMenuState()
-    }
-
-    OpenSettings(*) {
-        ; Reset selections in list views
-        this.MyGui["ChatHistory"].Modify(0, "-Select")
-        this.MyGui["ContextBox"].Modify(0, "-Select")
-
-        try {
-            settingsJson := FileRead(A_ScriptDir . "\settings.json")
-            this.WebViewManagerValue.RenderSettings(settingsJson)
-        } catch as e {
-            MsgBox("Could not open settings.json: " . e.Message, "Error", "Iconx")
-        }
-    }
-
-    HandleSettingsSave(updatedJson) {
-        if FileExist(A_ScriptDir . "\settings.json")
-            FileDelete(A_ScriptDir . "\settings.json")
-
-        FileAppend(updatedJson, A_ScriptDir . "\settings.json", "UTF-8")
-
-        ; Reload settings in memory
-        this.AppSettingsValue.Reload()
-
-        ; Update UI elements that might depend on settings
-        this.ReloadSettings() ; This updates the ModelMenu etc.
     }
 }

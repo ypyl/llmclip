@@ -11,9 +11,7 @@ class WebViewManager {
     articleReady := false
     currentArticle := ""
     isHtmlLoaded := false
-    settingsHost := {}
-    OnSaveSettings := (json) => ""
-    OnCancelSettings := () => ""
+
     uiFilePath := A_ScriptDir . "\ui.html"
     pendingRenderType := ""
     pendingRenderContent := ""
@@ -29,18 +27,8 @@ class WebViewManager {
         this.inputHost := {
             Append: (text) => MsgBox(text) ; Default placeholder
         }
-        this.settingsHost := {
-            Save: (json) => this.SaveSettingsWrapper(json),
-        }
+
         this.cache := Map()  ; Initialize the cache
-    }
-
-    SetSettingsCallbacks(saveCallback) {
-        this.OnSaveSettings := saveCallback
-    }
-
-    SaveSettingsWrapper(json) {
-        this.OnSaveSettings.Call(json)
     }
 
     SetInputCallback(callback) {
@@ -54,7 +42,6 @@ class WebViewManager {
         this.wv.AddHostObjectToScript("clipboard", this.clipboardHost)
         this.wv.AddHostObjectToScript("article", this.articleHost)
         this.wv.AddHostObjectToScript("input", this.inputHost)
-        this.wv.AddHostObjectToScript("settings", this.settingsHost)
 
         this.navStartingToken := this.wv.add_NavigationStarting((sender, args) => this.OnNavigationStarting(args))
         this.navCompletedToken := this.wv.add_NavigationCompleted((sender, args) => this.OnNavigationCompleted(sender, args))
@@ -127,8 +114,6 @@ class WebViewManager {
                 this.isHtmlLoaded := true
                 if (this.pendingRenderType == "markdown") {
                     this.RenderMarkdown(this.pendingRenderContent)
-                } else if (this.pendingRenderType == "settings") {
-                    this.RenderSettings(this.pendingRenderContent)
                 }
                 this.pendingRenderType := ""
                 this.pendingRenderContent := ""
@@ -224,16 +209,6 @@ class WebViewManager {
         } else {
             this.pendingRenderType := "markdown"
             this.pendingRenderContent := content
-            this.NavigateToUi()
-        }
-    }
-
-    RenderSettings(settingsJson) {
-        if (this.isHtmlLoaded) {
-            this.wv.ExecuteScript("showSettings(``" . this.EscapeForJs(settingsJson) . "``)")
-        } else {
-            this.pendingRenderType := "settings"
-            this.pendingRenderContent := settingsJson
             this.NavigateToUi()
         }
     }

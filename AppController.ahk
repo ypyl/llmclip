@@ -1,5 +1,5 @@
 #Requires AutoHotkey 2.0
-#Include AppSettings.ahk
+#Include Settings\AppSettings.ahk
 #Include LLM\LLMService.ahk
 #Include ClipboardParser.ahk
 #Include WebViewManager.ahk

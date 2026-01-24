@@ -62,6 +62,11 @@ class LLMClient {
 
             ; Prepare curl command
             curlCmd := Format(curl, inputFile, outputFile)
+            
+            ; Replace API_KEY placeholder if present
+            if (selectedSettings.Has("api_key")) {
+                curlCmd := StrReplace(curlCmd, "{API_KEY}", selectedSettings["api_key"])
+            }
 
             ; Execute curl
             Run(curlCmd, , "Hide", &pid)

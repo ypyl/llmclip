@@ -1,0 +1,187 @@
+{
+  "ol-qwen3-vl": [
+    "Default"
+  ],
+  "ol-ministral:8b": [
+    "Default",
+    "Message"
+  ],
+  "ol-qwen3:8b": [
+    "Default",
+    "Message"
+  ],
+  "ol-qwen3-30b": [
+    "Default",
+    "Message"
+  ],
+  "ol-qwen3-coder": [
+    "Default"
+  ],
+  "github-4o-mini": [
+    "Default (GitHub)",
+    "Message",
+    "Support Mail",
+    "Casual Mail",
+    "Code Review (GitHub)",
+    "Git Commit",
+    "PR Description (GitHub)",
+    "Rational",
+    "Task Estimate",
+    "Prompt Improver",
+    "Branch Name",
+    "Code Review (GitHub) 2",
+    "Task Name From Mail",
+    "Review"
+  ],
+  "github-4o": [
+    "Default (GitHub)",
+    "Message",
+    "Support Mail",
+    "Casual Mail",
+    "Code Review (GitHub)",
+    "Git Commit",
+    "PR Description (GitHub)",
+    "Rational",
+    "Task Estimate",
+    "Prompt Improver",
+    "Branch Name",
+    "Code Review (GitHub) 2",
+    "Task Name From Mail",
+    "Review"
+  ],
+  "github-41": [
+    "Default (GitHub)",
+    "Message",
+    "Support Mail",
+    "Casual Mail",
+    "Code Review (GitHub)",
+    "Git Commit",
+    "PR Description (GitHub)",
+    "Rational",
+    "Task Estimate",
+    "Prompt Improver",
+    "Branch Name",
+    "Code Review (GitHub) 2",
+    "Task Name From Mail",
+    "Review"
+  ],
+  "github-41-nano": [
+    "Default (GitHub)",
+    "Message",
+    "Support Mail",
+    "Casual Mail",
+    "Code Review (GitHub)",
+    "Git Commit",
+    "PR Description (GitHub)",
+    "Rational",
+    "Task Estimate",
+    "Prompt Improver",
+    "Branch Name",
+    "Code Review (GitHub) 2",
+    "Task Name From Mail",
+    "Review"
+  ],
+  "github-41-mini": [
+    "Default (GitHub)",
+    "Message",
+    "Support Mail",
+    "Casual Mail",
+    "Code Review (GitHub)",
+    "Git Commit",
+    "PR Description (GitHub)",
+    "Rational",
+    "Task Estimate",
+    "Prompt Improver",
+    "Branch Name",
+    "Code Review (GitHub) 2",
+    "Task Name From Mail",
+    "Review",
+    "News"
+  ],
+  "gr-ll3.3-70b": [
+    "Default (Groq)",
+    "Code Helper",
+    "Git Commit",
+    "PR Description (GitHub)",
+    "Task Estimate",
+    "Branch Name",
+    "Code Review (GitHub) 2"
+  ],
+  "gr-gpt-oss-20b": [
+    "Default (Groq)",
+    "Code Helper",
+    "Git Commit",
+    "PR Description (GitHub)",
+    "Task Estimate",
+    "Branch Name",
+    "Code Review (GitHub) 2"
+  ],
+  "gr-gpt-oss-120b": [
+    "Default (Groq)",
+    "Code Helper",
+    "Git Commit",
+    "PR Description (GitHub)",
+    "Task Estimate",
+    "Branch Name",
+    "Code Review (GitHub) 2"
+  ],
+  "gr-compound": [
+    "Default (Groq)",
+    "Code review"
+  ],
+  "gr-kimi-k2": [
+    "Default (Groq)",
+    "Code Helper",
+    "Git Commit",
+    "PR Description (GitHub)",
+    "Task Estimate",
+    "Branch Name",
+    "Code Review (GitHub) 2"
+  ],
+  "gr-ll4-scout": [
+    "Default (Groq) 2",
+    "Code Helper",
+    "Git Commit",
+    "PR Description (Groq)"
+  ],
+  "gr-audio": [],
+  "gr-qwen-32b": [
+    "Default (Groq)",
+    "Code Helper",
+    "Git Commit",
+    "PR Description (Groq)"
+  ],
+  "go-f2.5": [
+    "Default (Groq) 2",
+    "Professional"
+  ],
+  "go-pro2.5": [
+    "Default (Groq)",
+    "Professional"
+  ],
+  "go-f2.5-lite": [
+    "Default (Groq)",
+    "Professional"
+  ],
+  "ol-gemma3n": [
+    "Default (Groq)"
+  ],
+  "ol-qwen3-4b": [
+    "Default"
+  ],
+  "ol-gpt-oss": [
+    "Default"
+  ],
+  "ol-cl-gpt-oss": [
+    "Default"
+  ],
+  "ol-gemma3-270m": [
+    "Default"
+  ],
+  "or-nemotron-3-nano-30b-a3b": [
+    "Default"
+  ],
+  "or-olmo-3.1-32b-think": [
+    "Default"
+  ]
+}

@@ -1,26 +1,36 @@
 #Requires AutoHotkey 2.0
 #Include <Json>
+#Include SystemPrompts.ahk
+#Include Providers.ahk
+#Include Roles.ahk
 
 class AppSettings {
-    providers := Map()
+    providers := unset
     selectedLLMType := ""
     selectedLLMTypeIndex := 1
     llmTypes := []
     ollamaApiKey := ""
+    
+    systemPromptsManager := unset
+    providersManager := unset
+    rolesManager := unset
 
     __New() {
+        this.systemPromptsManager := SystemPrompts()
+        this.providersManager := Providers()
+        this.rolesManager := Roles()
         this.Reload()
     }
 
     Reload() {
         settings := JSON.LoadFile("settings.json")
-        this.providers := Map()
-        for provider in settings["providers"] {
-            value := settings["providers"][provider]
-            this.providers[provider] := Map()
-            for k, v in value
-                this.providers[provider][k] := v
-        }
+        
+        this.systemPromptsManager.Reload()
+        this.providersManager.Reload()
+        this.rolesManager.Reload()
+        
+        this.providers := this.providersManager.GetAll()
+        
         this.selectedLLMType := settings["selectedLLMType"]
         if (settings.Has("ollama_api_key")) {
             this.ollamaApiKey := settings["ollama_api_key"]
@@ -39,19 +49,44 @@ class AppSettings {
     }
 
     GetSelectedSettings(llmIndex) {
+        if (llmIndex > this.llmTypes.Length || llmIndex < 1)
+            return Map()
+
         selectedLLMType := this.llmTypes[llmIndex]
-        settings := this.providers[selectedLLMType]
+        settings := this.providersManager.Get(selectedLLMType)
         settings["type"] := selectedLLMType  ; Add type to settings
+        
+        ; Load API key from keys.ini
+        if (FileExist("Settings\keys.ini")) {
+            apiKey := IniRead("Settings\keys.ini", "Keys", selectedLLMType, "")
+            if (apiKey != "") {
+                settings["api_key"] := apiKey
+            }
+        }
+        
         return settings
     }
 
     GetVisiblePrompts(llmIndex) {
-        settings := this.GetSelectedSettings(llmIndex)
+        if (llmIndex > this.llmTypes.Length || llmIndex < 1)
+            return []
+
+        selectedLLMType := this.llmTypes[llmIndex]
+        promptNames := this.rolesManager.GetPromptsForProvider(selectedLLMType)
+        
         visiblePrompts := []
-        if (prompts := settings.Get("system_prompts", [])) {
-            for prompt in prompts {
-                if (!prompt.Get("hidden", false)) {
-                    visiblePrompts.Push(prompt)
+        for name in promptNames {
+            promptData := this.systemPromptsManager.Get(name)
+            if (promptData.Count > 0) {
+                ; Clone prompt data and inject name
+                promptEntry := Map()
+                promptEntry["name"] := name
+                for k, v in promptData {
+                    promptEntry[k] := v
+                }
+                
+                if (!promptEntry.Get("hidden", false)) {
+                    visiblePrompts.Push(promptEntry)
                 }
             }
         }
@@ -111,6 +146,12 @@ class AppSettings {
     }
 
     SetToolEnabled(llmIndex, toolName, enabled) {
+        ; NOTE: This modifies memory but NOT the file yet for tools. 
+        ; Since settings are split, saving back solely to providers.json might be needed if persistent.
+        ; However, original request did not specify full save implementation for tools, 
+        ; but typically we should update the providers map in memory and Providers class should handle save?
+        ; For now, keeping in-memory update on the provider object retrieved from manager.
+        
         settings := this.GetSelectedSettings(llmIndex)
         if (!settings.Has("tools")) {
             settings["tools"] := []

@@ -1,0 +1,262 @@
+{
+  "ol-qwen3-vl": {
+    "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble.",
+    "model": "qwen3-vl:8b",
+    "stream": false,
+    "temperature": 0.7,
+    "image": true
+  },
+  "ol-ministral:8b": {
+    "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
+    "model": "ministral-3:8b",
+    "stream": false,
+    "temperature": 0.7,
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "ol-qwen3:8b": {
+    "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
+    "model": "qwen3:8b",
+    "stream": false,
+    "temperature": 0.7,
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "ol-qwen3-30b": {
+    "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
+    "model": "qwen3:30b",
+    "stream": false,
+    "temperature": 0.7,
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "ol-qwen3-coder": {
+    "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
+    "model": "qwen3-coder",
+    "stream": false,
+    "temperature": 0.7,
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "github-4o-mini": {
+    "curl": "curl -s -S -X POST \"https://models.github.ai/inference/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
+    "model": "openai/gpt-4o-mini",
+    "image": true,
+    "tools": [
+      "powerShellTool",
+      "fileSystemTool",
+      "webSearch",
+      "webFetch"
+    ],
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "github-4o": {
+    "curl": "curl -s -S -X POST \"https://models.github.ai/inference/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
+    "model": "openai/gpt-4o",
+    "tools": [
+      "powerShellTool",
+      "fileSystemTool",
+      "webSearch",
+      "webFetch"
+    ],
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "github-41": {
+    "curl": "curl -s -S -X POST \"https://models.github.ai/inference/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
+    "model": "openai/gpt-4.1",
+    "image": true,
+    "tools": [
+      "powerShellTool",
+      "fileSystemTool",
+      "webSearch",
+      "webFetch"
+    ],
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "github-41-nano": {
+    "curl": "curl -s -S -X POST \"https://models.github.ai/inference/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
+    "model": "openai/gpt-4.1-nano",
+    "tools": [
+      "powerShellTool",
+      "fileSystemTool",
+      "webSearch",
+      "webFetch"
+    ],
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "github-41-mini": {
+    "curl": "curl -s -S -X POST \"https://models.github.ai/inference/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
+    "model": "openai/gpt-4.1-mini",
+    "image": true,
+    "tools": [
+      "powerShellTool",
+      "fileSystemTool",
+      "webSearch",
+      "webFetch"
+    ],
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "gr-ll3.3-70b": {
+    "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
+    "model": "llama-3.3-70b-versatile",
+    "temperature": 0.7,
+    "tools": [
+      "powerShellTool",
+      "fileSystemTool",
+      "webSearch",
+      "webFetch"
+    ],
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "gr-gpt-oss-20b": {
+    "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
+    "model": "openai/gpt-oss-20b",
+    "temperature": 0.7,
+    "tools": [
+      "powerShellTool",
+      "fileSystemTool",
+      "webSearch",
+      "webFetch"
+    ],
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "gr-gpt-oss-120b": {
+    "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
+    "model": "openai/gpt-oss-120b",
+    "temperature": 0.7,
+    "tools": [
+      "powerShellTool",
+      "fileSystemTool",
+      "webSearch",
+      "webFetch"
+    ],
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "gr-compound": {
+    "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
+    "model": "groq/compound",
+    "temperature": 0.7,
+    "tools": false,
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "gr-kimi-k2": {
+    "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
+    "model": "moonshotai/kimi-k2-instruct",
+    "temperature": 0.7,
+    "tools": [
+      "powerShellTool",
+      "fileSystemTool",
+      "webSearch",
+      "webFetch"
+    ],
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "gr-ll4-scout": {
+    "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
+    "model": "meta-llama/llama-4-scout-17b-16e-instruct",
+    "temperature": 0.7,
+    "tools": [
+      "powerShellTool",
+      "fileSystemTool",
+      "webSearch",
+      "webFetch"
+    ],
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble.",
+    "image": true
+  },
+  "gr-audio": {
+    "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/audio/speech\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
+    "model": "canopylabs/orpheus-v1-english"
+  },
+  "gr-qwen-32b": {
+    "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
+    "model": "qwen/qwen3-32b",
+    "temperature": 0.7,
+    "tools": [
+      "powerShellTool",
+      "fileSystemTool",
+      "webSearch",
+      "webFetch"
+    ],
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "go-f2.5": {
+    "curl": "curl -s -S -X POST \"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={API_KEY}\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
+    "temperature": 0.7,
+    "tools": [
+      "powerShellTool",
+      "fileSystemTool",
+      "webSearch",
+      "webFetch"
+    ],
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "go-pro2.5": {
+    "curl": "curl -s -S -X POST \"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key={API_KEY}\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
+    "temperature": 0.7,
+    "tools": [
+      "powerShellTool",
+      "fileSystemTool",
+      "webSearch",
+      "webFetch"
+    ],
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "go-f2.5-lite": {
+    "curl": "curl -s -S -X POST \"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={API_KEY}\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
+    "temperature": 0.7,
+    "tools": [
+      "powerShellTool",
+      "fileSystemTool",
+      "webSearch",
+      "webFetch"
+    ],
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "ol-gemma3n": {
+    "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
+    "model": "gemma3n",
+    "stream": false,
+    "temperature": 0.7,
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "ol-qwen3-4b": {
+    "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
+    "model": "qwen3:4b",
+    "stream": false,
+    "temperature": 0.7,
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "ol-gpt-oss": {
+    "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
+    "model": "gpt-oss:20b",
+    "stream": false,
+    "temperature": 0.7,
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "ol-cl-gpt-oss": {
+    "curl": "curl -s -S -X POST \"https://ollama.com/api/chat\" -H \"Authorization: Bearer {API_KEY}\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
+    "model": "gpt-oss:120b",
+    "stream": false,
+    "temperature": 0.7,
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "ol-gemma3-270m": {
+    "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
+    "model": "gemma3:270m",
+    "stream": false,
+    "temperature": 0.7,
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "or-nemotron-3-nano-30b-a3b": {
+    "curl": "curl -s -S -X POST \"https://openrouter.ai/api/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
+    "model": "nvidia/nemotron-3-nano-30b-a3b:free",
+    "stream": false,
+    "temperature": 0.7,
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "or-olmo-3.1-32b-think": {
+    "curl": "curl -s -S -X POST \"https://openrouter.ai/api/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
+    "model": "allenai/olmo-3.1-32b-think:free",
+    "stream": false,
+    "temperature": 0.7,
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  }
+}

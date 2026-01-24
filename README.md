@@ -38,34 +38,31 @@ LLMClip monitors your clipboard and aggregates copied text, files, and folders i
 2.  **Install cURL**: Ensure `curl` is installed (`winget install cURL.cURL` or via [curl.se](https://curl.se/)).
 3.  **PDF Tools (Optional)**: For PDF support, place `pdftotext.exe` and `pdfimages.exe` in a `pdf/` folder within the project directory. (These are part of Xpdf or Poppler utils).
 4.  **Clone Repository**: Clone or download this project.
-5.  **Configuration**: Create a `settings.json` file (see below).
+5.  **Configuration**: 
+    - Create a `Settings/keys.ini` file for your API keys.
+    - (Optional) Customize `providers.json`, `roles.json`, and `system_prompts.json` in the root directory.
 6.  **Run**: Execute `clip.ahk`.
 
-## Configuration (`settings.json`)
+## Configuration
 
-Create a `settings.json` file in the project root. Here is a comprehensive example:
+### API Keys (`Settings/keys.ini`)
 
-```json
-{
-    "selectedLLMType": "groq",
-    "providers": {
-        "groq": {
-            "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer <<KEY>>\" -d \"@{1}\" -o \"{2}\"",
-            "model": "llama-3.3-70b-versatile",
-            "temperature": 0.7,
-            "system_prompt": "You are a helpful assistant. Be concise and direct in your responses."
-        },
-        "ollama": {
-            "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer <<KEY>>\" -d \"@{1}\" -o \"{2}\"",
-            "model": "llama3",
-            "temperature": 0.7,
-            "system_prompt": "You are a helpful assistant. Be concise and direct in your responses."
-        }
-    }
-}
+Create a file named `keys.ini` inside the `Settings` folder. Use the following format:
+
+```ini
+[Keys]
+groq=gsk_your_groq_api_key_here
+openai=sk-your-openai-api-key-here
+google=your-google-gemini-api-key-here
 ```
 
-Replace `<<KEY>>` with your actual API keys.
+The key name (e.g., `groq`) should match the provider name defined in your configuration.
+
+### Advanced Configuration
+
+- **`providers.json`**: Define LLM endpoints, models, and curl commands.
+- **`system_prompts.json`**: Store your reusable system prompts.
+- **`roles.json`**: Map providers to specific system prompts and models.
 
 ## Usage
 

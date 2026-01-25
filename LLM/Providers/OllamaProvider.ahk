@@ -26,15 +26,16 @@ class OllamaProvider extends BaseProvider {
 
             for part in msg.Contents {
                 if (part is ImageContent) {
-                    ; Extract base64 from data URI if it's a data URI
-                    if (part.Url != "" && InStr(part.Url, "data:") = 1) {
-                        commaPos := InStr(part.Url, ",")
-                        if (commaPos > 0) {
-                            base64Data := SubStr(part.Url, commaPos + 1)
-                            images.Push(base64Data)
+                    ; Extract raw base64 from URL or Data, stripping prefix if present
+                    imageData := part.Url != "" ? part.Url : part.Data
+                    if (imageData != "") {
+                        if (InStr(imageData, "data:") = 1) {
+                            commaPos := InStr(imageData, ",")
+                            if (commaPos > 0) {
+                                imageData := SubStr(imageData, commaPos + 1)
+                            }
                         }
-                    } else if (part.Data != "") {
-                        images.Push(part.Data)
+                        images.Push(imageData)
                     }
                 }
             }

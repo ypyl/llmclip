@@ -258,5 +258,13 @@
     "stream": false,
     "temperature": 0.7,
     "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "or-nemotron-nano-12b-v2-vl": {
+    "curl": "curl -s -S -X POST \"https://openrouter.ai/api/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
+    "model": "nvidia/nemotron-nano-12b-v2-vl:free",
+    "stream": false,
+    "image": true,
+    "temperature": 0.7,
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
   }
 }

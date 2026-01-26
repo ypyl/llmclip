@@ -39,15 +39,15 @@ LLMClip monitors your clipboard and aggregates copied text, files, and folders i
 3.  **PDF Tools (Optional)**: For PDF support, place `pdftotext.exe` and `pdfimages.exe` in a `pdf/` folder within the project directory. (These are part of Xpdf or Poppler utils).
 4.  **Clone Repository**: Clone or download this project.
 5.  **Configuration**: 
-    - Create a `Settings/keys.ini` file for your API keys.
+    - Create a `keys.ini` file for your API keys.
     - (Optional) Customize `providers.json`, `roles.json`, and `system_prompts.json` in the root directory.
 6.  **Run**: Execute `clip.ahk`.
 
 ## Configuration
 
-### API Keys (`Settings/keys.ini`)
+### API Keys (`keys.ini`)
 
-Create a file named `keys.ini` inside the `Settings` folder. Use the following format:
+Create a file named `keys.ini` inside the root directory. Use the following format:
 
 ```ini
 [Keys]

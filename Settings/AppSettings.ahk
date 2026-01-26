@@ -57,8 +57,8 @@ class AppSettings {
         settings["type"] := selectedLLMType  ; Add type to settings
         
         ; Load API key from keys.ini
-        if (FileExist("Settings\keys.ini")) {
-            apiKey := IniRead("Settings\keys.ini", "Keys", selectedLLMType, "")
+        if (FileExist("keys.ini")) {
+            apiKey := IniRead("keys.ini", "Keys", selectedLLMType, "")
             if (apiKey != "") {
                 settings["api_key"] := apiKey
             }

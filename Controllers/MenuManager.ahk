@@ -2,12 +2,12 @@
 
 class MenuManager {
     controller := ""
-    appSettings := ""
+    configManager := ""
     sessionManager := ""
 
-    __New(controller, appSettings, sessionManager) {
+    __New(controller, configManager, sessionManager) {
         this.controller := controller
-        this.appSettings := appSettings
+        this.configManager := configManager
         this.sessionManager := sessionManager
     }
 
@@ -19,7 +19,7 @@ class MenuManager {
         this.sessionManager.SetCurrentSessionLLMType(ItemPos)
 
         ; Update menu checkmarks
-        for index, modelName in this.appSettings.llmTypes {
+        for index, modelName in this.configManager.llmTypes {
             if (index = ItemPos) {
                 MyMenu.Check(modelName)
             } else {
@@ -28,14 +28,14 @@ class MenuManager {
         }
 
         ; Update menu bar label to show new model name
-        newModelName := "Model: " . this.appSettings.llmTypes[ItemPos]
+        newModelName := "Model: " . this.configManager.llmTypes[ItemPos]
         try this.controller.MyMenuBar.Rename(oldModelName, newModelName)
         this.controller.currentModelName := newModelName
 
         ; Update system prompts for the new model
         systemPromptCombo := this.controller.MyGui["SystemPrompt"]
         systemPromptCombo.Delete()
-        systemPromptNames := this.appSettings.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType())
+        systemPromptNames := this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType())
         systemPromptCombo.Add(systemPromptNames)
 
         if (systemPromptNames.Length > 0) {
@@ -69,7 +69,7 @@ class MenuManager {
             return
 
         currentLLMIndex := this.sessionManager.GetCurrentSessionLLMType()
-        compressionPrompt := this.appSettings.GetCompressionPrompt(currentLLMIndex)
+        compressionPrompt := this.configManager.GetCompressionPrompt(currentLLMIndex)
 
         if (compressionPrompt == "") {
             this.controller.HistoryMenu.Disable("Compress")
@@ -85,7 +85,7 @@ class MenuManager {
         currentLLMIndex := this.sessionManager.GetCurrentSessionLLMType()
         
         ; Update PowerShell
-        powerShellEnabled := this.appSettings.IsToolEnabled(currentLLMIndex, "powerShellTool")
+        powerShellEnabled := this.configManager.IsToolEnabled(currentLLMIndex, "powerShellTool")
         if (powerShellEnabled) {
             this.controller.ToolsMenu.Check("PowerShell")
         } else {
@@ -93,7 +93,7 @@ class MenuManager {
         }
 
         ; Update File System
-        fileSystemEnabled := this.appSettings.IsToolEnabled(currentLLMIndex, "fileSystemTool")
+        fileSystemEnabled := this.configManager.IsToolEnabled(currentLLMIndex, "fileSystemTool")
         if (fileSystemEnabled) {
              this.controller.ToolsMenu.Check("File System")
         } else {
@@ -101,7 +101,7 @@ class MenuManager {
         }
 
         ; Update Web Search
-        webSearchEnabled := this.appSettings.IsToolEnabled(currentLLMIndex, "webSearch")
+        webSearchEnabled := this.configManager.IsToolEnabled(currentLLMIndex, "webSearch")
         if (webSearchEnabled) {
             this.controller.ToolsMenu.Check("Web Search")
         } else {
@@ -109,7 +109,7 @@ class MenuManager {
         }
 
         ; Update Web Fetch
-        webFetchEnabled := this.appSettings.IsToolEnabled(currentLLMIndex, "webFetch")
+        webFetchEnabled := this.configManager.IsToolEnabled(currentLLMIndex, "webFetch")
         if (webFetchEnabled) {
             this.controller.ToolsMenu.Check("Web Fetch")
         } else {
@@ -119,10 +119,10 @@ class MenuManager {
 
     ToggleTool(toolName, *) {
         currentLLMIndex := this.sessionManager.GetCurrentSessionLLMType()
-        isEnabled := this.appSettings.IsToolEnabled(currentLLMIndex, toolName)
+        isEnabled := this.configManager.IsToolEnabled(currentLLMIndex, toolName)
         
         ; Toggle state
-        this.appSettings.SetToolEnabled(currentLLMIndex, toolName, !isEnabled)
+        this.configManager.SetToolEnabled(currentLLMIndex, toolName, !isEnabled)
         
         ; Update UI
         this.UpdateToolsMenuState()

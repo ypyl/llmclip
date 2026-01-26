@@ -4,40 +4,42 @@
 #Include Providers.ahk
 #Include Roles.ahk
 
-class AppSettings {
-    providers := unset
+class ConfigurationManager {
+    static instance := ""
+    
+    ; Configuration data
+    providers := Map()
     selectedLLMType := ""
     selectedLLMTypeIndex := 1
     llmTypes := []
     ollamaApiKey := ""
     
+    ; Sub-managers
     systemPromptsManager := unset
     providersManager := unset
     rolesManager := unset
+
+    static GetInstance() {
+        if (!ConfigurationManager.instance)
+            ConfigurationManager.instance := ConfigurationManager()
+        return ConfigurationManager.instance
+    }
 
     __New() {
         this.systemPromptsManager := SystemPrompts()
         this.providersManager := Providers()
         this.rolesManager := Roles()
-        this.Reload()
+        this.LoadAll()
     }
 
-    Reload() {
-        settings := JSON.LoadFile("settings.json")
-        
+    LoadAll() {
+        this.LoadAppSettings()
         this.systemPromptsManager.Reload()
         this.providersManager.Reload()
         this.rolesManager.Reload()
         
         this.providers := this.providersManager.GetAll()
         
-        this.selectedLLMType := settings["selectedLLMType"]
-        if (settings.Has("ollama_api_key")) {
-            this.ollamaApiKey := settings["ollama_api_key"]
-        } else {
-            this.ollamaApiKey := ""
-        }
-
         ; Initialize LLM types
         this.llmTypes := []
         for key in this.providers {
@@ -48,20 +50,35 @@ class AppSettings {
         }
     }
 
+    LoadAppSettings() {
+        settings := JSON.LoadFile("settings.json")
+        this.selectedLLMType := settings["selectedLLMType"]
+        if (settings.Has("ollama_api_key")) {
+            this.ollamaApiKey := settings["ollama_api_key"]
+        } else {
+            this.ollamaApiKey := ""
+        }
+    }
+
+    GetApiKey(provider) {
+        if (FileExist("keys.ini")) {
+            return IniRead("keys.ini", "Keys", provider, "")
+        }
+        return ""
+    }
+
     GetSelectedSettings(llmIndex) {
         if (llmIndex > this.llmTypes.Length || llmIndex < 1)
             return Map()
 
         selectedLLMType := this.llmTypes[llmIndex]
         settings := this.providersManager.Get(selectedLLMType)
-        settings["type"] := selectedLLMType  ; Add type to settings
+        settings["type"] := selectedLLMType
         
-        ; Load API key from keys.ini
-        if (FileExist("keys.ini")) {
-            apiKey := IniRead("keys.ini", "Keys", selectedLLMType, "")
-            if (apiKey != "") {
-                settings["api_key"] := apiKey
-            }
+        ; Load API key
+        apiKey := this.GetApiKey(selectedLLMType)
+        if (apiKey != "") {
+            settings["api_key"] := apiKey
         }
         
         return settings
@@ -78,7 +95,6 @@ class AppSettings {
         for name in promptNames {
             promptData := this.systemPromptsManager.Get(name)
             if (promptData.Count > 0) {
-                ; Clone prompt data and inject name
                 promptEntry := Map()
                 promptEntry["name"] := name
                 for k, v in promptData {
@@ -102,7 +118,6 @@ class AppSettings {
                 value := FileRead(value)
             }
             
-            ; Add current date and time
             currentTime := FormatTime(, "yyyy-MM-dd HH:mm:ss")
             value .= "`n`nCurrent Date and Time: " . currentTime
             
@@ -112,14 +127,13 @@ class AppSettings {
     }
 
     GetInputTemplate(llmIndex, promptIndex) {
-        defaultPrompt := ""
         prompts := this.GetVisiblePrompts(llmIndex)
         if (prompts.Length >= promptIndex) {
-            if (inputTempalte := prompts[promptIndex].Get("input_template", "")) {
-                return inputTempalte
+            if (inputTemplate := prompts[promptIndex].Get("input_template", "")) {
+                return inputTemplate
             }
         }
-        return defaultPrompt
+        return ""
     }
 
     GetContext(llmIndex, promptIndex) {
@@ -146,12 +160,6 @@ class AppSettings {
     }
 
     SetToolEnabled(llmIndex, toolName, enabled) {
-        ; NOTE: This modifies memory but NOT the file yet for tools. 
-        ; Since settings are split, saving back solely to providers.json might be needed if persistent.
-        ; However, original request did not specify full save implementation for tools, 
-        ; but typically we should update the providers map in memory and Providers class should handle save?
-        ; For now, keeping in-memory update on the provider object retrieved from manager.
-        
         settings := this.GetSelectedSettings(llmIndex)
         if (!settings.Has("tools")) {
             settings["tools"] := []
@@ -159,7 +167,6 @@ class AppSettings {
         currentTools := settings["tools"]
         
         if (enabled) {
-            ; Add if not present
             hasTool := false
             for t in currentTools {
                 if (t = toolName) {
@@ -171,7 +178,6 @@ class AppSettings {
                 currentTools.Push(toolName)
             }
         } else {
-            ; Remove if present
             newTools := []
             for t in currentTools {
                 if (t != toolName) {
@@ -182,11 +188,9 @@ class AppSettings {
         }
     }
 
-
     IsImageInputEnabled(llmIndex) {
         settings := this.GetSelectedSettings(llmIndex)
-        image := settings.Get("image", false)
-        return image
+        return settings.Get("image", false)
     }
 
     GetCompressionPrompt(llmIndex) {
@@ -208,5 +212,9 @@ class AppSettings {
             names.Push(prompt["name"])
         }
         return names
+    }
+
+    Reload() {
+        this.LoadAll()
     }
 }

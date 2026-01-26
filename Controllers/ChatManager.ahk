@@ -2,14 +2,14 @@
 
 class ChatManager {
     controller := ""
-    appSettings := ""
+    configManager := ""
     sessionManager := ""
     llmService := ""
     contextManager := ""
 
-    __New(controller, appSettings, sessionManager, llmService, contextManager) {
+    __New(controller, configManager, sessionManager, llmService, contextManager) {
         this.controller := controller
-        this.appSettings := appSettings
+        this.configManager := configManager
         this.sessionManager := sessionManager
         this.llmService := llmService
         this.contextManager := contextManager
@@ -76,7 +76,7 @@ class ChatManager {
                     return true
                 } else {
                     ; Edit Mode: Build new message with text and images
-                    isImageEnabled := this.appSettings.IsImageInputEnabled(this.sessionManager.GetCurrentSessionLLMType())
+                    isImageEnabled := this.configManager.IsImageInputEnabled(this.sessionManager.GetCurrentSessionLLMType())
                     images := isImageEnabled ? this.controller.ContextViewControllerValue.GetCheckedImages() : []
                     newContent := this.sessionManager.BuildUserMessage(promptText, images)
 
@@ -151,7 +151,7 @@ class ChatManager {
             userMessageContent := promptText
         }
 
-        isImageEnabled := this.appSettings.IsImageInputEnabled(this.sessionManager.GetCurrentSessionLLMType())
+        isImageEnabled := this.configManager.IsImageInputEnabled(this.sessionManager.GetCurrentSessionLLMType())
 
         images := isImageEnabled ? this.controller.ContextViewControllerValue.GetCheckedImages() : []
         userMessageContent := this.sessionManager.BuildUserMessage(userMessageContent, images)
@@ -193,10 +193,10 @@ class ChatManager {
         try {
             ; Get common settings
             currentLLM := this.sessionManager.GetCurrentSessionLLMType()
-            powerShellEnabled := this.appSettings.IsToolEnabled(currentLLM, "powerShellTool")
-            fileSystemEnabled := this.appSettings.IsToolEnabled(currentLLM, "fileSystemTool")
-            webSearchEnabled := this.appSettings.IsToolEnabled(currentLLM, "webSearch")
-            webFetchEnabled := this.appSettings.IsToolEnabled(currentLLM, "webFetch")
+            powerShellEnabled := this.configManager.IsToolEnabled(currentLLM, "powerShellTool")
+            fileSystemEnabled := this.configManager.IsToolEnabled(currentLLM, "fileSystemTool")
+            webSearchEnabled := this.configManager.IsToolEnabled(currentLLM, "webSearch")
+            webFetchEnabled := this.configManager.IsToolEnabled(currentLLM, "webFetch")
 
             ; Prepare base history (filtered but WITHOUT the current trigger message)
             baseHistory := this.sessionManager.GetMessagesExcludingBatch()
@@ -274,7 +274,7 @@ class ChatManager {
         messages := this.sessionManager.GetCurrentSessionMessages()
 
         ; Update the system prompt content
-        systemPrompt := this.appSettings.GetSystemPromptValue(
+        systemPrompt := this.configManager.GetSystemPromptValue(
             this.sessionManager.GetCurrentSessionLLMType(),
             this.sessionManager.GetCurrentSessionSystemPrompt()
         )
@@ -326,10 +326,10 @@ class ChatManager {
         try {
             ; Check tool enabled
             currentLLM := this.sessionManager.GetCurrentSessionLLMType()
-            powerShellEnabled := this.appSettings.IsToolEnabled(currentLLM, "powerShellTool")
-            fileSystemEnabled := this.appSettings.IsToolEnabled(currentLLM, "fileSystemTool")
-            webSearchEnabled := this.appSettings.IsToolEnabled(currentLLM, "webSearch")
-            webFetchEnabled := this.appSettings.IsToolEnabled(currentLLM, "webFetch")
+            powerShellEnabled := this.configManager.IsToolEnabled(currentLLM, "powerShellTool")
+            fileSystemEnabled := this.configManager.IsToolEnabled(currentLLM, "fileSystemTool")
+            webSearchEnabled := this.configManager.IsToolEnabled(currentLLM, "webSearch")
+            webFetchEnabled := this.configManager.IsToolEnabled(currentLLM, "webFetch")
 
             newMessages := this.llmService.SendToLLM(this.sessionManager, this.controller.currentAnswerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled)
 

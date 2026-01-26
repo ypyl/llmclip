@@ -2,7 +2,7 @@
 #Include UIConfig.ahk
 
 class UIBuilder {
-    static CreateMenuBar(gui, controller, appSettingsValue, sessionManagerValue) {
+    static CreateMenuBar(gui, controller, configManager, sessionManagerValue) {
         FileMenu := Menu()
         FileMenu.Add("Save Conversation", ObjBindMethod(controller, "SaveConversation"))
         FileMenu.Add("Load Conversation", ObjBindMethod(controller, "LoadConversation"))
@@ -12,16 +12,16 @@ class UIBuilder {
         FileMenu.Add("Exit", ObjBindMethod(controller, "ExitApplication"))
 
         ModelMenu := Menu()
-        for index, modelName in appSettingsValue.llmTypes {
+        for index, modelName in configManager.llmTypes {
             ModelMenu.Add(modelName, ObjBindMethod(controller, "SelectModel"))
         }
 
         ; Get current model name for menu label
         currentModelIndex := sessionManagerValue.GetCurrentSessionLLMType()
-        currentModelName := "Model: " . appSettingsValue.llmTypes[currentModelIndex]
+        currentModelName := "Model: " . configManager.llmTypes[currentModelIndex]
 
         ; Set initial checkmark in Model menu
-        for index, modelName in appSettingsValue.llmTypes {
+        for index, modelName in configManager.llmTypes {
             if (index = currentModelIndex) {
                 ModelMenu.Check(modelName)
             }
@@ -119,17 +119,17 @@ class UIBuilder {
     }
 
 
-    static CreatePromptSection(gui, sessionManagerValue, appSettingsValue, controller) {
+    static CreatePromptSection(gui, sessionManagerValue, configManager, controller) {
         ; Prompt edit control
         promptEdit := gui.Add("Edit", "vPromptEdit x" UIConfig.promptEditX " y" UIConfig.promptEditY " w" UIConfig.promptEditWidth " h" UIConfig.promptEditHeight " Multi WantReturn", "")
         promptEdit.OnEvent("Change", ObjBindMethod(controller, "PromptChange"))
     }
 
-    static CreateBottomControls(gui, sessionManagerValue, appSettingsValue, controller) {
+    static CreateBottomControls(gui, sessionManagerValue, configManager, controller) {
         ; PowerShell tool checkbox and icon removed
 
         ; Add system prompt selector
-        systemPromptCombo := gui.Add("DropDownList", "x" UIConfig.systemPromptX " y" (UIConfig.systemPromptY + 2) " w" UIConfig.systemPromptWidth " vSystemPrompt", appSettingsValue.GetSystemPromptNames(sessionManagerValue.GetCurrentSessionLLMType()))
+        systemPromptCombo := gui.Add("DropDownList", "x" UIConfig.systemPromptX " y" (UIConfig.systemPromptY + 2) " w" UIConfig.systemPromptWidth " vSystemPrompt", configManager.GetSystemPromptNames(sessionManagerValue.GetCurrentSessionLLMType()))
         systemPromptCombo.Value := sessionManagerValue.GetCurrentSessionSystemPrompt()
         systemPromptCombo.OnEvent("Change", ObjBindMethod(controller, "SystemPromptChanged"))
 

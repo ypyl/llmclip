@@ -5,12 +5,12 @@ class HistoryViewController {
     WebViewManagerValue := ""
     MyGui := ""
 
-    AppSettingsValue := ""
+    configManager := ""
 
-    __New(sessionManager, webViewManager, appSettings) {
+    __New(sessionManager, webViewManager, configManager) {
         this.SessionManagerValue := sessionManager
         this.WebViewManagerValue := webViewManager
-        this.AppSettingsValue := appSettings
+        this.configManager := configManager
     }
 
     SetGui(gui) {
@@ -172,7 +172,7 @@ class HistoryViewController {
         this.SessionManagerValue.ClearCurrentMessages()
 
         ; Update the system prompt content after clearing
-        systemPrompt := this.AppSettingsValue.GetSystemPromptValue(
+        systemPrompt := this.configManager.GetSystemPromptValue(
             this.SessionManagerValue.GetCurrentSessionLLMType(),
             this.SessionManagerValue.GetCurrentSessionSystemPrompt()
         )

@@ -2,14 +2,14 @@
 
 class ContextViewController {
     SessionManagerValue := ""
-    AppSettingsValue := ""
+    configManager := ""
     ContextManagerValue := ""
     WebViewManagerValue := ""
     MyGui := ""
 
-    __New(sessionManager, appSettings, contextManager, webViewManager) {
+    __New(sessionManager, configManager, contextManager, webViewManager) {
         this.SessionManagerValue := sessionManager
-        this.AppSettingsValue := appSettings
+        this.configManager := configManager
         this.ContextManagerValue := contextManager
         this.WebViewManagerValue := webViewManager
     }
@@ -20,7 +20,7 @@ class ContextViewController {
 
     GetLabelsForContextItems() {
         context := this.SessionManagerValue.GetCurrentSessionContext()
-        predefinedContext := this.AppSettingsValue.GetContext(this.SessionManagerValue.GetCurrentSessionLLMType(),
+        predefinedContext := this.configManager.GetContext(this.SessionManagerValue.GetCurrentSessionLLMType(),
         this.SessionManagerValue.GetCurrentSessionSystemPrompt())
         labels := []
         for item in predefinedContext {

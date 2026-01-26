@@ -7,11 +7,11 @@
 #Include ..\SessionManager.ahk
 
 class LLMService {
-    appSettings := ""
+    configManager := ""
     llmClientInstance := ""
 
-    __New(appSettings) {
-        this.appSettings := appSettings
+    __New(configManager) {
+        this.configManager := configManager
     }
 
     ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled) {
@@ -23,10 +23,10 @@ class LLMService {
              enabledTools.Push("fileSystemTool")
 
         ; Enable web tools if API key is present
-        if (webSearchEnabled && this.appSettings.ollamaApiKey != "") {
+        if (webSearchEnabled && this.configManager.ollamaApiKey != "") {
             enabledTools.Push("web_search")
         }
-        if (webFetchEnabled && this.appSettings.ollamaApiKey != "") {
+        if (webFetchEnabled && this.configManager.ollamaApiKey != "") {
             enabledTools.Push("web_fetch")
         }
             
@@ -48,9 +48,9 @@ class LLMService {
                 } else if (tool_call.Name == "file_system") {
                      result := FileSystemTool.ExecuteToolCall(tool_call)
                 } else if (tool_call.Name == "web_search") {
-                     result := WebSearchTool.ExecuteToolCall(tool_call, this.appSettings.ollamaApiKey)
+                     result := WebSearchTool.ExecuteToolCall(tool_call, this.configManager.ollamaApiKey)
                 } else if (tool_call.Name == "web_fetch") {
-                     result := WebFetchTool.ExecuteToolCall(tool_call, this.appSettings.ollamaApiKey)
+                     result := WebFetchTool.ExecuteToolCall(tool_call, this.configManager.ollamaApiKey)
                 }
 
                 if (result) {
@@ -69,7 +69,7 @@ class LLMService {
 
         try {
             ; Create LLM client if it doesn't exist yet
-            settings := this.appSettings.GetSelectedSettings(sessionManager.GetCurrentSessionLLMType())
+            settings := this.configManager.GetSelectedSettings(sessionManager.GetCurrentSessionLLMType())
 
             ; Update tools property based on checkbox values
             settings["tools"] := this.ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled)
@@ -134,7 +134,7 @@ class LLMService {
         }
 
         ; Build compression prompt
-        compressionPrompt := this.appSettings.GetCompressionPrompt(sessionManager.GetCurrentSessionLLMType())
+        compressionPrompt := this.configManager.GetCompressionPrompt(sessionManager.GetCurrentSessionLLMType())
 
         if (compressionPrompt == "") {
             throw Error("Compression prompt not configured for this provider.")
@@ -150,7 +150,7 @@ class LLMService {
 
         try {
             ; Create LLM client
-            settings := this.appSettings.GetSelectedSettings(sessionManager.GetCurrentSessionLLMType())
+            settings := this.configManager.GetSelectedSettings(sessionManager.GetCurrentSessionLLMType())
             settings["tools"] := []  ; No tools for compression
 
             this.llmClientInstance := LLMClient(settings)
@@ -195,7 +195,7 @@ class LLMService {
         }
 
         ; Get learnings prompt
-        learningsPrompt := this.appSettings.GetLearningsPrompt(sessionManager.GetCurrentSessionLLMType())
+        learningsPrompt := this.configManager.GetLearningsPrompt(sessionManager.GetCurrentSessionLLMType())
         learningsPrompt .= "`n`nCONVERSATION:`n" conversationText
 
         ; Create temporary messages for the extraction request
@@ -206,7 +206,7 @@ class LLMService {
 
         try {
             ; Create LLM client
-            settings := this.appSettings.GetSelectedSettings(sessionManager.GetCurrentSessionLLMType())
+            settings := this.configManager.GetSelectedSettings(sessionManager.GetCurrentSessionLLMType())
             settings["tools"] := []  ; No tools for extraction
 
             this.llmClientInstance := LLMClient(settings)

@@ -1,5 +1,5 @@
 #Requires AutoHotkey 2.0
-#Include Settings\AppSettings.ahk
+#Include Settings\ConfigurationManager.ahk
 #Include LLM\LLMService.ahk
 #Include ClipboardParser.ahk
 #Include WebViewManager.ahk
@@ -29,7 +29,7 @@ class AppController {
     currentAnswerSize := "Default"  ; Track current answer size (Small, Default, Long)
     currentModelName := ""  ; Track current model name for MenuBar updates
 
-    AppSettingsValue := ""
+    configManager := ""
     SessionManagerValue := ""
     ClipboardParserValue := ""
     WebViewManagerValue := ""
@@ -48,13 +48,13 @@ class AppController {
     batchModeEnabled := false  ; Track batch mode state
 
     __New() {
-        ; Create settings instance
-        this.AppSettingsValue := AppSettings()
+        ; Create configuration manager instance
+        this.configManager := ConfigurationManager.GetInstance()
 
-        ; Create session manager instance with default values from AppSettings
+        ; Create session manager instance with default values from ConfigurationManager
         this.SessionManagerValue := SessionManager(
-            this.AppSettingsValue.selectedLLMTypeIndex,
-            this.AppSettingsValue.GetSystemPromptValue(this.AppSettingsValue.selectedLLMTypeIndex, 1)
+            this.configManager.selectedLLMTypeIndex,
+            this.configManager.GetSystemPromptValue(this.configManager.selectedLLMTypeIndex, 1)
         )
 
         ; Create clipboard parser instance
@@ -69,15 +69,15 @@ class AppController {
         this.TrayManagerValue := TrayManager(ObjBindMethod(this, "DisplayLLMUserInterface"), ObjBindMethod(this, "UpdateUiBasesOnRecordingStatus"), ObjBindMethod(this,
             "ExitApplication"), this.ContextManagerValue)
 
-        this.ContextViewControllerValue := ContextViewController(this.SessionManagerValue, this.AppSettingsValue, this.ContextManagerValue, this.WebViewManagerValue)
-        this.HistoryViewControllerValue := HistoryViewController(this.SessionManagerValue, this.WebViewManagerValue, this.AppSettingsValue)
+        this.ContextViewControllerValue := ContextViewController(this.SessionManagerValue, this.configManager, this.ContextManagerValue, this.WebViewManagerValue)
+        this.HistoryViewControllerValue := HistoryViewController(this.SessionManagerValue, this.WebViewManagerValue, this.configManager)
 
-        this.LLMServiceValue := LLMService(this.AppSettingsValue)
+        this.LLMServiceValue := LLMService(this.configManager)
         
         ; Create specialized managers
-        this.MenuManagerValue := MenuManager(this, this.AppSettingsValue, this.SessionManagerValue)
-        this.ChatManagerValue := ChatManager(this, this.AppSettingsValue, this.SessionManagerValue, this.LLMServiceValue, this.ContextManagerValue)
-        this.ConversationHandlerValue := ConversationHandler(this, this.AppSettingsValue, this.SessionManagerValue, this.LLMServiceValue, this.MenuManagerValue)
+        this.MenuManagerValue := MenuManager(this, this.configManager, this.SessionManagerValue)
+        this.ChatManagerValue := ChatManager(this, this.configManager, this.SessionManagerValue, this.LLMServiceValue, this.ContextManagerValue)
+        this.ConversationHandlerValue := ConversationHandler(this, this.configManager, this.SessionManagerValue, this.LLMServiceValue, this.MenuManagerValue)
         this.ClipboardManagerValue := ClipboardManager(this, this.SessionManagerValue, this.ContextManagerValue)
 
         this.batchModeEnabled := false
@@ -129,7 +129,7 @@ class AppController {
         this.ContextViewControllerValue.SetGui(this.MyGui)
         this.HistoryViewControllerValue.SetGui(this.MyGui)
 
-        menus := UIBuilder.CreateMenuBar(this.MyGui, this, this.AppSettingsValue, this.SessionManagerValue)
+        menus := UIBuilder.CreateMenuBar(this.MyGui, this, this.configManager, this.SessionManagerValue)
         this.MyMenuBar := menus.menuBar
         this.ModelMenu := menus.modelMenu
         this.HistoryMenu := menus.historyMenu
@@ -143,7 +143,7 @@ class AppController {
 
         ; Initialize current model name
         currentModelIndex := this.SessionManagerValue.GetCurrentSessionLLMType()
-        this.currentModelName := "Model: " . this.AppSettingsValue.llmTypes[currentModelIndex]
+        this.currentModelName := "Model: " . this.configManager.llmTypes[currentModelIndex]
 
         UIBuilder.CreateTopControls(this.MyGui, this.SessionManagerValue, this.TrayManagerValue, this)
 
@@ -151,9 +151,9 @@ class AppController {
 
         UIBuilder.CreateChatHistorySection(this.MyGui, this.HistoryViewControllerValue)
 
-        UIBuilder.CreatePromptSection(this.MyGui, this.SessionManagerValue, this.AppSettingsValue, this)
+        UIBuilder.CreatePromptSection(this.MyGui, this.SessionManagerValue, this.configManager, this)
 
-        this.askButton := UIBuilder.CreateBottomControls(this.MyGui, this.SessionManagerValue, this.AppSettingsValue, this)
+        this.askButton := UIBuilder.CreateBottomControls(this.MyGui, this.SessionManagerValue, this.configManager, this)
 
         responseCtr := UIBuilder.CreateResponseArea(this.MyGui)
 

@@ -118,6 +118,25 @@ class SessionManager {
         return this.sessionMessages[this.currentSessionIndex]
     }
 
+    /**
+     * Get messages for the current session, excluding those marked as batch mode or batch response
+     * @returns Array of ChatMessage instances
+     */
+    GetMessagesExcludingBatch() {
+        allMessages := this.GetCurrentSessionMessages()
+        filteredMessages := []
+        
+        for msg in allMessages {
+            isBatch := (msg.AdditionalProperties.Has("isBatchMode") && msg.AdditionalProperties["isBatchMode"])
+                    || (msg.AdditionalProperties.Has("isBatchResponse") && msg.AdditionalProperties["isBatchResponse"])
+            
+            if (!isBatch) {
+                filteredMessages.Push(msg)
+            }
+        }
+        return filteredMessages
+    }
+
     GetCurrentSessionMessagesAsStrings() {
         messages := []
         allMessages := this.GetCurrentSessionMessages()
@@ -184,6 +203,15 @@ class SessionManager {
             }
             if (message.AdditionalProperties.Has("tokens")) {
                 result.tokens := message.AdditionalProperties["tokens"]
+            }
+            if (message.AdditionalProperties.Has("isBatchMode")) {
+                result.isBatchMode := message.AdditionalProperties["isBatchMode"]
+            }
+            if (message.AdditionalProperties.Has("isBatchResponse")) {
+                result.isBatchResponse := message.AdditionalProperties["isBatchResponse"]
+            }
+            if (message.AdditionalProperties.Has("batchContextItem")) {
+                result.batchContextItem := message.AdditionalProperties["batchContextItem"]
             }
             messages.Push(result)
         }

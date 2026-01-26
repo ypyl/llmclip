@@ -25,10 +25,22 @@ class HistoryViewController {
         chatHistory := this.MyGui["ChatHistory"]
         chatHistory.Delete()
         for msg in messages {
-            duration := msg.HasOwnProp("duration") ? Round(msg.duration, 2) . "s" : ""
+            duration := msg.HasOwnProp("duration") ? msg.duration : ""
             tokens := msg.HasOwnProp("tokens") ? msg.tokens : ""
-            chatHistory.Add(, msg.role, SubStr(msg.content, 1, 70) (StrLen(msg.content) > 70 ? "..." : ""), duration,
-            tokens)
+            
+            ; Get content with truncation
+            contentText := SubStr(msg.content, 1, 70) (StrLen(msg.content) > 70 ? "..." : "")
+            
+            ; Add to ListView
+            row := chatHistory.Add(, msg.role, contentText, duration, tokens)
+            
+            ; Check for batch indicators and modify the displayed content
+            if (msg.HasOwnProp("isBatchMode") && msg.isBatchMode) {
+                chatHistory.Modify(row, "Col2", "🔄 [Batch] " . contentText)
+            } else if (msg.HasOwnProp("isBatchResponse") && msg.isBatchResponse) {
+                itemLabel := msg.HasOwnProp("batchContextItem") ? msg.batchContextItem : "Item"
+                chatHistory.Modify(row, "Col2", "✅ [" . itemLabel . "] " . contentText)
+            }
         }
         this.MyGui["ChatMessageActionButton"].Visible := false  ; Hide the Run Tool button
         if (chatHistory.GetCount() > 0) {

@@ -41,9 +41,14 @@ class UIBuilder {
         HistoryMenu.Add("Compress", ObjBindMethod(controller, "CompressHistory"))
         HistoryMenu.Add("Extract Notes", ObjBindMethod(controller, "ExtractLearnings"))
 
+        ; Create Mode menu
+        ModeMenu := Menu()
+        ModeMenu.Add("Batch Mode", ObjBindMethod(controller, "ToggleBatchMode"))
+
         MyMenuBar := MenuBar()
         MyMenuBar.Add("&File", FileMenu)
         MyMenuBar.Add("History", HistoryMenu)
+        MyMenuBar.Add("Mode", ModeMenu)
         
         ; Create Tools menu
         ToolsMenu := Menu()
@@ -57,7 +62,7 @@ class UIBuilder {
         MyMenuBar.Add(currentModelName, ModelMenu)  ; Use model name instead of "&Model"
         gui.MenuBar := MyMenuBar
 
-        return {menuBar: MyMenuBar, modelMenu: ModelMenu, historyMenu: HistoryMenu, toolsMenu: ToolsMenu}  ; Return menuBar, modelMenu, historyMenu and toolsMenu
+        return {menuBar: MyMenuBar, modelMenu: ModelMenu, historyMenu: HistoryMenu, toolsMenu: ToolsMenu, modeMenu: ModeMenu}  ; Return menuBar, modelMenu, historyMenu, toolsMenu and modeMenu
     }
 
     static CreateTopControls(gui, sessionManagerValue, trayManagerValue, controller) {

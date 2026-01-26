@@ -64,7 +64,8 @@ class LLMService {
     }
 
     SendToLLM(sessionManager, answerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled) {
-        messages := sessionManager.GetCurrentSessionMessages()
+        ; Use filtered messages to exclude previous batch processing
+        messages := sessionManager.GetMessagesExcludingBatch()
 
         try {
             ; Create LLM client if it doesn't exist yet
@@ -97,10 +98,12 @@ class LLMService {
                 messages.RemoveAt(messages.Length)
             }
 
-            ; Simply add the new messages to the session
+            ; Get the actual session messages array (not the filtered copy)
+            ; and add the new messages to it
+            actualSessionMessages := sessionManager.GetCurrentSessionMessages()
             for newMessage in newMessages {
                 newMessage.AdditionalProperties["duration"] := duration
-                messages.Push(newMessage)
+                actualSessionMessages.Push(newMessage)
             }
 
             return newMessages

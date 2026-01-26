@@ -222,6 +222,17 @@ class ContextViewController {
         return images
     }
 
+    GetAllCheckedContextItems() {
+        checkedItems := []
+        context := this.SessionManagerValue.GetCurrentSessionContext()
+        for index, item in context {
+            if (this.IsItemChecked(index)) {
+                checkedItems.Push(item)
+            }
+        }
+        return checkedItems
+    }
+
     HasAnyCheckedItem() {
         context := this.SessionManagerValue.GetCurrentSessionContext()
         loop context.Length {

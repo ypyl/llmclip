@@ -20,6 +20,7 @@ class AppController {
     ModelMenu := ""  ; Store reference to Model menu
     HistoryMenu := ""  ; Store reference to History menu
     ToolsMenu := "" ; Store reference to Tools menu
+    ModeMenu := "" ; Store reference to Mode menu
     MyMenuBar := ""  ; Store reference to MenuBar
     currentAnswerSize := "Default"  ; Track current answer size (Small, Default, Long)
     currentModelName := ""  ; Track current model name for MenuBar updates
@@ -34,6 +35,7 @@ class AppController {
 
     ContextViewControllerValue := ""
     HistoryViewControllerValue := ""
+    batchModeEnabled := false  ; Track batch mode state
 
     __New() {
         ; Create settings instance
@@ -61,6 +63,8 @@ class AppController {
         this.HistoryViewControllerValue := HistoryViewController(this.SessionManagerValue, this.WebViewManagerValue, this.AppSettingsValue)
 
         this.LLMServiceValue := LLMService(this.AppSettingsValue)
+        
+        this.batchModeEnabled := false
     }
 
     Start() {
@@ -114,6 +118,7 @@ class AppController {
         this.ModelMenu := menus.modelMenu
         this.HistoryMenu := menus.historyMenu
         this.ToolsMenu := menus.toolsMenu
+        this.ModeMenu := menus.modeMenu
 
         this.UpdateCompressionMenuState()
         this.UpdateToolsMenuState()
@@ -221,6 +226,18 @@ class AppController {
         this.currentAnswerSize := ItemName
     }
 
+    ToggleBatchMode(*) {
+        ; Toggle batch mode state
+        this.batchModeEnabled := !this.batchModeEnabled
+        
+        ; Update menu checkmark
+        if (this.batchModeEnabled) {
+            this.ModeMenu.Check("Batch Mode")
+        } else {
+            this.ModeMenu.Uncheck("Batch Mode")
+        }
+    }
+
     SessionChanged(*) {
         ; Update LLM type and system prompt selections
         ; Update Model menu checkmarks and menu bar label
@@ -290,6 +307,9 @@ class AppController {
     HandleCancellation() {
         if (this.LLMServiceValue) {
             this.LLMServiceValue.Cancel()
+        }
+        if (this.MyGui) {
+            this.MyGui["AskLLM"].Text := "Ask LLM"
         }
     }
 
@@ -371,6 +391,12 @@ class AppController {
             return
         }
 
+        ; Check for Batch Mode
+        if (this.batchModeEnabled) {
+            this.SendBatchToLLM(promptText)
+            return
+        }
+
         messages := this.SessionManagerValue.GetCurrentSessionMessages()
         userMessageContent := ""
         if (promptText != "") {
@@ -394,6 +420,109 @@ class AppController {
 
         if (this.TrayManagerValue.isRecording) {
             this.TrayManagerValue.StopRecording(this.SessionManagerValue)
+        }
+    }
+
+    SendBatchToLLM(promptText) {
+        checkedItems := this.ContextViewControllerValue.GetAllCheckedContextItems()
+        if (checkedItems.Length == 0) {
+            MsgBox("Please check at least one item in the context list for batch mode.", "No Items Selected", "Iconi")
+            return
+        }
+
+        ; Create and mark the user message
+        userContent := [TextContent(promptText)]
+        userMsg := ChatMessage("user", userContent)
+        userMsg.AdditionalProperties["isBatchMode"] := true
+        
+        ; Add to main history once
+        messages := this.SessionManagerValue.GetCurrentSessionMessages()
+        messages.Push(userMsg)
+
+        ; Update UI to show "Cancel"
+        if (this.MyGui) {
+            this.askButton.Text := "Cancel"
+        }
+
+        try {
+            ; Get common settings
+            powerShellEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "powerShellTool")
+            fileSystemEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "fileSystemTool")
+            webSearchEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "webSearch")
+            webFetchEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "webFetch")
+
+            ; Prepare base history (filtered but WITHOUT the current trigger message)
+            baseHistory := this.SessionManagerValue.GetMessagesExcludingBatch()
+            ; Note: GetMessagesExcludingBatch normally filters out the current userMsg too if it's already marked.
+            ; We want cloned requests to have: [Past Messages] + [Current User Prompt] + [Specific Context Item]
+
+            ; Process each item
+            for item in checkedItems {
+                ; Deep clone the base history and the trigger message
+                clonedMessages := []
+                for msg in baseHistory {
+                    clonedMessages.Push(msg.Clone())
+                }
+                
+                ; Add a clone of the current prompt message to the history for THIS request
+                ; This ensures each parallel request has its own last 'user' message to modify
+                activePromptClone := userMsg.Clone()
+                clonedMessages.Push(activePromptClone)
+                
+                ; Add context specifically for THIS item to the first user message in clone
+                itemLabel := this.ContextManagerValue.GetLabelFromContextItem(item)
+                itemText := this.ContextViewControllerValue.GetTextFromContextItem(item)
+                
+                ; Find first user message in clone to attach context
+                firstUserMsg := ""
+                for msg in clonedMessages {
+                    if (msg.Role == "user") {
+                        firstUserMsg := msg
+                        break
+                    }
+                }
+                
+                if (firstUserMsg) {
+                    ; Attach context as first element of Contents
+                    firstUserMsg.Contents.InsertAt(1, TextContent("Context for this request: [" . itemLabel . "]`n" . itemText))
+                    firstUserMsg.AdditionalProperties["hasContext"] := true
+                }
+
+                ; Create a temporary session manager for LLMService (hacky but works for SendToLLM)
+                tempSessionManager := {
+                    GetCurrentSessionMessages: (*) => clonedMessages,
+                    GetCurrentSessionLLMType: (*) => this.SessionManagerValue.GetCurrentSessionLLMType(),
+                    GetMessagesExcludingBatch: (*) => clonedMessages, ; It's already filtered
+                    HasUnexecutedToolCalls: (*) => false
+                }
+
+                ; Send single request
+                newMessages := this.LLMServiceValue.SendToLLM(tempSessionManager, this.currentAnswerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled)
+
+                ; Mark responses and add to main history
+                for respMsg in newMessages {
+                    respMsg.AdditionalProperties["isBatchResponse"] := true
+                    respMsg.AdditionalProperties["batchContextItem"] := itemLabel
+                    messages.Push(respMsg)
+                }
+
+                ; Update History View as we go
+                this.HistoryViewControllerValue.UpdateChatHistoryView()
+                
+                ; Check for cancellation (simplified)
+                if (this.askButton.Text != "Cancel")
+                    break
+            }
+        } catch as e {
+            if (e.Message != "Request cancelled")
+                MsgBox("Batch processing error: " . e.Message, "Error", "Iconx")
+        } finally {
+            if (this.MyGui) {
+                this.askButton.Text := "Ask LLM"
+                this.askButton.Enabled := true
+            }
+            this.MyGui["PromptEdit"].Value := ""
+            this.HistoryViewControllerValue.UpdateChatHistoryView()
         }
     }
 

@@ -32,6 +32,10 @@ class TextContent extends ChatContent {
         this.Type := "text"
         this.Text := text
     }
+
+    Clone() {
+        return TextContent(this.Text)
+    }
 }
 
 class ImageContent extends ChatContent {
@@ -48,6 +52,10 @@ class ImageContent extends ChatContent {
         }
         this.MimeType := mimeType
     }
+
+    Clone() {
+        return ImageContent(this.Url != "" ? this.Url : this.Data, this.MimeType)
+    }
 }
 
 class AudioContent extends ChatContent {
@@ -58,6 +66,10 @@ class AudioContent extends ChatContent {
         this.Type := "audio"
         this.Data := dataOrPath
         this.Format := format
+    }
+
+    Clone() {
+        return AudioContent(this.Data, this.Format)
     }
 }
 
@@ -72,6 +84,10 @@ class FunctionCallContent extends ChatContent {
         this.Name := name
         this.Arguments := arguments
     }
+
+    Clone() {
+        return FunctionCallContent(this.Id, this.Name, this.Arguments.Clone())
+    }
 }
 
 class FunctionResultContent extends ChatContent {
@@ -82,6 +98,10 @@ class FunctionResultContent extends ChatContent {
         this.Type := "function_result"
         this.CallId := callId
         this.Result := result
+    }
+
+    Clone() {
+        return FunctionResultContent(this.CallId, this.Result)
     }
 }
 
@@ -103,6 +123,18 @@ class ChatMessage {
                 throw Error("ChatMessage content must be an Array of ChatContent objects.")
             }
         }
+    }
+
+    Clone() {
+        newMsg := ChatMessage(this.Role)
+        newMsg.AuthorName := this.AuthorName
+        for part in this.Contents {
+            newMsg.Contents.Push(part.Clone())
+        }
+        for key, value in this.AdditionalProperties {
+            newMsg.AdditionalProperties[key] := value
+        }
+        return newMsg
     }
 
     AddText(text) {
@@ -202,7 +234,7 @@ class ChatMessage {
 
         ; Copy additional properties
         ; Internal properties that should not be sent to API unless requested
-        internalProps := ["hasContext", "thinking", "duration", "tokens"] 
+        internalProps := ["hasContext", "thinking", "duration", "tokens", "isBatchMode", "isBatchResponse", "batchContextItem"] 
         
         for key, value in this.AdditionalProperties {
             isInternal := false

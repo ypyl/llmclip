@@ -12,6 +12,10 @@
 #Include HistoryViewController.ahk
 #Include PdfProcessor.ahk
 #Include LLM\TempFileManager.ahk
+#Include Controllers\MenuManager.ahk
+#Include Controllers\ChatManager.ahk
+#Include Controllers\ConversationHandler.ahk
+#Include Controllers\ClipboardManager.ahk
 
 class AppController {
     askButton := ""
@@ -35,6 +39,12 @@ class AppController {
 
     ContextViewControllerValue := ""
     HistoryViewControllerValue := ""
+    
+    MenuManagerValue := ""
+    ChatManagerValue := ""
+    ConversationHandlerValue := ""
+    ClipboardManagerValue := ""
+    
     batchModeEnabled := false  ; Track batch mode state
 
     __New() {
@@ -64,6 +74,12 @@ class AppController {
 
         this.LLMServiceValue := LLMService(this.AppSettingsValue)
         
+        ; Create specialized managers
+        this.MenuManagerValue := MenuManager(this, this.AppSettingsValue, this.SessionManagerValue)
+        this.ChatManagerValue := ChatManager(this, this.AppSettingsValue, this.SessionManagerValue, this.LLMServiceValue, this.ContextManagerValue)
+        this.ConversationHandlerValue := ConversationHandler(this, this.AppSettingsValue, this.SessionManagerValue, this.LLMServiceValue, this.MenuManagerValue)
+        this.ClipboardManagerValue := ClipboardManager(this, this.SessionManagerValue, this.ContextManagerValue)
+
         this.batchModeEnabled := false
     }
 
@@ -151,605 +167,63 @@ class AppController {
         this.HistoryViewControllerValue.UpdateChatHistoryView()
     }
 
-    SystemPromptChanged(*) {
-        this.SessionManagerValue.SetCurrentSessionSystemPrompt(this.MyGui["SystemPrompt"].Value)
-
-        ; Update the system prompt content
-        systemPrompt := this.AppSettingsValue.GetSystemPromptValue(
-            this.SessionManagerValue.GetCurrentSessionLLMType(),
-            this.SessionManagerValue.GetCurrentSessionSystemPrompt()
-        )
-        inputTemplate := this.AppSettingsValue.GetInputTemplate(
-            this.SessionManagerValue.GetCurrentSessionLLMType(),
-            this.SessionManagerValue.GetCurrentSessionSystemPrompt()
-        )
-        if (inputTemplate) {
-            this.MyGui["PromptEdit"].Value := inputTemplate  ; Set the prompt edit value to the input template
-        }
-        this.SessionManagerValue.UpdateSystemPromptContent(systemPrompt)
-        this.ContextViewControllerValue.UpdateContextView()  ; Update the context view
-    }
-
-    SelectModel(ItemName, ItemPos, MyMenu) {
-        ; Get old model name for renaming menu
-        oldModelName := this.currentModelName
-
-        ; Update session with new model index
-        this.SessionManagerValue.SetCurrentSessionLLMType(ItemPos)
-
-        ; Update menu checkmarks
-        for index, modelName in this.AppSettingsValue.llmTypes {
-            if (index = ItemPos) {
-                MyMenu.Check(modelName)
-            } else {
-                MyMenu.Uncheck(modelName)
-            }
-        }
-
-        ; Update menu bar label to show new model name
-        newModelName := "Model: " . this.AppSettingsValue.llmTypes[ItemPos]
-        try this.MyMenuBar.Rename(oldModelName, newModelName)
-        this.currentModelName := newModelName
-
-        ; Update system prompts for the new model
-        systemPromptCombo := this.MyGui["SystemPrompt"]
-        systemPromptCombo.Delete()
-        systemPromptNames := this.AppSettingsValue.GetSystemPromptNames(this.SessionManagerValue.GetCurrentSessionLLMType())
-        systemPromptCombo.Add(systemPromptNames)
-
-        if (systemPromptNames.Length > 0) {
-            systemPromptCombo.Value := 1
-            systemPromptCombo.Enabled := true
-        } else {
-            systemPromptCombo.Enabled := false
-        }
-        this.SessionManagerValue.SetCurrentSessionSystemPrompt(1)
-
-        this.SessionManagerValue.SetCurrentSessionSystemPrompt(1)
-
-        this.UpdateToolsMenuState()
-
-        this.UpdateCompressionMenuState()
-    }
-
-    SelectAnswerSize(ItemName, ItemPos, MyMenu) {
-        ; Update checkmarks
-        for _, size in ["Small", "Default", "Long"] {
-            if (size = ItemName) {
-                MyMenu.Check(size)
-            } else {
-                MyMenu.Uncheck(size)
-            }
-        }
-
-        ; Store current answer size
-        this.currentAnswerSize := ItemName
-    }
-
-    ToggleBatchMode(*) {
-        ; Toggle batch mode state
-        this.batchModeEnabled := !this.batchModeEnabled
-        
-        ; Update menu checkmark
-        if (this.batchModeEnabled) {
-            this.ModeMenu.Check("Batch Mode")
-        } else {
-            this.ModeMenu.Uncheck("Batch Mode")
-        }
-    }
-
-    SessionChanged(*) {
-        ; Update LLM type and system prompt selections
-        ; Update Model menu checkmarks and menu bar label
-        oldModelName := this.currentModelName
-
-        ; Switch to new session
-        this.SessionManagerValue.SwitchSession(this.MyGui["SessionSelect"].Value)
-
-        this.ContextViewControllerValue.UpdateContextView()
-        this.HistoryViewControllerValue.UpdateChatHistoryView()
-
-        currentModelIndex := this.SessionManagerValue.GetCurrentSessionLLMType()
-        newModelName := "Model: " . this.AppSettingsValue.llmTypes[currentModelIndex]
-
-        ; Update menu checkmarks
-        for index, modelName in this.AppSettingsValue.llmTypes {
-            if (index = currentModelIndex) {
-                this.ModelMenu.Check(modelName)
-            } else {
-                this.ModelMenu.Uncheck(modelName)
-            }
-        }
-
-        ; Update menu bar label if model changed
-        if (oldModelName != newModelName) {
-            try this.MyMenuBar.Rename(oldModelName, newModelName)
-            this.currentModelName := newModelName
-        }
-
-        ; Update system prompts for the selected LLM type
-        systemPromptCombo := this.MyGui["SystemPrompt"]
-        systemPromptCombo.Delete()
-        systemPromptCombo.Add(this.AppSettingsValue.GetSystemPromptNames(this.SessionManagerValue.GetCurrentSessionLLMType()))
-        systemPromptCombo.Value := this.SessionManagerValue.GetCurrentSessionSystemPrompt()
-
-        ; Clear response field
-        this.RenderMarkdown("")  ; Clear the response area
-
-        this.UpdateCompressionMenuState()
-    }
-
-    HandleToolConfirmation() {
-        messages := this.SessionManagerValue.GetCurrentSessionMessages()
-
-        ; Find and execute all unexecuted tool calls
-        executedAny := false
-        for msg in messages {
-            if (this.SessionManagerValue.HasToolCalls(msg)) {
-                toolResults := this.LLMServiceValue.ExecuteToolCalls(this.SessionManagerValue, msg)
-                if (toolResults.Length > 0) {
-                    for res in toolResults {
-                        messages.Push(res)
-                    }
-                    executedAny := true
-                }
-            }
-        }
-
-        if (executedAny) {
-            this.SendToLLM()
-        } else {
-            ; Should not happen if button is Confirm Tool Run, but reset just in case
-            this.MyGui["AskLLM"].Text := "Ask LLM"
-        }
-    }
-
-    HandleCancellation() {
-        if (this.LLMServiceValue) {
-            this.LLMServiceValue.Cancel()
-        }
-        if (this.MyGui) {
-            this.MyGui["AskLLM"].Text := "Ask LLM"
-        }
-    }
-
-    HandleRegenerationOrEdit(promptText) {
-        messages := this.SessionManagerValue.GetCurrentSessionMessages()
-        chatHistory := this.MyGui["ChatHistory"]
-        focused_row := chatHistory.GetNext()
-
-        if (focused_row > 0) {
-            selectedMsg := messages[focused_row]
-
-            if (selectedMsg.Role == "user") {
-                if (promptText == "") {
-                    ; Regeneration case: Load message content into prompt for editing
-                    this.MyGui["PromptEdit"].Value := this.SessionManagerValue.GetUserMessageTextWithoutContext(selectedMsg)
-                    return true
-                } else {
-                    ; Edit Mode: Build new message with text and images
-                    isImageEnabled := this.AppSettingsValue.IsImageInputEnabled(this.SessionManagerValue.GetCurrentSessionLLMType())
-                    images := isImageEnabled ? this.ContextViewControllerValue.GetCheckedImages() : []
-                    newContent := this.SessionManagerValue.BuildUserMessage(promptText, images)
-
-                    ; Check if this is the first user message with context
-                    messages := this.SessionManagerValue.GetCurrentSessionMessages()
-                    isFirstUserMsg := false
-                    for i, msg in messages {
-                        if (msg.Role == "user") {
-                            isFirstUserMsg := (msg == selectedMsg)
-                            break
-                        }
-                    }
-
-                    ; If first user message with context, preserve the context
-                    if (isFirstUserMsg && selectedMsg.AdditionalProperties.Has("hasContext")
-                        && selectedMsg.AdditionalProperties["hasContext"]
-                        && selectedMsg.Contents.Length > 0 && (selectedMsg.Contents[1] is TextContent)) {
-                        ; Keep the context (first TextContent) and add new content after it
-                        contextText := selectedMsg.Contents[1]
-                        newContentWithContext := [contextText]
-                        for part in newContent {
-                            newContentWithContext.Push(part)
-                        }
-                        selectedMsg.Contents := newContentWithContext
-                    } else {
-                        ; Replace the message contents normally
-                        selectedMsg.Contents := newContent
-                    }
-
-                    ; Truncate history after this message
-                    if (this.SessionManagerValue.TruncateMessages(focused_row)) {
-                        this.SendToLLM()
-                        this.MyGui["PromptEdit"].Value := ""
-                        ; Clear selection to exit "Edit Mode"
-                        chatHistory.Modify(focused_row, "-Select")
-                        return true
-                    }
-                }
-            }
-        }
-        return false
-    }
-
-    AskToLLM(*) {
-        ; Check if we are in "Confirm Tool Run" mode (Agent Mode tool execution)
-        if (this.MyGui["AskLLM"].Text == "Confirm Tool Run") {
-            this.HandleToolConfirmation()
-            return
-        }
-
-        if (this.MyGui["AskLLM"].Text == "Cancel") {
-            this.HandleCancellation()
-            return
-        }
-
-        promptText := this.MyGui["PromptEdit"].Value
-
-        ; Check for regeneration or edit case
-        if (this.HandleRegenerationOrEdit(promptText)) {
-            return
-        }
-
-        ; Check for Batch Mode
-        if (this.batchModeEnabled) {
-            this.SendBatchToLLM(promptText)
-            return
-        }
-
-        messages := this.SessionManagerValue.GetCurrentSessionMessages()
-        userMessageContent := ""
-        if (promptText != "") {
-            userMessageContent := promptText
-        }
-
-        contextItems := this.SessionManagerValue.GetCurrentSessionContext()
-        isImageEnabled := this.AppSettingsValue.IsImageInputEnabled(this.SessionManagerValue.GetCurrentSessionLLMType())
-
-        images := isImageEnabled ? this.ContextViewControllerValue.GetCheckedImages() : []
-        userMessageContent := this.SessionManagerValue.BuildUserMessage(userMessageContent, images)
-
-        ; Allow empty user message if there's context to attach
-        contextBox := this.MyGui["ContextBox"]
-        hasContext := this.ContextViewControllerValue.HasAnyCheckedItem()
-        if (userMessageContent.Length > 0 || hasContext) {
-            messages.Push(ChatMessage("user", userMessageContent))
-        }
-        this.SendToLLM()
-        this.MyGui["PromptEdit"].Value := ""  ; Clear prompt field
-
-        if (this.TrayManagerValue.isRecording) {
-            this.TrayManagerValue.StopRecording(this.SessionManagerValue)
-        }
-    }
-
-    SendBatchToLLM(promptText) {
-        checkedItems := this.ContextViewControllerValue.GetAllCheckedContextItems()
-        if (checkedItems.Length == 0) {
-            MsgBox("Please check at least one item in the context list for batch mode.", "No Items Selected", "Iconi")
-            return
-        }
-
-        ; Create and mark the user message
-        userContent := [TextContent(promptText)]
-        userMsg := ChatMessage("user", userContent)
-        userMsg.AdditionalProperties["isBatchMode"] := true
-        
-        ; Add to main history once
-        messages := this.SessionManagerValue.GetCurrentSessionMessages()
-        messages.Push(userMsg)
-
-        ; Update UI to show "Cancel"
-        if (this.MyGui) {
-            this.askButton.Text := "Cancel"
-        }
-
-        try {
-            ; Get common settings
-            powerShellEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "powerShellTool")
-            fileSystemEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "fileSystemTool")
-            webSearchEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "webSearch")
-            webFetchEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "webFetch")
-
-            ; Prepare base history (filtered but WITHOUT the current trigger message)
-            baseHistory := this.SessionManagerValue.GetMessagesExcludingBatch()
-            ; Note: GetMessagesExcludingBatch normally filters out the current userMsg too if it's already marked.
-            ; We want cloned requests to have: [Past Messages] + [Current User Prompt] + [Specific Context Item]
-
-            ; Process each item
-            for item in checkedItems {
-                ; Deep clone the base history and the trigger message
-                clonedMessages := []
-                for msg in baseHistory {
-                    clonedMessages.Push(msg.Clone())
-                }
-                
-                ; Add a clone of the current prompt message to the history for THIS request
-                ; This ensures each parallel request has its own last 'user' message to modify
-                activePromptClone := userMsg.Clone()
-                clonedMessages.Push(activePromptClone)
-                
-                ; Add context specifically for THIS item to the first user message in clone
-                itemLabel := this.ContextManagerValue.GetLabelFromContextItem(item)
-                itemText := this.ContextViewControllerValue.GetTextFromContextItem(item)
-                
-                ; Find first user message in clone to attach context
-                firstUserMsg := ""
-                for msg in clonedMessages {
-                    if (msg.Role == "user") {
-                        firstUserMsg := msg
-                        break
-                    }
-                }
-                
-                if (firstUserMsg) {
-                    ; Attach context as first element of Contents
-                    firstUserMsg.Contents.InsertAt(1, TextContent("Context for this request: [" . itemLabel . "]`n" . itemText))
-                    firstUserMsg.AdditionalProperties["hasContext"] := true
-                }
-
-                ; Create a temporary session manager for LLMService (hacky but works for SendToLLM)
-                tempSessionManager := {
-                    GetCurrentSessionMessages: (*) => clonedMessages,
-                    GetCurrentSessionLLMType: (*) => this.SessionManagerValue.GetCurrentSessionLLMType(),
-                    GetMessagesExcludingBatch: (*) => clonedMessages, ; It's already filtered
-                    HasUnexecutedToolCalls: (*) => false
-                }
-
-                ; Send single request
-                newMessages := this.LLMServiceValue.SendToLLM(tempSessionManager, this.currentAnswerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled)
-
-                ; Mark responses and add to main history
-                for respMsg in newMessages {
-                    respMsg.AdditionalProperties["isBatchResponse"] := true
-                    respMsg.AdditionalProperties["batchContextItem"] := itemLabel
-                    messages.Push(respMsg)
-                }
-
-                ; Update History View as we go
-                this.HistoryViewControllerValue.UpdateChatHistoryView()
-                
-                ; Check for cancellation (simplified)
-                if (this.askButton.Text != "Cancel")
-                    break
-            }
-        } catch as e {
-            if (e.Message != "Request cancelled")
-                MsgBox("Batch processing error: " . e.Message, "Error", "Iconx")
-        } finally {
-            if (this.MyGui) {
-                this.askButton.Text := "Ask LLM"
-                this.askButton.Enabled := true
-            }
-            this.MyGui["PromptEdit"].Value := ""
-            this.HistoryViewControllerValue.UpdateChatHistoryView()
-        }
-    }
-
-    SendToLLM() {
-        messages := this.SessionManagerValue.GetCurrentSessionMessages()
-
-        ; Update the system prompt content
-        systemPrompt := this.AppSettingsValue.GetSystemPromptValue(
-            this.SessionManagerValue.GetCurrentSessionLLMType(),
-            this.SessionManagerValue.GetCurrentSessionSystemPrompt()
-        )
-        this.SessionManagerValue.UpdateSystemPromptContent(systemPrompt)
-
-        context := this.SessionManagerValue.GetCurrentSessionContext()
-        contextBox := this.MyGui["ContextBox"]
-
-        ; Build context message content
-        additionalContext := this.ContextViewControllerValue.BuildAdditionalContextMessage(context, contextBox.Value)
-
-        ; Find first user message
-        firstUserMsg := ""
-        for i, msg in messages {
-            if (msg.Role == "user") {
-                firstUserMsg := msg
-                break
-            }
-        }
-
-        if (firstUserMsg) {
-            ; Check if message has existing context
-            if (firstUserMsg.AdditionalProperties.Has("hasContext") && firstUserMsg.AdditionalProperties["hasContext"]) {
-                if (additionalContext != "") {
-                    ; Update existing context (first item in Contents)
-                    if (firstUserMsg.Contents.Length > 0 && (firstUserMsg.Contents[1] is TextContent)) {
-                        firstUserMsg.Contents[1].Text := additionalContext
-                    }
-                } else {
-                    ; Remove existing context
-                    firstUserMsg.Contents.RemoveAt(1)
-                    firstUserMsg.AdditionalProperties["hasContext"] := false
-                }
-            } else {
-                ; No existing context
-                if (additionalContext != "") {
-                    ; Insert new context at the beginning
-                    firstUserMsg.Contents.InsertAt(1, TextContent(additionalContext))
-                    firstUserMsg.AdditionalProperties["hasContext"] := true
-                }
-            }
-        }
-
-        ; Disable Ask LLM button while processing
-        if (this.MyGui) {
-            this.askButton.Text := "Cancel"
-        }
-
-        try {
-            ; Check tool enabled
-            powerShellEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "powerShellTool")
-            fileSystemEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "fileSystemTool")
-            webSearchEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "webSearch")
-            webFetchEnabled := this.AppSettingsValue.IsToolEnabled(this.SessionManagerValue.GetCurrentSessionLLMType(), "webFetch")
-
-            newMessages := this.LLMServiceValue.SendToLLM(this.SessionManagerValue, this.currentAnswerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled)
-
-            ; Check for unexecuted Tool Calls
-            if (this.SessionManagerValue.HasUnexecutedToolCalls()) {
-                this.MyGui["AskLLM"].Text := "Confirm Tool Run"
-            } else {
-                this.MyGui["AskLLM"].Text := "Ask LLM"
-            }
-
-        } catch as e {
-            if (e.Message == "Request cancelled") {
-                ; Do nothing on cancellation
-            } else {
-                throw e
-            }
-        } finally {
-            ; Re-enable Ask LLM button
-            if (this.MyGui) {
-                if (this.MyGui["AskLLM"].Text == "Cancel") {
-                    this.MyGui["AskLLM"].Text := "Ask LLM"
-                }
-                this.askButton.Enabled := true
-            }
-        }
-        this.HistoryViewControllerValue.UpdateChatHistoryView()  ; Update the chat history view
-
-        if (messages.Length > 0) {
-            this.RenderMarkdown(this.SessionManagerValue.GetMessageAsString(messages[messages.Length]))
-        }
-
-        ; Uncheck images after sending
-        this.ContextViewControllerValue.UncheckSentImages()
-    }
+    SystemPromptChanged(*) => this.ConversationHandlerValue.SystemPromptChanged()
+    SelectModel(ItemName, ItemPos, MyMenu) => this.MenuManagerValue.SelectModel(ItemName, ItemPos, MyMenu)
+    SelectAnswerSize(ItemName, ItemPos, MyMenu) => this.MenuManagerValue.SelectAnswerSize(ItemName, ItemPos, MyMenu)
+    ToggleBatchMode(*) => this.ChatManagerValue.ToggleBatchMode()
+    SessionChanged(*) => this.ConversationHandlerValue.SessionChanged()
+    HandleToolConfirmation() => this.ChatManagerValue.HandleToolConfirmation()
+    HandleCancellation() => this.ChatManagerValue.HandleCancellation()
+    HandleRegenerationOrEdit(promptText) => this.ChatManagerValue.HandleRegenerationOrEdit(promptText)
+    AskToLLM(*) => this.ChatManagerValue.AskToLLM()
+    SendBatchToLLM(promptText) => this.ChatManagerValue.SendBatchToLLM(promptText)
+    SendToLLM() => this.ChatManagerValue.SendToLLM()
+    ResetAll(*) => this.ConversationHandlerValue.ResetAll()
+    CompressHistory(*) => this.ConversationHandlerValue.CompressHistory()
+    ExtractLearnings(*) => this.ConversationHandlerValue.ExtractLearnings()
+    ExitApplication(*) => ExitApp()
+    ClipChanged(DataType) => this.ClipboardManagerValue.ClipChanged(DataType)
+    SaveConversation(*) => this.ConversationHandlerValue.SaveConversation()
+    LoadConversation(*) => this.ConversationHandlerValue.LoadConversation()
+    ReloadSettings(*) => this.ConversationHandlerValue.ReloadSettings()
+    UpdateCompressionMenuState() => this.MenuManagerValue.UpdateCompressionMenuState()
+    UpdateToolsMenuState() => this.MenuManagerValue.UpdateToolsMenuState()
+    ToggleTool(toolName, *) => this.MenuManagerValue.ToggleTool(toolName)
 
     GuiClose(*) {
         this.MyGui.Destroy()
         this.guiShown := false
     }
 
-    ResetAll(*) {
-        ; Reset current session
-        this.SessionManagerValue.ResetCurrentSession()
+    AppendToPrompt(text) {
+        currentText := this.MyGui["PromptEdit"].Value
+        if (currentText != "") {
+            currentText .= "`n"
+        }
+        this.MyGui["PromptEdit"].Value := currentText . "> " . text . "`n"
+    }
 
-        ; Update UI
-        this.HistoryViewControllerValue.UpdateChatHistoryView()
+    PromptChange(GuiCtrl, Info) {
+        if (GetKeyState("Enter") && !GetKeyState("Shift")) {
+            ; Get the last character
+            text := GuiCtrl.Value
+            if (SubStr(text, -1) == "`n") {
+                ; Remove the trailing newline
+                GuiCtrl.Value := SubStr(text, 1, -1)
+                ; Send the prompt
+                this.AskToLLM()
+                return true
+            }
+        }
+    }
+    
+    ToggleRecording(*) {
+        this.ToggleDisplay()
+    }
+
+    ClearAllContext(*) {
+        this.SessionManagerValue.SetCurrentSessionContext([])
         this.ContextViewControllerValue.UpdateContextView()
-
-        ; Clear response and prompt
-        this.RenderMarkdown("")  ; Clear the response area
-    }
-
-    CompressHistory(*) {
-        messages := this.SessionManagerValue.GetCurrentSessionMessages()
-
-        ; Check if there are enough messages to compress (at least 3: system + 2 others)
-        if (messages.Length < 3) {
-            MsgBox("Not enough messages to compress. Need at least 2 messages besides the system message.", "Info", "Iconi")
-            return
-        }
-
-        ; Format the conversation history for compression
-        conversationText := this.SessionManagerValue.FormatMessagesForCompression()
-
-        if (conversationText == "") {
-            MsgBox("No conversation history to compress.", "Info", "Iconi")
-            return
-        }
-
-        ; Build compression prompt
-        compressionPrompt := this.AppSettingsValue.GetCompressionPrompt(this.SessionManagerValue.GetCurrentSessionLLMType())
-
-        if (compressionPrompt == "") {
-            MsgBox("Compression prompt not configured for this provider.", "Info", "Iconi")
-            return
-        }
-
-        compressionPrompt .= "`n`nCONVERSATION:`n" conversationText
-
-        ; Create a temporary message array with just system message and compression request
-        tempMessages := [
-            messages[1],  ; Keep system message
-            ChatMessage("user", [TextContent(compressionPrompt)])
-        ]
-
-        ; Disable Ask LLM button while processing
-        if (this.MyGui) {
-            this.askButton.Text := "Compressing..."
-            this.askButton.Enabled := false
-        }
-
-        try {
-            compressedMsg := this.LLMServiceValue.CompressHistory(this.SessionManagerValue)
-
-            if (compressedMsg != "") {
-                 ; Update UI
-                 this.HistoryViewControllerValue.UpdateChatHistoryView()
-                 this.RenderMarkdown(this.SessionManagerValue.GetMessageAsString(compressedMsg))
-            }
-
-        } catch as e {
-            MsgBox("Compression failed: " . e.Message, "Error", "Iconx")
-        } finally {
-            ; Re-enable Ask LLM button
-            if (this.MyGui) {
-                this.askButton.Text := "Ask LLM"
-                this.askButton.Enabled := true
-            }
-        }
-    }
-
-    ExtractLearnings(*) {
-        messages := this.SessionManagerValue.GetCurrentSessionMessages()
-
-        ; Check if there are enough messages (at least 2: system + 1 user/assistant)
-        if (messages.Length < 2) {
-            MsgBox("Not enough conversation history to extract notes.", "Info", "Iconi")
-            return
-        }
-
-        ; Format the conversation history
-        conversationText := this.SessionManagerValue.FormatMessagesForCompression()
-
-        if (conversationText == "") {
-            MsgBox("No conversation history to extract from.", "Info", "Iconi")
-            return
-        }
-
-        ; Get learnings prompt
-        learningsPrompt := this.AppSettingsValue.GetLearningsPrompt(this.SessionManagerValue.GetCurrentSessionLLMType())
-        learningsPrompt .= "`n`nCONVERSATION:`n" conversationText
-
-        ; Create temporary messages for the extraction request
-        tempMessages := [
-            messages[1],  ; Keep system message
-            ChatMessage("user", [TextContent(learningsPrompt)])
-        ]
-
-        ; Disable Ask LLM button while processing
-        if (this.MyGui) {
-            originalButtonText := this.askButton.Text
-            this.askButton.Text := "Extracting..."
-            this.askButton.Enabled := false
-        }
-
-        try {
-            extractedNotes := this.LLMServiceValue.ExtractLearnings(this.SessionManagerValue)
-
-            if (extractedNotes != "") {
-                UIBuilder.ShowNotesWindow(extractedNotes)
-            }
-
-        } catch as e {
-            MsgBox("Extraction failed: " . e.Message, "Error", "Iconx")
-        } finally {
-            ; Re-enable Ask LLM button
-            if (this.MyGui) {
-                this.askButton.Text := "Ask LLM" ; Reset to default
-                this.askButton.Enabled := true
-            }
-        }
-    }
-
-    ExitApplication(*) {
-        ExitApp
     }
 
     HasVal(haystack, needle) {
@@ -781,265 +255,5 @@ class AppController {
             return true
 
         return false
-    }
-
-    ClipChanged(DataType) {
-        if (this.TrayManagerValue.isRecording) {
-            localTxtFromClipboardArray := this.ClipboardParserValue.Parse()
-
-            ; Add non-duplicate items to context
-            context := this.SessionManagerValue.GetCurrentSessionContext()
-
-            for item in localTxtFromClipboardArray {
-                ; Add the original item first
-                if !this.HasContent(context, item) {
-                    context.Push(item)
-
-                    ; Check if it's a PDF and process it
-                    ; if (this.ContextManagerValue.IsPdf(item)) {
-                    ;     ; Check if pdftotext exists
-                    ;     pdftotextPath := PdfProcessor.PdfToolsDir . "\pdftotext.exe"
-                    ;     if FileExist(pdftotextPath) {
-                    ;         ; Extract Text
-                    ;         extractedTextFile := PdfProcessor.ExtractText(pdftotextPath, item)
-                    ;         if (extractedTextFile && !this.HasContent(context, extractedTextFile)) {
-                    ;             context.Push(extractedTextFile)
-                    ;         }
-                    ;     }
-
-                        ; Extract Images
-                        ; extractedImages := PdfProcessor.ExtractImages(item)
-                        ; for imgPath in extractedImages {
-                        ;      if !this.HasContent(context, imgPath) {
-                        ;         context.Push(imgPath)
-                        ;      }
-                        ; }
-                    ; }
-                }
-            }
-
-            ; Update session contexts
-            this.SessionManagerValue.SetCurrentSessionContext(context)
-
-            ; Update Context in GUI if shown
-            if (this.guiShown) {
-                this.ContextViewControllerValue.UpdateContextView()
-            }
-        }
-    }
-
-    AppendToPrompt(text) {
-        currentText := this.MyGui["PromptEdit"].Value
-        if (currentText != "") {
-            currentText .= "`n"
-        }
-        this.MyGui["PromptEdit"].Value := currentText . "> " . text . "`n"
-    }
-
-    PromptChange(GuiCtrl, Info) {
-        if (GetKeyState("Enter") && !GetKeyState("Shift")) {
-            ; Get the last character
-            text := GuiCtrl.Value
-            if (SubStr(text, -1) == "`n") {
-                ; Remove the trailing newline
-                GuiCtrl.Value := SubStr(text, 1, -1)
-                ; Send the prompt
-                this.AskToLLM()
-                return true
-            }
-        }
-    }
-
-    ClearAllContext(*) {
-        this.SessionManagerValue.SetCurrentSessionContext([])
-        this.ContextViewControllerValue.UpdateContextView()
-    }
-
-    ToggleRecording(*) {
-        this.TrayManagerValue.ToggleRecording(this.SessionManagerValue)
-    }
-
-    SaveConversation(*) {
-        state := this.SessionManagerValue.ExportSessionState()
-        jsonStr := JSON.Dump(state, true) ; Pretty print
-
-        selectedFile := FileSelect("S16", "conversation.json", "Save Conversation", "JSON Files (*.json)")
-        if (selectedFile) {
-            if (FileExist(selectedFile)) {
-                FileDelete(selectedFile)
-            }
-            FileAppend(jsonStr, selectedFile)
-        }
-    }
-
-    LoadConversation(*) {
-        selectedFile := FileSelect("3", , "Load Conversation", "JSON Files (*.json)")
-        if (selectedFile) {
-            try {
-                fileContent := FileRead(selectedFile)
-                state := JSON.Load(fileContent)
-
-                this.SessionManagerValue.ImportSessionState(state)
-
-                ; Update LLM Type
-                currentLLMType := this.SessionManagerValue.GetCurrentSessionLLMType()
-                newModelName := "Model: " . this.AppSettingsValue.llmTypes[currentLLMType]
-
-                ; Update checkmarks
-                for index, modelName in this.AppSettingsValue.llmTypes {
-                    if (index = currentLLMType) {
-                        this.ModelMenu.Check(modelName)
-                    } else {
-                        this.ModelMenu.Uncheck(modelName)
-                    }
-                }
-
-                ; Update MenuBar label
-                if (this.currentModelName != newModelName) {
-                    try this.MyMenuBar.Rename(this.currentModelName, newModelName)
-                    this.currentModelName := newModelName
-                }
-
-                ; Update System Prompt List and Selection
-                systemPromptCombo := this.MyGui["SystemPrompt"]
-                systemPromptCombo.Delete()
-                systemPromptCombo.Add(this.AppSettingsValue.GetSystemPromptNames(this.SessionManagerValue.GetCurrentSessionLLMType()))
-                systemPromptCombo.Value := this.SessionManagerValue.GetCurrentSessionSystemPrompt()
-
-                ; Update System Prompt Content
-                systemPrompt := this.AppSettingsValue.GetSystemPromptValue(
-                    this.SessionManagerValue.GetCurrentSessionLLMType(),
-                    this.SessionManagerValue.GetCurrentSessionSystemPrompt()
-                )
-                this.SessionManagerValue.UpdateSystemPromptContent(systemPrompt)
-
-                ; Update Context View
-                this.ContextViewControllerValue.UpdateContextView()
-
-                ; Update Chat History View
-                this.HistoryViewControllerValue.UpdateChatHistoryView()
-                
-                ; Update Tools Menu
-                this.UpdateToolsMenuState()
-
-                ; Clear Response Area
-                this.RenderMarkdown("")
-            } catch as e {
-                MsgBox("Failed to load conversation: " . e.Message, "Error", "Iconx")
-            }
-        }
-    }
-
-    ReloadSettings(*) {
-        ; Reload settings from disk
-        this.AppSettingsValue.Reload()
-
-        ; Refresh LLM Type dropdown
-        ; Refresh Model Menu
-        this.ModelMenu.Delete() ; Delete all items
-        for index, modelName in this.AppSettingsValue.llmTypes {
-            this.ModelMenu.Add(modelName, ObjBindMethod(this, "SelectModel"))
-        }
-
-        currentLLMType := this.SessionManagerValue.GetCurrentSessionLLMType()
-
-        ; Validate index
-        if (currentLLMType > this.AppSettingsValue.llmTypes.Length) {
-            currentLLMType := 1
-            this.SessionManagerValue.SetCurrentSessionLLMType(1)
-        }
-
-        ; Check the current model
-        newModelName := "Model: " . this.AppSettingsValue.llmTypes[currentLLMType]
-        this.ModelMenu.Check(this.AppSettingsValue.llmTypes[currentLLMType])
-
-        ; Update MenuBar label
-        if (this.currentModelName != newModelName) {
-            try this.MyMenuBar.Rename(this.currentModelName, newModelName)
-            this.currentModelName := newModelName
-        }
-
-        ; Refresh System Prompt dropdown
-        systemPromptCombo := this.MyGui["SystemPrompt"]
-        currentSystemPrompt := this.SessionManagerValue.GetCurrentSessionSystemPrompt()
-
-        systemPromptCombo.Delete()
-        systemPromptCombo.Add(this.AppSettingsValue.GetSystemPromptNames(this.SessionManagerValue.GetCurrentSessionLLMType()))
-
-        ; Try to preserve current selection, otherwise default to first
-        try {
-            systemPromptCombo.Value := currentSystemPrompt
-        } catch {
-            systemPromptCombo.Value := 1
-            this.SessionManagerValue.SetCurrentSessionSystemPrompt(1)
-        }
-
-        this.UpdateToolsMenuState()
-
-        this.UpdateCompressionMenuState()
-    }
-
-    UpdateCompressionMenuState() {
-        if (!this.HistoryMenu)
-            return
-
-        currentLLMIndex := this.SessionManagerValue.GetCurrentSessionLLMType()
-        compressionPrompt := this.AppSettingsValue.GetCompressionPrompt(currentLLMIndex)
-
-        if (compressionPrompt == "") {
-            this.HistoryMenu.Disable("Compress")
-        } else {
-            this.HistoryMenu.Enable("Compress")
-        }
-    }
-
-    UpdateToolsMenuState() {
-        if (!this.ToolsMenu)
-            return
-
-        currentLLMIndex := this.SessionManagerValue.GetCurrentSessionLLMType()
-        
-        ; Update PowerShell
-        powerShellEnabled := this.AppSettingsValue.IsToolEnabled(currentLLMIndex, "powerShellTool")
-        if (powerShellEnabled) {
-            this.ToolsMenu.Check("PowerShell")
-        } else {
-            this.ToolsMenu.Uncheck("PowerShell")
-        }
-
-        ; Update File System
-        fileSystemEnabled := this.AppSettingsValue.IsToolEnabled(currentLLMIndex, "fileSystemTool")
-        if (fileSystemEnabled) {
-            this.ToolsMenu.Check("File System")
-        } else {
-            this.ToolsMenu.Uncheck("File System")
-        }
-
-        ; Update Web Search
-        webSearchEnabled := this.AppSettingsValue.IsToolEnabled(currentLLMIndex, "webSearch")
-        if (webSearchEnabled) {
-            this.ToolsMenu.Check("Web Search")
-        } else {
-            this.ToolsMenu.Uncheck("Web Search")
-        }
-
-        ; Update Web Fetch
-        webFetchEnabled := this.AppSettingsValue.IsToolEnabled(currentLLMIndex, "webFetch")
-        if (webFetchEnabled) {
-            this.ToolsMenu.Check("Web Fetch")
-        } else {
-            this.ToolsMenu.Uncheck("Web Fetch")
-        }
-    }
-
-    ToggleTool(toolName, *) {
-        currentLLMIndex := this.SessionManagerValue.GetCurrentSessionLLMType()
-        isEnabled := this.AppSettingsValue.IsToolEnabled(currentLLMIndex, toolName)
-        
-        ; Toggle state
-        this.AppSettingsValue.SetToolEnabled(currentLLMIndex, toolName, !isEnabled)
-        
-        ; Update UI
-        this.UpdateToolsMenuState()
     }
 }

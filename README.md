@@ -14,18 +14,19 @@ LLMClip monitors your clipboard and aggregates copied text, files, and folders i
 - **Smart Capture**: Automatically captures copied text, file paths, and folder contents.
 - **Context Awareness**:
     - **Files & Folders**: Reads content of text-based files and lists folder contents.
-    - **PDF Support**: Auto-extracts text and images from PDF files (requires `pdftotext` and `pdfimages`).
     - **Images**: Supports clipboard images and image files for multimodal LLMs.
     - **URLs**: Extracts content and metadata from web links.
 - **Selection Control**: Checkboxes allow you to select specific items from your history to send as context.
 
 ### 🤖 LLM Integration
 - **Multi-Provider**: Pre-configured support for **Groq**, **Ollama**, **Google (Gemini)**, and **OpenAI**.
-- **Customizable**: Easy `settings.json` configuration for models, system prompts, and API keys.
+- **Customizable**: Flexible configuration via `settings.json`, `roles.json`, and `system_prompts.json` for models and behavior.
 - **Tools**: Capable of executing **PowerShell** commands for file system operations when enabled.
 
 ### 💬 Advanced Chat Interface
 - **Markdown Rendering**: chat history is rendered with Markdown, including syntax highlighting for code blocks.
+    - **Mermaid Diagrams**: Supports rendering of Mermaid diagrams for visual workflows and charts.
+    - **Save as SVG**: Save generated diagrams directly from the chat interface.
 - **History Management**:
     - **Compression**: "Compress" feature to summarize long conversations and save tokens.
     - **Extract Notes**: "Extract Learnings" to summarize key information from a session.
@@ -36,12 +37,11 @@ LLMClip monitors your clipboard and aggregates copied text, files, and folders i
 
 1.  **Install AutoHotkey v2**: Download from [autohotkey.com](https://www.autohotkey.com/).
 2.  **Install cURL**: Ensure `curl` is installed (`winget install cURL.cURL` or via [curl.se](https://curl.se/)).
-3.  **PDF Tools (Optional)**: For PDF support, place `pdftotext.exe` and `pdfimages.exe` in a `pdf/` folder within the project directory. (These are part of Xpdf or Poppler utils).
-4.  **Clone Repository**: Clone or download this project.
-5.  **Configuration**: 
+3.  **Clone Repository**: Clone or download this project.
+4.  **Configuration**: 
     - Create a `keys.ini` file for your API keys.
     - (Optional) Customize `providers.json`, `roles.json`, and `system_prompts.json` in the root directory.
-6.  **Run**: Execute `clip.ahk`.
+5.  **Run**: Execute `clip.ahk`.
 
 ## Configuration
 

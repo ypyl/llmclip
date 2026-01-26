@@ -68,6 +68,11 @@ class LLMClient {
                 curlCmd := StrReplace(curlCmd, "{API_KEY}", selectedSettings["api_key"])
             }
 
+            ; Report error if API_KEY is still missing but required by the template
+            if (InStr(curlCmd, "{API_KEY}")) {
+                throw Error("Missing API_KEY for provider: " . selectedLLMType)
+            }
+
             ; Execute curl
             Run(curlCmd, , "Hide", &pid)
             this.pid := pid

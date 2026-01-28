@@ -1,8 +1,21 @@
 #Requires AutoHotkey 2.0
-#Include DI\ServiceContainer.ahk
+#Include Settings\ConfigurationManager.ahk
+#Include LLM\LLMService.ahk
+#Include ClipboardParser.ahk
+#Include WebViewManager.ahk
+#Include ContextManager.ahk
+#Include TrayManager.ahk
 #Include UIConfig.ahk
 #Include UIBuilder.ahk
+#Include LLM\Types.ahk
+#Include ContextViewController.ahk
+#Include HistoryViewController.ahk
+#Include PdfProcessor.ahk
 #Include LLM\TempFileManager.ahk
+#Include Controllers\MenuManager.ahk
+#Include Controllers\ChatManager.ahk
+#Include Controllers\ConversationHandler.ahk
+#Include Controllers\ClipboardManager.ahk
 
 class AppController {
     askButton := ""
@@ -35,33 +48,38 @@ class AppController {
     batchModeEnabled := false  ; Track batch mode state
 
     __New() {
-        container := ServiceContainer.GetInstance()
-        
-        ; Get core services from container
-        this.configManager := container.Get("ConfigurationManager")
-        this.SessionManagerValue := container.Get("SessionManager")
-        this.ClipboardParserValue := container.Get("ClipboardParser")
-        this.WebViewManagerValue := container.Get("WebViewManager")
-        this.ContextManagerValue := container.Get("ContextManager")
-        this.LLMServiceValue := container.Get("LLMService")
-        
-        ; Create TrayManager with callbacks
-        this.TrayManagerValue := container.Get("TrayManagerFactory",
-            ObjBindMethod(this, "DisplayLLMUserInterface"),
-            ObjBindMethod(this, "UpdateUiBasesOnRecordingStatus"),
-            ObjBindMethod(this, "ExitApplication")
+        ; Create configuration manager instance
+        this.configManager := ConfigurationManager.GetInstance()
+
+        ; Create session manager instance with default values from ConfigurationManager
+        this.SessionManagerValue := SessionManager(
+            this.configManager.selectedLLMTypeIndex,
+            this.configManager.GetSystemPromptValue(this.configManager.selectedLLMTypeIndex, 1)
         )
+
+        ; Create clipboard parser instance
+        this.ClipboardParserValue := ClipboardParser()
+
+        ; Create WebView manager instance
+        this.WebViewManagerValue := WebViewManager()
+
+        this.ContextManagerValue := ContextManager()
+
+        ; Create TrayManager instance
+        this.TrayManagerValue := TrayManager(ObjBindMethod(this, "DisplayLLMUserInterface"), ObjBindMethod(this, "UpdateUiBasesOnRecordingStatus"), ObjBindMethod(this,
+            "ExitApplication"), this.ContextManagerValue)
+
+        this.ContextViewControllerValue := ContextViewController(this.SessionManagerValue, this.configManager, this.ContextManagerValue, this.WebViewManagerValue)
+        this.HistoryViewControllerValue := HistoryViewController(this.SessionManagerValue, this.WebViewManagerValue, this.configManager)
+
+        this.LLMServiceValue := LLMService(this.configManager)
         
-        ; Get view controllers
-        this.ContextViewControllerValue := container.Get("ContextViewController")
-        this.HistoryViewControllerValue := container.Get("HistoryViewController")
-        
-        ; Create managers that need app reference
-        this.MenuManagerValue := container.Get("MenuManagerFactory", this)
-        this.ChatManagerValue := container.Get("ChatManagerFactory", this)
-        this.ConversationHandlerValue := container.Get("ConversationHandlerFactory", this)
-        this.ClipboardManagerValue := container.Get("ClipboardManagerFactory", this)
-        
+        ; Create specialized managers
+        this.MenuManagerValue := MenuManager(this, this.configManager, this.SessionManagerValue)
+        this.ChatManagerValue := ChatManager(this, this.configManager, this.SessionManagerValue, this.LLMServiceValue, this.ContextManagerValue)
+        this.ConversationHandlerValue := ConversationHandler(this, this.configManager, this.SessionManagerValue, this.LLMServiceValue, this.MenuManagerValue)
+        this.ClipboardManagerValue := ClipboardManager(this, this.SessionManagerValue, this.ContextManagerValue)
+
         this.batchModeEnabled := false
     }
 

@@ -16,6 +16,7 @@
 #Include Controllers\ClipboardManager.ahk
 #Include Services\FileService.ahk
 #Include Commands\SaveConversationCommand.ahk
+#Include Commands\LoadConversationCommand.ahk
 
 class AppController {
     view := ""
@@ -40,6 +41,7 @@ class AppController {
 
     FileServiceValue := ""
     SaveConversationCommandValue := ""
+    LoadConversationCommandValue := ""
     
     batchModeEnabled := false  ; Track batch mode state
 
@@ -77,8 +79,9 @@ class AppController {
         ; Initialize Services and Commands
         this.FileServiceValue := FileService()
         this.SaveConversationCommandValue := SaveConversationCommand(this.SessionManagerValue, this.FileServiceValue)
+        this.LoadConversationCommandValue := LoadConversationCommand(this.SessionManagerValue, this.FileServiceValue)
 
-        this.ConversationHandlerValue := ConversationHandler(this, this.configManager, this.SessionManagerValue, this.LLMServiceValue, this.MenuManagerValue, this.SaveConversationCommandValue)
+        this.ConversationHandlerValue := ConversationHandler(this, this.configManager, this.SessionManagerValue, this.LLMServiceValue, this.MenuManagerValue, this.SaveConversationCommandValue, this.LoadConversationCommandValue)
         this.ClipboardManagerValue := ClipboardManager(this, this.SessionManagerValue, this.ContextManagerValue)
 
         this.batchModeEnabled := false

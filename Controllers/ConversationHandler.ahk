@@ -6,14 +6,16 @@ class ConversationHandler {
     sessionManager := ""
     llmService := ""
     saveConversationCommand := ""
+    loadConversationCommand := ""
 
-    __New(controller, configManager, sessionManager, llmService, menuManager, saveConversationCommand) {
+    __New(controller, configManager, sessionManager, llmService, menuManager, saveConversationCommand, loadConversationCommand) {
         this.controller := controller
         this.configManager := configManager
         this.sessionManager := sessionManager
         this.llmService := llmService
         this.menuManager := menuManager
         this.saveConversationCommand := saveConversationCommand
+        this.loadConversationCommand := loadConversationCommand
     }
 
     SystemPromptChanged(*) {
@@ -193,10 +195,7 @@ class ConversationHandler {
         selectedFile := FileSelect("3", , "Load Conversation", "JSON Files (*.json)")
         if (selectedFile) {
             try {
-                fileContent := FileRead(selectedFile)
-                state := JSON.Load(fileContent)
-
-                this.sessionManager.ImportSessionState(state)
+                this.loadConversationCommand.Execute(selectedFile)
 
                 ; Update LLM Type
                 currentModelIndex := this.sessionManager.GetCurrentSessionLLMType()

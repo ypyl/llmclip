@@ -13,4 +13,17 @@ class FileService {
         }
         FileAppend(content, filePath, encoding)
     }
+
+    /**
+     * Read content from a file.
+     * @param filePath The absolute path to the file
+     * @param encoding The encoding to use (default UTF-8)
+     * @returns The string content of the file
+     */
+    ReadText(filePath, encoding := "UTF-8") {
+        if (!FileExist(filePath)) {
+            throw Error("File not found: " . filePath)
+        }
+        return FileRead(filePath, encoding)
+    }
 }

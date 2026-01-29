@@ -68,7 +68,7 @@ class AppWindow {
         UIBuilder.CreateTopControls(this.gui, this.controller.SessionManagerValue, this.controller.TrayManagerValue, this.controller, this.controller.ConversationHandlerValue)
         UIBuilder.CreateContextSection(this.gui, this.controller.ContextViewControllerValue)
         UIBuilder.CreateChatHistorySection(this.gui, this.controller.HistoryViewControllerValue)
-        UIBuilder.CreatePromptSection(this.gui, this.controller.SessionManagerValue, this.controller.configManager, this.controller)
+        UIBuilder.CreatePromptSection(this.gui, this.controller.SessionManagerValue, this.controller.configManager, this)
         
         this.askButton := UIBuilder.CreateBottomControls(this.gui, this.controller.SessionManagerValue, this.controller.configManager, this.controller)
         
@@ -98,5 +98,19 @@ class AppWindow {
 
     SetPromptValue(text) {
         this.gui["PromptEdit"].Value := text
+    }
+
+    HandlePromptInput(GuiCtrl, Info) {
+        if (GetKeyState("Enter") && !GetKeyState("Shift")) {
+            ; Get the last character
+            text := GuiCtrl.Value
+            if (SubStr(text, -1) == "`n") {
+                ; Remove the trailing newline
+                GuiCtrl.Value := SubStr(text, 1, -1)
+                ; Send the prompt
+                this.controller.AskToLLM()
+                return true
+            }
+        }
     }
 }

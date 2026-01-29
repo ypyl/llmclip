@@ -140,20 +140,6 @@ class AppController {
         this.view.SetPromptValue(currentText . "> " . text . "`n")
     }
 
-    PromptChange(GuiCtrl, Info) {
-        if (GetKeyState("Enter") && !GetKeyState("Shift")) {
-            ; Get the last character
-            text := GuiCtrl.Value
-            if (SubStr(text, -1) == "`n") {
-                ; Remove the trailing newline
-                GuiCtrl.Value := SubStr(text, 1, -1)
-                ; Send the prompt
-                this.AskToLLM()
-                return true
-            }
-        }
-    }
-    
     ToggleRecording(*) {
         this.ToggleDisplay()
     }

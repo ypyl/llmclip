@@ -16,7 +16,7 @@ class ConversationHandler {
     }
 
     SystemPromptChanged(*) {
-        this.sessionManager.SetCurrentSessionSystemPrompt(this.controller.MyGui["SystemPrompt"].Value)
+        this.sessionManager.SetCurrentSessionSystemPrompt(this.controller.view.gui["SystemPrompt"].Value)
 
         ; Update the system prompt content
         systemPrompt := this.configManager.GetSystemPromptValue(
@@ -28,7 +28,7 @@ class ConversationHandler {
             this.sessionManager.GetCurrentSessionSystemPrompt()
         )
         if (inputTemplate) {
-            this.controller.MyGui["PromptEdit"].Value := inputTemplate
+            this.controller.view.gui["PromptEdit"].Value := inputTemplate
         }
         this.sessionManager.UpdateSystemPromptContent(systemPrompt)
         this.controller.ContextViewControllerValue.UpdateContextView()
@@ -38,7 +38,7 @@ class ConversationHandler {
         oldModelName := this.controller.currentModelName
 
         ; Switch to new session
-        this.sessionManager.SwitchSession(this.controller.MyGui["SessionSelect"].Value)
+        this.sessionManager.SwitchSession(this.controller.view.gui["SessionSelect"].Value)
 
         this.controller.ContextViewControllerValue.UpdateContextView()
         this.controller.HistoryViewControllerValue.UpdateChatHistoryView()
@@ -49,20 +49,20 @@ class ConversationHandler {
         ; Update menu checkmarks
         for index, modelName in this.configManager.llmTypes {
             if (index = currentModelIndex) {
-                this.controller.ModelMenu.Check(modelName)
+                this.controller.view.modelMenu.Check(modelName)
             } else {
-                this.controller.ModelMenu.Uncheck(modelName)
+                this.controller.view.modelMenu.Uncheck(modelName)
             }
         }
 
         ; Update menu bar label if model changed
         if (oldModelName != newModelName) {
-            try this.controller.MyMenuBar.Rename(oldModelName, newModelName)
+            try this.controller.view.menuBar.Rename(oldModelName, newModelName)
             this.controller.currentModelName := newModelName
         }
 
         ; Update system prompts for the selected LLM type
-        systemPromptCombo := this.controller.MyGui["SystemPrompt"]
+        systemPromptCombo := this.controller.view.gui["SystemPrompt"]
         systemPromptCombo.Delete()
         systemPromptCombo.Add(this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType()))
         systemPromptCombo.Value := this.sessionManager.GetCurrentSessionSystemPrompt()
@@ -110,9 +110,9 @@ class ConversationHandler {
         compressionPrompt .= "`n`nCONVERSATION:`n" conversationText
 
         ; Disable Ask LLM button while processing
-        if (this.controller.MyGui) {
-            this.controller.askButton.Text := "Compressing..."
-            this.controller.askButton.Enabled := false
+        if (this.controller.view.gui) {
+            this.controller.view.askButton.Text := "Compressing..."
+            this.controller.view.askButton.Enabled := false
         }
 
         try {
@@ -128,9 +128,9 @@ class ConversationHandler {
             MsgBox("Compression failed: " . e.Message, "Error", "Iconx")
         } finally {
             ; Re-enable Ask LLM button
-            if (this.controller.MyGui) {
-                this.controller.askButton.Text := "Ask LLM"
-                this.controller.askButton.Enabled := true
+            if (this.controller.view.gui) {
+                this.controller.view.askButton.Text := "Ask LLM"
+                this.controller.view.askButton.Enabled := true
             }
         }
     }
@@ -154,9 +154,9 @@ class ConversationHandler {
         learningsPrompt .= "`n`nCONVERSATION:`n" conversationText
 
         ; Disable Ask LLM button while processing
-        if (this.controller.MyGui) {
-            this.controller.askButton.Text := "Extracting..."
-            this.controller.askButton.Enabled := false
+        if (this.controller.view.gui) {
+            this.controller.view.askButton.Text := "Extracting..."
+            this.controller.view.askButton.Enabled := false
         }
 
         try {
@@ -170,9 +170,9 @@ class ConversationHandler {
             MsgBox("Extraction failed: " . e.Message, "Error", "Iconx")
         } finally {
             ; Re-enable Ask LLM button
-            if (this.controller.MyGui) {
-                this.controller.askButton.Text := "Ask LLM"
-                this.controller.askButton.Enabled := true
+            if (this.controller.view.gui) {
+                this.controller.view.askButton.Text := "Ask LLM"
+                this.controller.view.askButton.Enabled := true
             }
         }
     }
@@ -202,24 +202,24 @@ class ConversationHandler {
                 currentModelIndex := this.sessionManager.GetCurrentSessionLLMType()
                 for index, modelName in this.configManager.llmTypes {
                     if (index = currentModelIndex) {
-                        this.controller.ModelMenu.Check(modelName)
+                        this.controller.view.modelMenu.Check(modelName)
                     } else {
-                        this.controller.ModelMenu.Uncheck(modelName)
+                        this.controller.view.modelMenu.Uncheck(modelName)
                     }
                 }
 
                 ; Update model name label
                 oldModelName := this.controller.currentModelName
                 newModelName := "Model: " . this.configManager.llmTypes[currentModelIndex]
-                try this.controller.MyMenuBar.Rename(oldModelName, newModelName)
+                try this.controller.view.menuBar.Rename(oldModelName, newModelName)
                 this.controller.currentModelName := newModelName
 
                 ; Update Session UI
-                this.controller.MyGui["SessionSelect"].Value := this.sessionManager.currentSessionIndex
+                this.controller.view.gui["SessionSelect"].Value := this.sessionManager.currentSessionIndex
                 this.controller.ContextViewControllerValue.UpdateContextView()
 
                 ; Update System Prompt UI
-                systemPromptCombo := this.controller.MyGui["SystemPrompt"]
+                systemPromptCombo := this.controller.view.gui["SystemPrompt"]
                 systemPromptCombo.Delete()
                 systemPromptCombo.Add(this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType()))
                 systemPromptCombo.Value := this.sessionManager.GetCurrentSessionSystemPrompt()
@@ -252,29 +252,29 @@ class ConversationHandler {
 
         ; Refresh LLM Type dropdown
         ; Refresh Model Menu
-        this.controller.ModelMenu.Delete() ; Delete all items
+        this.controller.view.modelMenu.Delete() ; Delete all items
         for index, modelName in this.configManager.llmTypes {
-            this.controller.ModelMenu.Add(modelName, ObjBindMethod(this.menuManager, "SelectModel"))
+            this.controller.view.modelMenu.Add(modelName, ObjBindMethod(this.menuManager, "SelectModel"))
         }
 
         ; Restore model checkmark
         currentModelIndex := this.sessionManager.GetCurrentSessionLLMType()
         if (currentModelIndex <= this.configManager.llmTypes.Length) {
-            this.controller.ModelMenu.Check(this.configManager.llmTypes[currentModelIndex])
+            this.controller.view.modelMenu.Check(this.configManager.llmTypes[currentModelIndex])
         } else {
             ; If former selection no longer exists, default to first
             this.sessionManager.SetCurrentSessionLLMType(1)
-            this.controller.ModelMenu.Check(this.configManager.llmTypes[1])
+            this.controller.view.modelMenu.Check(this.configManager.llmTypes[1])
         }
 
         ; Update MenuBar label
         oldModelName := this.controller.currentModelName
         newModelName := "Model: " . this.configManager.llmTypes[this.sessionManager.GetCurrentSessionLLMType()]
-        try this.controller.MyMenuBar.Rename(oldModelName, newModelName)
+        try this.controller.view.menuBar.Rename(oldModelName, newModelName)
         this.controller.currentModelName := newModelName
 
         ; Refresh System Prompt Combo
-        systemPromptCombo := this.controller.MyGui["SystemPrompt"]
+        systemPromptCombo := this.controller.view.gui["SystemPrompt"]
         currentSystemPrompt := systemPromptCombo.Value
 
         systemPromptCombo.Delete()

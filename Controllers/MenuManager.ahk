@@ -29,11 +29,11 @@ class MenuManager {
 
         ; Update menu bar label to show new model name
         newModelName := "Model: " . this.configManager.llmTypes[ItemPos]
-        try this.controller.MyMenuBar.Rename(oldModelName, newModelName)
+        this.controller.view.menuBar.Rename(oldModelName, newModelName)
         this.controller.currentModelName := newModelName
 
         ; Update system prompts for the new model
-        systemPromptCombo := this.controller.MyGui["SystemPrompt"]
+        systemPromptCombo := this.controller.view.gui["SystemPrompt"]
         systemPromptCombo.Delete()
         systemPromptNames := this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType())
         systemPromptCombo.Add(systemPromptNames)
@@ -65,21 +65,21 @@ class MenuManager {
     }
 
     UpdateCompressionMenuState() {
-        if (!this.controller.HistoryMenu)
+        if (!this.controller.view || !this.controller.view.historyMenu)
             return
 
         currentLLMIndex := this.sessionManager.GetCurrentSessionLLMType()
         compressionPrompt := this.configManager.GetCompressionPrompt(currentLLMIndex)
 
         if (compressionPrompt == "") {
-            this.controller.HistoryMenu.Disable("Compress")
+            this.controller.view.historyMenu.Disable("Compress")
         } else {
-            this.controller.HistoryMenu.Enable("Compress")
+            this.controller.view.historyMenu.Enable("Compress")
         }
     }
 
     UpdateToolsMenuState() {
-        if (!this.controller.ToolsMenu)
+        if (!this.controller.view || !this.controller.view.toolsMenu)
             return
 
         currentLLMIndex := this.sessionManager.GetCurrentSessionLLMType()
@@ -87,33 +87,33 @@ class MenuManager {
         ; Update PowerShell
         powerShellEnabled := this.configManager.IsToolEnabled(currentLLMIndex, "powerShellTool")
         if (powerShellEnabled) {
-            this.controller.ToolsMenu.Check("PowerShell")
+            this.controller.view.toolsMenu.Check("PowerShell")
         } else {
-            this.controller.ToolsMenu.Uncheck("PowerShell")
+            this.controller.view.toolsMenu.Uncheck("PowerShell")
         }
 
         ; Update File System
         fileSystemEnabled := this.configManager.IsToolEnabled(currentLLMIndex, "fileSystemTool")
         if (fileSystemEnabled) {
-             this.controller.ToolsMenu.Check("File System")
+             this.controller.view.toolsMenu.Check("File System")
         } else {
-             this.controller.ToolsMenu.Uncheck("File System")
+             this.controller.view.toolsMenu.Uncheck("File System")
         }
 
         ; Update Web Search
         webSearchEnabled := this.configManager.IsToolEnabled(currentLLMIndex, "webSearch")
         if (webSearchEnabled) {
-            this.controller.ToolsMenu.Check("Web Search")
+            this.controller.view.toolsMenu.Check("Web Search")
         } else {
-            this.controller.ToolsMenu.Uncheck("Web Search")
+            this.controller.view.toolsMenu.Uncheck("Web Search")
         }
 
         ; Update Web Fetch
         webFetchEnabled := this.configManager.IsToolEnabled(currentLLMIndex, "webFetch")
         if (webFetchEnabled) {
-            this.controller.ToolsMenu.Check("Web Fetch")
+            this.controller.view.toolsMenu.Check("Web Fetch")
         } else {
-            this.controller.ToolsMenu.Uncheck("Web Fetch")
+            this.controller.view.toolsMenu.Uncheck("Web Fetch")
         }
     }
 

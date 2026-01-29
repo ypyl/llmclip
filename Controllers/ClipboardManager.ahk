@@ -62,7 +62,7 @@ class ClipboardManager {
             this.sessionManager.SetCurrentSessionContext(context)
 
             ; Update Context in GUI if shown
-            if (this.controller.guiShown) {
+            if (this.controller.view.guiShown) {
                 this.controller.ContextViewControllerValue.UpdateContextView()
             }
         }

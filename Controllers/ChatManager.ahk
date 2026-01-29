@@ -21,9 +21,9 @@ class ChatManager {
         
         ; Update menu checkmark
         if (this.controller.batchModeEnabled) {
-            this.controller.ModeMenu.Check("Batch Mode")
+            this.controller.view.modeMenu.Check("Batch Mode")
         } else {
-            this.controller.ModeMenu.Uncheck("Batch Mode")
+            this.controller.view.modeMenu.Uncheck("Batch Mode")
         }
     }
 
@@ -48,7 +48,7 @@ class ChatManager {
             this.SendToLLM()
         } else {
             ; Should not happen if button is Confirm Tool Run, but reset just in case
-            this.controller.MyGui["AskLLM"].Text := "Ask LLM"
+            this.controller.view.gui["AskLLM"].Text := "Ask LLM"
         }
     }
 
@@ -56,14 +56,14 @@ class ChatManager {
         if (this.llmService) {
             this.llmService.Cancel()
         }
-        if (this.controller.MyGui) {
-            this.controller.MyGui["AskLLM"].Text := "Ask LLM"
+        if (this.controller.view.gui) {
+            this.controller.view.gui["AskLLM"].Text := "Ask LLM"
         }
     }
 
     HandleRegenerationOrEdit(promptText) {
         messages := this.sessionManager.GetCurrentSessionMessages()
-        chatHistory := this.controller.MyGui["ChatHistory"]
+        chatHistory := this.controller.view.gui["ChatHistory"]
         focused_row := chatHistory.GetNext()
 
         if (focused_row > 0) {
@@ -72,7 +72,7 @@ class ChatManager {
             if (selectedMsg.Role == "user") {
                 if (promptText == "") {
                     ; Regeneration case: Load message content into prompt for editing
-                    this.controller.MyGui["PromptEdit"].Value := this.sessionManager.GetUserMessageTextWithoutContext(selectedMsg)
+                    this.controller.view.gui["PromptEdit"].Value := this.sessionManager.GetUserMessageTextWithoutContext(selectedMsg)
                     return true
                 } else {
                     ; Edit Mode: Build new message with text and images
@@ -109,7 +109,7 @@ class ChatManager {
                     ; Truncate history after this message
                     if (this.sessionManager.TruncateMessages(focused_row)) {
                         this.SendToLLM()
-                        this.controller.MyGui["PromptEdit"].Value := ""
+                        this.controller.view.gui["PromptEdit"].Value := ""
                         ; Clear selection to exit "Edit Mode"
                         chatHistory.Modify(focused_row, "-Select")
                         return true
@@ -122,17 +122,17 @@ class ChatManager {
 
     AskToLLM(*) {
         ; Check if we are in "Confirm Tool Run" mode (Agent Mode tool execution)
-        if (this.controller.MyGui["AskLLM"].Text == "Confirm Tool Run") {
+        if (this.controller.view.gui["AskLLM"].Text == "Confirm Tool Run") {
             this.HandleToolConfirmation()
             return
         }
 
-        if (this.controller.MyGui["AskLLM"].Text == "Cancel") {
+        if (this.controller.view.gui["AskLLM"].Text == "Cancel") {
             this.HandleCancellation()
             return
         }
 
-        promptText := this.controller.MyGui["PromptEdit"].Value
+        promptText := this.controller.view.gui["PromptEdit"].Value
 
         ; Check for regeneration or edit case
         if (this.HandleRegenerationOrEdit(promptText)) {
@@ -162,7 +162,7 @@ class ChatManager {
             messages.Push(ChatMessage("user", userMessageContent))
         }
         this.SendToLLM()
-        this.controller.MyGui["PromptEdit"].Value := ""  ; Clear prompt field
+        this.controller.view.gui["PromptEdit"].Value := ""  ; Clear prompt field
 
         if (this.controller.TrayManagerValue.isRecording) {
             this.controller.TrayManagerValue.StopRecording(this.sessionManager)
@@ -186,8 +186,8 @@ class ChatManager {
         messages.Push(userMsg)
 
         ; Update UI to show "Cancel"
-        if (this.controller.MyGui) {
-            this.controller.askButton.Text := "Cancel"
+        if (this.controller.view.gui) {
+            this.controller.view.askButton.Text := "Cancel"
         }
 
         try {
@@ -254,18 +254,18 @@ class ChatManager {
                 this.controller.HistoryViewControllerValue.UpdateChatHistoryView()
                 
                 ; Check for cancellation (simplified)
-                if (this.controller.askButton.Text != "Cancel")
+                if (this.controller.view.askButton.Text != "Cancel")
                     break
             }
         } catch as e {
             if (e.Message != "Request cancelled")
                 MsgBox("Batch processing error: " . e.Message, "Error", "Iconx")
         } finally {
-            if (this.controller.MyGui) {
-                this.controller.askButton.Text := "Ask LLM"
-                this.controller.askButton.Enabled := true
+            if (this.controller.view.gui) {
+                this.controller.view.askButton.Text := "Ask LLM"
+                this.controller.view.askButton.Enabled := true
             }
-            this.controller.MyGui["PromptEdit"].Value := ""
+            this.controller.view.gui["PromptEdit"].Value := ""
             this.controller.HistoryViewControllerValue.UpdateChatHistoryView()
         }
     }
@@ -281,7 +281,7 @@ class ChatManager {
         this.sessionManager.UpdateSystemPromptContent(systemPrompt)
 
         context := this.sessionManager.GetCurrentSessionContext()
-        contextBox := this.controller.MyGui["ContextBox"]
+        contextBox := this.controller.view.gui["ContextBox"]
 
         ; Build context message content
         additionalContext := this.controller.ContextViewControllerValue.BuildAdditionalContextMessage(context, contextBox.Value)
@@ -319,8 +319,8 @@ class ChatManager {
         }
 
         ; Disable Ask LLM button while processing
-        if (this.controller.MyGui) {
-            this.controller.askButton.Text := "Cancel"
+        if (this.controller.view.gui) {
+            this.controller.view.askButton.Text := "Cancel"
         }
 
         try {
@@ -335,9 +335,9 @@ class ChatManager {
 
             ; Check for unexecuted Tool Calls
             if (this.sessionManager.HasUnexecutedToolCalls()) {
-                this.controller.MyGui["AskLLM"].Text := "Confirm Tool Run"
+                this.controller.view.gui["AskLLM"].Text := "Confirm Tool Run"
             } else {
-                this.controller.MyGui["AskLLM"].Text := "Ask LLM"
+                this.controller.view.gui["AskLLM"].Text := "Ask LLM"
             }
 
         } catch as e {
@@ -348,11 +348,11 @@ class ChatManager {
             }
         } finally {
             ; Re-enable Ask LLM button
-            if (this.controller.MyGui) {
-                if (this.controller.MyGui["AskLLM"].Text == "Cancel") {
-                    this.controller.MyGui["AskLLM"].Text := "Ask LLM"
+            if (this.controller.view.gui) {
+                if (this.controller.view.gui["AskLLM"].Text == "Cancel") {
+                    this.controller.view.gui["AskLLM"].Text := "Ask LLM"
                 }
-                this.controller.askButton.Enabled := true
+                this.controller.view.askButton.Enabled := true
             }
         }
         this.controller.HistoryViewControllerValue.UpdateChatHistoryView()  ; Update the chat history view

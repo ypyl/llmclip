@@ -61,6 +61,9 @@ class UIBuilder {
         MyMenuBar.Add("Answer Size", AnswerSizeMenu)
         MyMenuBar.Add(currentModelName, ModelMenu)  ; Use model name instead of "&Model"
         gui.MenuBar := MyMenuBar
+        
+        ; Initialize controller's current model name to match the menu
+        controller.currentModelName := currentModelName
 
         return {menuBar: MyMenuBar, modelMenu: ModelMenu, historyMenu: HistoryMenu, toolsMenu: ToolsMenu, modeMenu: ModeMenu}  ; Return menuBar, modelMenu, historyMenu, toolsMenu and modeMenu
     }
@@ -165,7 +168,7 @@ class UIBuilder {
         NumPut("Int", 0, wvRect, 4)                          ; top
         NumPut("Int", widthResponseCtr, wvRect, 8)           ; right
         NumPut("Int", heightResponseCtr, wvRect, 12)         ; bottom
-        if controller.guiShown {
+        if controller.view.guiShown {
             controller.WebViewManagerValue.Resize(wvRect)
         }
 

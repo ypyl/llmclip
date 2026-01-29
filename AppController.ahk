@@ -14,6 +14,8 @@
 #Include Controllers\ChatManager.ahk
 #Include Controllers\ConversationHandler.ahk
 #Include Controllers\ClipboardManager.ahk
+#Include Services\FileService.ahk
+#Include Commands\SaveConversationCommand.ahk
 
 class AppController {
     view := ""
@@ -35,6 +37,9 @@ class AppController {
     ChatManagerValue := ""
     ConversationHandlerValue := ""
     ClipboardManagerValue := ""
+
+    FileServiceValue := ""
+    SaveConversationCommandValue := ""
     
     batchModeEnabled := false  ; Track batch mode state
 
@@ -68,7 +73,12 @@ class AppController {
         ; Create specialized managers
         this.MenuManagerValue := MenuManager(this, this.configManager, this.SessionManagerValue)
         this.ChatManagerValue := ChatManager(this, this.configManager, this.SessionManagerValue, this.LLMServiceValue, this.ContextManagerValue)
-        this.ConversationHandlerValue := ConversationHandler(this, this.configManager, this.SessionManagerValue, this.LLMServiceValue, this.MenuManagerValue)
+        
+        ; Initialize Services and Commands
+        this.FileServiceValue := FileService()
+        this.SaveConversationCommandValue := SaveConversationCommand(this.SessionManagerValue, this.FileServiceValue)
+
+        this.ConversationHandlerValue := ConversationHandler(this, this.configManager, this.SessionManagerValue, this.LLMServiceValue, this.MenuManagerValue, this.SaveConversationCommandValue)
         this.ClipboardManagerValue := ClipboardManager(this, this.SessionManagerValue, this.ContextManagerValue)
 
         this.batchModeEnabled := false

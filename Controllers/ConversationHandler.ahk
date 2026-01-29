@@ -5,14 +5,15 @@ class ConversationHandler {
     configManager := ""
     sessionManager := ""
     llmService := ""
-    menuManager := ""
+    saveConversationCommand := ""
 
-    __New(controller, configManager, sessionManager, llmService, menuManager) {
+    __New(controller, configManager, sessionManager, llmService, menuManager, saveConversationCommand) {
         this.controller := controller
         this.configManager := configManager
         this.sessionManager := sessionManager
         this.llmService := llmService
         this.menuManager := menuManager
+        this.saveConversationCommand := saveConversationCommand
     }
 
     SystemPromptChanged(*) {
@@ -178,14 +179,13 @@ class ConversationHandler {
     }
 
     SaveConversation(*) {
-        jsonStr := this.sessionManager.ExportSessionState()
-
         selectedFile := FileSelect("S16", "conversation.json", "Save Conversation", "JSON Files (*.json)")
         if (selectedFile) {
-            if (FileExist(selectedFile)) {
-                FileDelete(selectedFile)
+            try {
+                this.saveConversationCommand.Execute(selectedFile)
+            } catch as e {
+                 MsgBox("Failed to save conversation: " . e.Message, "Error", "Iconx")
             }
-            FileAppend(jsonStr, selectedFile)
         }
     }
 

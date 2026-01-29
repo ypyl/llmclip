@@ -121,27 +121,16 @@ class AppController {
     }
 
     SystemPromptChanged(*) => this.ConversationHandlerValue.SystemPromptChanged()
-    SelectModel(ItemName, ItemPos, MyMenu) => this.MenuManagerValue.SelectModel(ItemName, ItemPos, MyMenu)
-    SelectAnswerSize(ItemName, ItemPos, MyMenu) => this.MenuManagerValue.SelectAnswerSize(ItemName, ItemPos, MyMenu)
-    ToggleBatchMode(*) => this.ChatManagerValue.ToggleBatchMode()
-    SessionChanged(*) => this.ConversationHandlerValue.SessionChanged()
+    
     HandleToolConfirmation() => this.ChatManagerValue.HandleToolConfirmation()
     HandleCancellation() => this.ChatManagerValue.HandleCancellation()
     HandleRegenerationOrEdit(promptText) => this.ChatManagerValue.HandleRegenerationOrEdit(promptText)
     AskToLLM(*) => this.ChatManagerValue.AskToLLM()
     SendBatchToLLM(promptText) => this.ChatManagerValue.SendBatchToLLM(promptText)
     SendToLLM() => this.ChatManagerValue.SendToLLM()
-    ResetAll(*) => this.ConversationHandlerValue.ResetAll()
-    CompressHistory(*) => this.ConversationHandlerValue.CompressHistory()
-    ExtractLearnings(*) => this.ConversationHandlerValue.ExtractLearnings()
+    
     ExitApplication(*) => ExitApp()
     ClipChanged(DataType) => this.ClipboardManagerValue.ClipChanged(DataType)
-    SaveConversation(*) => this.ConversationHandlerValue.SaveConversation()
-    LoadConversation(*) => this.ConversationHandlerValue.LoadConversation()
-    ReloadSettings(*) => this.ConversationHandlerValue.ReloadSettings()
-    UpdateCompressionMenuState() => this.MenuManagerValue.UpdateCompressionMenuState()
-    UpdateToolsMenuState() => this.MenuManagerValue.UpdateToolsMenuState()
-    ToggleTool(toolName, *) => this.MenuManagerValue.ToggleTool(toolName)
 
     AppendToPrompt(text) {
         currentText := this.view.GetPromptValue()

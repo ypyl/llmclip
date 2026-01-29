@@ -2,18 +2,18 @@
 #Include UIConfig.ahk
 
 class UIBuilder {
-    static CreateMenuBar(gui, controller, configManager, sessionManagerValue) {
+    static CreateMenuBar(gui, controller, configManager, sessionManagerValue, menuManager, conversationHandler, chatManager) {
         FileMenu := Menu()
-        FileMenu.Add("Save Conversation", ObjBindMethod(controller, "SaveConversation"))
-        FileMenu.Add("Load Conversation", ObjBindMethod(controller, "LoadConversation"))
+        FileMenu.Add("Save Conversation", ObjBindMethod(conversationHandler, "SaveConversation"))
+        FileMenu.Add("Load Conversation", ObjBindMethod(conversationHandler, "LoadConversation"))
         FileMenu.Add()  ; Separator
-        FileMenu.Add("Reload Settings", ObjBindMethod(controller, "ReloadSettings"))
+        FileMenu.Add("Reload Settings", ObjBindMethod(conversationHandler, "ReloadSettings"))
         FileMenu.Add()  ; Separator
         FileMenu.Add("Exit", ObjBindMethod(controller, "ExitApplication"))
 
         ModelMenu := Menu()
         for index, modelName in configManager.llmTypes {
-            ModelMenu.Add(modelName, ObjBindMethod(controller, "SelectModel"))
+            ModelMenu.Add(modelName, ObjBindMethod(menuManager, "SelectModel"))
         }
 
         ; Get current model name for menu label
@@ -29,21 +29,21 @@ class UIBuilder {
 
         ; Create Answer Size menu
         AnswerSizeMenu := Menu()
-        AnswerSizeMenu.Add("Small", ObjBindMethod(controller, "SelectAnswerSize"))
-        AnswerSizeMenu.Add("Default", ObjBindMethod(controller, "SelectAnswerSize"))
-        AnswerSizeMenu.Add("Long", ObjBindMethod(controller, "SelectAnswerSize"))
+        AnswerSizeMenu.Add("Small", ObjBindMethod(menuManager, "SelectAnswerSize"))
+        AnswerSizeMenu.Add("Default", ObjBindMethod(menuManager, "SelectAnswerSize"))
+        AnswerSizeMenu.Add("Long", ObjBindMethod(menuManager, "SelectAnswerSize"))
 
         ; Set initial checkmark (Default = index 2)
         AnswerSizeMenu.Check("Default")
 
         ; Create History menu
         HistoryMenu := Menu()
-        HistoryMenu.Add("Compress", ObjBindMethod(controller, "CompressHistory"))
-        HistoryMenu.Add("Extract Notes", ObjBindMethod(controller, "ExtractLearnings"))
+        HistoryMenu.Add("Compress", ObjBindMethod(conversationHandler, "CompressHistory"))
+        HistoryMenu.Add("Extract Notes", ObjBindMethod(conversationHandler, "ExtractLearnings"))
 
         ; Create Mode menu
         ModeMenu := Menu()
-        ModeMenu.Add("Batch Mode", ObjBindMethod(controller, "ToggleBatchMode"))
+        ModeMenu.Add("Batch Mode", ObjBindMethod(chatManager, "ToggleBatchMode"))
 
         MyMenuBar := MenuBar()
         MyMenuBar.Add("&File", FileMenu)
@@ -52,10 +52,10 @@ class UIBuilder {
         
         ; Create Tools menu
         ToolsMenu := Menu()
-        ToolsMenu.Add("PowerShell", ObjBindMethod(controller, "ToggleTool", "powerShellTool"))
-        ToolsMenu.Add("File System", ObjBindMethod(controller, "ToggleTool", "fileSystemTool"))
-        ToolsMenu.Add("Web Search", ObjBindMethod(controller, "ToggleTool", "webSearch"))
-        ToolsMenu.Add("Web Fetch", ObjBindMethod(controller, "ToggleTool", "webFetch"))
+        ToolsMenu.Add("PowerShell", ObjBindMethod(menuManager, "ToggleTool", "powerShellTool"))
+        ToolsMenu.Add("File System", ObjBindMethod(menuManager, "ToggleTool", "fileSystemTool"))
+        ToolsMenu.Add("Web Search", ObjBindMethod(menuManager, "ToggleTool", "webSearch"))
+        ToolsMenu.Add("Web Fetch", ObjBindMethod(menuManager, "ToggleTool", "webFetch"))
         MyMenuBar.Add("Tools", ToolsMenu)
 
         MyMenuBar.Add("Answer Size", AnswerSizeMenu)
@@ -68,11 +68,11 @@ class UIBuilder {
         return {menuBar: MyMenuBar, modelMenu: ModelMenu, historyMenu: HistoryMenu, toolsMenu: ToolsMenu, modeMenu: ModeMenu}  ; Return menuBar, modelMenu, historyMenu, toolsMenu and modeMenu
     }
 
-    static CreateTopControls(gui, sessionManagerValue, trayManagerValue, controller) {
+    static CreateTopControls(gui, sessionManagerValue, trayManagerValue, controller, conversationHandler) {
         ; Add session selector
         sessionCombo := gui.Add("DropDownList", "x10 y12 w70 vSessionSelect", sessionManagerValue.sessionNames)
         sessionCombo.Value := sessionManagerValue.currentSessionIndex
-        sessionCombo.OnEvent("Change", ObjBindMethod(controller, "SessionChanged"))
+        sessionCombo.OnEvent("Change", ObjBindMethod(conversationHandler, "SessionChanged"))
 
         ; Add record button
         recordButtonTitle := trayManagerValue.isRecording ? "Stop" : "Record"
@@ -81,7 +81,7 @@ class UIBuilder {
 
         ; Add reset button
         resetButton := gui.Add("Button", "x300 y10 w90", "Reset All")
-        resetButton.OnEvent("Click", ObjBindMethod(controller, "ResetAll"))
+        resetButton.OnEvent("Click", ObjBindMethod(conversationHandler, "ResetAll"))
     }
 
     static CreateContextSection(gui, contextViewController) {

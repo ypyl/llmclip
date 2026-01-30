@@ -1,5 +1,5 @@
 #Requires AutoHotkey 2.0
-#Include ..\ImageFromClipboard.ahk
+#Include ImageFromClipboard.ahk
 
 class ClipboardParser {
     ; Parse clipboard content and return an array of items (text or paths)

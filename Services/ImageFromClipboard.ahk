@@ -1,4 +1,4 @@
-#Include Lib\CGDip.ahk
+#Include ..\Lib\CGDip.ahk
 #Include Base64.ahk
 
 class ClipboardUtil {

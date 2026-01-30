@@ -68,15 +68,15 @@ class UIBuilder {
         return {menuBar: MyMenuBar, modelMenu: ModelMenu, historyMenu: HistoryMenu, toolsMenu: ToolsMenu, modeMenu: ModeMenu}  ; Return menuBar, modelMenu, historyMenu, toolsMenu and modeMenu
     }
 
-    static CreateTopControls(gui, sessionManagerValue, trayManagerValue, controller, conversationHandler) {
+    static CreateTopControls(gui, sessionManagerValue, recordingService, controller, conversationHandler) {
         ; Add session selector
         sessionCombo := gui.Add("DropDownList", "x10 y12 w70 vSessionSelect", sessionManagerValue.sessionNames)
         sessionCombo.Value := sessionManagerValue.currentSessionIndex
         sessionCombo.OnEvent("Change", ObjBindMethod(conversationHandler, "SessionChanged"))
 
         ; Add record button
-        recordButtonTitle := trayManagerValue.isRecording ? "Stop" : "Record"
-        recordButton := gui.Add("Button", "x90 y10 w90", recordButtonTitle)
+        recordButtonTitle := recordingService.isRecording ? "Stop" : "Record"
+        recordButton := gui.Add("Button", "x90 y10 w90 vRecordButton", recordButtonTitle)
         recordButton.OnEvent("Click", ObjBindMethod(controller, "ToggleRecording"))
 
         ; Add reset button

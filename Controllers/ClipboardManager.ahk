@@ -12,7 +12,7 @@ class ClipboardManager {
     }
 
     ClipChanged(DataType) {
-        if (this.controller.TrayManagerValue.isRecording) {
+        if (this.controller.RecordingServiceValue.isRecording) {
             localTxtFromClipboardArray := this.controller.ClipboardParserValue.Parse()
 
             ; Add non-duplicate items to context

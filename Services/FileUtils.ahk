@@ -1,4 +1,3 @@
-#Include Base64.ahk
 
 class FileUtils {
     static GetFileAsBase64(filePath) {

@@ -112,8 +112,8 @@ class ChatManager {
         this.SendToLLM()
         
         this.controller.view.ClearPrompt()
-        if (this.controller.TrayManagerValue.isRecording) {
-            this.controller.TrayManagerValue.StopRecording(this.sessionManager)
+        if (this.controller.RecordingServiceValue.isRecording) {
+            this.controller.StopRecordingCommandValue.Execute()
         }
     }
 

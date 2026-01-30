@@ -1,4 +1,4 @@
-#Requires AutoHotkey 2.0
+#Include FileUtils.ahk
 
 class ContextManager {
     ; Get text content from a context item (file, folder, plain text or URL)

@@ -65,7 +65,7 @@ class AppWindow {
         this.controller.MenuManagerValue.UpdateToolsMenuState()
         
         ; Create Controls
-        UIBuilder.CreateTopControls(this.gui, this.controller.SessionManagerValue, this.controller.TrayManagerValue, this.controller, this.controller.ConversationHandlerValue)
+        UIBuilder.CreateTopControls(this.gui, this.controller.SessionManagerValue, this.controller.RecordingServiceValue, this.controller, this.controller.ConversationHandlerValue)
         UIBuilder.CreateContextSection(this.gui, this.controller.ContextViewControllerValue)
         UIBuilder.CreateChatHistorySection(this.gui, this.controller.HistoryViewControllerValue)
         UIBuilder.CreatePromptSection(this.gui, this.controller.SessionManagerValue, this.controller.configManager, this)
@@ -83,11 +83,7 @@ class AppWindow {
     UpdateRecordButton(isRecording) {
         if (this.guiShown) {
             try {
-                if (isRecording) {
-                    this.gui["Record"].Text := "Stop"
-                } else {
-                    this.gui["Stop"].Text := "Record"
-                }
+                this.gui["RecordButton"].Text := isRecording ? "Stop" : "Record"
             }
         }
     }

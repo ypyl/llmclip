@@ -1,4 +1,4 @@
-#Include ..\FileUtils.ahk
+#Include FileUtils.ahk
 #Include ..\LLM\Types.ahk
 
 class SessionManager {

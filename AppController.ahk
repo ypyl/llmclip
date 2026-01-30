@@ -1,11 +1,14 @@
 #Requires AutoHotkey 2.0
 #Include Settings\ConfigurationManager.ahk
+#Include Services\Base64.ahk
+#Include Services\FileUtils.ahk
 #Include LLM\LLMService.ahk
 #Include Services\SessionManager.ahk
 #Include Services\ClipboardParser.ahk
-#Include WebViewManager.ahk
+#Include Services\WebViewManager.ahk
 #Include Services\ContextManager.ahk
-#Include TrayManager.ahk
+#Include Services\RecordingService.ahk
+#Include ui\TrayView.ahk
 #Include ui\UIConfig.ahk
 #Include ui\UIBuilder.ahk
 #Include ui\AppWindow.ahk
@@ -23,6 +26,7 @@
 #Include Commands\SendBatchToLLMCommand.ahk
 #Include Commands\ConfirmToolCommand.ahk
 #Include Commands\RegenerateMessageCommand.ahk
+#Include Commands\StopRecordingCommand.ahk
 
 class AppController {
     view := ""
@@ -34,7 +38,8 @@ class AppController {
     ClipboardParserValue := ""
     WebViewManagerValue := ""
     ContextManagerValue := ""
-    TrayManagerValue := ""
+    RecordingServiceValue := ""
+    TrayViewValue := ""
     LLMServiceValue := ""
 
     ContextViewControllerValue := ""
@@ -53,6 +58,7 @@ class AppController {
     SendBatchToLLMCommandValue := ""
     ConfirmToolCommandValue := ""
     RegenerateMessageCommandValue := ""
+    StopRecordingCommandValue := ""
     
     batchModeEnabled := false  ; Track batch mode state
 
@@ -69,14 +75,12 @@ class AppController {
         ; Create clipboard parser instance
         this.ClipboardParserValue := ClipboardParser()
 
-        ; Create WebView manager instance
         this.WebViewManagerValue := WebViewManager()
-
         this.ContextManagerValue := ContextManager()
+        this.RecordingServiceValue := RecordingService()
 
-        ; Create TrayManager instance
-        this.TrayManagerValue := TrayManager(ObjBindMethod(this, "Show"), ObjBindMethod(this, "UpdateUiBasesOnRecordingStatus"), ObjBindMethod(this,
-            "ExitApplication"), this.ContextManagerValue)
+        ; Create TrayView instance
+        this.TrayViewValue := TrayView(this)
 
         this.LLMServiceValue := LLMService(this.configManager)
         
@@ -94,6 +98,7 @@ class AppController {
         this.SendBatchToLLMCommandValue := SendBatchToLLMCommand(this.SessionManagerValue, this.configManager, this.LLMServiceValue, this.ContextManagerValue, this.currentAnswerSize)
         this.ConfirmToolCommandValue := ConfirmToolCommand(this.SessionManagerValue, this.LLMServiceValue, this.SendToLLMCommandValue)
         this.RegenerateMessageCommandValue := RegenerateMessageCommand(this.SessionManagerValue, this.configManager)
+        this.StopRecordingCommandValue := StopRecordingCommand(this.RecordingServiceValue, this.SessionManagerValue, this.ContextManagerValue)
 
         this.ChatManagerValue := ChatManager(this, this.configManager, this.SessionManagerValue, this.LLMServiceValue, this.ContextManagerValue, this.SendToLLMCommandValue, this.SendBatchToLLMCommandValue, this.ConfirmToolCommandValue, this.RegenerateMessageCommandValue)
 
@@ -112,16 +117,19 @@ class AppController {
     Start() {
         TempFileManager.CleanUp()
         this.Show()
+        this.UpdateUiBasesOnRecordingStatus()
         OnClipboardChange ObjBindMethod(this, "ClipChanged")
     }
 
     ToggleDisplay() {
-        if (!this.TrayManagerValue.isRecording) {
-            this.TrayManagerValue.StartRecording()
+        if (!this.RecordingServiceValue.isRecording) {
+            this.RecordingServiceValue.StartRecording()
+            this.UpdateUiBasesOnRecordingStatus()
         } else if (!this.view.guiShown) {
             this.Show()
         } else {
-            this.TrayManagerValue.StopRecording(this.SessionManagerValue)
+            this.StopRecordingCommandValue.Execute()
+            this.UpdateUiBasesOnRecordingStatus()
         }
     }
 
@@ -130,8 +138,9 @@ class AppController {
     }
 
     UpdateUiBasesOnRecordingStatus(*) {
+        this.TrayViewValue.UpdateStatus(this.RecordingServiceValue.isRecording)
         if (this.view.guiShown) {
-             this.view.UpdateRecordButton(this.TrayManagerValue.isRecording)
+             this.view.UpdateRecordButton(this.RecordingServiceValue.isRecording)
         }
     }
 
@@ -162,6 +171,25 @@ class AppController {
     ToggleRecording(*) {
         this.ToggleDisplay()
     }
+
+    ; Tray Event Handlers
+    OnStartRecording() {
+        this.RecordingServiceValue.StartRecording()
+        this.UpdateUiBasesOnRecordingStatus()
+    }
+
+    OnStopRecording() {
+        this.StopRecordingCommandValue.Execute()
+        this.UpdateUiBasesOnRecordingStatus()
+    }
+
+    OnToggleRecording() {
+        this.RecordingServiceValue.ToggleRecording(this.SessionManagerValue, this.ContextManagerValue)
+        this.UpdateUiBasesOnRecordingStatus()
+    }
+
+    OnDisplayLLM() => this.Show()
+    OnExit() => this.ExitApplication()
 
     ClearAllContext(*) {
         this.ClearContextCommandValue.Execute()

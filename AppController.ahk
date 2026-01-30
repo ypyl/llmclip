@@ -5,9 +5,9 @@
 #Include WebViewManager.ahk
 #Include ContextManager.ahk
 #Include TrayManager.ahk
-#Include UIConfig.ahk
-#Include UIBuilder.ahk
-#Include AppWindow.ahk
+#Include ui\UIConfig.ahk
+#Include ui\UIBuilder.ahk
+#Include ui\AppWindow.ahk
 #Include ContextViewController.ahk
 #Include HistoryViewController.ahk
 #Include Controllers\MenuManager.ahk

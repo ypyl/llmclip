@@ -84,8 +84,6 @@ class SessionManager {
         return '<audio controls><source src="data:audio/wav;base64,' audioBase64 '" type="audio/wav"></audio>'
     }
 
-
-
     FormatToolCallMessage(toolCall) {
         return toolCall.Name "(" JSON.Stringify(toolCall.Arguments) ")"
     }

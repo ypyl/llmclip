@@ -6,13 +6,22 @@ class ChatManager {
     sessionManager := ""
     llmService := ""
     contextManager := ""
+    
+    ; Commands
+    sendToLLMCommand := ""
+    sendBatchToLLMCommand := ""
+    confirmToolCommand := ""
 
-    __New(controller, configManager, sessionManager, llmService, contextManager) {
+    __New(controller, configManager, sessionManager, llmService, contextManager, sendToLLMCommand, sendBatchToLLMCommand, confirmToolCommand) {
         this.controller := controller
         this.configManager := configManager
         this.sessionManager := sessionManager
         this.llmService := llmService
         this.contextManager := contextManager
+        
+        this.sendToLLMCommand := sendToLLMCommand
+        this.sendBatchToLLMCommand := sendBatchToLLMCommand
+        this.confirmToolCommand := confirmToolCommand
     }
 
     ToggleBatchMode(*) {
@@ -28,28 +37,14 @@ class ChatManager {
     }
 
     HandleToolConfirmation() {
-        messages := this.sessionManager.GetCurrentSessionMessages()
-
-        ; Find and execute all unexecuted tool calls
-        executedAny := false
-        for msg in messages {
-            if (this.sessionManager.HasToolCalls(msg)) {
-                toolResults := this.llmService.ExecuteToolCalls(this.sessionManager, msg)
-                if (toolResults.Length > 0) {
-                    for res in toolResults {
-                        messages.Push(res)
-                    }
-                    executedAny := true
-                }
+        if (this.confirmToolCommand.Execute()) {
+            this.controller.HistoryViewControllerValue.UpdateChatHistoryView()
+            if (this.sessionManager.GetCurrentSessionMessages().Length > 0) {
+                lastMsg := this.sessionManager.GetCurrentSessionMessages()[-1]
+                this.controller.RenderMarkdown(this.sessionManager.GetMessageAsString(lastMsg))
             }
         }
-
-        if (executedAny) {
-            this.SendToLLM()
-        } else {
-            ; Should not happen if button is Confirm Tool Run, but reset just in case
-            this.controller.view.gui["AskLLM"].Text := "Ask LLM"
-        }
+        this.controller.view.gui["AskLLM"].Text := "Ask LLM"
     }
 
     HandleCancellation() {
@@ -75,13 +70,12 @@ class ChatManager {
                     this.controller.view.gui["PromptEdit"].Value := this.sessionManager.GetUserMessageTextWithoutContext(selectedMsg)
                     return true
                 } else {
-                    ; Edit Mode: Build new message with text and images
+                    ; Edit Mode Logic (kept in controller for now as it manipulates history directly)
                     isImageEnabled := this.configManager.IsImageInputEnabled(this.sessionManager.GetCurrentSessionLLMType())
                     images := isImageEnabled ? this.controller.ContextViewControllerValue.GetCheckedImages() : []
                     newContent := this.sessionManager.BuildUserMessage(promptText, images)
 
                     ; Check if this is the first user message with context
-                    messages := this.sessionManager.GetCurrentSessionMessages()
                     isFirstUserMsg := false
                     for i, msg in messages {
                         if (msg.Role == "user") {
@@ -94,7 +88,6 @@ class ChatManager {
                     if (isFirstUserMsg && selectedMsg.AdditionalProperties.Has("hasContext")
                         && selectedMsg.AdditionalProperties["hasContext"]
                         && selectedMsg.Contents.Length > 0 && (selectedMsg.Contents[1] is TextContent)) {
-                        ; Keep the context (first TextContent) and add new content after it
                         contextText := selectedMsg.Contents[1]
                         newContentWithContext := [contextText]
                         for part in newContent {
@@ -102,7 +95,6 @@ class ChatManager {
                         }
                         selectedMsg.Contents := newContentWithContext
                     } else {
-                        ; Replace the message contents normally
                         selectedMsg.Contents := newContent
                     }
 
@@ -110,7 +102,6 @@ class ChatManager {
                     if (this.sessionManager.TruncateMessages(focused_row)) {
                         this.SendToLLM()
                         this.controller.view.gui["PromptEdit"].Value := ""
-                        ; Clear selection to exit "Edit Mode"
                         chatHistory.Modify(focused_row, "-Select")
                         return true
                     }
@@ -121,49 +112,43 @@ class ChatManager {
     }
 
     AskToLLM(*) {
-        ; Check if we are in "Confirm Tool Run" mode (Agent Mode tool execution)
-        if (this.controller.view.gui["AskLLM"].Text == "Confirm Tool Run") {
+        ; 1. Check current button state
+        btnText := this.controller.view.gui["AskLLM"].Text
+        if (btnText == "Confirm Tool Run") {
             this.HandleToolConfirmation()
             return
         }
-
-        if (this.controller.view.gui["AskLLM"].Text == "Cancel") {
+        if (btnText == "Cancel") {
             this.HandleCancellation()
             return
         }
 
         promptText := this.controller.view.gui["PromptEdit"].Value
 
-        ; Check for regeneration or edit case
+        ; 2. Check for regeneration or edit case
         if (this.HandleRegenerationOrEdit(promptText)) {
             return
         }
 
-        ; Check for Batch Mode
+        ; 3. Check for Batch Mode
         if (this.controller.batchModeEnabled) {
             this.SendBatchToLLM(promptText)
             return
         }
 
-        messages := this.sessionManager.GetCurrentSessionMessages()
-        userMessageContent := ""
-        if (promptText != "") {
-            userMessageContent := promptText
-        }
-
+        ; 4. Normal Send Mode
         isImageEnabled := this.configManager.IsImageInputEnabled(this.sessionManager.GetCurrentSessionLLMType())
-
         images := isImageEnabled ? this.controller.ContextViewControllerValue.GetCheckedImages() : []
-        userMessageContent := this.sessionManager.BuildUserMessage(userMessageContent, images)
+        userMessageContent := this.sessionManager.BuildUserMessage(promptText, images)
 
-        ; Allow empty user message if there's context to attach
         hasContext := this.controller.ContextViewControllerValue.HasAnyCheckedItem()
         if (userMessageContent.Length > 0 || hasContext) {
-            messages.Push(ChatMessage("user", userMessageContent))
+            this.sessionManager.GetCurrentSessionMessages().Push(ChatMessage("user", userMessageContent))
         }
-        this.SendToLLM()
-        this.controller.view.gui["PromptEdit"].Value := ""  ; Clear prompt field
 
+        this.SendToLLM()
+        
+        this.controller.view.gui["PromptEdit"].Value := ""  ; Clear prompt field
         if (this.controller.TrayManagerValue.isRecording) {
             this.controller.TrayManagerValue.StopRecording(this.sessionManager)
         }
@@ -176,87 +161,27 @@ class ChatManager {
             return
         }
 
-        ; Create and mark the user message
-        userContent := [TextContent(promptText)]
-        userMsg := ChatMessage("user", userContent)
-        userMsg.AdditionalProperties["isBatchMode"] := true
-        
-        ; Add to main history once
-        messages := this.sessionManager.GetCurrentSessionMessages()
-        messages.Push(userMsg)
-
         ; Update UI to show "Cancel"
         if (this.controller.view.gui) {
             this.controller.view.askButton.Text := "Cancel"
         }
 
+        ; Prepare context providers (logic-only data)
+        contextProviders := []
+        for item in checkedItems {
+            contextProviders.Push({
+                item: item,
+                text: this.controller.ContextViewControllerValue.GetTextFromContextItem(item)
+            })
+        }
+
         try {
-            ; Get common settings
-            currentLLM := this.sessionManager.GetCurrentSessionLLMType()
-            powerShellEnabled := this.configManager.IsToolEnabled(currentLLM, "powerShellTool")
-            fileSystemEnabled := this.configManager.IsToolEnabled(currentLLM, "fileSystemTool")
-            webSearchEnabled := this.configManager.IsToolEnabled(currentLLM, "webSearch")
-            webFetchEnabled := this.configManager.IsToolEnabled(currentLLM, "webFetch")
-
-            ; Prepare base history (filtered but WITHOUT the current trigger message)
-            baseHistory := this.sessionManager.GetMessagesExcludingBatch()
-
-            ; Process each item
-            for item in checkedItems {
-                ; Deep clone the base history and the trigger message
-                clonedMessages := []
-                for msg in baseHistory {
-                    clonedMessages.Push(msg.Clone())
-                }
-                
-                ; Add a clone of the current prompt message to the history for THIS request
-                activePromptClone := userMsg.Clone()
-                clonedMessages.Push(activePromptClone)
-                
-                ; Add context specifically for THIS item to the first user message in clone
-                itemLabel := this.contextManager.GetLabelFromContextItem(item)
-                itemText := this.controller.ContextViewControllerValue.GetTextFromContextItem(item)
-                
-                ; Find first user message in clone to attach context
-                firstUserMsg := ""
-                for msg in clonedMessages {
-                    if (msg.Role == "user") {
-                        firstUserMsg := msg
-                        break
-                    }
-                }
-                
-                if (firstUserMsg) {
-                    ; Attach context as first element of Contents
-                    firstUserMsg.Contents.InsertAt(1, TextContent("Context for this request: [" . itemLabel . "]`n" . itemText))
-                    firstUserMsg.AdditionalProperties["hasContext"] := true
-                }
-
-                ; Create a temporary session manager for LLMService (hacky but works for SendToLLM)
-                tempSessionManager := {
-                    GetCurrentSessionMessages: (*) => clonedMessages,
-                    GetCurrentSessionLLMType: (*) => this.sessionManager.GetCurrentSessionLLMType(),
-                    GetMessagesExcludingBatch: (*) => clonedMessages,
-                    HasUnexecutedToolCalls: (*) => false
-                }
-
-                ; Send single request
-                newMessages := this.llmService.SendToLLM(tempSessionManager, this.controller.currentAnswerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled)
-
-                ; Mark responses and add to main history
-                for respMsg in newMessages {
-                    respMsg.AdditionalProperties["isBatchResponse"] := true
-                    respMsg.AdditionalProperties["batchContextItem"] := itemLabel
-                    messages.Push(respMsg)
-                }
-
-                ; Update History View as we go
-                this.controller.HistoryViewControllerValue.UpdateChatHistoryView()
-                
-                ; Check for cancellation (simplified)
-                if (this.controller.view.askButton.Text != "Cancel")
-                    break
-            }
+            this.sendBatchToLLMCommand.Execute(
+                promptText, 
+                contextProviders, 
+                (label, messages) => this.controller.HistoryViewControllerValue.UpdateChatHistoryView(),
+                () => (this.controller.view.askButton.Text != "Cancel")
+            )
         } catch as e {
             if (e.Message != "Request cancelled")
                 MsgBox("Batch processing error: " . e.Message, "Error", "Iconx")
@@ -271,83 +196,30 @@ class ChatManager {
     }
 
     SendToLLM() {
-        messages := this.sessionManager.GetCurrentSessionMessages()
-
-        ; Update the system prompt content
-        systemPrompt := this.configManager.GetSystemPromptValue(
-            this.sessionManager.GetCurrentSessionLLMType(),
-            this.sessionManager.GetCurrentSessionSystemPrompt()
-        )
-        this.sessionManager.UpdateSystemPromptContent(systemPrompt)
-
+        ; Capture GUI dependencies
         context := this.sessionManager.GetCurrentSessionContext()
-        contextBox := this.controller.view.gui["ContextBox"]
+        contextBoxValue := this.controller.view.gui["ContextBox"].Value
+        additionalContext := this.controller.ContextViewControllerValue.BuildAdditionalContextMessage(context, contextBoxValue)
 
-        ; Build context message content
-        additionalContext := this.controller.ContextViewControllerValue.BuildAdditionalContextMessage(context, contextBox.Value)
-
-        ; Find first user message
-        firstUserMsg := ""
-        for i, msg in messages {
-            if (msg.Role == "user") {
-                firstUserMsg := msg
-                break
-            }
-        }
-
-        if (firstUserMsg) {
-            ; Check if message has existing context
-            if (firstUserMsg.AdditionalProperties.Has("hasContext") && firstUserMsg.AdditionalProperties["hasContext"]) {
-                if (additionalContext != "") {
-                    ; Update existing context (first item in Contents)
-                    if (firstUserMsg.Contents.Length > 0 && (firstUserMsg.Contents[1] is TextContent)) {
-                        firstUserMsg.Contents[1].Text := additionalContext
-                    }
-                } else {
-                    ; Remove existing context
-                    firstUserMsg.Contents.RemoveAt(1)
-                    firstUserMsg.AdditionalProperties["hasContext"] := false
-                }
-            } else {
-                ; No existing context
-                if (additionalContext != "") {
-                    ; Insert new context at the beginning
-                    firstUserMsg.Contents.InsertAt(1, TextContent(additionalContext))
-                    firstUserMsg.AdditionalProperties["hasContext"] := true
-                }
-            }
-        }
-
-        ; Disable Ask LLM button while processing
+        ; Update UI State
         if (this.controller.view.gui) {
             this.controller.view.askButton.Text := "Cancel"
         }
 
         try {
-            ; Check tool enabled
-            currentLLM := this.sessionManager.GetCurrentSessionLLMType()
-            powerShellEnabled := this.configManager.IsToolEnabled(currentLLM, "powerShellTool")
-            fileSystemEnabled := this.configManager.IsToolEnabled(currentLLM, "fileSystemTool")
-            webSearchEnabled := this.configManager.IsToolEnabled(currentLLM, "webSearch")
-            webFetchEnabled := this.configManager.IsToolEnabled(currentLLM, "webFetch")
-
-            newMessages := this.llmService.SendToLLM(this.sessionManager, this.controller.currentAnswerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled)
-
-            ; Check for unexecuted Tool Calls
+            this.sendToLLMCommand.Execute(additionalContext)
+            
+            ; Check for unexecuted Tool Calls to update button text
             if (this.sessionManager.HasUnexecutedToolCalls()) {
                 this.controller.view.gui["AskLLM"].Text := "Confirm Tool Run"
             } else {
                 this.controller.view.gui["AskLLM"].Text := "Ask LLM"
             }
-
         } catch as e {
-            if (e.Message == "Request cancelled") {
-                ; Do nothing on cancellation
-            } else {
+            if (e.Message != "Request cancelled")
                 throw e
-            }
         } finally {
-            ; Re-enable Ask LLM button
+            ; Re-enable/Reset Ask LLM button
             if (this.controller.view.gui) {
                 if (this.controller.view.gui["AskLLM"].Text == "Cancel") {
                     this.controller.view.gui["AskLLM"].Text := "Ask LLM"
@@ -355,8 +227,10 @@ class ChatManager {
                 this.controller.view.askButton.Enabled := true
             }
         }
-        this.controller.HistoryViewControllerValue.UpdateChatHistoryView()  ; Update the chat history view
 
+        ; Update UI views
+        this.controller.HistoryViewControllerValue.UpdateChatHistoryView()
+        messages := this.sessionManager.GetCurrentSessionMessages()
         if (messages.Length > 0) {
             this.controller.RenderMarkdown(this.sessionManager.GetMessageAsString(messages[messages.Length]))
         }

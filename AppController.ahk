@@ -19,6 +19,9 @@
 #Include Commands\SaveConversationCommand.ahk
 #Include Commands\LoadConversationCommand.ahk
 #Include Commands\ClearContextCommand.ahk
+#Include Commands\SendToLLMCommand.ahk
+#Include Commands\SendBatchToLLMCommand.ahk
+#Include Commands\ConfirmToolCommand.ahk
 
 class AppController {
     view := ""
@@ -45,6 +48,9 @@ class AppController {
     SaveConversationCommandValue := ""
     LoadConversationCommandValue := ""
     ClearContextCommandValue := ""
+    SendToLLMCommandValue := ""
+    SendBatchToLLMCommandValue := ""
+    ConfirmToolCommandValue := ""
     
     batchModeEnabled := false  ; Track batch mode state
 
@@ -73,14 +79,20 @@ class AppController {
         this.LLMServiceValue := LLMService(this.configManager)
         
         ; Create specialized managers
+        ; Create specialized managers
         this.MenuManagerValue := MenuManager(this, this.configManager, this.SessionManagerValue)
-        this.ChatManagerValue := ChatManager(this, this.configManager, this.SessionManagerValue, this.LLMServiceValue, this.ContextManagerValue)
         
         ; Initialize Services and Commands
         this.FileServiceValue := FileService()
         this.SaveConversationCommandValue := SaveConversationCommand(this.SessionManagerValue, this.FileServiceValue)
         this.LoadConversationCommandValue := LoadConversationCommand(this.SessionManagerValue, this.FileServiceValue)
         this.ClearContextCommandValue := ClearContextCommand(this.SessionManagerValue)
+        
+        this.SendToLLMCommandValue := SendToLLMCommand(this.SessionManagerValue, this.configManager, this.LLMServiceValue, this.currentAnswerSize)
+        this.SendBatchToLLMCommandValue := SendBatchToLLMCommand(this.SessionManagerValue, this.configManager, this.LLMServiceValue, this.ContextManagerValue, this.currentAnswerSize)
+        this.ConfirmToolCommandValue := ConfirmToolCommand(this.SessionManagerValue, this.LLMServiceValue, this.SendToLLMCommandValue)
+
+        this.ChatManagerValue := ChatManager(this, this.configManager, this.SessionManagerValue, this.LLMServiceValue, this.ContextManagerValue, this.SendToLLMCommandValue, this.SendBatchToLLMCommandValue, this.ConfirmToolCommandValue)
 
         this.ConversationHandlerValue := ConversationHandler(this, this.configManager, this.SessionManagerValue, this.LLMServiceValue, this.MenuManagerValue, this.SaveConversationCommandValue, this.LoadConversationCommandValue)
         this.ClipboardManagerValue := ClipboardManager(this, this.SessionManagerValue, this.ContextManagerValue)

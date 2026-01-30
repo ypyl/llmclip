@@ -5,13 +5,15 @@ class ContextViewController {
     configManager := ""
     ContextManagerValue := ""
     WebViewManagerValue := ""
+    ClearContextCommandValue := ""
     MyGui := ""
 
-    __New(sessionManager, configManager, contextManager, webViewManager) {
+    __New(sessionManager, configManager, contextManager, webViewManager, clearContextCommand) {
         this.SessionManagerValue := sessionManager
         this.configManager := configManager
         this.ContextManagerValue := contextManager
         this.WebViewManagerValue := webViewManager
+        this.ClearContextCommandValue := clearContextCommand
     }
 
     SetGui(gui) {
@@ -128,7 +130,7 @@ class ContextViewController {
     }
 
     ClearAllContext(*) {
-        this.SessionManagerValue.SetCurrentSessionContext([])
+        this.ClearContextCommandValue.Execute()
         this.UpdateContextView()
     }
 

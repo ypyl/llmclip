@@ -1,5 +1,5 @@
-#Include FileUtils.ahk
-#Include LLM\Types.ahk
+#Include ..\FileUtils.ahk
+#Include ..\LLM\Types.ahk
 
 class SessionManager {
     currentSessionIndex := 1

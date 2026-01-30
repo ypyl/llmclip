@@ -1,15 +1,16 @@
 #Requires AutoHotkey 2.0
 #Include Settings\ConfigurationManager.ahk
 #Include LLM\LLMService.ahk
-#Include ClipboardParser.ahk
+#Include Services\SessionManager.ahk
+#Include Services\ClipboardParser.ahk
 #Include WebViewManager.ahk
 #Include Services\ContextManager.ahk
 #Include TrayManager.ahk
 #Include ui\UIConfig.ahk
 #Include ui\UIBuilder.ahk
 #Include ui\AppWindow.ahk
-#Include ContextViewController.ahk
-#Include HistoryViewController.ahk
+#Include Controllers\ContextViewController.ahk
+#Include Controllers\HistoryViewController.ahk
 #Include Controllers\MenuManager.ahk
 #Include Controllers\ChatManager.ahk
 #Include Controllers\ConversationHandler.ahk
@@ -17,6 +18,7 @@
 #Include Services\FileService.ahk
 #Include Commands\SaveConversationCommand.ahk
 #Include Commands\LoadConversationCommand.ahk
+#Include Commands\ClearContextCommand.ahk
 
 class AppController {
     view := ""
@@ -42,6 +44,7 @@ class AppController {
     FileServiceValue := ""
     SaveConversationCommandValue := ""
     LoadConversationCommandValue := ""
+    ClearContextCommandValue := ""
     
     batchModeEnabled := false  ; Track batch mode state
 
@@ -67,9 +70,6 @@ class AppController {
         this.TrayManagerValue := TrayManager(ObjBindMethod(this, "Show"), ObjBindMethod(this, "UpdateUiBasesOnRecordingStatus"), ObjBindMethod(this,
             "ExitApplication"), this.ContextManagerValue)
 
-        this.ContextViewControllerValue := ContextViewController(this.SessionManagerValue, this.configManager, this.ContextManagerValue, this.WebViewManagerValue)
-        this.HistoryViewControllerValue := HistoryViewController(this.SessionManagerValue, this.WebViewManagerValue, this.configManager)
-
         this.LLMServiceValue := LLMService(this.configManager)
         
         ; Create specialized managers
@@ -80,9 +80,13 @@ class AppController {
         this.FileServiceValue := FileService()
         this.SaveConversationCommandValue := SaveConversationCommand(this.SessionManagerValue, this.FileServiceValue)
         this.LoadConversationCommandValue := LoadConversationCommand(this.SessionManagerValue, this.FileServiceValue)
+        this.ClearContextCommandValue := ClearContextCommand(this.SessionManagerValue)
 
         this.ConversationHandlerValue := ConversationHandler(this, this.configManager, this.SessionManagerValue, this.LLMServiceValue, this.MenuManagerValue, this.SaveConversationCommandValue, this.LoadConversationCommandValue)
         this.ClipboardManagerValue := ClipboardManager(this, this.SessionManagerValue, this.ContextManagerValue)
+
+        this.ContextViewControllerValue := ContextViewController(this.SessionManagerValue, this.configManager, this.ContextManagerValue, this.WebViewManagerValue, this.ClearContextCommandValue)
+        this.HistoryViewControllerValue := HistoryViewController(this.SessionManagerValue, this.WebViewManagerValue, this.configManager)
 
         this.batchModeEnabled := false
 
@@ -145,7 +149,7 @@ class AppController {
     }
 
     ClearAllContext(*) {
-        this.SessionManagerValue.SetCurrentSessionContext([])
+        this.ClearContextCommandValue.Execute()
         this.ContextViewControllerValue.UpdateContextView()
     }
 }

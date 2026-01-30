@@ -4,7 +4,7 @@
 #Include FileSystemTool.ahk
 #Include WebSearchTool.ahk
 #Include WebFetchTool.ahk
-#Include ..\SessionManager.ahk
+#Include ..\Services\SessionManager.ahk
 
 class LLMService {
     configManager := ""

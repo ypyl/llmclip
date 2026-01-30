@@ -11,8 +11,9 @@ class ChatManager {
     sendToLLMCommand := ""
     sendBatchToLLMCommand := ""
     confirmToolCommand := ""
+    regenerateMessageCommand := ""
 
-    __New(controller, configManager, sessionManager, llmService, contextManager, sendToLLMCommand, sendBatchToLLMCommand, confirmToolCommand) {
+    __New(controller, configManager, sessionManager, llmService, contextManager, sendToLLMCommand, sendBatchToLLMCommand, confirmToolCommand, regenerateMessageCommand) {
         this.controller := controller
         this.configManager := configManager
         this.sessionManager := sessionManager
@@ -22,6 +23,7 @@ class ChatManager {
         this.sendToLLMCommand := sendToLLMCommand
         this.sendBatchToLLMCommand := sendBatchToLLMCommand
         this.confirmToolCommand := confirmToolCommand
+        this.regenerateMessageCommand := regenerateMessageCommand
     }
 
     ToggleBatchMode(*) {
@@ -29,11 +31,7 @@ class ChatManager {
         this.controller.batchModeEnabled := !this.controller.batchModeEnabled
         
         ; Update menu checkmark
-        if (this.controller.batchModeEnabled) {
-            this.controller.view.modeMenu.Check("Batch Mode")
-        } else {
-            this.controller.view.modeMenu.Uncheck("Batch Mode")
-        }
+        this.controller.view.UpdateBatchModeMenu(this.controller.batchModeEnabled)
     }
 
     HandleToolConfirmation() {
@@ -44,70 +42,35 @@ class ChatManager {
                 this.controller.RenderMarkdown(this.sessionManager.GetMessageAsString(lastMsg))
             }
         }
-        this.controller.view.gui["AskLLM"].Text := "Ask LLM"
+        this.controller.view.SetAskButtonText("Ask LLM")
     }
 
     HandleCancellation() {
         if (this.llmService) {
             this.llmService.Cancel()
         }
-        if (this.controller.view.gui) {
-            this.controller.view.gui["AskLLM"].Text := "Ask LLM"
-        }
+        this.controller.view.SetAskButtonText("Ask LLM")
     }
 
     HandleRegenerationOrEdit(promptText) {
-        messages := this.sessionManager.GetCurrentSessionMessages()
-        chatHistory := this.controller.view.gui["ChatHistory"]
-        focused_row := chatHistory.GetNext()
+        focusedRow := this.controller.view.GetSelectedHistoryIndex()
+        
+        result := this.regenerateMessageCommand.Execute(
+            focusedRow, 
+            promptText, 
+            () => this.controller.ContextViewControllerValue.GetCheckedImages()
+        )
 
-        if (focused_row > 0) {
-            selectedMsg := messages[focused_row]
-
-            if (selectedMsg.Role == "user") {
-                if (promptText == "") {
-                    ; Regeneration case: Load message content into prompt for editing
-                    this.controller.view.gui["PromptEdit"].Value := this.sessionManager.GetUserMessageTextWithoutContext(selectedMsg)
-                    return true
-                } else {
-                    ; Edit Mode Logic (kept in controller for now as it manipulates history directly)
-                    isImageEnabled := this.configManager.IsImageInputEnabled(this.sessionManager.GetCurrentSessionLLMType())
-                    images := isImageEnabled ? this.controller.ContextViewControllerValue.GetCheckedImages() : []
-                    newContent := this.sessionManager.BuildUserMessage(promptText, images)
-
-                    ; Check if this is the first user message with context
-                    isFirstUserMsg := false
-                    for i, msg in messages {
-                        if (msg.Role == "user") {
-                            isFirstUserMsg := (msg == selectedMsg)
-                            break
-                        }
-                    }
-
-                    ; If first user message with context, preserve the context
-                    if (isFirstUserMsg && selectedMsg.AdditionalProperties.Has("hasContext")
-                        && selectedMsg.AdditionalProperties["hasContext"]
-                        && selectedMsg.Contents.Length > 0 && (selectedMsg.Contents[1] is TextContent)) {
-                        contextText := selectedMsg.Contents[1]
-                        newContentWithContext := [contextText]
-                        for part in newContent {
-                            newContentWithContext.Push(part)
-                        }
-                        selectedMsg.Contents := newContentWithContext
-                    } else {
-                        selectedMsg.Contents := newContent
-                    }
-
-                    ; Truncate history after this message
-                    if (this.sessionManager.TruncateMessages(focused_row)) {
-                        this.SendToLLM()
-                        this.controller.view.gui["PromptEdit"].Value := ""
-                        chatHistory.Modify(focused_row, "-Select")
-                        return true
-                    }
-                }
-            }
+        if (result.status == "load_to_prompt") {
+            this.controller.view.SetPromptValue(result.text)
+            return true
+        } else if (result.status == "sent") {
+            this.SendToLLM()
+            this.controller.view.ClearPrompt()
+            this.controller.view.DeselectHistoryItem(focusedRow)
+            return true
         }
+
         return false
     }
 
@@ -123,7 +86,7 @@ class ChatManager {
             return
         }
 
-        promptText := this.controller.view.gui["PromptEdit"].Value
+        promptText := this.controller.view.GetPromptValue()
 
         ; 2. Check for regeneration or edit case
         if (this.HandleRegenerationOrEdit(promptText)) {
@@ -148,7 +111,7 @@ class ChatManager {
 
         this.SendToLLM()
         
-        this.controller.view.gui["PromptEdit"].Value := ""  ; Clear prompt field
+        this.controller.view.ClearPrompt()
         if (this.controller.TrayManagerValue.isRecording) {
             this.controller.TrayManagerValue.StopRecording(this.sessionManager)
         }
@@ -163,7 +126,7 @@ class ChatManager {
 
         ; Update UI to show "Cancel"
         if (this.controller.view.gui) {
-            this.controller.view.askButton.Text := "Cancel"
+            this.controller.view.SetAskButtonText("Cancel")
         }
 
         ; Prepare context providers (logic-only data)
@@ -187,10 +150,10 @@ class ChatManager {
                 MsgBox("Batch processing error: " . e.Message, "Error", "Iconx")
         } finally {
             if (this.controller.view.gui) {
-                this.controller.view.askButton.Text := "Ask LLM"
-                this.controller.view.askButton.Enabled := true
+                this.controller.view.SetAskButtonText("Ask LLM")
+                this.controller.view.SetAskButtonEnabled(true)
             }
-            this.controller.view.gui["PromptEdit"].Value := ""
+            this.controller.view.ClearPrompt()
             this.controller.HistoryViewControllerValue.UpdateChatHistoryView()
         }
     }
@@ -203,7 +166,7 @@ class ChatManager {
 
         ; Update UI State
         if (this.controller.view.gui) {
-            this.controller.view.askButton.Text := "Cancel"
+            this.controller.view.SetAskButtonText("Cancel")
         }
 
         try {
@@ -222,9 +185,9 @@ class ChatManager {
             ; Re-enable/Reset Ask LLM button
             if (this.controller.view.gui) {
                 if (this.controller.view.gui["AskLLM"].Text == "Cancel") {
-                    this.controller.view.gui["AskLLM"].Text := "Ask LLM"
+                    this.controller.view.SetAskButtonText("Ask LLM")
                 }
-                this.controller.view.askButton.Enabled := true
+                this.controller.view.SetAskButtonEnabled(true)
             }
         }
 

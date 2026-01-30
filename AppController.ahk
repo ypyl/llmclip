@@ -22,6 +22,7 @@
 #Include Commands\SendToLLMCommand.ahk
 #Include Commands\SendBatchToLLMCommand.ahk
 #Include Commands\ConfirmToolCommand.ahk
+#Include Commands\RegenerateMessageCommand.ahk
 
 class AppController {
     view := ""
@@ -51,6 +52,7 @@ class AppController {
     SendToLLMCommandValue := ""
     SendBatchToLLMCommandValue := ""
     ConfirmToolCommandValue := ""
+    RegenerateMessageCommandValue := ""
     
     batchModeEnabled := false  ; Track batch mode state
 
@@ -91,8 +93,9 @@ class AppController {
         this.SendToLLMCommandValue := SendToLLMCommand(this.SessionManagerValue, this.configManager, this.LLMServiceValue, this.currentAnswerSize)
         this.SendBatchToLLMCommandValue := SendBatchToLLMCommand(this.SessionManagerValue, this.configManager, this.LLMServiceValue, this.ContextManagerValue, this.currentAnswerSize)
         this.ConfirmToolCommandValue := ConfirmToolCommand(this.SessionManagerValue, this.LLMServiceValue, this.SendToLLMCommandValue)
+        this.RegenerateMessageCommandValue := RegenerateMessageCommand(this.SessionManagerValue, this.configManager)
 
-        this.ChatManagerValue := ChatManager(this, this.configManager, this.SessionManagerValue, this.LLMServiceValue, this.ContextManagerValue, this.SendToLLMCommandValue, this.SendBatchToLLMCommandValue, this.ConfirmToolCommandValue)
+        this.ChatManagerValue := ChatManager(this, this.configManager, this.SessionManagerValue, this.LLMServiceValue, this.ContextManagerValue, this.SendToLLMCommandValue, this.SendBatchToLLMCommandValue, this.ConfirmToolCommandValue, this.RegenerateMessageCommandValue)
 
         this.ConversationHandlerValue := ConversationHandler(this, this.configManager, this.SessionManagerValue, this.LLMServiceValue, this.MenuManagerValue, this.SaveConversationCommandValue, this.LoadConversationCommandValue)
         this.ClipboardManagerValue := ClipboardManager(this, this.SessionManagerValue, this.ContextManagerValue)

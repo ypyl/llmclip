@@ -113,4 +113,32 @@ class AppWindow {
             }
         }
     }
+
+    ClearPrompt() {
+        this.gui["PromptEdit"].Value := ""
+    }
+
+    SetAskButtonText(text) {
+        this.gui["AskLLM"].Text := text
+    }
+
+    SetAskButtonEnabled(enabled) {
+        this.askButton.Enabled := enabled
+    }
+
+    GetSelectedHistoryIndex() {
+        return this.gui["ChatHistory"].GetNext()
+    }
+
+    DeselectHistoryItem(index) {
+        this.gui["ChatHistory"].Modify(index, "-Select")
+    }
+
+    UpdateBatchModeMenu(enabled) {
+        if (enabled) {
+            this.modeMenu.Check("Batch Mode")
+        } else {
+            this.modeMenu.Uncheck("Batch Mode")
+        }
+    }
 }

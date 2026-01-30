@@ -3,7 +3,7 @@
 #Include LLM\LLMService.ahk
 #Include ClipboardParser.ahk
 #Include WebViewManager.ahk
-#Include ContextManager.ahk
+#Include Services\ContextManager.ahk
 #Include TrayManager.ahk
 #Include ui\UIConfig.ahk
 #Include ui\UIBuilder.ahk

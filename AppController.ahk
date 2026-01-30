@@ -148,35 +148,4 @@ class AppController {
         this.SessionManagerValue.SetCurrentSessionContext([])
         this.ContextViewControllerValue.UpdateContextView()
     }
-
-    HasVal(haystack, needle) {
-        for index, value in haystack {
-            if (value = needle)
-                return true
-        }
-        return false
-    }
-
-    CheckContentInMessages(messages, newContent) {
-        for msg in messages {
-            if (InStr(msg.GetText(), newContent))
-                return true
-        }
-        return false
-    }
-
-    HasContent(haystack, newContent) {
-        if (newContent = "")
-            return true
-
-        ; First check exact matches
-        if (this.HasVal(haystack, newContent))
-            return true
-
-        ; Also check in chat history
-        if (this.CheckContentInMessages(this.SessionManagerValue.GetCurrentSessionMessages(), newContent))
-            return true
-
-        return false
-    }
 }

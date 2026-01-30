@@ -513,4 +513,36 @@ class SessionManager {
 
         return contentParts
     }
+
+    HasVal(haystack, needle) {
+        for index, value in haystack {
+            if (value = needle)
+                return true
+        }
+        return false
+    }
+
+    CheckContentInMessages(messages, newContent) {
+        for msg in messages {
+            if (InStr(msg.GetText(), newContent))
+                return true
+        }
+        return false
+    }
+
+    IsContentDuplicate(newContent) {
+        if (newContent = "")
+            return true
+
+        ; Check in current session context
+        currentContext := this.GetCurrentSessionContext()
+        if (this.HasVal(currentContext, newContent))
+            return true
+
+        ; Check in chat history
+        if (this.CheckContentInMessages(this.GetCurrentSessionMessages(), newContent))
+            return true
+
+        return false
+    }
 }

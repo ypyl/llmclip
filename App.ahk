@@ -28,6 +28,8 @@
 #Include Commands\ConfirmToolCommand.ahk
 #Include Commands\RegenerateMessageCommand.ahk
 #Include Commands\StopRecordingCommand.ahk
+#Include Commands\DeleteMessageCommand.ahk
+#Include Commands\ClearHistoryCommand.ahk
 #Include Commands\CompressHistoryCommand.ahk
 #Include Commands\ExtractLearningsCommand.ahk
 #Include Commands\ResetAllCommand.ahk
@@ -74,6 +76,8 @@ class App {
         compress := CompressHistoryCommand(sess, cfg, llm)
         extract := ExtractLearningsCommand(sess, cfg, llm)
         resetAll := ResetAllCommand(sess)
+        deleteMsg := DeleteMessageCommand(sess)
+        clearHist := ClearHistoryCommand(sess, cfg)
 
         this.controller.SetCommands(
             saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, compress, extract, resetAll
@@ -86,7 +90,7 @@ class App {
         clipMan := ClipboardManager(this.controller, sess, ctx)
         
         ctxView := ContextViewController(this.controller, sess, cfg, ctx, wv, clearCtx)
-        histView := HistoryViewController(this.controller, sess, wv, cfg)
+        histView := HistoryViewController(this.controller, sess, wv, cfg, deleteMsg, clearHist)
 
         this.controller.SetSubControllers(menuMan, chatMan, convHandler, clipMan, ctxView, histView)
 

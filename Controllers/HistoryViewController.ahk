@@ -4,19 +4,19 @@ class HistoryViewController {
     controller := ""
     sessionManager := ""
     webViewManager := ""
-    MyGui := ""
-
     configManager := ""
 
-    __New(controller, sessionManager, webViewManager, configManager) {
+    ; Commands
+    deleteMessageCommand := ""
+    clearHistoryCommand := ""
+
+    __New(controller, sessionManager, webViewManager, configManager, deleteMessageCommand, clearHistoryCommand) {
         this.controller := controller
         this.sessionManager := sessionManager
         this.webViewManager := webViewManager
         this.configManager := configManager
-    }
-
-    SetGui(gui) {
-        this.MyGui := gui
+        this.deleteMessageCommand := deleteMessageCommand
+        this.clearHistoryCommand := clearHistoryCommand
     }
 
     UpdateChatHistoryView(*) {
@@ -43,7 +43,7 @@ class HistoryViewController {
                 this.controller.view.ModifyChatHistory(row, "Col2", "✅ [" . itemLabel . "] " . contentText)
             }
         }
-        this.controller.view.SetChatMessageActionButtonVisible(false)  ; Hide the Run Tool button
+        this.controller.view.SetChatMessageActionButtonVisible(false)  ; Hide the action button
         if (this.controller.view.GetChatHistoryCount() > 0) {
             this.controller.view.ScrollChatHistoryToBottom()  ; Scroll to bottom
         }
@@ -109,9 +109,9 @@ class HistoryViewController {
     }
 
     CopySelectedMessage(*) {
-        messages := this.sessionManager.GetCurrentSessionMessages()
-        chatHistory := this.MyGui["ChatHistory"]
-        if (focused_row := chatHistory.GetNext()) {
+        focused_row := this.controller.view.GetChatHistoryFocus()
+        if (focused_row) {
+            messages := this.sessionManager.GetCurrentSessionMessages()
             msg := messages[focused_row]
             
             ; Check if this is the first user message with context
@@ -148,37 +148,14 @@ class HistoryViewController {
     }
 
     DeleteSelectedMessage(*) {
-        messages := this.sessionManager.GetCurrentSessionMessages()
-        chatHistory := this.MyGui["ChatHistory"]
-
-        selectedIndices := []
-        focused_row := 0
-
-        ; Collect all selected rows, excluding system message
-        while (focused_row := chatHistory.GetNext(focused_row)) {
-            if (focused_row > 1) {  ; Don't include system message
-                selectedIndices.InsertAt(1, focused_row)
-            }
-        }
-
-        ; Remove messages in reverse order to maintain correct indices
-        for index in selectedIndices
-            messages.RemoveAt(index)
-
+        selectedIndices := this.controller.view.GetChatHistorySelectedIndices()
+        this.deleteMessageCommand.Execute(selectedIndices)
         this.UpdateChatHistoryView()
         this.webViewManager.RenderMarkdown("")  ; Clear the response area
     }
 
     ClearChatHistory(*) {
-        this.sessionManager.ClearCurrentMessages()
-
-        ; Update the system prompt content after clearing
-        systemPrompt := this.configManager.GetSystemPromptValue(
-            this.sessionManager.GetCurrentSessionLLMType(),
-            this.sessionManager.GetCurrentSessionSystemPrompt()
-        )
-        this.sessionManager.UpdateSystemPromptContent(systemPrompt)
-
+        this.clearHistoryCommand.Execute()
         this.UpdateChatHistoryView()  ; Update the chat history view
         this.webViewManager.RenderMarkdown("")  ; Clear the response area
     }

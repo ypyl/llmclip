@@ -50,7 +50,6 @@ class AppWindow {
         
         ; Set GUI for VCs
         this.controller.contextViewController.SetGui(this.gui)
-        this.controller.historyViewController.SetGui(this.gui)
         
         ; Create Menus
         menus := UIBuilder.CreateMenuBar(this.gui, this.controller, this.controller.configManager, this.controller.sessionManager, this.controller.menuManager, this.controller.conversationHandler, this.controller.chatManager)
@@ -204,6 +203,19 @@ class AppWindow {
 
     GetChatHistoryCount() {
         return this.gui["ChatHistory"].GetCount()
+    }
+
+    GetChatHistorySelectedIndices() {
+        selectedIndices := []
+        row := 0
+        while (row := this.gui["ChatHistory"].GetNext(row)) {
+            selectedIndices.InsertAt(1, row) ; Reverse order for safe deletion
+        }
+        return selectedIndices
+    }
+
+    GetChatHistoryFocus() {
+        return this.gui["ChatHistory"].GetNext()
     }
 
     ScrollChatHistoryToBottom() {

@@ -12,8 +12,8 @@ class ClipboardManager {
     }
 
     ClipChanged(DataType) {
-        if (this.controller.RecordingServiceValue.isRecording) {
-            localTxtFromClipboardArray := this.controller.ClipboardParserValue.Parse()
+        if (this.controller.recordingService.isRecording) {
+            localTxtFromClipboardArray := this.controller.clipboardParser.Parse()
 
             ; Add non-duplicate items to context
             context := this.sessionManager.GetCurrentSessionContext()
@@ -32,7 +32,7 @@ class ClipboardManager {
 
             ; Update Context in GUI if shown
             if (this.controller.view.guiShown) {
-                this.controller.ContextViewControllerValue.UpdateContextView()
+                this.controller.contextViewController.UpdateContextView()
             }
         }
     }

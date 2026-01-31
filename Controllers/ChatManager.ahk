@@ -36,7 +36,7 @@ class ChatManager {
 
     HandleToolConfirmation() {
         if (this.confirmToolCommand.Execute()) {
-            this.controller.HistoryViewControllerValue.UpdateChatHistoryView()
+            this.controller.historyViewController.UpdateChatHistoryView()
             if (this.sessionManager.GetCurrentSessionMessages().Length > 0) {
                 lastMsg := this.sessionManager.GetCurrentSessionMessages()[-1]
                 this.controller.RenderMarkdown(this.sessionManager.GetMessageAsString(lastMsg))
@@ -58,7 +58,7 @@ class ChatManager {
         result := this.regenerateMessageCommand.Execute(
             focusedRow, 
             promptText, 
-            () => this.controller.ContextViewControllerValue.GetCheckedImages()
+            () => this.controller.contextViewController.GetCheckedImages()
         )
 
         if (result.status == "load_to_prompt") {
@@ -76,7 +76,7 @@ class ChatManager {
 
     AskToLLM(*) {
         ; 1. Check current button state
-        btnText := this.controller.view.gui["AskLLM"].Text
+        btnText := this.controller.view.GetAskButtonText()
         if (btnText == "Confirm Tool Run") {
             this.HandleToolConfirmation()
             return
@@ -101,10 +101,10 @@ class ChatManager {
 
         ; 4. Normal Send Mode
         isImageEnabled := this.configManager.IsImageInputEnabled(this.sessionManager.GetCurrentSessionLLMType())
-        images := isImageEnabled ? this.controller.ContextViewControllerValue.GetCheckedImages() : []
+        images := isImageEnabled ? this.controller.contextViewController.GetCheckedImages() : []
         userMessageContent := this.sessionManager.BuildUserMessage(promptText, images)
 
-        hasContext := this.controller.ContextViewControllerValue.HasAnyCheckedItem()
+        hasContext := this.controller.contextViewController.HasAnyCheckedItem()
         if (userMessageContent.Length > 0 || hasContext) {
             this.sessionManager.GetCurrentSessionMessages().Push(ChatMessage("user", userMessageContent))
         }
@@ -112,13 +112,13 @@ class ChatManager {
         this.SendToLLM()
         
         this.controller.view.ClearPrompt()
-        if (this.controller.RecordingServiceValue.isRecording) {
-            this.controller.StopRecordingCommandValue.Execute()
+        if (this.controller.recordingService.isRecording) {
+            this.controller.stopRecordingCommand.Execute()
         }
     }
 
     SendBatchToLLM(promptText) {
-        checkedItems := this.controller.ContextViewControllerValue.GetAllCheckedContextItems()
+        checkedItems := this.controller.contextViewController.GetAllCheckedContextItems()
         if (checkedItems.Length == 0) {
             MsgBox("Please check at least one item in the context list for batch mode.", "No Items Selected", "Iconi")
             return
@@ -134,7 +134,7 @@ class ChatManager {
         for item in checkedItems {
             contextProviders.Push({
                 item: item,
-                text: this.controller.ContextViewControllerValue.GetTextFromContextItem(item)
+                text: this.controller.contextViewController.GetTextFromContextItem(item)
             })
         }
 
@@ -142,7 +142,7 @@ class ChatManager {
             this.sendBatchToLLMCommand.Execute(
                 promptText, 
                 contextProviders, 
-                (label, messages) => this.controller.HistoryViewControllerValue.UpdateChatHistoryView(),
+                (label, messages) => this.controller.historyViewController.UpdateChatHistoryView(),
                 () => (this.controller.view.askButton.Text != "Cancel")
             )
         } catch as e {
@@ -154,15 +154,15 @@ class ChatManager {
                 this.controller.view.SetAskButtonEnabled(true)
             }
             this.controller.view.ClearPrompt()
-            this.controller.HistoryViewControllerValue.UpdateChatHistoryView()
+            this.controller.historyViewController.UpdateChatHistoryView()
         }
     }
 
     SendToLLM() {
         ; Capture GUI dependencies
         context := this.sessionManager.GetCurrentSessionContext()
-        contextBoxValue := this.controller.view.gui["ContextBox"].Value
-        additionalContext := this.controller.ContextViewControllerValue.BuildAdditionalContextMessage(context, contextBoxValue)
+        contextBoxValue := this.controller.view.GetContextBoxValue()
+        additionalContext := this.controller.contextViewController.BuildAdditionalContextMessage(context, contextBoxValue)
 
         ; Update UI State
         if (this.controller.view.gui) {
@@ -174,17 +174,17 @@ class ChatManager {
             
             ; Check for unexecuted Tool Calls to update button text
             if (this.sessionManager.HasUnexecutedToolCalls()) {
-                this.controller.view.gui["AskLLM"].Text := "Confirm Tool Run"
+                this.controller.view.SetAskButtonText("Confirm Tool Run")
             } else {
-                this.controller.view.gui["AskLLM"].Text := "Ask LLM"
+                this.controller.view.SetAskButtonText("Ask LLM")
             }
         } catch as e {
             if (e.Message != "Request cancelled")
                 throw e
         } finally {
             ; Re-enable/Reset Ask LLM button
-            if (this.controller.view.gui) {
-                if (this.controller.view.gui["AskLLM"].Text == "Cancel") {
+            if (this.controller.view.guiShown) {
+                if (this.controller.view.GetAskButtonText() == "Cancel") {
                     this.controller.view.SetAskButtonText("Ask LLM")
                 }
                 this.controller.view.SetAskButtonEnabled(true)
@@ -192,13 +192,13 @@ class ChatManager {
         }
 
         ; Update UI views
-        this.controller.HistoryViewControllerValue.UpdateChatHistoryView()
+        this.controller.historyViewController.UpdateChatHistoryView()
         messages := this.sessionManager.GetCurrentSessionMessages()
         if (messages.Length > 0) {
             this.controller.RenderMarkdown(this.sessionManager.GetMessageAsString(messages[messages.Length]))
         }
 
         ; Uncheck images after sending
-        this.controller.ContextViewControllerValue.UncheckSentImages()
+        this.controller.contextViewController.UncheckSentImages()
     }
 }

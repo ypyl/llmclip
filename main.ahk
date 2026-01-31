@@ -1,12 +1,12 @@
 #Requires AutoHotkey 2.0
 #SingleInstance Force  ; Prevent multiple instances
 #Warn
-#Include AppController.ahk
+#Include App.ahk
 
-; Initialize controller
-global app := AppController()
-app.Start()
+; Initialize application
+global appInstance := App()
+appInstance.Start()
 
 F3:: {
-    app.ToggleDisplay()
+    appInstance.ToggleDisplay()
 }

@@ -30,13 +30,13 @@ class AppWindow {
         this.gui.Show("w1230 h610")
         
         ; Initialize WebView after showing
-        this.controller.WebViewManagerValue.Init(this.gui["ResponseCtr"])
-        this.controller.WebViewManagerValue.SetInputCallback(ObjBindMethod(this.controller, "AppendToPrompt"))
+        this.controller.webViewManager.Init(this.gui["ResponseCtr"])
+        this.controller.webViewManager.SetInputCallback(ObjBindMethod(this.controller, "AppendToPrompt"))
         
         this.guiShown := true
         
         ; Update views
-        this.controller.HistoryViewControllerValue.UpdateChatHistoryView()
+        this.controller.historyViewController.UpdateChatHistoryView()
     }
     
     BuildUI() {
@@ -49,11 +49,11 @@ class AppWindow {
         this.gui.OnEvent("Close", ObjBindMethod(this, "GuiClose"))
         
         ; Set GUI for VCs
-        this.controller.ContextViewControllerValue.SetGui(this.gui)
-        this.controller.HistoryViewControllerValue.SetGui(this.gui)
+        this.controller.contextViewController.SetGui(this.gui)
+        this.controller.historyViewController.SetGui(this.gui)
         
         ; Create Menus
-        menus := UIBuilder.CreateMenuBar(this.gui, this.controller, this.controller.configManager, this.controller.SessionManagerValue, this.controller.MenuManagerValue, this.controller.ConversationHandlerValue, this.controller.ChatManagerValue)
+        menus := UIBuilder.CreateMenuBar(this.gui, this.controller, this.controller.configManager, this.controller.sessionManager, this.controller.menuManager, this.controller.conversationHandler, this.controller.chatManager)
         this.menuBar := menus.menuBar
         this.modelMenu := menus.modelMenu
         this.historyMenu := menus.historyMenu
@@ -61,16 +61,16 @@ class AppWindow {
         this.modeMenu := menus.modeMenu
         
         ; Initial menu states
-        this.controller.MenuManagerValue.UpdateCompressionMenuState()
-        this.controller.MenuManagerValue.UpdateToolsMenuState()
+        this.controller.menuManager.UpdateCompressionMenuState()
+        this.controller.menuManager.UpdateToolsMenuState()
         
         ; Create Controls
-        UIBuilder.CreateTopControls(this.gui, this.controller.SessionManagerValue, this.controller.RecordingServiceValue, this.controller, this.controller.ConversationHandlerValue)
-        UIBuilder.CreateContextSection(this.gui, this.controller.ContextViewControllerValue)
-        UIBuilder.CreateChatHistorySection(this.gui, this.controller.HistoryViewControllerValue)
-        UIBuilder.CreatePromptSection(this.gui, this.controller.SessionManagerValue, this.controller.configManager, this)
+        UIBuilder.CreateTopControls(this.gui, this.controller.sessionManager, this.controller.recordingService, this.controller, this.controller.conversationHandler)
+        UIBuilder.CreateContextSection(this.gui, this.controller.contextViewController)
+        UIBuilder.CreateChatHistorySection(this.gui, this.controller.historyViewController)
+        UIBuilder.CreatePromptSection(this.gui, this.controller.sessionManager, this.controller.configManager, this)
         
-        this.askButton := UIBuilder.CreateBottomControls(this.gui, this.controller.SessionManagerValue, this.controller.configManager, this.controller)
+        this.askButton := UIBuilder.CreateBottomControls(this.gui, this.controller.sessionManager, this.controller.configManager, this.controller)
         
         UIBuilder.CreateResponseArea(this.gui)
     }
@@ -136,5 +136,93 @@ class AppWindow {
         } else {
             this.modeMenu.Uncheck("Batch Mode")
         }
+    }
+
+    GetAskButtonText() {
+        return this.gui["AskLLM"].Text
+    }
+
+    SetSystemPromptValue(value) {
+        this.gui["SystemPrompt"].Value := value
+    }
+
+    GetSystemPromptValue() {
+        return this.gui["SystemPrompt"].Value
+    }
+
+    SetSessionSelectValue(value) {
+        this.gui["SessionSelect"].Value := value
+    }
+
+    GetSessionSelectValue() {
+        return this.gui["SessionSelect"].Value
+    }
+
+    GetContextBoxValue() {
+        return this.gui["ContextBox"].Value
+    }
+
+    GetContextBoxNext(row) {
+        return this.gui["ContextBox"].GetNext(row)
+    }
+
+    DeleteContextBoxItems() {
+        this.gui["ContextBox"].Delete()
+    }
+
+    AddContextBoxItem(label) {
+        return this.gui["ContextBox"].Add("Check", label)
+    }
+
+    ModifyContextBox(row, options) {
+        this.gui["ContextBox"].Modify(row, options)
+    }
+
+    GetContextBoxCount() {
+        return this.gui["ContextBox"].GetCount()
+    }
+
+    ModifyContextBoxCol(column, width) {
+        this.gui["ContextBox"].ModifyCol(column, width)
+    }
+
+    GetContextBoxHwnd() {
+        return this.gui["ContextBox"].Hwnd
+    }
+
+    DeleteChatHistoryItems() {
+        this.gui["ChatHistory"].Delete()
+    }
+
+    AddChatHistoryItem(role, text, duration, tokens) {
+        return this.gui["ChatHistory"].Add(, role, text, duration, tokens)
+    }
+
+    ModifyChatHistory(row, options, text := "") {
+        this.gui["ChatHistory"].Modify(row, options, text)
+    }
+
+    GetChatHistoryCount() {
+        return this.gui["ChatHistory"].GetCount()
+    }
+
+    ScrollChatHistoryToBottom() {
+        this.gui["ChatHistory"].Modify(this.gui["ChatHistory"].GetCount(), "Vis")
+    }
+
+    SetChatMessageActionButtonVisible(visible) {
+        this.gui["ChatMessageActionButton"].Visible := visible
+    }
+
+    ClearSystemPrompt() {
+        this.gui["SystemPrompt"].Delete()
+    }
+
+    AddSystemPromptItems(items) {
+        this.gui["SystemPrompt"].Add(items)
+    }
+
+    SetSystemPromptEnabled(enabled) {
+        this.gui["SystemPrompt"].Enabled := enabled
     }
 }

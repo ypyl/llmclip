@@ -1,15 +1,17 @@
 #Requires AutoHotkey 2.0
 
 class HistoryViewController {
-    SessionManagerValue := ""
-    WebViewManagerValue := ""
+    controller := ""
+    sessionManager := ""
+    webViewManager := ""
     MyGui := ""
 
     configManager := ""
 
-    __New(sessionManager, webViewManager, configManager) {
-        this.SessionManagerValue := sessionManager
-        this.WebViewManagerValue := webViewManager
+    __New(controller, sessionManager, webViewManager, configManager) {
+        this.controller := controller
+        this.sessionManager := sessionManager
+        this.webViewManager := webViewManager
         this.configManager := configManager
     }
 
@@ -18,12 +20,11 @@ class HistoryViewController {
     }
 
     UpdateChatHistoryView(*) {
-        if (!this.MyGui)
+        if (!this.controller || !this.controller.view) ; Check if initialized
             return
 
-        messages := this.SessionManagerValue.GetCurrentSessionMessagesAsStrings()
-        chatHistory := this.MyGui["ChatHistory"]
-        chatHistory.Delete()
+        messages := this.sessionManager.GetCurrentSessionMessagesAsStrings()
+        this.controller.view.DeleteChatHistoryItems()
         for msg in messages {
             duration := msg.HasOwnProp("duration") ? msg.duration : ""
             tokens := msg.HasOwnProp("tokens") ? msg.tokens : ""
@@ -32,19 +33,19 @@ class HistoryViewController {
             contentText := SubStr(msg.content, 1, 70) (StrLen(msg.content) > 70 ? "..." : "")
             
             ; Add to ListView
-            row := chatHistory.Add(, msg.role, contentText, duration, tokens)
+            row := this.controller.view.AddChatHistoryItem(msg.role, contentText, duration, tokens)
             
             ; Check for batch indicators and modify the displayed content
             if (msg.HasOwnProp("isBatchMode") && msg.isBatchMode) {
-                chatHistory.Modify(row, "Col2", "🔄 [Batch] " . contentText)
+                this.controller.view.ModifyChatHistory(row, "Col2", "🔄 [Batch] " . contentText)
             } else if (msg.HasOwnProp("isBatchResponse") && msg.isBatchResponse) {
                 itemLabel := msg.HasOwnProp("batchContextItem") ? msg.batchContextItem : "Item"
-                chatHistory.Modify(row, "Col2", "✅ [" . itemLabel . "] " . contentText)
+                this.controller.view.ModifyChatHistory(row, "Col2", "✅ [" . itemLabel . "] " . contentText)
             }
         }
-        this.MyGui["ChatMessageActionButton"].Visible := false  ; Hide the Run Tool button
-        if (chatHistory.GetCount() > 0) {
-            chatHistory.Modify(chatHistory.GetCount(), "Vis")  ; Scroll to bottom
+        this.controller.view.SetChatMessageActionButtonVisible(false)  ; Hide the Run Tool button
+        if (this.controller.view.GetChatHistoryCount() > 0) {
+            this.controller.view.ScrollChatHistoryToBottom()  ; Scroll to bottom
         }
     }
 
@@ -53,9 +54,9 @@ class HistoryViewController {
             return
 
         ; Deselect ContextBox to ensure mutual exclusion
-        this.MyGui["ContextBox"].Modify(0, "-Select")
+        this.controller.view.ModifyContextBox(0, "-Select")
 
-        messages := this.SessionManagerValue.GetCurrentSessionMessages()
+        messages := this.sessionManager.GetCurrentSessionMessages()
         
         if (Item > 0 && Item <= messages.Length) {
             msg := messages[Item]
@@ -99,16 +100,16 @@ class HistoryViewController {
                 messageContent := hasImage ? text . " [Image]" : text
             } else {
                 ; Regular message - use normal display
-                messageContent := this.SessionManagerValue.GetMessageAsString(msg)
+                messageContent := this.sessionManager.GetMessageAsString(msg)
             }
             
-            this.MyGui["ChatMessageActionButton"].Visible := true  ; Show the Copy button
-            this.WebViewManagerValue.RenderMarkdown(messageContent)  ; Render the selected message in the WebView
+            this.controller.view.SetChatMessageActionButtonVisible(true)  ; Show the Copy button
+            this.webViewManager.RenderMarkdown(messageContent)  ; Render the selected message in the WebView
         }
     }
 
     CopySelectedMessage(*) {
-        messages := this.SessionManagerValue.GetCurrentSessionMessages()
+        messages := this.sessionManager.GetCurrentSessionMessages()
         chatHistory := this.MyGui["ChatHistory"]
         if (focused_row := chatHistory.GetNext()) {
             msg := messages[focused_row]
@@ -147,7 +148,7 @@ class HistoryViewController {
     }
 
     DeleteSelectedMessage(*) {
-        messages := this.SessionManagerValue.GetCurrentSessionMessages()
+        messages := this.sessionManager.GetCurrentSessionMessages()
         chatHistory := this.MyGui["ChatHistory"]
 
         selectedIndices := []
@@ -165,20 +166,20 @@ class HistoryViewController {
             messages.RemoveAt(index)
 
         this.UpdateChatHistoryView()
-        this.WebViewManagerValue.RenderMarkdown("")  ; Clear the response area
+        this.webViewManager.RenderMarkdown("")  ; Clear the response area
     }
 
     ClearChatHistory(*) {
-        this.SessionManagerValue.ClearCurrentMessages()
+        this.sessionManager.ClearCurrentMessages()
 
         ; Update the system prompt content after clearing
         systemPrompt := this.configManager.GetSystemPromptValue(
-            this.SessionManagerValue.GetCurrentSessionLLMType(),
-            this.SessionManagerValue.GetCurrentSessionSystemPrompt()
+            this.sessionManager.GetCurrentSessionLLMType(),
+            this.sessionManager.GetCurrentSessionSystemPrompt()
         )
-        this.SessionManagerValue.UpdateSystemPromptContent(systemPrompt)
+        this.sessionManager.UpdateSystemPromptContent(systemPrompt)
 
         this.UpdateChatHistoryView()  ; Update the chat history view
-        this.WebViewManagerValue.RenderMarkdown("")  ; Clear the response area
+        this.webViewManager.RenderMarkdown("")  ; Clear the response area
     }
 }

@@ -33,16 +33,15 @@ class MenuManager {
         this.controller.currentModelName := newModelName
 
         ; Update system prompts for the new model
-        systemPromptCombo := this.controller.view.gui["SystemPrompt"]
-        systemPromptCombo.Delete()
+        this.controller.view.ClearSystemPrompt()
         systemPromptNames := this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType())
-        systemPromptCombo.Add(systemPromptNames)
+        this.controller.view.AddSystemPromptItems(systemPromptNames)
 
         if (systemPromptNames.Length > 0) {
-            systemPromptCombo.Value := 1
-            systemPromptCombo.Enabled := true
+            this.controller.view.SetSystemPromptValue(1)
+            this.controller.view.SetSystemPromptEnabled(true)
         } else {
-            systemPromptCombo.Enabled := false
+            this.controller.view.SetSystemPromptEnabled(false)
         }
         this.sessionManager.SetCurrentSessionSystemPrompt(1)
 

@@ -2,7 +2,7 @@
 #Include UIConfig.ahk
 
 class UIBuilder {
-    static CreateMenuBar(gui, controller, configManager, sessionManagerValue, menuManager, conversationHandler, chatManager) {
+    static CreateMenuBar(gui, controller, configManager, sessionManager, menuManager, conversationHandler, chatManager) {
         FileMenu := Menu()
         FileMenu.Add("Save Conversation", ObjBindMethod(conversationHandler, "SaveConversation"))
         FileMenu.Add("Load Conversation", ObjBindMethod(conversationHandler, "LoadConversation"))
@@ -17,7 +17,7 @@ class UIBuilder {
         }
 
         ; Get current model name for menu label
-        currentModelIndex := sessionManagerValue.GetCurrentSessionLLMType()
+        currentModelIndex := sessionManager.GetCurrentSessionLLMType()
         currentModelName := "Model: " . configManager.llmTypes[currentModelIndex]
 
         ; Set initial checkmark in Model menu
@@ -68,10 +68,10 @@ class UIBuilder {
         return {menuBar: MyMenuBar, modelMenu: ModelMenu, historyMenu: HistoryMenu, toolsMenu: ToolsMenu, modeMenu: ModeMenu}  ; Return menuBar, modelMenu, historyMenu, toolsMenu and modeMenu
     }
 
-    static CreateTopControls(gui, sessionManagerValue, recordingService, controller, conversationHandler) {
+    static CreateTopControls(gui, sessionManager, recordingService, controller, conversationHandler) {
         ; Add session selector
-        sessionCombo := gui.Add("DropDownList", "x10 y12 w70 vSessionSelect", sessionManagerValue.sessionNames)
-        sessionCombo.Value := sessionManagerValue.currentSessionIndex
+        sessionCombo := gui.Add("DropDownList", "x10 y12 w70 vSessionSelect", sessionManager.sessionNames)
+        sessionCombo.Value := sessionManager.currentSessionIndex
         sessionCombo.OnEvent("Change", ObjBindMethod(conversationHandler, "SessionChanged"))
 
         ; Add record button
@@ -122,18 +122,18 @@ class UIBuilder {
     }
 
 
-    static CreatePromptSection(gui, sessionManagerValue, configManager, window) {
+    static CreatePromptSection(gui, sessionManager, configManager, window) {
         ; Prompt edit control
         promptEdit := gui.Add("Edit", "vPromptEdit x" UIConfig.promptEditX " y" UIConfig.promptEditY " w" UIConfig.promptEditWidth " h" UIConfig.promptEditHeight " Multi WantReturn", "")
         promptEdit.OnEvent("Change", ObjBindMethod(window, "HandlePromptInput"))
     }
 
-    static CreateBottomControls(gui, sessionManagerValue, configManager, controller) {
+    static CreateBottomControls(gui, sessionManager, configManager, controller) {
         ; PowerShell tool checkbox and icon removed
 
         ; Add system prompt selector
-        systemPromptCombo := gui.Add("DropDownList", "x" UIConfig.systemPromptX " y" (UIConfig.systemPromptY + 2) " w" UIConfig.systemPromptWidth " vSystemPrompt", configManager.GetSystemPromptNames(sessionManagerValue.GetCurrentSessionLLMType()))
-        systemPromptCombo.Value := sessionManagerValue.GetCurrentSessionSystemPrompt()
+        systemPromptCombo := gui.Add("DropDownList", "x" UIConfig.systemPromptX " y" (UIConfig.systemPromptY + 2) " w" UIConfig.systemPromptWidth " vSystemPrompt", configManager.GetSystemPromptNames(sessionManager.GetCurrentSessionLLMType()))
+        systemPromptCombo.Value := sessionManager.GetCurrentSessionSystemPrompt()
         systemPromptCombo.OnEvent("Change", ObjBindMethod(controller, "SystemPromptChanged"))
 
         ; Add Ask LLM button
@@ -169,7 +169,7 @@ class UIBuilder {
         NumPut("Int", widthResponseCtr, wvRect, 8)           ; right
         NumPut("Int", heightResponseCtr, wvRect, 12)         ; bottom
         if controller.view.guiShown {
-            controller.WebViewManagerValue.Resize(wvRect)
+            controller.webViewManager.Resize(wvRect)
         }
 
         ; Resize the prompt edit control

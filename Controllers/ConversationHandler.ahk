@@ -25,7 +25,7 @@ class ConversationHandler {
     }
 
     SystemPromptChanged(*) {
-        this.sessionManager.SetCurrentSessionSystemPrompt(this.controller.view.gui["SystemPrompt"].Value)
+        this.sessionManager.SetCurrentSessionSystemPrompt(this.controller.view.GetSystemPromptValue())
 
         ; Update the system prompt content
         systemPrompt := this.configManager.GetSystemPromptValue(
@@ -37,20 +37,20 @@ class ConversationHandler {
             this.sessionManager.GetCurrentSessionSystemPrompt()
         )
         if (inputTemplate) {
-            this.controller.view.gui["PromptEdit"].Value := inputTemplate
+            this.controller.view.SetPromptValue(inputTemplate)
         }
         this.sessionManager.UpdateSystemPromptContent(systemPrompt)
-        this.controller.ContextViewControllerValue.UpdateContextView()
+        this.controller.contextViewController.UpdateContextView()
     }
 
     SessionChanged(*) {
         oldModelName := this.controller.currentModelName
 
         ; Switch to new session
-        this.sessionManager.SwitchSession(this.controller.view.gui["SessionSelect"].Value)
+        this.sessionManager.SwitchSession(this.controller.view.GetSessionSelectValue())
 
-        this.controller.ContextViewControllerValue.UpdateContextView()
-        this.controller.HistoryViewControllerValue.UpdateChatHistoryView()
+        this.controller.contextViewController.UpdateContextView()
+        this.controller.historyViewController.UpdateChatHistoryView()
 
         currentModelIndex := this.sessionManager.GetCurrentSessionLLMType()
         newModelName := "Model: " . this.configManager.llmTypes[currentModelIndex]
@@ -71,10 +71,9 @@ class ConversationHandler {
         }
 
         ; Update system prompts for the selected LLM type
-        systemPromptCombo := this.controller.view.gui["SystemPrompt"]
-        systemPromptCombo.Delete()
-        systemPromptCombo.Add(this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType()))
-        systemPromptCombo.Value := this.sessionManager.GetCurrentSessionSystemPrompt()
+        this.controller.view.ClearSystemPrompt()
+        this.controller.view.AddSystemPromptItems(this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType()))
+        this.controller.view.SetSystemPromptValue(this.sessionManager.GetCurrentSessionSystemPrompt())
 
         ; Clear response field
         this.controller.RenderMarkdown("")
@@ -87,8 +86,8 @@ class ConversationHandler {
         this.resetAllCommand.Execute()
 
         ; Update UI
-        this.controller.HistoryViewControllerValue.UpdateChatHistoryView()
-        this.controller.ContextViewControllerValue.UpdateContextView()
+        this.controller.historyViewController.UpdateChatHistoryView()
+        this.controller.contextViewController.UpdateContextView()
 
         ; Clear response and prompt
         this.controller.RenderMarkdown("")
@@ -96,9 +95,9 @@ class ConversationHandler {
 
     CompressHistory(*) {
         ; Disable Ask LLM button while processing
-        if (this.controller.view.gui) {
-            this.controller.view.askButton.Text := "Compressing..."
-            this.controller.view.askButton.Enabled := false
+        if (this.controller.view.guiShown) {
+            this.controller.view.SetAskButtonText("Compressing...")
+            this.controller.view.SetAskButtonEnabled(false)
         }
 
         try {
@@ -106,7 +105,7 @@ class ConversationHandler {
 
             if (compressedMsg != "") {
                  ; Update UI
-                 this.controller.HistoryViewControllerValue.UpdateChatHistoryView()
+                 this.controller.historyViewController.UpdateChatHistoryView()
                  this.controller.RenderMarkdown(this.sessionManager.GetMessageAsString(compressedMsg))
             }
 
@@ -114,18 +113,18 @@ class ConversationHandler {
             MsgBox("Compression failed: " . e.Message, "Error", "Iconx")
         } finally {
             ; Re-enable Ask LLM button
-            if (this.controller.view.gui) {
-                this.controller.view.askButton.Text := "Ask LLM"
-                this.controller.view.askButton.Enabled := true
+            if (this.controller.view.guiShown) {
+                this.controller.view.SetAskButtonText("Ask LLM")
+                this.controller.view.SetAskButtonEnabled(true)
             }
         }
     }
 
     ExtractLearnings(*) {
         ; Disable Ask LLM button while processing
-        if (this.controller.view.gui) {
-            this.controller.view.askButton.Text := "Extracting..."
-            this.controller.view.askButton.Enabled := false
+        if (this.controller.view.guiShown) {
+            this.controller.view.SetAskButtonText("Extracting...")
+            this.controller.view.SetAskButtonEnabled(false)
         }
 
         try {
@@ -139,9 +138,9 @@ class ConversationHandler {
             MsgBox("Extraction failed: " . e.Message, "Error", "Iconx")
         } finally {
             ; Re-enable Ask LLM button
-            if (this.controller.view.gui) {
-                this.controller.view.askButton.Text := "Ask LLM"
-                this.controller.view.askButton.Enabled := true
+            if (this.controller.view.guiShown) {
+                this.controller.view.SetAskButtonText("Ask LLM")
+                this.controller.view.SetAskButtonEnabled(true)
             }
         }
     }
@@ -180,14 +179,13 @@ class ConversationHandler {
                 this.controller.currentModelName := newModelName
 
                 ; Update Session UI
-                this.controller.view.gui["SessionSelect"].Value := this.sessionManager.currentSessionIndex
-                this.controller.ContextViewControllerValue.UpdateContextView()
+                this.controller.view.SetSessionSelectValue(this.sessionManager.currentSessionIndex)
+                this.controller.contextViewController.UpdateContextView()
 
                 ; Update System Prompt UI
-                systemPromptCombo := this.controller.view.gui["SystemPrompt"]
-                systemPromptCombo.Delete()
-                systemPromptCombo.Add(this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType()))
-                systemPromptCombo.Value := this.sessionManager.GetCurrentSessionSystemPrompt()
+                this.controller.view.ClearSystemPrompt()
+                this.controller.view.AddSystemPromptItems(this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType()))
+                this.controller.view.SetSystemPromptValue(this.sessionManager.GetCurrentSessionSystemPrompt())
 
                 ; Update System Prompt Content
                 systemPrompt := this.configManager.GetSystemPromptValue(
@@ -197,7 +195,7 @@ class ConversationHandler {
                 this.sessionManager.UpdateSystemPromptContent(systemPrompt)
 
                 ; Update History View
-                this.controller.HistoryViewControllerValue.UpdateChatHistoryView()
+                this.controller.historyViewController.UpdateChatHistoryView()
                 
                 ; Update Tools Menu
                 this.menuManager.UpdateToolsMenuState()
@@ -239,17 +237,16 @@ class ConversationHandler {
         this.controller.currentModelName := newModelName
 
         ; Refresh System Prompt Combo
-        systemPromptCombo := this.controller.view.gui["SystemPrompt"]
-        currentSystemPrompt := systemPromptCombo.Value
+        currentSystemPrompt := this.controller.view.GetSystemPromptValue()
 
-        systemPromptCombo.Delete()
-        systemPromptCombo.Add(this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType()))
+        this.controller.view.ClearSystemPrompt()
+        this.controller.view.AddSystemPromptItems(this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType()))
 
         ; Try to preserve current selection, otherwise default to first
         try {
-            systemPromptCombo.Value := currentSystemPrompt
+            this.controller.view.SetSystemPromptValue(currentSystemPrompt)
         } catch {
-            systemPromptCombo.Value := 1
+            this.controller.view.SetSystemPromptValue(1)
             this.sessionManager.SetCurrentSessionSystemPrompt(1)
         }
 

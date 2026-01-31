@@ -27,6 +27,9 @@
 #Include Commands\ConfirmToolCommand.ahk
 #Include Commands\RegenerateMessageCommand.ahk
 #Include Commands\StopRecordingCommand.ahk
+#Include Commands\CompressHistoryCommand.ahk
+#Include Commands\ExtractLearningsCommand.ahk
+#Include Commands\ResetAllCommand.ahk
 
 class AppController {
     view := ""
@@ -59,6 +62,9 @@ class AppController {
     ConfirmToolCommandValue := ""
     RegenerateMessageCommandValue := ""
     StopRecordingCommandValue := ""
+    CompressHistoryCommandValue := ""
+    ExtractLearningsCommandValue := ""
+    ResetAllCommandValue := ""
     
     batchModeEnabled := false  ; Track batch mode state
 
@@ -99,10 +105,14 @@ class AppController {
         this.ConfirmToolCommandValue := ConfirmToolCommand(this.SessionManagerValue, this.LLMServiceValue, this.SendToLLMCommandValue)
         this.RegenerateMessageCommandValue := RegenerateMessageCommand(this.SessionManagerValue, this.configManager)
         this.StopRecordingCommandValue := StopRecordingCommand(this.RecordingServiceValue, this.SessionManagerValue, this.ContextManagerValue)
+        
+        this.CompressHistoryCommandValue := CompressHistoryCommand(this.SessionManagerValue, this.configManager, this.LLMServiceValue)
+        this.ExtractLearningsCommandValue := ExtractLearningsCommand(this.SessionManagerValue, this.configManager, this.LLMServiceValue)
+        this.ResetAllCommandValue := ResetAllCommand(this.SessionManagerValue)
 
         this.ChatManagerValue := ChatManager(this, this.configManager, this.SessionManagerValue, this.LLMServiceValue, this.ContextManagerValue, this.SendToLLMCommandValue, this.SendBatchToLLMCommandValue, this.ConfirmToolCommandValue, this.RegenerateMessageCommandValue)
 
-        this.ConversationHandlerValue := ConversationHandler(this, this.configManager, this.SessionManagerValue, this.LLMServiceValue, this.MenuManagerValue, this.SaveConversationCommandValue, this.LoadConversationCommandValue)
+        this.ConversationHandlerValue := ConversationHandler(this, this.configManager, this.SessionManagerValue, this.LLMServiceValue, this.MenuManagerValue, this.SaveConversationCommandValue, this.LoadConversationCommandValue, this.CompressHistoryCommandValue, this.ExtractLearningsCommandValue, this.ResetAllCommandValue)
         this.ClipboardManagerValue := ClipboardManager(this, this.SessionManagerValue, this.ContextManagerValue)
 
         this.ContextViewControllerValue := ContextViewController(this.SessionManagerValue, this.configManager, this.ContextManagerValue, this.WebViewManagerValue, this.ClearContextCommandValue)

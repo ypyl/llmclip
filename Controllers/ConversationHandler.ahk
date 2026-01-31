@@ -7,8 +7,11 @@ class ConversationHandler {
     llmService := ""
     saveConversationCommand := ""
     loadConversationCommand := ""
+    compressHistoryCommand := ""
+    extractLearningsCommand := ""
+    resetAllCommand := ""
 
-    __New(controller, configManager, sessionManager, llmService, menuManager, saveConversationCommand, loadConversationCommand) {
+    __New(controller, configManager, sessionManager, llmService, menuManager, saveConversationCommand, loadConversationCommand, compressHistoryCommand, extractLearningsCommand, resetAllCommand) {
         this.controller := controller
         this.configManager := configManager
         this.sessionManager := sessionManager
@@ -16,6 +19,9 @@ class ConversationHandler {
         this.menuManager := menuManager
         this.saveConversationCommand := saveConversationCommand
         this.loadConversationCommand := loadConversationCommand
+        this.compressHistoryCommand := compressHistoryCommand
+        this.extractLearningsCommand := extractLearningsCommand
+        this.resetAllCommand := resetAllCommand
     }
 
     SystemPromptChanged(*) {
@@ -78,7 +84,7 @@ class ConversationHandler {
 
     ResetAll(*) {
         ; Reset current session
-        this.sessionManager.ResetCurrentSession()
+        this.resetAllCommand.Execute()
 
         ; Update UI
         this.controller.HistoryViewControllerValue.UpdateChatHistoryView()
@@ -89,29 +95,6 @@ class ConversationHandler {
     }
 
     CompressHistory(*) {
-        messages := this.sessionManager.GetCurrentSessionMessages()
-
-        if (messages.Length < 3) {
-            MsgBox("Not enough messages to compress. Need at least 2 messages besides the system message.", "Info", "Iconi")
-            return
-        }
-
-        conversationText := this.sessionManager.FormatMessagesForCompression()
-
-        if (conversationText == "") {
-            MsgBox("No conversation history to compress.", "Info", "Iconi")
-            return
-        }
-
-        compressionPrompt := this.configManager.GetCompressionPrompt(this.sessionManager.GetCurrentSessionLLMType())
-
-        if (compressionPrompt == "") {
-            MsgBox("Compression prompt not configured for this provider.", "Info", "Iconi")
-            return
-        }
-
-        compressionPrompt .= "`n`nCONVERSATION:`n" conversationText
-
         ; Disable Ask LLM button while processing
         if (this.controller.view.gui) {
             this.controller.view.askButton.Text := "Compressing..."
@@ -119,7 +102,7 @@ class ConversationHandler {
         }
 
         try {
-            compressedMsg := this.llmService.CompressHistory(this.sessionManager)
+            compressedMsg := this.compressHistoryCommand.Execute()
 
             if (compressedMsg != "") {
                  ; Update UI
@@ -139,23 +122,6 @@ class ConversationHandler {
     }
 
     ExtractLearnings(*) {
-        messages := this.sessionManager.GetCurrentSessionMessages()
-
-        if (messages.Length < 2) {
-            MsgBox("Not enough conversation history to extract notes.", "Info", "Iconi")
-            return
-        }
-
-        conversationText := this.sessionManager.FormatMessagesForCompression()
-
-        if (conversationText == "") {
-            MsgBox("No conversation history to extract from.", "Info", "Iconi")
-            return
-        }
-
-        learningsPrompt := this.configManager.GetLearningsPrompt(this.sessionManager.GetCurrentSessionLLMType())
-        learningsPrompt .= "`n`nCONVERSATION:`n" conversationText
-
         ; Disable Ask LLM button while processing
         if (this.controller.view.gui) {
             this.controller.view.askButton.Text := "Extracting..."
@@ -163,7 +129,7 @@ class ConversationHandler {
         }
 
         try {
-            extractedNotes := this.llmService.ExtractLearnings(this.sessionManager)
+            extractedNotes := this.extractLearningsCommand.Execute()
 
             if (extractedNotes != "") {
                 UIBuilder.ShowNotesWindow(extractedNotes)

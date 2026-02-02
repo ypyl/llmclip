@@ -34,6 +34,8 @@
 #Include Commands\ExtractLearningsCommand.ahk
 #Include Commands\ResetAllCommand.ahk
 #Include ui\NotesView.ahk
+#Include Services\ClipboardService.ahk
+#Include Commands\CopyToClipboardCommand.ahk
 #Include Controllers\NotesController.ahk
 
 
@@ -55,6 +57,7 @@ class App {
         rec := RecordingService()
         llm := LLMService(cfg)
         fs := FileService()
+        cls := ClipboardService()
 
         ; 2. Initialize Main Controller
         this.controller := MainController(
@@ -81,6 +84,7 @@ class App {
         resetAll := ResetAllCommand(sess)
         deleteMsg := DeleteMessageCommand(sess)
         clearHist := ClearHistoryCommand(sess, cfg)
+        copyToClip := CopyToClipboardCommand(cls)
 
         this.controller.SetCommands(
             saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, compress, extract, resetAll
@@ -94,7 +98,7 @@ class App {
         
         ctxView := ContextViewController(this.controller, sess, cfg, ctx, wv, clearCtx)
         histView := HistoryViewController(this.controller, sess, wv, cfg, deleteMsg, clearHist)
-        notesContr := NotesController()
+        notesContr := NotesController(copyToClip)
 
         this.controller.SetSubControllers(menuMan, chatMan, convHandler, clipMan, ctxView, histView, notesContr)
 

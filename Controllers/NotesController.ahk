@@ -1,7 +1,9 @@
 class NotesController {
     view := ""
+    copyToClipboardCommand := ""
 
-    __New() {
+    __New(copyToClipboardCommand) {
+        this.copyToClipboardCommand := copyToClipboardCommand
         this.view := NotesView(this)
     }
 
@@ -10,7 +12,7 @@ class NotesController {
     }
 
     OnCopy(content) {
-        A_Clipboard := content
+        this.copyToClipboardCommand.Execute(content)
         MsgBox("Copied to clipboard!", "Info", "T1")
     }
 

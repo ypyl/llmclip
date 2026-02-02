@@ -28,6 +28,7 @@
 #Include Commands\ConfirmToolCommand.ahk
 #Include Commands\RegenerateMessageCommand.ahk
 #Include Commands\StopRecordingCommand.ahk
+#Include Commands\StartRecordingCommand.ahk
 #Include Commands\DeleteMessageCommand.ahk
 #Include Commands\ClearHistoryCommand.ahk
 #Include Commands\CompressHistoryCommand.ahk
@@ -79,6 +80,7 @@ class App {
         confirmTool := ConfirmToolCommand(sess, llm, sendLLM)
         regenerate := RegenerateMessageCommand(sess, cfg)
         stopRec := StopRecordingCommand(rec, sess, ctx)
+        startRec := StartRecordingCommand(rec)
         compress := CompressHistoryCommand(sess, cfg, llm)
         extract := ExtractLearningsCommand(sess, cfg, llm)
         resetAll := ResetAllCommand(sess)
@@ -87,7 +89,7 @@ class App {
         copyToClip := CopyToClipboardCommand(cls)
 
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, compress, extract, resetAll
+            saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll
         )
 
         ; 4. Initialize Sub-Controllers

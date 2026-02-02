@@ -24,6 +24,7 @@ class MainController {
     confirmToolCommand := ""
     regenerateMessageCommand := ""
     stopRecordingCommand := ""
+    startRecordingCommand := ""
     compressHistoryCommand := ""
     extractLearningsCommand := ""
     resetAllCommand := ""
@@ -48,7 +49,7 @@ class MainController {
         this.clipboardParser := clipboardParser
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, compress, extract, resetAll) {
+    SetCommands(saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll) {
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
         this.clearContextCommand := clearCtx
@@ -57,6 +58,7 @@ class MainController {
         this.confirmToolCommand := confirmTool
         this.regenerateMessageCommand := regenerate
         this.stopRecordingCommand := stopRec
+        this.startRecordingCommand := startRec
         this.compressHistoryCommand := compress
         this.extractLearningsCommand := extract
         this.resetAllCommand := resetAll
@@ -86,7 +88,7 @@ class MainController {
 
     ToggleDisplay() {
         if (!this.recordingService.isRecording) {
-            this.recordingService.StartRecording()
+            this.startRecordingCommand.Execute()
             this.UpdateUiBasesOnRecordingStatus()
         } else if (!this.view.guiShown) {
             this.Show()
@@ -139,7 +141,7 @@ class MainController {
 
     ; Event Handlers from UI/Tray
     OnStartRecording() {
-        this.recordingService.StartRecording()
+        this.startRecordingCommand.Execute()
         this.UpdateUiBasesOnRecordingStatus()
         ; Update tray status if needed - this should be handled by a listener or direct call
     }

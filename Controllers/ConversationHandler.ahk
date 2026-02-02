@@ -131,7 +131,7 @@ class ConversationHandler {
             extractedNotes := this.extractLearningsCommand.Execute()
 
             if (extractedNotes != "") {
-                UIBuilder.ShowNotesWindow(extractedNotes)
+                this.controller.notesController.ShowNotes(extractedNotes)
             }
 
         } catch as e {

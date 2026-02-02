@@ -35,6 +35,8 @@ class MainController {
     clipboardManager := ""
     contextViewController := ""
     historyViewController := ""
+    notesController := ""
+
 
     __New(configManager, sessionManager, llmService, webViewManager, recordingService, contextManager, clipboardParser) {
         this.configManager := configManager
@@ -60,14 +62,16 @@ class MainController {
         this.resetAllCommand := resetAll
     }
 
-    SetSubControllers(menu, chat, conv, clip, ctxView, histView) {
+    SetSubControllers(menu, chat, conv, clip, ctxView, histView, notes) {
         this.menuManager := menu
         this.chatManager := chat
         this.conversationHandler := conv
         this.clipboardManager := clip
         this.contextViewController := ctxView
         this.historyViewController := histView
+        this.notesController := notes
     }
+
 
     SetView(view) {
         this.view := view

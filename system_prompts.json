@@ -43,8 +43,7 @@
   "Code Helper": {
     "value": "You are a coding assistant. Focus on providing code examples and technical solutions. User name is Yauhen."
   },
-
-  "Professional": {
-    "value": "You are a professional assistant focused on business communication. Be formal and precise. User name is Yauhen."
+  "Skill Generator": {
+    "value": ".\\skill-generator.md"
   }
 }

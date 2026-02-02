@@ -33,6 +33,9 @@
 #Include Commands\CompressHistoryCommand.ahk
 #Include Commands\ExtractLearningsCommand.ahk
 #Include Commands\ResetAllCommand.ahk
+#Include ui\NotesView.ahk
+#Include Controllers\NotesController.ahk
+
 
 class App {
     controller := ""
@@ -91,8 +94,10 @@ class App {
         
         ctxView := ContextViewController(this.controller, sess, cfg, ctx, wv, clearCtx)
         histView := HistoryViewController(this.controller, sess, wv, cfg, deleteMsg, clearHist)
+        notesContr := NotesController()
 
-        this.controller.SetSubControllers(menuMan, chatMan, convHandler, clipMan, ctxView, histView)
+        this.controller.SetSubControllers(menuMan, chatMan, convHandler, clipMan, ctxView, histView, notesContr)
+
 
         ; 5. Initialize Views
         this.trayView := TrayView(this.controller)

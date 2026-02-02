@@ -57,7 +57,8 @@
     "Task Estimate",
     "Prompt Improver",
     "Branch Name",
-    "Task Name From Mail"
+    "Task Name From Mail",
+    "Skill Generator"
   ],
   "github-41-nano": [
     "Default",
@@ -142,16 +143,14 @@
     "PR Description"
   ],
   "go-f2.5": [
-    "Default",
-    "Professional"
+    "Default"
   ],
   "go-pro2.5": [
     "Default",
-    "Professional"
+    "Skill Generator"
   ],
   "go-f2.5-lite": [
-    "Default",
-    "Professional"
+    "Default"
   ],
   "ol-gemma3n": [
     "Default"

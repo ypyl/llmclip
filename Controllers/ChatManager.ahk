@@ -114,6 +114,7 @@ class ChatManager {
         this.controller.view.ClearPrompt()
         if (this.controller.recordingService.isRecording) {
             this.controller.stopRecordingCommand.Execute()
+            this.controller.UpdateUiBasesOnRecordingStatus()
         }
     }
 

@@ -4,11 +4,13 @@ class MenuManager {
     controller := ""
     configManager := ""
     sessionManager := ""
+    selectModelCommand := ""
 
-    __New(controller, configManager, sessionManager) {
+    __New(controller, configManager, sessionManager, selectModelCommand) {
         this.controller := controller
         this.configManager := configManager
         this.sessionManager := sessionManager
+        this.selectModelCommand := selectModelCommand
     }
 
     SelectModel(ItemName, ItemPos, MyMenu) {
@@ -16,7 +18,7 @@ class MenuManager {
         oldModelName := this.controller.currentModelName
 
         ; Update session with new model index
-        this.sessionManager.SetCurrentSessionLLMType(ItemPos)
+        this.selectModelCommand.Execute(ItemPos)
 
         ; Update menu checkmarks
         for index, modelName in this.configManager.llmTypes {
@@ -43,7 +45,6 @@ class MenuManager {
         } else {
             this.controller.view.SetSystemPromptEnabled(false)
         }
-        this.sessionManager.SetCurrentSessionSystemPrompt(1)
 
         this.UpdateToolsMenuState()
         this.UpdateCompressionMenuState()

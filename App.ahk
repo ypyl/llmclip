@@ -39,6 +39,7 @@
 #Include Services\ClipboardService.ahk
 #Include Commands\CopyToClipboardCommand.ahk
 #Include Controllers\NotesController.ahk
+#Include Commands\SelectModelCommand.ahk
 
 
 class App {
@@ -89,13 +90,14 @@ class App {
         deleteMsg := DeleteMessageCommand(sess)
         clearHist := ClearHistoryCommand(sess, cfg)
         copyToClip := CopyToClipboardCommand(cls)
+        selectModel := SelectModelCommand(sess)
 
         this.controller.SetCommands(
             saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll, toggleRec
         )
 
         ; 4. Initialize Sub-Controllers
-        menuMan := MenuManager(this.controller, cfg, sess)
+        menuMan := MenuManager(this.controller, cfg, sess, selectModel)
         chatMan := ChatManager(this.controller, cfg, sess, llm, ctx, sendLLM, sendBatch, confirmTool, regenerate)
         convHandler := ConversationHandler(this.controller, cfg, sess, llm, menuMan, saveConv, loadConv, compress, extract, resetAll)
         clipMan := ClipboardManager(this.controller, sess, ctx)

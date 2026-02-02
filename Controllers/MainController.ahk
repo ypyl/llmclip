@@ -28,6 +28,7 @@ class MainController {
     compressHistoryCommand := ""
     extractLearningsCommand := ""
     resetAllCommand := ""
+    toggleRecordingCommand := ""
 
     ; Sub-Controllers
     menuManager := ""
@@ -49,7 +50,7 @@ class MainController {
         this.clipboardParser := clipboardParser
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll) {
+    SetCommands(saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll, toggleRec) {
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
         this.clearContextCommand := clearCtx
@@ -62,6 +63,7 @@ class MainController {
         this.compressHistoryCommand := compress
         this.extractLearningsCommand := extract
         this.resetAllCommand := resetAll
+        this.toggleRecordingCommand := toggleRec
     }
 
     SetSubControllers(menu, chat, conv, clip, ctxView, histView, notes) {
@@ -152,7 +154,7 @@ class MainController {
     }
 
     OnToggleRecording() {
-        this.recordingService.ToggleRecording(this.sessionManager, this.contextManager)
+        this.toggleRecordingCommand.Execute()
         this.UpdateUiBasesOnRecordingStatus()
     }
 

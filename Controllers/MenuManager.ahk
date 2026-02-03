@@ -2,15 +2,19 @@
 
 class MenuManager {
     controller := ""
-    configManager := ""
-    sessionManager := ""
     selectModelCommand := ""
+    getToolsStateCommand := ""
+    getCompressionStateCommand := ""
+    toggleToolCommand := ""
 
-    __New(controller, configManager, sessionManager, selectModelCommand) {
+    __New(controller, configManager, sessionManager, selectModelCommand, getToolsStateCommand, getCompressionStateCommand, toggleToolCommand) {
         this.controller := controller
         this.configManager := configManager
         this.sessionManager := sessionManager
         this.selectModelCommand := selectModelCommand
+        this.getToolsStateCommand := getToolsStateCommand
+        this.getCompressionStateCommand := getCompressionStateCommand
+        this.toggleToolCommand := toggleToolCommand
     }
 
     SelectModel(ItemName, ItemPos, MyMenu) {
@@ -68,13 +72,12 @@ class MenuManager {
         if (!this.controller.view || !this.controller.view.historyMenu)
             return
 
-        currentLLMIndex := this.sessionManager.GetCurrentSessionLLMType()
-        compressionPrompt := this.configManager.GetCompressionPrompt(currentLLMIndex)
+        isEnabled := this.getCompressionStateCommand.Execute()
 
-        if (compressionPrompt == "") {
-            this.controller.view.historyMenu.Disable("Compress")
-        } else {
+        if (isEnabled) {
             this.controller.view.historyMenu.Enable("Compress")
+        } else {
+            this.controller.view.historyMenu.Disable("Compress")
         }
     }
 
@@ -82,35 +85,31 @@ class MenuManager {
         if (!this.controller.view || !this.controller.view.toolsMenu)
             return
 
-        currentLLMIndex := this.sessionManager.GetCurrentSessionLLMType()
+        toolStates := this.getToolsStateCommand.Execute()
         
         ; Update PowerShell
-        powerShellEnabled := this.configManager.IsToolEnabled(currentLLMIndex, "powerShellTool")
-        if (powerShellEnabled) {
+        if (toolStates.powerShell) {
             this.controller.view.toolsMenu.Check("PowerShell")
         } else {
             this.controller.view.toolsMenu.Uncheck("PowerShell")
         }
 
         ; Update File System
-        fileSystemEnabled := this.configManager.IsToolEnabled(currentLLMIndex, "fileSystemTool")
-        if (fileSystemEnabled) {
+        if (toolStates.fileSystem) {
              this.controller.view.toolsMenu.Check("File System")
         } else {
              this.controller.view.toolsMenu.Uncheck("File System")
         }
 
         ; Update Web Search
-        webSearchEnabled := this.configManager.IsToolEnabled(currentLLMIndex, "webSearch")
-        if (webSearchEnabled) {
+        if (toolStates.webSearch) {
             this.controller.view.toolsMenu.Check("Web Search")
         } else {
             this.controller.view.toolsMenu.Uncheck("Web Search")
         }
 
         ; Update Web Fetch
-        webFetchEnabled := this.configManager.IsToolEnabled(currentLLMIndex, "webFetch")
-        if (webFetchEnabled) {
+        if (toolStates.webFetch) {
             this.controller.view.toolsMenu.Check("Web Fetch")
         } else {
             this.controller.view.toolsMenu.Uncheck("Web Fetch")
@@ -118,11 +117,8 @@ class MenuManager {
     }
 
     ToggleTool(toolName, *) {
-        currentLLMIndex := this.sessionManager.GetCurrentSessionLLMType()
-        isEnabled := this.configManager.IsToolEnabled(currentLLMIndex, toolName)
-        
-        ; Toggle state
-        this.configManager.SetToolEnabled(currentLLMIndex, toolName, !isEnabled)
+        ; Execute toggle command
+        this.toggleToolCommand.Execute(toolName)
         
         ; Update UI
         this.UpdateToolsMenuState()

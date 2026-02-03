@@ -40,6 +40,9 @@
 #Include Commands\CopyToClipboardCommand.ahk
 #Include Controllers\NotesController.ahk
 #Include Commands\SelectModelCommand.ahk
+#Include Commands\GetToolsMenuStateCommand.ahk
+#Include Commands\GetCompressionMenuStateCommand.ahk
+#Include Commands\ToggleToolCommand.ahk
 
 
 class App {
@@ -91,13 +94,16 @@ class App {
         clearHist := ClearHistoryCommand(sess, cfg)
         copyToClip := CopyToClipboardCommand(cls)
         selectModel := SelectModelCommand(sess)
+        getToolsState := GetToolsMenuStateCommand(cfg, sess)
+        getCompressionState := GetCompressionMenuStateCommand(cfg, sess)
+        toggleTool := ToggleToolCommand(cfg, sess)
 
         this.controller.SetCommands(
             saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll, toggleRec
         )
 
         ; 4. Initialize Sub-Controllers
-        menuMan := MenuManager(this.controller, cfg, sess, selectModel)
+        menuMan := MenuManager(this.controller, cfg, sess, selectModel, getToolsState, getCompressionState, toggleTool)
         chatMan := ChatManager(this.controller, cfg, sess, llm, ctx, sendLLM, sendBatch, confirmTool, regenerate)
         convHandler := ConversationHandler(this.controller, cfg, sess, llm, menuMan, saveConv, loadConv, compress, extract, resetAll)
         clipMan := ClipboardManager(this.controller, sess, ctx)

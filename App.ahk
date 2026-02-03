@@ -103,16 +103,16 @@ class App {
         )
 
         ; 4. Initialize Sub-Controllers
-        menuController := MenuController(this.controller, cfg, sess, selectModel, getToolsState, getCompressionState, toggleTool)
-        chatController := ChatController(this.controller, cfg, sess, llm, ctx, sendLLM, sendBatch, confirmTool, regenerate)
-        conversationController := ConversationController(this.controller, cfg, sess, llm, menuController, saveConv, loadConv, compress, extract, resetAll)
-        clipboardController := ClipboardController(this.controller, sess, ctx)
+        menuCtrl := MenuController(this.controller, cfg, sess, selectModel, getToolsState, getCompressionState, toggleTool)
+        chatCtrl := ChatController(this.controller, cfg, sess, llm, ctx, sendLLM, sendBatch, confirmTool, regenerate)
+        conversationCtrl := ConversationController(this.controller, cfg, sess, llm, menuCtrl, saveConv, loadConv, compress, extract, resetAll)
+        clipboardCtrl := ClipboardController(this.controller, sess, ctx)
         
         ctxView := ContextViewController(this.controller, sess, cfg, ctx, wv, clearCtx)
         histView := HistoryViewController(this.controller, sess, wv, cfg, deleteMsg, clearHist)
         notesContr := NotesController(copyToClip)
 
-        this.controller.SetSubControllers(menuController, chatController, conversationController, clipboardController, ctxView, histView, notesContr)
+        this.controller.SetSubControllers(menuCtrl, chatCtrl, conversationCtrl, clipboardCtrl, ctxView, histView, notesContr)
 
 
         ; 5. Initialize Views

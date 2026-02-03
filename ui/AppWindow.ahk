@@ -52,7 +52,7 @@ class AppWindow {
         this.controller.contextViewController.SetGui(this.gui)
         
         ; Create Menus
-        menus := UIBuilder.CreateMenuBar(this.gui, this.controller, this.controller.configManager, this.controller.sessionManager, this.controller.menuManager, this.controller.conversationHandler, this.controller.chatManager)
+        menus := UIBuilder.CreateMenuBar(this.gui, this.controller, this.controller.configManager, this.controller.sessionManager, this.controller.menuController, this.controller.conversationController, this.controller.chatController)
         this.menuBar := menus.menuBar
         this.modelMenu := menus.modelMenu
         this.historyMenu := menus.historyMenu
@@ -60,11 +60,11 @@ class AppWindow {
         this.modeMenu := menus.modeMenu
         
         ; Initial menu states
-        this.controller.menuManager.UpdateCompressionMenuState()
-        this.controller.menuManager.UpdateToolsMenuState()
+        this.controller.menuController.UpdateCompressionMenuState()
+        this.controller.menuController.UpdateToolsMenuState()
         
         ; Create Controls
-        UIBuilder.CreateTopControls(this.gui, this.controller.sessionManager, this.controller.recordingService, this.controller, this.controller.conversationHandler)
+        UIBuilder.CreateTopControls(this.gui, this.controller.sessionManager, this.controller.recordingService, this.controller, this.controller.conversationController)
         UIBuilder.CreateContextSection(this.gui, this.controller.contextViewController)
         UIBuilder.CreateChatHistorySection(this.gui, this.controller.historyViewController)
         UIBuilder.CreatePromptSection(this.gui, this.controller.sessionManager, this.controller.configManager, this)

@@ -1,6 +1,6 @@
 #Requires AutoHotkey 2.0
 
-class MenuManager {
+class MenuController {
     controller := ""
     selectModelCommand := ""
     getToolsStateCommand := ""

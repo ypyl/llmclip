@@ -15,10 +15,10 @@
 #Include Controllers\MainController.ahk
 #Include Controllers\ContextViewController.ahk
 #Include Controllers\HistoryViewController.ahk
-#Include Controllers\MenuManager.ahk
-#Include Controllers\ChatManager.ahk
-#Include Controllers\ConversationHandler.ahk
-#Include Controllers\ClipboardManager.ahk
+#Include Controllers\MenuController.ahk
+#Include Controllers\ChatController.ahk
+#Include Controllers\ConversationController.ahk
+#Include Controllers\ClipboardController.ahk
 #Include Services\FileService.ahk
 #Include Commands\SaveConversationCommand.ahk
 #Include Commands\LoadConversationCommand.ahk
@@ -103,16 +103,16 @@ class App {
         )
 
         ; 4. Initialize Sub-Controllers
-        menuMan := MenuManager(this.controller, cfg, sess, selectModel, getToolsState, getCompressionState, toggleTool)
-        chatMan := ChatManager(this.controller, cfg, sess, llm, ctx, sendLLM, sendBatch, confirmTool, regenerate)
-        convHandler := ConversationHandler(this.controller, cfg, sess, llm, menuMan, saveConv, loadConv, compress, extract, resetAll)
-        clipMan := ClipboardManager(this.controller, sess, ctx)
+        menuController := MenuController(this.controller, cfg, sess, selectModel, getToolsState, getCompressionState, toggleTool)
+        chatController := ChatController(this.controller, cfg, sess, llm, ctx, sendLLM, sendBatch, confirmTool, regenerate)
+        conversationController := ConversationController(this.controller, cfg, sess, llm, menuController, saveConv, loadConv, compress, extract, resetAll)
+        clipboardController := ClipboardController(this.controller, sess, ctx)
         
         ctxView := ContextViewController(this.controller, sess, cfg, ctx, wv, clearCtx)
         histView := HistoryViewController(this.controller, sess, wv, cfg, deleteMsg, clearHist)
         notesContr := NotesController(copyToClip)
 
-        this.controller.SetSubControllers(menuMan, chatMan, convHandler, clipMan, ctxView, histView, notesContr)
+        this.controller.SetSubControllers(menuController, chatController, conversationController, clipboardController, ctxView, histView, notesContr)
 
 
         ; 5. Initialize Views

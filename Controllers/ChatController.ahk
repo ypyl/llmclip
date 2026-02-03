@@ -1,6 +1,6 @@
 #Requires AutoHotkey 2.0
 
-class ChatManager {
+class ChatController {
     controller := ""
     configManager := ""
     sessionManager := ""

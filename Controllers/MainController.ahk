@@ -31,10 +31,10 @@ class MainController {
     toggleRecordingCommand := ""
 
     ; Sub-Controllers
-    menuManager := ""
-    chatManager := ""
-    conversationHandler := ""
-    clipboardManager := ""
+    menuController := ""
+    chatController := ""
+    conversationController := ""
+    clipboardController := ""
     contextViewController := ""
     historyViewController := ""
     notesController := ""
@@ -67,10 +67,10 @@ class MainController {
     }
 
     SetSubControllers(menu, chat, conv, clip, ctxView, histView, notes) {
-        this.menuManager := menu
-        this.chatManager := chat
-        this.conversationHandler := conv
-        this.clipboardManager := clip
+        this.menuController := menu
+        this.chatController := chat
+        this.conversationController := conv
+        this.clipboardController := clip
         this.contextViewController := ctxView
         this.historyViewController := histView
         this.notesController := notes
@@ -117,17 +117,17 @@ class MainController {
         this.view.Show()
     }
 
-    SystemPromptChanged(*) => this.conversationHandler.SystemPromptChanged()
+    SystemPromptChanged(*) => this.conversationController.SystemPromptChanged()
     
-    HandleToolConfirmation() => this.chatManager.HandleToolConfirmation()
-    HandleCancellation() => this.chatManager.HandleCancellation()
-    HandleRegenerationOrEdit(promptText) => this.chatManager.HandleRegenerationOrEdit(promptText)
-    AskToLLM(*) => this.chatManager.AskToLLM()
-    SendBatchToLLM(promptText) => this.chatManager.SendBatchToLLM(promptText)
-    SendToLLM() => this.chatManager.SendToLLM()
+    HandleToolConfirmation() => this.chatController.HandleToolConfirmation()
+    HandleCancellation() => this.chatController.HandleCancellation()
+    HandleRegenerationOrEdit(promptText) => this.chatController.HandleRegenerationOrEdit(promptText)
+    AskToLLM(*) => this.chatController.AskToLLM()
+    SendBatchToLLM(promptText) => this.chatController.SendBatchToLLM(promptText)
+    SendToLLM() => this.chatController.SendToLLM()
     
     ExitApplication(*) => ExitApp()
-    ClipChanged(DataType) => this.clipboardManager.ClipChanged(DataType)
+    ClipChanged(DataType) => this.clipboardController.ClipChanged(DataType)
 
     AppendToPrompt(text) {
         currentText := this.view.GetPromptValue()

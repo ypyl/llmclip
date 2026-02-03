@@ -1,6 +1,6 @@
 #Requires AutoHotkey 2.0
 
-class ConversationHandler {
+class ConversationController {
     controller := ""
     configManager := ""
     sessionManager := ""
@@ -11,12 +11,12 @@ class ConversationHandler {
     extractLearningsCommand := ""
     resetAllCommand := ""
 
-    __New(controller, configManager, sessionManager, llmService, menuManager, saveConversationCommand, loadConversationCommand, compressHistoryCommand, extractLearningsCommand, resetAllCommand) {
+    __New(controller, configManager, sessionManager, llmService, menuController, saveConversationCommand, loadConversationCommand, compressHistoryCommand, extractLearningsCommand, resetAllCommand) {
         this.controller := controller
         this.configManager := configManager
         this.sessionManager := sessionManager
         this.llmService := llmService
-        this.menuManager := menuManager
+        this.menuController := menuController
         this.saveConversationCommand := saveConversationCommand
         this.loadConversationCommand := loadConversationCommand
         this.compressHistoryCommand := compressHistoryCommand
@@ -78,7 +78,7 @@ class ConversationHandler {
         ; Clear response field
         this.controller.RenderMarkdown("")
 
-        this.menuManager.UpdateCompressionMenuState()
+        this.menuController.UpdateCompressionMenuState()
     }
 
     ResetAll(*) {
@@ -198,7 +198,7 @@ class ConversationHandler {
                 this.controller.historyViewController.UpdateChatHistoryView()
                 
                 ; Update Tools Menu
-                this.menuManager.UpdateToolsMenuState()
+                this.menuController.UpdateToolsMenuState()
 
                 ; Clear Response Area
                 this.controller.RenderMarkdown("")
@@ -217,7 +217,7 @@ class ConversationHandler {
         ; Refresh Model Menu
         this.controller.view.modelMenu.Delete() ; Delete all items
         for index, modelName in this.configManager.llmTypes {
-            this.controller.view.modelMenu.Add(modelName, ObjBindMethod(this.menuManager, "SelectModel"))
+            this.controller.view.modelMenu.Add(modelName, ObjBindMethod(this.menuController, "SelectModel"))
         }
 
         ; Restore model checkmark
@@ -250,7 +250,7 @@ class ConversationHandler {
             this.sessionManager.SetCurrentSessionSystemPrompt(1)
         }
 
-        this.menuManager.UpdateToolsMenuState()
-        this.menuManager.UpdateCompressionMenuState()
+        this.menuController.UpdateToolsMenuState()
+        this.menuController.UpdateCompressionMenuState()
     }
 }

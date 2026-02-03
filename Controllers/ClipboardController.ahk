@@ -1,6 +1,6 @@
 #Requires AutoHotkey 2.0
 
-class ClipboardManager {
+class ClipboardController {
     controller := ""
     sessionManager := ""
     contextManager := ""

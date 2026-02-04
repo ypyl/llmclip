@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿<!doctype html>
 <html>
   <head>
     <script src="marked.min.js"></script>
@@ -87,7 +87,6 @@
         -webkit-box-orient: vertical;
         overflow: hidden;
       }
-
     </style>
   </head>
   <body>
@@ -144,36 +143,72 @@
       // Override the code block renderer to include copy and toggle buttons
       const renderer = new marked.Renderer();
       renderer.code = function (code, infostring, escaped) {
+        // Handle Mermaid
         if (code.lang === "mermaid") {
-          return (
-            '<div class="mermaid-wrapper"><div class="mermaid">' +
-            code.text +
-            '</div><button class="custom-button" onclick="saveMermaidDiagram(this)">Save as SVG</button></div>'
-          );
+          // We need a unique ID for mermaid.render() to target
+          const uniqueId = "mer-" + Math.random().toString(36).substr(2, 9);
+          return `
+      <div class="mermaid-wrapper" id="wrapper-${uniqueId}">
+        <div class="mermaid" id="${uniqueId}">${code.text}</div>
+        <button class="custom-button" onclick="saveMermaidDiagram(this)">Save as SVG</button>
+      </div>`;
         }
+
+        // Handle Thinking
         if (code.lang === "thinking") {
           return `<div class="thinking-block-wrapper collapsed"><div class="thinking-block">${code.text}</div><button class="custom-button" onclick="toggleThinking(this)">Expand</button></div>`;
         }
+
+        // Handle Standard Code
         return `<div class="code-block-wrapper"><pre><code>${code.text}</code></pre><button class="custom-button" onclick="copyCode(this)">Copy</button><button class="custom-button" onclick="toggle(this)">Collapse</button></div>`;
       };
 
-      mermaid.initialize({ startOnLoad: false });
+      mermaid.initialize({ startOnLoad: false, suppressErrorRendering: true });
 
-      function renderMarkdown(content) {
-
+      async function renderMarkdown(content) {
         const quoteBtn = document.getElementById("quoteBtn");
         if (quoteBtn) {
           quoteBtn.style.display = "none";
         }
+
+        // 1. Parse Markdown
         document.getElementById("content").innerHTML = marked.parse(content, {
           renderer: renderer,
         });
-        mermaid.run({
-          nodes: document.querySelectorAll(".mermaid"),
-        });
+
+        // 2. Select all mermaid nodes
+        const mermaidNodes = document.querySelectorAll(".mermaid");
+
+        // 3. Render them manually to catch errors
+        for (const node of mermaidNodes) {
+          const rawCode = node.textContent;
+          const id = node.id;
+          const wrapper = document.getElementById(`wrapper-${id}`);
+
+          try {
+            // Clear text before rendering
+            node.textContent = "";
+
+            // Attempt render
+            const { svg } = await mermaid.render(id + "-svg", rawCode);
+            node.innerHTML = svg;
+          } catch (error) {
+            // Deconstruct the error and show it to the user
+            console.error("Mermaid Render Error:", error);
+
+            // Inject error UI into the specific node
+            node.innerHTML = `
+        <div style="color: #d32f2f; background: #fff5f5; border: 1px solid #ff4d4d; padding: 12px; font-family: monospace; font-size: 0.9em; margin-bottom: 10px;">
+          <strong>Mermaid Syntax Error:</strong>
+          <pre style="white-space: pre-wrap; margin-top: 8px;">${error.message || error.str}</pre>
+        </div>`;
+
+            // Optional: Hide the save button if there is an error
+            const saveBtn = wrapper.querySelector("button");
+            if (saveBtn) saveBtn.style.display = "none";
+          }
+        }
       }
-
-
 
       // Quote button logic
       const quoteBtn = document.getElementById("quoteBtn");

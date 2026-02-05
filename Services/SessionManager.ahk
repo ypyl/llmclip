@@ -224,6 +224,29 @@ class SessionManager {
         this.sessionContexts[this.currentSessionIndex] := newContext
     }
 
+    /**
+     * Add multiple items to the current session context, filtering duplicates.
+     * @param items - Array of items to add
+     * @returns Boolean indicating if any items were added
+     */
+    AddContextItems(items) {
+        addedAny := false
+        context := this.GetCurrentSessionContext()
+        
+        for item in items {
+            if !this.IsContentDuplicate(item) {
+                context.Push(item)
+                addedAny := true
+            }
+        }
+
+        if (addedAny) {
+            this.SetCurrentSessionContext(context)
+        }
+
+        return addedAny
+    }
+
     GetCurrentSessionLLMType() {
         return this.sessionLLMTypes[this.currentSessionIndex]
     }

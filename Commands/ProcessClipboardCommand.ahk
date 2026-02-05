@@ -1,4 +1,3 @@
-#Requires AutoHotkey 2.0
 
 class ProcessClipboardCommand {
     recordingService := ""
@@ -17,20 +16,6 @@ class ProcessClipboardCommand {
         }
 
         localTxtFromClipboardArray := this.clipboardParser.Parse()
-        context := this.sessionManager.GetCurrentSessionContext()
-        addedAny := false
-
-        for item in localTxtFromClipboardArray {
-            if !this.sessionManager.IsContentDuplicate(item) {
-                context.Push(item)
-                addedAny := true
-            }
-        }
-
-        if (addedAny) {
-            this.sessionManager.SetCurrentSessionContext(context)
-        }
-
-        return addedAny
+        return this.sessionManager.AddContextItems(localTxtFromClipboardArray)
     }
 }

@@ -43,6 +43,7 @@
 #Include Commands\GetToolsMenuStateCommand.ahk
 #Include Commands\GetCompressionMenuStateCommand.ahk
 #Include Commands\ToggleToolCommand.ahk
+#Include Commands\InitializeAppCommand.ahk
 
 
 class App {
@@ -97,9 +98,10 @@ class App {
         getToolsState := GetToolsMenuStateCommand(cfg, sess)
         getCompressionState := GetCompressionMenuStateCommand(cfg, sess)
         toggleTool := ToggleToolCommand(cfg, sess)
+        initializeApp := InitializeAppCommand()
 
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll, toggleRec
+            saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp
         )
 
         ; 4. Initialize Sub-Controllers

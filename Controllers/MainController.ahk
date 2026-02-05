@@ -29,6 +29,7 @@ class MainController {
     extractLearningsCommand := ""
     resetAllCommand := ""
     toggleRecordingCommand := ""
+    initializeAppCommand := ""
 
     ; Sub-Controllers
     menuController := ""
@@ -50,7 +51,7 @@ class MainController {
         this.clipboardParser := clipboardParser
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll, toggleRec) {
+    SetCommands(saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp) {
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
         this.clearContextCommand := clearCtx
@@ -64,6 +65,7 @@ class MainController {
         this.extractLearningsCommand := extract
         this.resetAllCommand := resetAll
         this.toggleRecordingCommand := toggleRec
+        this.initializeAppCommand := initializeApp
     }
 
     SetSubControllers(menu, chat, conv, clip, ctxView, histView, notes) {
@@ -82,7 +84,7 @@ class MainController {
     }
 
     Start() {
-        TempFileManager.CleanUp()
+        this.initializeAppCommand.Execute()
         this.Show()
         this.UpdateUiBasesOnRecordingStatus()
         OnClipboardChange ObjBindMethod(this, "ClipChanged")

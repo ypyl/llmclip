@@ -1,4 +1,3 @@
-#Requires AutoHotkey 2.0
 
 class RecordingService {
     isRecording := false

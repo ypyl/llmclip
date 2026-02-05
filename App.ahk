@@ -1,8 +1,8 @@
 #Requires AutoHotkey 2.0
-#Include Settings\ConfigurationManager.ahk
+#Include Services\Configuration\ConfigurationService.ahk
 #Include Services\Base64.ahk
 #Include Services\FileUtils.ahk
-#Include LLM\LLMService.ahk
+#Include Services\LLM\LLMService.ahk
 #Include Services\SessionManager.ahk
 #Include Services\ClipboardParser.ahk
 #Include Services\WebViewManager.ahk
@@ -52,7 +52,7 @@ class App {
 
     __New() {
         ; 1. Initialize Services
-        cfg := ConfigurationManager.GetInstance()
+        cfg := ConfigurationService.GetInstance()
         sess := SessionManager(
             cfg.selectedLLMTypeIndex,
             cfg.GetSystemPromptValue(cfg.selectedLLMTypeIndex, 1)

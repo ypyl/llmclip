@@ -1,5 +1,5 @@
 #Requires AutoHotkey 2.0
-#Include <Json>
+#Include ..\..\Lib\Json.ahk
 
 class SystemPrompts {
     prompts := Map()

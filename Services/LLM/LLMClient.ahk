@@ -1,5 +1,4 @@
-#Requires AutoHotkey 2.0
-#Include ..\Lib\Json.ahk
+#Include ..\..\Lib\Json.ahk
 #Include "Types.ahk"
 #Include "PowerShellTool.ahk"
 #Include "Providers\OpenAIProvider.ahk"

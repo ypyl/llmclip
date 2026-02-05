@@ -1,4 +1,4 @@
-#Include ..\Lib\Json.ahk
+#Include ..\..\Lib\Json.ahk
 
 class WebSearchTool {
     /**

@@ -1,10 +1,10 @@
-#Requires AutoHotkey 2.0
-#Include <Json>
+
+#Include ..\..\Lib\Json.ahk
 #Include SystemPrompts.ahk
 #Include Providers.ahk
 #Include Roles.ahk
 
-class ConfigurationManager {
+class ConfigurationService {
     static instance := ""
     
     ; Configuration data
@@ -18,11 +18,11 @@ class ConfigurationManager {
     systemPromptsManager := unset
     providersManager := unset
     rolesManager := unset
-
+    
     static GetInstance() {
-        if (!ConfigurationManager.instance)
-            ConfigurationManager.instance := ConfigurationManager()
-        return ConfigurationManager.instance
+        if (!ConfigurationService.instance)
+            ConfigurationService.instance := ConfigurationService()
+        return ConfigurationService.instance
     }
 
     __New() {

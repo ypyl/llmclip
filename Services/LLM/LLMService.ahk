@@ -1,10 +1,10 @@
-#Requires AutoHotkey 2.0
+
 #Include LLMClient.ahk
 #Include PowerShellTool.ahk
 #Include FileSystemTool.ahk
 #Include WebSearchTool.ahk
 #Include WebFetchTool.ahk
-#Include ..\Services\SessionManager.ahk
+#Include ..\SessionManager.ahk
 
 class LLMService {
     configManager := ""

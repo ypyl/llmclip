@@ -128,4 +128,69 @@ class ContextManager {
             return "📝 " truncatedText
         }
     }
+
+    BuildPromptContext(context, checkedIndices, selectedIndices, articleExtract := "") {
+        if (context.Length = 0)
+            return ""
+
+        contextText := ""
+        
+        ; Build general context from checked items (that are not selected and not images/PDFs)
+        for index, item in context {
+            isChecked := false
+            for checkedIndex in checkedIndices {
+                if (checkedIndex = index) {
+                    isChecked := true
+                    break
+                }
+            }
+
+            isSelected := false
+            for selectedIndex in selectedIndices {
+                if (selectedIndex = index) {
+                    isSelected := true
+                    break
+                }
+            }
+
+            if (isChecked && !isSelected && !this.IsImage(item) && !this.IsPdf(item)) {
+                contextText .= this.GetTextFromContextItem(item, articleExtract)
+            }
+        }
+
+        messageContent := ""
+
+        ; Only add general context if there is any non-selected content
+        if (contextText != "") {
+            messageContent .= "Use information from the following context. If the information is not relevant, do not use it. If you need more information, ask.`n`n<CONTEXT>`n" contextText "`n<CONTEXT>"
+        }
+
+        ; Add selected items as special focus points (excluding images/PDFs)
+        if (selectedIndices.Length > 0) {
+            selectedContextText := ""
+            for index in selectedIndices {
+                if (index > 0 && index <= context.Length) {
+                    item := context[index]
+                    ; Check if it was checked
+                    isChecked := false
+                    for checkedIndex in checkedIndices {
+                        if (checkedIndex = index) {
+                            isChecked := true
+                            break
+                        }
+                    }
+
+                    if (isChecked && !this.IsImage(item) && !this.IsPdf(item)) {
+                        selectedContextText .= this.GetTextFromContextItem(item, articleExtract)
+                    }
+                }
+            }
+            
+            if (selectedContextText != "") {
+                messageContent .= "`n`n<SELECTED_CONTEXT>`n" selectedContextText "`n<SELECTED_CONTEXT>"
+            }
+        }
+
+        return messageContent
+    }
 }

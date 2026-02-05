@@ -223,4 +223,17 @@ class AppWindow {
     SetSystemPromptEnabled(enabled) {
         this.gui["SystemPrompt"].Enabled := enabled
     }
+
+    IsContextItemChecked(index) {
+        if (!this.guiShown)
+            return true ; Default to true if GUI not available
+
+        try {
+            Result := SendMessage(0x102C, index-1, 0xF000, this.GetContextBoxHwnd()) ; LVM_GETITEMSTATE
+            State := (Result >> 12) - 1
+            return State == 1
+        } catch {
+            return true ; Fallback
+        }
+    }
 }

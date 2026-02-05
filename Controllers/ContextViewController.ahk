@@ -143,7 +143,7 @@ class ContextViewController {
             ; Check if the item corresponds to an image
             if (A_Index <= context.Length) {
                 item := context[A_Index]
-                if (this.contextManager.IsImage(item)) {
+                if (this.contextManager.IsImage(item) && this.controller.view.IsContextItemChecked(A_Index)) {
                     this.controller.view.ModifyContextBox(A_Index, "-Check")
                 }
             }
@@ -154,67 +154,11 @@ class ContextViewController {
         return this.contextManager.GetTextFromContextItem(item, (url) => this.webViewManager.LoadArticle(url))
     }
 
-    BuildAdditionalContextMessage(context, contextBoxValue) {
-        if (context.Length = 0)
-            return ""
-
-        contextText := ""
-        selectedIndices := []
-
-        ; Get selected indices
-        if (contextBoxValue is Array) {
-            selectedIndices := contextBoxValue
-        } else if (contextBoxValue) {
-            selectedIndices := [contextBoxValue]
-        }
-
-        ; Build context excluding selected items AND unchecked items AND images AND PDFs
-        for index, item in context {
-            if (this.IsItemChecked(index) && !this.HasVal(selectedIndices, index) && !this.contextManager.IsImage(item) && !this.contextManager.IsPdf(item)) {
-                contextText .= this.GetTextFromContextItem(item)
-            }
-        }
-
-        messageContent := ""
-
-        ; Only add general context if there is any non-selected content
-        if (contextText != "") {
-            messageContent .= "Use information from the following context. If the information is not relevant, do not use it. If you need more information, ask.`n`n<CONTEXT>`n" contextText "`n<CONTEXT>"
-        }
-
-        ; Add selected items as special focus points (excluding images)
-        if (selectedIndices.Length > 0) {
-            messageContent .= "`n`n<SELECTED_CONTEXT>`n"
-            for index in selectedIndices {
-                if (this.IsItemChecked(index) && !this.contextManager.IsImage(context[index])) {
-                    messageContent .= this.GetTextFromContextItem(context[index])
-                }
-            }
-            messageContent .= "`n<SELECTED_CONTEXT>"
-        }
-
-        return messageContent
-    }
-
-    ; Helper to check if an item is checked in the ListView
-    IsItemChecked(index) {
-        if (!this.controller || !this.controller.view)
-            return true ; Default to true if GUI not available
-
-        try {
-            Result := SendMessage(0x102C, index-1, 0xF000, this.controller.view.GetContextBoxHwnd())
-            State := (Result >> 12) - 1
-            return State == 1
-        } catch {
-            return true ; Fallback
-        }
-    }
-
     GetCheckedImages() {
         images := []
         context := this.sessionManager.GetCurrentSessionContext()
         for index, item in context {
-            if (this.IsItemChecked(index) && this.contextManager.IsImage(item)) {
+            if (this.controller.view.IsContextItemChecked(index) && this.contextManager.IsImage(item)) {
                 images.Push(item)
             }
         }
@@ -225,7 +169,7 @@ class ContextViewController {
         checkedItems := []
         context := this.sessionManager.GetCurrentSessionContext()
         for index, item in context {
-            if (this.IsItemChecked(index)) {
+            if (this.controller.view.IsContextItemChecked(index)) {
                 checkedItems.Push(item)
             }
         }
@@ -235,7 +179,7 @@ class ContextViewController {
     HasAnyCheckedItem() {
         context := this.sessionManager.GetCurrentSessionContext()
         loop context.Length {
-            if (this.IsItemChecked(A_Index)) {
+            if (this.controller.view.IsContextItemChecked(A_Index)) {
                 return true
             }
         }

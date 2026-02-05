@@ -135,7 +135,7 @@ class ChatController {
         for item in checkedItems {
             contextProviders.Push({
                 item: item,
-                text: this.controller.contextViewController.GetTextFromContextItem(item)
+                text: this.contextManager.GetTextFromContextItem(item, (url) => this.webViewManager.LoadArticle(url))
             })
         }
 
@@ -162,8 +162,25 @@ class ChatController {
     SendToLLM() {
         ; Capture GUI dependencies
         context := this.sessionManager.GetCurrentSessionContext()
-        contextBoxValue := this.controller.view.GetContextBoxValue()
-        additionalContext := this.controller.contextViewController.BuildAdditionalContextMessage(context, contextBoxValue)
+        
+        checkedIndices := []
+        loop context.Length {
+            if (this.controller.view.IsContextItemChecked(A_Index)) {
+                checkedIndices.Push(A_Index)
+            }
+        }
+        
+        selectedIndices := []
+        if (selectedIndex := this.controller.view.GetContextBoxValue()) {
+            selectedIndices.Push(selectedIndex)
+        }
+
+        additionalContext := this.contextManager.BuildPromptContext(
+            context, 
+            checkedIndices, 
+            selectedIndices,
+            (url) => this.webViewManager.LoadArticle(url)
+        )
 
         ; Update UI State
         if (this.controller.view.gui) {

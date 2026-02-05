@@ -45,6 +45,8 @@
 #Include Commands\GetCompressionMenuStateCommand.ahk
 #Include Commands\ToggleToolCommand.ahk
 #Include Commands\InitializeAppCommand.ahk
+#Include Commands\ProcessClipboardCommand.ahk
+
 
 
 class App {
@@ -103,6 +105,8 @@ class App {
         getCompressionState := GetCompressionMenuStateCommand(cfg, sess)
         toggleTool := ToggleToolCommand(cfg, sess)
         initializeApp := InitializeAppCommand()
+        processClip := ProcessClipboardCommand(rec, cp, sess)
+
 
         this.controller.SetCommands(
             saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp
@@ -112,7 +116,8 @@ class App {
         menuCtrl := MenuController(this.controller, this.window, cfg, sess, selectModel, getToolsState, getCompressionState, toggleTool)
         chatCtrl := ChatController(this.controller, this.window, cfg, sess, llm, ctx, sendLLM, sendBatch, confirmTool, regenerate)
         conversationCtrl := ConversationController(this.controller, this.window, cfg, sess, llm, menuCtrl, saveConv, loadConv, compress, extract, resetAll)
-        clipboardCtrl := ClipboardController(this.controller, sess, ctx)
+        clipboardCtrl := ClipboardController(this.controller, processClip)
+
         
         ctxView := ContextViewController(this.controller, this.window, sess, cfg, ctx, wv, clearCtx)
         histView := HistoryViewController(this.controller, this.window, sess, wv, cfg, deleteMsg, clearHist)

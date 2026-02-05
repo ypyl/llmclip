@@ -2,34 +2,15 @@
 
 class ClipboardController {
     controller := ""
-    sessionManager := ""
-    contextManager := ""
+    processClipboardCommand := ""
 
-    __New(controller, sessionManager, contextManager) {
+    __New(controller, processClipboardCommand) {
         this.controller := controller
-        this.sessionManager := sessionManager
-        this.contextManager := contextManager
+        this.processClipboardCommand := processClipboardCommand
     }
 
     ClipChanged(DataType) {
-        if (this.controller.recordingService.isRecording) {
-            localTxtFromClipboardArray := this.controller.clipboardParser.Parse()
-
-            ; Add non-duplicate items to context
-            context := this.sessionManager.GetCurrentSessionContext()
-
-            for item in localTxtFromClipboardArray {
-                ; Add the original item first
-                if !this.sessionManager.IsContentDuplicate(item) {
-                    context.Push(item)
-
-                    ; PDF processing logic could go here if needed
-                }
-            }
-
-            ; Update session contexts
-            this.sessionManager.SetCurrentSessionContext(context)
-
+        if (this.processClipboardCommand.Execute()) {
             ; Update Context in GUI if shown
             if (this.controller.view.guiShown) {
                 this.controller.contextViewController.UpdateContextView()

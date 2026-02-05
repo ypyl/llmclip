@@ -83,6 +83,7 @@
       }
       .thinking-block-wrapper.collapsed .thinking-block {
         display: -webkit-box;
+        -webkit-line-clamp: 1;
         line-clamp: 1;
         -webkit-box-orient: vertical;
         overflow: hidden;
@@ -142,25 +143,27 @@
 
       // Override the code block renderer to include copy and toggle buttons
       const renderer = new marked.Renderer();
-      renderer.code = function (code, infostring, escaped) {
+      renderer.code = function (token) {
+        const { text, lang } = token;
+
         // Handle Mermaid
-        if (code.lang === "mermaid") {
+        if (lang === "mermaid") {
           // We need a unique ID for mermaid.render() to target
           const uniqueId = "mer-" + Math.random().toString(36).substr(2, 9);
           return `
       <div class="mermaid-wrapper" id="wrapper-${uniqueId}">
-        <div class="mermaid" id="${uniqueId}">${code.text}</div>
+        <div class="mermaid" id="${uniqueId}">${text}</div>
         <button class="custom-button" onclick="saveMermaidDiagram(this)">Save as SVG</button>
       </div>`;
         }
 
         // Handle Thinking
-        if (code.lang === "thinking") {
-          return `<div class="thinking-block-wrapper collapsed"><div class="thinking-block">${code.text}</div><button class="custom-button" onclick="toggleThinking(this)">Expand</button></div>`;
+        if (lang === "thinking") {
+          return `<div class="thinking-block-wrapper collapsed"><div class="thinking-block">${text}</div><button class="custom-button" onclick="toggleThinking(this)">Expand</button></div>`;
         }
 
         // Handle Standard Code
-        return `<div class="code-block-wrapper"><pre><code>${code.text}</code></pre><button class="custom-button" onclick="copyCode(this)">Copy</button><button class="custom-button" onclick="toggle(this)">Collapse</button></div>`;
+        return `<div class="code-block-wrapper"><pre><code>${text}<code></pre><button class="custom-button" onclick="copyCode(this)">Copy</button><button class="custom-button" onclick="toggle(this)">Collapse</button></div>`;
       };
 
       mermaid.initialize({ startOnLoad: false, suppressErrorRendering: true });

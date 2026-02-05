@@ -39,6 +39,7 @@ class MainController {
     contextViewController := ""
     historyViewController := ""
     notesController := ""
+    promptController := ""
 
 
     __New(configManager, sessionManager, llmService, webViewManager, recordingService, contextManager, clipboardParser) {
@@ -68,7 +69,7 @@ class MainController {
         this.initializeAppCommand := initializeApp
     }
 
-    SetSubControllers(menu, chat, conv, clip, ctxView, histView, notes) {
+    SetSubControllers(menu, chat, conv, clip, ctxView, histView, notes, prompt) {
         this.menuController := menu
         this.chatController := chat
         this.conversationController := conv
@@ -76,6 +77,7 @@ class MainController {
         this.contextViewController := ctxView
         this.historyViewController := histView
         this.notesController := notes
+        this.promptController := prompt
     }
 
 
@@ -122,7 +124,7 @@ class MainController {
     OnViewReady() {
         ; Initialize WebView after window is shown
         this.webViewManager.Init(this.view.gui["ResponseCtr"])
-        this.webViewManager.SetInputCallback(ObjBindMethod(this, "AppendToPrompt"))
+        this.webViewManager.SetInputCallback(ObjBindMethod(this.promptController, "AppendToPrompt"))
         
         ; Update views
         this.historyViewController.UpdateChatHistoryView()
@@ -140,26 +142,8 @@ class MainController {
     ExitApplication(*) => ExitApp()
     ClipChanged(DataType) => this.clipboardController.ClipChanged(DataType)
 
-    OnPromptInput() {
-        if (GetKeyState("Enter") && !GetKeyState("Shift")) {
-            ; Get the current text
-            text := this.view.GetPromptValue()
-            if (SubStr(text, -1) == "`n") {
-                ; Remove the trailing newline
-                this.view.SetPromptValue(SubStr(text, 1, -1))
-                ; Send the prompt
-                this.AskToLLM()
-            }
-        }
-    }
-
-    AppendToPrompt(text) {
-        currentText := this.view.GetPromptValue()
-        if (currentText != "") {
-            currentText .= "`n"
-        }
-        this.view.SetPromptValue(currentText . "> " . text . "`n")
-    }
+    OnPromptInput() => this.promptController.OnPromptInput()
+    AppendToPrompt(text) => this.promptController.AppendToPrompt(text)
 
     ToggleRecording(*) {
         this.ToggleDisplay()

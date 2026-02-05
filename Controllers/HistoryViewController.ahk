@@ -8,10 +8,11 @@ class HistoryViewController {
 
     ; Commands
     deleteMessageCommand := ""
-    clearHistoryCommand := ""
+    view := ""
 
-    __New(controller, sessionManager, webViewManager, configManager, deleteMessageCommand, clearHistoryCommand) {
+    __New(controller, view, sessionManager, webViewManager, configManager, deleteMessageCommand, clearHistoryCommand) {
         this.controller := controller
+        this.view := view
         this.sessionManager := sessionManager
         this.webViewManager := webViewManager
         this.configManager := configManager
@@ -24,7 +25,7 @@ class HistoryViewController {
             return
 
         messages := this.sessionManager.GetCurrentSessionMessagesAsStrings()
-        this.controller.view.DeleteChatHistoryItems()
+        this.view.DeleteChatHistoryItems()
         for msg in messages {
             duration := msg.HasOwnProp("duration") ? msg.duration : ""
             tokens := msg.HasOwnProp("tokens") ? msg.tokens : ""
@@ -33,19 +34,19 @@ class HistoryViewController {
             contentText := SubStr(msg.content, 1, 70) (StrLen(msg.content) > 70 ? "..." : "")
             
             ; Add to ListView
-            row := this.controller.view.AddChatHistoryItem(msg.role, contentText, duration, tokens)
+            row := this.view.AddChatHistoryItem(msg.role, contentText, duration, tokens)
             
             ; Check for batch indicators and modify the displayed content
             if (msg.HasOwnProp("isBatchMode") && msg.isBatchMode) {
-                this.controller.view.ModifyChatHistory(row, "Col2", "🔄 [Batch] " . contentText)
+                this.view.ModifyChatHistory(row, "Col2", "🔄 [Batch] " . contentText)
             } else if (msg.HasOwnProp("isBatchResponse") && msg.isBatchResponse) {
                 itemLabel := msg.HasOwnProp("batchContextItem") ? msg.batchContextItem : "Item"
-                this.controller.view.ModifyChatHistory(row, "Col2", "✅ [" . itemLabel . "] " . contentText)
+                this.view.ModifyChatHistory(row, "Col2", "✅ [" . itemLabel . "] " . contentText)
             }
         }
-        this.controller.view.SetChatMessageActionButtonVisible(false)  ; Hide the action button
-        if (this.controller.view.GetChatHistoryCount() > 0) {
-            this.controller.view.ScrollChatHistoryToBottom()  ; Scroll to bottom
+        this.view.SetChatMessageActionButtonVisible(false)  ; Hide the action button
+        if (this.view.GetChatHistoryCount() > 0) {
+            this.view.ScrollChatHistoryToBottom()  ; Scroll to bottom
         }
     }
 
@@ -54,7 +55,7 @@ class HistoryViewController {
             return
 
         ; Deselect ContextBox to ensure mutual exclusion
-        this.controller.view.ModifyContextBox(0, "-Select")
+        this.view.ModifyContextBox(0, "-Select")
 
         messages := this.sessionManager.GetCurrentSessionMessages()
         
@@ -103,13 +104,13 @@ class HistoryViewController {
                 messageContent := this.sessionManager.GetMessageAsString(msg)
             }
             
-            this.controller.view.SetChatMessageActionButtonVisible(true)  ; Show the Copy button
+            this.view.SetChatMessageActionButtonVisible(true)  ; Show the Copy button
             this.webViewManager.RenderMarkdown(messageContent)  ; Render the selected message in the WebView
         }
     }
 
     CopySelectedMessage(*) {
-        focused_row := this.controller.view.GetChatHistoryFocus()
+        focused_row := this.view.GetChatHistoryFocus()
         if (focused_row) {
             messages := this.sessionManager.GetCurrentSessionMessages()
             msg := messages[focused_row]
@@ -148,7 +149,7 @@ class HistoryViewController {
     }
 
     DeleteSelectedMessage(*) {
-        selectedIndices := this.controller.view.GetChatHistorySelectedIndices()
+        selectedIndices := this.view.GetChatHistorySelectedIndices()
         this.deleteMessageCommand.Execute(selectedIndices)
         this.UpdateChatHistoryView()
         this.webViewManager.RenderMarkdown("")  ; Clear the response area

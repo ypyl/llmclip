@@ -5,10 +5,11 @@ class MenuController {
     selectModelCommand := ""
     getToolsStateCommand := ""
     getCompressionStateCommand := ""
-    toggleToolCommand := ""
+    view := ""
 
-    __New(controller, configManager, sessionManager, selectModelCommand, getToolsStateCommand, getCompressionStateCommand, toggleToolCommand) {
+    __New(controller, view, configManager, sessionManager, selectModelCommand, getToolsStateCommand, getCompressionStateCommand, toggleToolCommand) {
         this.controller := controller
+        this.view := view
         this.configManager := configManager
         this.sessionManager := sessionManager
         this.selectModelCommand := selectModelCommand
@@ -35,19 +36,19 @@ class MenuController {
 
         ; Update menu bar label to show new model name
         newModelName := "Model: " . this.configManager.llmTypes[ItemPos]
-        this.controller.view.menuBar.Rename(oldModelName, newModelName)
+        this.view.menuBar.Rename(oldModelName, newModelName)
         this.controller.currentModelName := newModelName
 
         ; Update system prompts for the new model
-        this.controller.view.ClearSystemPrompt()
+        this.view.ClearSystemPrompt()
         systemPromptNames := this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType())
-        this.controller.view.AddSystemPromptItems(systemPromptNames)
+        this.view.AddSystemPromptItems(systemPromptNames)
 
         if (systemPromptNames.Length > 0) {
-            this.controller.view.SetSystemPromptValue(1)
-            this.controller.view.SetSystemPromptEnabled(true)
+            this.view.SetSystemPromptValue(1)
+            this.view.SetSystemPromptEnabled(true)
         } else {
-            this.controller.view.SetSystemPromptEnabled(false)
+            this.view.SetSystemPromptEnabled(false)
         }
 
         this.UpdateToolsMenuState()
@@ -69,50 +70,50 @@ class MenuController {
     }
 
     UpdateCompressionMenuState() {
-        if (!this.controller.view || !this.controller.view.historyMenu)
+        if (!this.controller.view || !this.view.historyMenu)
             return
 
         isEnabled := this.getCompressionStateCommand.Execute()
 
         if (isEnabled) {
-            this.controller.view.historyMenu.Enable("Compress")
+            this.view.historyMenu.Enable("Compress")
         } else {
-            this.controller.view.historyMenu.Disable("Compress")
+            this.view.historyMenu.Disable("Compress")
         }
     }
 
     UpdateToolsMenuState() {
-        if (!this.controller.view || !this.controller.view.toolsMenu)
+        if (!this.controller.view || !this.view.toolsMenu)
             return
 
         toolStates := this.getToolsStateCommand.Execute()
         
         ; Update PowerShell
         if (toolStates.powerShell) {
-            this.controller.view.toolsMenu.Check("PowerShell")
+            this.view.toolsMenu.Check("PowerShell")
         } else {
-            this.controller.view.toolsMenu.Uncheck("PowerShell")
+            this.view.toolsMenu.Uncheck("PowerShell")
         }
 
         ; Update File System
         if (toolStates.fileSystem) {
-             this.controller.view.toolsMenu.Check("File System")
+             this.view.toolsMenu.Check("File System")
         } else {
-             this.controller.view.toolsMenu.Uncheck("File System")
+             this.view.toolsMenu.Uncheck("File System")
         }
 
         ; Update Web Search
         if (toolStates.webSearch) {
-            this.controller.view.toolsMenu.Check("Web Search")
+            this.view.toolsMenu.Check("Web Search")
         } else {
-            this.controller.view.toolsMenu.Uncheck("Web Search")
+            this.view.toolsMenu.Uncheck("Web Search")
         }
 
         ; Update Web Fetch
         if (toolStates.webFetch) {
-            this.controller.view.toolsMenu.Check("Web Fetch")
+            this.view.toolsMenu.Check("Web Fetch")
         } else {
-            this.controller.view.toolsMenu.Uncheck("Web Fetch")
+            this.view.toolsMenu.Uncheck("Web Fetch")
         }
     }
 

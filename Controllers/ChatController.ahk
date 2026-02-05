@@ -7,14 +7,17 @@ class ChatController {
     llmService := ""
     contextManager := ""
     
+    view := ""
+    
     ; Commands
     sendToLLMCommand := ""
     sendBatchToLLMCommand := ""
     confirmToolCommand := ""
     regenerateMessageCommand := ""
 
-    __New(controller, configManager, sessionManager, llmService, contextManager, sendToLLMCommand, sendBatchToLLMCommand, confirmToolCommand, regenerateMessageCommand) {
+    __New(controller, view, configManager, sessionManager, llmService, contextManager, sendToLLMCommand, sendBatchToLLMCommand, confirmToolCommand, regenerateMessageCommand) {
         this.controller := controller
+        this.view := view
         this.configManager := configManager
         this.sessionManager := sessionManager
         this.llmService := llmService
@@ -31,7 +34,7 @@ class ChatController {
         this.controller.batchModeEnabled := !this.controller.batchModeEnabled
         
         ; Update menu checkmark
-        this.controller.view.UpdateBatchModeMenu(this.controller.batchModeEnabled)
+        this.view.UpdateBatchModeMenu(this.controller.batchModeEnabled)
     }
 
     HandleToolConfirmation() {
@@ -42,18 +45,18 @@ class ChatController {
                 this.controller.RenderMarkdown(this.sessionManager.GetMessageAsString(lastMsg))
             }
         }
-        this.controller.view.SetAskButtonText("Ask LLM")
+        this.view.SetAskButtonText("Ask LLM")
     }
 
     HandleCancellation() {
         if (this.llmService) {
             this.llmService.Cancel()
         }
-        this.controller.view.SetAskButtonText("Ask LLM")
+        this.view.SetAskButtonText("Ask LLM")
     }
 
     HandleRegenerationOrEdit(promptText) {
-        focusedRow := this.controller.view.GetSelectedHistoryIndex()
+        focusedRow := this.view.GetSelectedHistoryIndex()
         
         result := this.regenerateMessageCommand.Execute(
             focusedRow, 
@@ -62,12 +65,12 @@ class ChatController {
         )
 
         if (result.status == "load_to_prompt") {
-            this.controller.view.SetPromptValue(result.text)
+            this.view.SetPromptValue(result.text)
             return true
         } else if (result.status == "sent") {
             this.SendToLLM()
-            this.controller.view.ClearPrompt()
-            this.controller.view.DeselectHistoryItem(focusedRow)
+            this.view.ClearPrompt()
+            this.view.DeselectHistoryItem(focusedRow)
             return true
         }
 
@@ -76,7 +79,7 @@ class ChatController {
 
     AskToLLM(*) {
         ; 1. Check current button state
-        btnText := this.controller.view.GetAskButtonText()
+        btnText := this.view.GetAskButtonText()
         if (btnText == "Confirm Tool Run") {
             this.HandleToolConfirmation()
             return
@@ -86,7 +89,7 @@ class ChatController {
             return
         }
 
-        promptText := this.controller.view.GetPromptValue()
+        promptText := this.view.GetPromptValue()
 
         ; 2. Check for regeneration or edit case
         if (this.HandleRegenerationOrEdit(promptText)) {
@@ -111,7 +114,7 @@ class ChatController {
 
         this.SendToLLM()
         
-        this.controller.view.ClearPrompt()
+        this.view.ClearPrompt()
         if (this.controller.recordingService.isRecording) {
             this.controller.stopRecordingCommand.Execute()
             this.controller.UpdateUiBasesOnRecordingStatus()
@@ -126,8 +129,8 @@ class ChatController {
         }
 
         ; Update UI to show "Cancel"
-        if (this.controller.view.gui) {
-            this.controller.view.SetAskButtonText("Cancel")
+        if (this.view.gui) {
+            this.view.SetAskButtonText("Cancel")
         }
 
         ; Prepare context providers (logic-only data)
@@ -144,17 +147,17 @@ class ChatController {
                 promptText, 
                 contextProviders, 
                 (label, messages) => this.controller.historyViewController.UpdateChatHistoryView(),
-                () => (this.controller.view.askButton.Text != "Cancel")
+                () => (this.view.askButton.Text != "Cancel")
             )
         } catch as e {
             if (e.Message != "Request cancelled")
                 MsgBox("Batch processing error: " . e.Message, "Error", "Iconx")
         } finally {
-            if (this.controller.view.gui) {
-                this.controller.view.SetAskButtonText("Ask LLM")
-                this.controller.view.SetAskButtonEnabled(true)
+            if (this.view.gui) {
+                this.view.SetAskButtonText("Ask LLM")
+                this.view.SetAskButtonEnabled(true)
             }
-            this.controller.view.ClearPrompt()
+            this.view.ClearPrompt()
             this.controller.historyViewController.UpdateChatHistoryView()
         }
     }
@@ -165,13 +168,13 @@ class ChatController {
         
         checkedIndices := []
         loop context.Length {
-            if (this.controller.view.IsContextItemChecked(A_Index)) {
+            if (this.view.IsContextItemChecked(A_Index)) {
                 checkedIndices.Push(A_Index)
             }
         }
         
         selectedIndices := []
-        if (selectedIndex := this.controller.view.GetContextBoxValue()) {
+        if (selectedIndex := this.view.GetContextBoxValue()) {
             selectedIndices.Push(selectedIndex)
         }
 
@@ -183,8 +186,8 @@ class ChatController {
         )
 
         ; Update UI State
-        if (this.controller.view.gui) {
-            this.controller.view.SetAskButtonText("Cancel")
+        if (this.view.gui) {
+            this.view.SetAskButtonText("Cancel")
         }
 
         try {
@@ -192,20 +195,20 @@ class ChatController {
             
             ; Check for unexecuted Tool Calls to update button text
             if (this.sessionManager.HasUnexecutedToolCalls()) {
-                this.controller.view.SetAskButtonText("Confirm Tool Run")
+                this.view.SetAskButtonText("Confirm Tool Run")
             } else {
-                this.controller.view.SetAskButtonText("Ask LLM")
+                this.view.SetAskButtonText("Ask LLM")
             }
         } catch as e {
             if (e.Message != "Request cancelled")
                 throw e
         } finally {
             ; Re-enable/Reset Ask LLM button
-            if (this.controller.view.guiShown) {
-                if (this.controller.view.GetAskButtonText() == "Cancel") {
-                    this.controller.view.SetAskButtonText("Ask LLM")
+            if (this.view.guiShown) {
+                if (this.view.GetAskButtonText() == "Cancel") {
+                    this.view.SetAskButtonText("Ask LLM")
                 }
-                this.controller.view.SetAskButtonEnabled(true)
+                this.view.SetAskButtonEnabled(true)
             }
         }
 

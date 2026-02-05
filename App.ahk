@@ -19,6 +19,7 @@
 #Include Controllers\ChatController.ahk
 #Include Controllers\ConversationController.ahk
 #Include Controllers\ClipboardController.ahk
+#Include Controllers\PromptController.ahk
 #Include Services\FileService.ahk
 #Include Commands\SaveConversationCommand.ahk
 #Include Commands\LoadConversationCommand.ahk
@@ -66,7 +67,6 @@ class App {
         fs := FileService()
         cls := ClipboardService()
 
-        ; 2. Initialize Main Controller
         this.controller := MainController(
             cfg, 
             sess, 
@@ -76,6 +76,10 @@ class App {
             ctx, 
             cp
         )
+
+        ; 2.5 Initialize View
+        this.window := AppWindow(this.controller)
+        this.controller.SetView(this.window)
 
         ; 3. Initialize Commands
         saveConv := SaveConversationCommand(sess, fs)
@@ -105,22 +109,21 @@ class App {
         )
 
         ; 4. Initialize Sub-Controllers
-        menuCtrl := MenuController(this.controller, cfg, sess, selectModel, getToolsState, getCompressionState, toggleTool)
-        chatCtrl := ChatController(this.controller, cfg, sess, llm, ctx, sendLLM, sendBatch, confirmTool, regenerate)
-        conversationCtrl := ConversationController(this.controller, cfg, sess, llm, menuCtrl, saveConv, loadConv, compress, extract, resetAll)
+        menuCtrl := MenuController(this.controller, this.window, cfg, sess, selectModel, getToolsState, getCompressionState, toggleTool)
+        chatCtrl := ChatController(this.controller, this.window, cfg, sess, llm, ctx, sendLLM, sendBatch, confirmTool, regenerate)
+        conversationCtrl := ConversationController(this.controller, this.window, cfg, sess, llm, menuCtrl, saveConv, loadConv, compress, extract, resetAll)
         clipboardCtrl := ClipboardController(this.controller, sess, ctx)
         
-        ctxView := ContextViewController(this.controller, sess, cfg, ctx, wv, clearCtx)
-        histView := HistoryViewController(this.controller, sess, wv, cfg, deleteMsg, clearHist)
+        ctxView := ContextViewController(this.controller, this.window, sess, cfg, ctx, wv, clearCtx)
+        histView := HistoryViewController(this.controller, this.window, sess, wv, cfg, deleteMsg, clearHist)
         notesContr := NotesController(copyToClip)
+        promptCtrl := PromptController(this.window, chatCtrl)
 
-        this.controller.SetSubControllers(menuCtrl, chatCtrl, conversationCtrl, clipboardCtrl, ctxView, histView, notesContr)
+        this.controller.SetSubControllers(menuCtrl, chatCtrl, conversationCtrl, clipboardCtrl, ctxView, histView, notesContr, promptCtrl)
 
 
         ; 5. Initialize Views
         this.trayView := TrayView(this.controller)
-        this.window := AppWindow(this.controller)
-        this.controller.SetView(this.window)
     }
 
     Start() {

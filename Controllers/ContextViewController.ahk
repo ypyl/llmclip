@@ -6,11 +6,12 @@ class ContextViewController {
     configManager := ""
     contextManager := ""
     webViewManager := ""
-    clearContextCommand := ""
+    view := ""
     MyGui := ""
 
-    __New(controller, sessionManager, configManager, contextManager, webViewManager, clearContextCommand) {
+    __New(controller, view, sessionManager, configManager, contextManager, webViewManager, clearContextCommand) {
         this.controller := controller
+        this.view := view
         this.sessionManager := sessionManager
         this.configManager := configManager
         this.contextManager := contextManager
@@ -47,23 +48,23 @@ class ContextViewController {
         labels := this.GetLabelsForContextItems()
 
         ; Update UI
-        this.controller.view.DeleteContextBoxItems() ; Clear ListView
+        this.view.DeleteContextBoxItems() ; Clear ListView
 
         ; Add items and check them by default (except specific types)
         for label in labels {
-            row := this.controller.view.AddContextBoxItem(label)
+            row := this.view.AddContextBoxItem(label)
             ; Check if the underlying item is a PDF, if so, remove checkbox
             currentContext := this.sessionManager.GetCurrentSessionContext()
             if (A_Index <= currentContext.Length) {
                 item := currentContext[A_Index]
                 if (this.contextManager.IsPdf(item)) {
-                     this.RemoveCheckbox(this.controller.view.GetContextBoxHwnd(), row)
+                     this.RemoveCheckbox(this.view.GetContextBoxHwnd(), row)
                 }
             }
         }
 
         ; Modify column width to avoid horizontal scrollbar if possible or auto-size
-        this.controller.view.ModifyContextBoxCol(1, 350)
+        this.view.ModifyContextBoxCol(1, 350)
     }
 
     RemoveCheckbox(hwnd, row) {
@@ -88,7 +89,7 @@ class ContextViewController {
             return
 
         ; Deselect ChatHistory to ensure mutual exclusion
-        this.controller.view.ModifyChatHistory(0, "-Select")
+        this.view.ModifyChatHistory(0, "-Select")
 
         context := this.sessionManager.GetCurrentSessionContext()
         contextText := ""
@@ -111,7 +112,7 @@ class ContextViewController {
 
         ; Get selected rows (highlighted, not necessarily checked)
         row := 0
-        while (row := this.controller.view.GetContextBoxNext(row)) {
+        while (row := this.view.GetContextBoxNext(row)) {
             selectedIndices.InsertAt(1, row) ; Insert at beginning to keep reverse order
         }
 
@@ -125,7 +126,7 @@ class ContextViewController {
     }
 
     ResetSelection(*) {
-        this.controller.view.ModifyContextBox(0, "-Select")  ; Deselect all
+        this.view.ModifyContextBox(0, "-Select")  ; Deselect all
     }
 
     ClearAllContext(*) {
@@ -139,12 +140,12 @@ class ContextViewController {
             
         context := this.sessionManager.GetCurrentSessionContext()
 
-        loop this.controller.view.GetContextBoxCount() {
+        loop this.view.GetContextBoxCount() {
             ; Check if the item corresponds to an image
             if (A_Index <= context.Length) {
                 item := context[A_Index]
-                if (this.contextManager.IsImage(item) && this.controller.view.IsContextItemChecked(A_Index)) {
-                    this.controller.view.ModifyContextBox(A_Index, "-Check")
+                if (this.contextManager.IsImage(item) && this.view.IsContextItemChecked(A_Index)) {
+                    this.view.ModifyContextBox(A_Index, "-Check")
                 }
             }
         }
@@ -158,7 +159,7 @@ class ContextViewController {
         images := []
         context := this.sessionManager.GetCurrentSessionContext()
         for index, item in context {
-            if (this.controller.view.IsContextItemChecked(index) && this.contextManager.IsImage(item)) {
+            if (this.view.IsContextItemChecked(index) && this.contextManager.IsImage(item)) {
                 images.Push(item)
             }
         }
@@ -169,7 +170,7 @@ class ContextViewController {
         checkedItems := []
         context := this.sessionManager.GetCurrentSessionContext()
         for index, item in context {
-            if (this.controller.view.IsContextItemChecked(index)) {
+            if (this.view.IsContextItemChecked(index)) {
                 checkedItems.Push(item)
             }
         }
@@ -179,7 +180,7 @@ class ContextViewController {
     HasAnyCheckedItem() {
         context := this.sessionManager.GetCurrentSessionContext()
         loop context.Length {
-            if (this.controller.view.IsContextItemChecked(A_Index)) {
+            if (this.view.IsContextItemChecked(A_Index)) {
                 return true
             }
         }

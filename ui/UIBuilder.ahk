@@ -125,7 +125,7 @@ class UIBuilder {
     static CreatePromptSection(gui, sessionManager, configManager, window) {
         ; Prompt edit control
         promptEdit := gui.Add("Edit", "vPromptEdit x" UIConfig.promptEditX " y" UIConfig.promptEditY " w" UIConfig.promptEditWidth " h" UIConfig.promptEditHeight " Multi WantReturn", "")
-        promptEdit.OnEvent("Change", ObjBindMethod(window, "HandlePromptInput"))
+        promptEdit.OnEvent("Change", ObjBindMethod(window, "OnPromptChange"))
     }
 
     static CreateBottomControls(gui, sessionManager, configManager, controller) {

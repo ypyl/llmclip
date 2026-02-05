@@ -29,14 +29,10 @@ class AppWindow {
         this.BuildUI()
         this.gui.Show("w1230 h610")
         
-        ; Initialize WebView after showing
-        this.controller.webViewManager.Init(this.gui["ResponseCtr"])
-        this.controller.webViewManager.SetInputCallback(ObjBindMethod(this.controller, "AppendToPrompt"))
-        
         this.guiShown := true
         
-        ; Update views
-        this.controller.historyViewController.UpdateChatHistoryView()
+        ; Notify controller that view is ready
+        this.controller.OnViewReady()
     }
     
     BuildUI() {
@@ -86,7 +82,7 @@ class AppWindow {
             }
         }
     }
-
+    
     GetPromptValue() {
         return this.gui["PromptEdit"].Value
     }
@@ -95,18 +91,8 @@ class AppWindow {
         this.gui["PromptEdit"].Value := text
     }
 
-    HandlePromptInput(GuiCtrl, Info) {
-        if (GetKeyState("Enter") && !GetKeyState("Shift")) {
-            ; Get the last character
-            text := GuiCtrl.Value
-            if (SubStr(text, -1) == "`n") {
-                ; Remove the trailing newline
-                GuiCtrl.Value := SubStr(text, 1, -1)
-                ; Send the prompt
-                this.controller.AskToLLM()
-                return true
-            }
-        }
+    OnPromptChange(GuiCtrl, Info) {
+        this.controller.OnPromptInput()
     }
 
     ClearPrompt() {

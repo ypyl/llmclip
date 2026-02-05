@@ -117,6 +117,15 @@ class MainController {
         this.view.Show()
     }
 
+    OnViewReady() {
+        ; Initialize WebView after window is shown
+        this.webViewManager.Init(this.view.gui["ResponseCtr"])
+        this.webViewManager.SetInputCallback(ObjBindMethod(this, "AppendToPrompt"))
+        
+        ; Update views
+        this.historyViewController.UpdateChatHistoryView()
+    }
+
     SystemPromptChanged(*) => this.conversationController.SystemPromptChanged()
     
     HandleToolConfirmation() => this.chatController.HandleToolConfirmation()
@@ -128,6 +137,19 @@ class MainController {
     
     ExitApplication(*) => ExitApp()
     ClipChanged(DataType) => this.clipboardController.ClipChanged(DataType)
+
+    OnPromptInput() {
+        if (GetKeyState("Enter") && !GetKeyState("Shift")) {
+            ; Get the current text
+            text := this.view.GetPromptValue()
+            if (SubStr(text, -1) == "`n") {
+                ; Remove the trailing newline
+                this.view.SetPromptValue(SubStr(text, 1, -1))
+                ; Send the prompt
+                this.AskToLLM()
+            }
+        }
+    }
 
     AppendToPrompt(text) {
         currentText := this.view.GetPromptValue()

@@ -30,68 +30,6 @@ class SessionManager {
         }
     }
 
-    GetMessageAsString(message) {
-        ; Check for audio content
-        audioData := message.GetAudio()
-        if (audioData != "") {
-            return this.FormatAudioMessage(audioData)
-        }
-        
-        ; Check for tool calls and results
-        toolCallTexts := []
-        for part in message.Contents {
-            if (part is FunctionCallContent) {
-                toolCallTexts.Push(this.FormatToolCallMessage(part))
-            }
-            if (part is FunctionResultContent) {
-                return part.Result
-            }
-        }
-        
-        if (toolCallTexts.Length > 0) {
-            finalText := ""
-            for text in toolCallTexts {
-                if (finalText != "")
-                    finalText .= "`n"
-                finalText .= text
-            }
-            return finalText
-        }
-        
-        ; Get text content and check for thinking
-        text := message.GetText()
-        if (message.AdditionalProperties.Has("thinking") && message.AdditionalProperties["thinking"] != "") {
-            ; Use 4 backticks for fence if content contains 3 backticks (to prevent breaking markdown rendering)
-            thinkingContent := message.AdditionalProperties["thinking"]
-            fence := InStr(thinkingContent, "``````") ? "````````" : "``````"
-            text := fence . "thinking`n" . thinkingContent . "`n" . fence . "`n`n" . text
-        }
-        
-        ; Check if has images
-        hasImage := false
-        for part in message.Contents {
-            if (part is ImageContent) {
-                hasImage := true
-                break
-            }
-        }
-        
-        return hasImage ? text . " [Image]" : text
-    }
-
-    FormatAudioMessage(audioLink) {
-        audioBase64 := FileUtils.GetFileAsBase64(audioLink)
-        return '<audio controls><source src="data:audio/wav;base64,' audioBase64 '" type="audio/wav"></audio>'
-    }
-
-    FormatToolCallMessage(toolCall) {
-        return toolCall.Name "(" JSON.Stringify(toolCall.Arguments) ")"
-    }
-
-    /**
-     * Format messages for compression by creating a conversation transcript
-     * @returns String representation of all messages for compression
-     */
     FormatMessagesForCompression() {
         messages := this.GetCurrentSessionMessages()
         formattedText := ""
@@ -104,7 +42,7 @@ class SessionManager {
                 msg.Role == "assistant" ? "Assistant" : 
                 msg.Role == "tool" ? "Tool" : msg.Role
             
-            messageText := this.GetMessageAsString(msg)
+            messageText := msg.GetText()
             formattedText .= roleLabel ": " messageText "`n`n"
             i++
         }
@@ -135,86 +73,7 @@ class SessionManager {
         return filteredMessages
     }
 
-    GetCurrentSessionMessagesAsStrings() {
-        messages := []
-        allMessages := this.GetCurrentSessionMessages()
-        
-        ; Find first user message and check for context
-        firstUserMsg := ""
-        firstUserIndex := 0
-        for i, message in allMessages {
-            if (message.Role == "user") {
-                firstUserMsg := message
-                firstUserIndex := i
-                break
-            }
-        }
-        
-        ; Check if context exists in first user message
-        hasContext := false
-        if (firstUserMsg && firstUserMsg.AdditionalProperties.Has("hasContext") 
-            && firstUserMsg.AdditionalProperties["hasContext"]) {
-            hasContext := true
-        }
-        
-        ; Build messages array
-        for i, message in allMessages {
-            roleEmoji := message.Role == "system" ? "⚙️" :
-                message.Role == "user" ? "👤" :
-                message.Role == "assistant" ? "🤖" :
-                message.Role == "tool" ? "🛠️" : message.Role
 
-            ; If this is the first user message with context, exclude context from display
-            if (hasContext && i == firstUserIndex) {
-                ; Add user message without context
-                userContent := ""
-                for j, part in message.Contents {
-                    if (j > 1 && part is TextContent) {
-                        if (userContent != "")
-                            userContent .= "`n"
-                        userContent .= part.Text
-                    }
-                }
-                
-                ; Check if has images
-                hasImage := false
-                for part in message.Contents {
-                    if (part is ImageContent) {
-                        hasImage := true
-                        break
-                    }
-                }
-                
-                if (userContent == "" && !hasImage) {
-                    userContent := "(empty message)"
-                }
-                
-                result := { role: roleEmoji, content: hasImage ? userContent . " [Image]" : userContent }
-            } else {
-                ; Regular message
-                result := { role: roleEmoji, content: this.GetMessageAsString(message) }
-            }
-
-            ; Add additional properties from ChatMessage
-            if (message.AdditionalProperties.Has("duration")) {
-                result.duration := message.AdditionalProperties["duration"]
-            }
-            if (message.AdditionalProperties.Has("tokens")) {
-                result.tokens := message.AdditionalProperties["tokens"]
-            }
-            if (message.AdditionalProperties.Has("isBatchMode")) {
-                result.isBatchMode := message.AdditionalProperties["isBatchMode"]
-            }
-            if (message.AdditionalProperties.Has("isBatchResponse")) {
-                result.isBatchResponse := message.AdditionalProperties["isBatchResponse"]
-            }
-            if (message.AdditionalProperties.Has("batchContextItem")) {
-                result.batchContextItem := message.AdditionalProperties["batchContextItem"]
-            }
-            messages.Push(result)
-        }
-        return messages
-    }
 
     GetCurrentSessionContext() {
         return this.sessionContexts[this.currentSessionIndex]

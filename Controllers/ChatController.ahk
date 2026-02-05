@@ -14,14 +14,16 @@ class ChatController {
     sendBatchToLLMCommand := ""
     confirmToolCommand := ""
     regenerateMessageCommand := ""
+    messagePresentationService := ""
 
-    __New(controller, view, configManager, sessionManager, llmService, contextManager, sendToLLMCommand, sendBatchToLLMCommand, confirmToolCommand, regenerateMessageCommand) {
+    __New(controller, view, configManager, sessionManager, llmService, contextManager, messagePresentationService, sendToLLMCommand, sendBatchToLLMCommand, confirmToolCommand, regenerateMessageCommand) {
         this.controller := controller
         this.view := view
         this.configManager := configManager
         this.sessionManager := sessionManager
         this.llmService := llmService
         this.contextManager := contextManager
+        this.messagePresentationService := messagePresentationService
         
         this.sendToLLMCommand := sendToLLMCommand
         this.sendBatchToLLMCommand := sendBatchToLLMCommand
@@ -42,7 +44,7 @@ class ChatController {
             this.controller.historyViewController.UpdateChatHistoryView()
             if (this.sessionManager.GetCurrentSessionMessages().Length > 0) {
                 lastMsg := this.sessionManager.GetCurrentSessionMessages()[-1]
-                this.controller.RenderMarkdown(this.sessionManager.GetMessageAsString(lastMsg))
+                this.controller.RenderMarkdown(this.messagePresentationService.GetMessageAsString(lastMsg))
             }
         }
         this.view.SetAskButtonText("Ask LLM")
@@ -216,7 +218,7 @@ class ChatController {
         this.controller.historyViewController.UpdateChatHistoryView()
         messages := this.sessionManager.GetCurrentSessionMessages()
         if (messages.Length > 0) {
-            this.controller.RenderMarkdown(this.sessionManager.GetMessageAsString(messages[messages.Length]))
+            this.controller.RenderMarkdown(this.messagePresentationService.GetMessageAsString(messages[messages.Length]))
         }
 
         ; Uncheck images after sending

@@ -10,12 +10,13 @@ class HistoryViewController {
     deleteMessageCommand := ""
     view := ""
 
-    __New(controller, view, sessionManager, webViewManager, configManager, deleteMessageCommand, clearHistoryCommand) {
+    __New(controller, view, sessionManager, webViewManager, configManager, messagePresentationService, deleteMessageCommand, clearHistoryCommand) {
         this.controller := controller
         this.view := view
         this.sessionManager := sessionManager
         this.webViewManager := webViewManager
         this.configManager := configManager
+        this.messagePresentationService := messagePresentationService
         this.deleteMessageCommand := deleteMessageCommand
         this.clearHistoryCommand := clearHistoryCommand
     }
@@ -24,23 +25,42 @@ class HistoryViewController {
         if (!this.controller || !this.controller.view) ; Check if initialized
             return
 
-        messages := this.sessionManager.GetCurrentSessionMessagesAsStrings()
+        allMessages := this.sessionManager.GetCurrentSessionMessages()
         this.view.DeleteChatHistoryItems()
-        for msg in messages {
-            duration := msg.HasOwnProp("duration") ? msg.duration : ""
-            tokens := msg.HasOwnProp("tokens") ? msg.tokens : ""
+        
+        ; Identify first user message for presentation service
+        firstUserIndex := 0
+        for i, msg in allMessages {
+            if (msg.Role == "user") {
+                firstUserIndex := i
+                break
+            }
+        }
+
+        for i, msg in allMessages {
+            roleEmoji := msg.Role == "system" ? "⚙️" :
+                msg.Role == "user" ? "👤" :
+                msg.Role == "assistant" ? "🤖" :
+                msg.Role == "tool" ? "🛠️" : msg.Role
+
+            duration := msg.AdditionalProperties.Has("duration") ? msg.AdditionalProperties["duration"] : ""
+            tokens := msg.AdditionalProperties.Has("tokens") ? msg.AdditionalProperties["tokens"] : ""
             
-            ; Get content with truncation
-            contentText := SubStr(msg.content, 1, 70) (StrLen(msg.content) > 70 ? "..." : "")
+            ; Get presentation text from service
+            isFirstUserMsg := (i == firstUserIndex)
+            presentationText := this.messagePresentationService.GetPresentationText(msg, isFirstUserMsg)
+            
+            ; Get content with truncation for ListView
+            contentText := SubStr(presentationText, 1, 70) (StrLen(presentationText) > 70 ? "..." : "")
             
             ; Add to ListView
-            row := this.view.AddChatHistoryItem(msg.role, contentText, duration, tokens)
+            row := this.view.AddChatHistoryItem(roleEmoji, contentText, duration, tokens)
             
             ; Check for batch indicators and modify the displayed content
-            if (msg.HasOwnProp("isBatchMode") && msg.isBatchMode) {
+            if (msg.AdditionalProperties.Has("isBatchMode") && msg.AdditionalProperties["isBatchMode"]) {
                 this.view.ModifyChatHistory(row, "Col2", "🔄 [Batch] " . contentText)
-            } else if (msg.HasOwnProp("isBatchResponse") && msg.isBatchResponse) {
-                itemLabel := msg.HasOwnProp("batchContextItem") ? msg.batchContextItem : "Item"
+            } else if (msg.AdditionalProperties.Has("isBatchResponse") && msg.AdditionalProperties["isBatchResponse"]) {
+                itemLabel := msg.AdditionalProperties.Has("batchContextItem") ? msg.AdditionalProperties["batchContextItem"] : "Item"
                 this.view.ModifyChatHistory(row, "Col2", "✅ [" . itemLabel . "] " . contentText)
             }
         }
@@ -62,7 +82,7 @@ class HistoryViewController {
         if (Item > 0 && Item <= messages.Length) {
             msg := messages[Item]
             
-            ; Check if this is the first user message with context
+            ; Identify first user message for presentation service
             isFirstUserMsg := false
             for i, m in messages {
                 if (m.Role == "user") {
@@ -71,41 +91,11 @@ class HistoryViewController {
                 }
             }
             
-            ; Get message content
-            messageContent := ""
-            if (isFirstUserMsg && msg.AdditionalProperties.Has("hasContext") 
-                && msg.AdditionalProperties["hasContext"]) {
-                ; First user message with context - exclude first TextContent
-                text := ""
-                for i, part in msg.Contents {
-                    if (i > 1 && part is TextContent) {
-                        if (text != "")
-                            text .= "`n"
-                        text .= part.Text
-                    }
-                }
-                
-                ; Check if has images
-                hasImage := false
-                for part in msg.Contents {
-                    if (part is ImageContent) {
-                        hasImage := true
-                        break
-                    }
-                }
-                
-                if (text == "" && !hasImage) {
-                    text := "(empty message)"
-                }
-                
-                messageContent := hasImage ? text . " [Image]" : text
-            } else {
-                ; Regular message - use normal display
-                messageContent := this.sessionManager.GetMessageAsString(msg)
-            }
+            ; Use presentation service
+            presentationText := this.messagePresentationService.GetPresentationText(msg, isFirstUserMsg)
             
             this.view.SetChatMessageActionButtonVisible(true)  ; Show the Copy button
-            this.webViewManager.RenderMarkdown(messageContent)  ; Render the selected message in the WebView
+            this.webViewManager.RenderMarkdown(presentationText)  ; Render the selected message in the WebView
         }
     }
 
@@ -124,22 +114,8 @@ class HistoryViewController {
                 }
             }
             
-            ; Get message content, excluding context if present
-            messageText := ""
-            if (isFirstUserMsg && msg.AdditionalProperties.Has("hasContext") 
-                && msg.AdditionalProperties["hasContext"]) {
-                ; First user message with context - exclude first TextContent
-                for i, part in msg.Contents {
-                    if (i > 1 && part is TextContent) {
-                        if (messageText != "")
-                            messageText .= "`n"
-                        messageText .= part.Text
-                    }
-                }
-            } else {
-                ; Regular message - use normal GetText
-                messageText := msg.GetText()
-            }
+            ; Get text without context if first user message
+            messageText := this.messagePresentationService.GetPresentationText(msg, isFirstUserMsg)
 
             ClipText := StrReplace(messageText, "`r`n", "`n")
             ClipText := StrReplace(ClipText, "`r", "`n")

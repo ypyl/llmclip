@@ -8,6 +8,7 @@
 #Include Services\WebViewManager.ahk
 #Include Services\ContextManager.ahk
 #Include Services\RecordingService.ahk
+#Include Services\MessagePresentationService.ahk
 #Include ui\TrayView.ahk
 #Include ui\UIConfig.ahk
 #Include ui\UIBuilder.ahk
@@ -68,6 +69,7 @@ class App {
         llm := LLMService(cfg)
         fs := FileService()
         cls := ClipboardService()
+        mps := MessagePresentationService()
 
         this.controller := MainController(
             cfg, 
@@ -114,13 +116,13 @@ class App {
 
         ; 4. Initialize Sub-Controllers
         menuCtrl := MenuController(this.controller, this.window, cfg, sess, selectModel, getToolsState, getCompressionState, toggleTool)
-        chatCtrl := ChatController(this.controller, this.window, cfg, sess, llm, ctx, sendLLM, sendBatch, confirmTool, regenerate)
+        chatCtrl := ChatController(this.controller, this.window, cfg, sess, llm, ctx, mps, sendLLM, sendBatch, confirmTool, regenerate)
         conversationCtrl := ConversationController(this.controller, this.window, cfg, sess, llm, menuCtrl, saveConv, loadConv, compress, extract, resetAll)
         clipboardCtrl := ClipboardController(this.controller, processClip)
 
         
         ctxView := ContextViewController(this.controller, this.window, sess, cfg, ctx, wv, clearCtx)
-        histView := HistoryViewController(this.controller, this.window, sess, wv, cfg, deleteMsg, clearHist)
+        histView := HistoryViewController(this.controller, this.window, sess, wv, cfg, mps, deleteMsg, clearHist)
         notesContr := NotesController(copyToClip)
         promptCtrl := PromptController(this.window, chatCtrl)
 

@@ -236,4 +236,8 @@ class AppWindow {
             return true ; Fallback
         }
     }
+
+    ShowSaveFileDialog(defaultFilename, title, filter) {
+        return FileSelect("S16", defaultFilename, title, filter)
+    }
 }

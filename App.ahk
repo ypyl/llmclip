@@ -47,6 +47,7 @@
 #Include Commands\ToggleToolCommand.ahk
 #Include Commands\InitializeAppCommand.ahk
 #Include Commands\ProcessClipboardCommand.ahk
+#Include Commands\SaveDiagramCommand.ahk
 
 
 
@@ -108,10 +109,11 @@ class App {
         toggleTool := ToggleToolCommand(cfg, sess)
         initializeApp := InitializeAppCommand()
         processClip := ProcessClipboardCommand(rec, cp, sess)
+        saveDiagram := SaveDiagramCommand(fs)
 
 
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp
+            saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram
         )
 
         ; 4. Initialize Sub-Controllers

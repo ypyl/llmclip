@@ -140,7 +140,7 @@ class ChatController {
         for item in checkedItems {
             contextProviders.Push({
                 item: item,
-                text: this.contextManager.GetTextFromContextItem(item, (url) => this.webViewManager.LoadArticle(url))
+                text: this.contextManager.GetTextFromContextItem(item, (url) => this.controller.webViewManager.LoadArticle(url))
             })
         }
 
@@ -184,7 +184,7 @@ class ChatController {
             context, 
             checkedIndices, 
             selectedIndices,
-            (url) => this.webViewManager.LoadArticle(url)
+            (url) => this.controller.webViewManager.LoadArticle(url)
         )
 
         ; Update UI State

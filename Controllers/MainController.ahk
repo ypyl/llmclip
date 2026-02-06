@@ -30,6 +30,7 @@ class MainController {
     resetAllCommand := ""
     toggleRecordingCommand := ""
     initializeAppCommand := ""
+    saveDiagramCommand := ""
 
     ; Sub-Controllers
     menuController := ""
@@ -52,7 +53,7 @@ class MainController {
         this.clipboardParser := clipboardParser
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp) {
+    SetCommands(saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram) {
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
         this.clearContextCommand := clearCtx
@@ -67,6 +68,7 @@ class MainController {
         this.resetAllCommand := resetAll
         this.toggleRecordingCommand := toggleRec
         this.initializeAppCommand := initializeApp
+        this.saveDiagramCommand := saveDiagram
     }
 
     SetSubControllers(menu, chat, conv, clip, ctxView, histView, notes, prompt) {
@@ -185,21 +187,10 @@ class MainController {
         timestamp := FormatTime(, "yyyyMMdd_HHmmss")
         defaultFilename := "mermaid_" . timestamp . ".svg"
 
-        ; Show save dialog
-        selectedFile := FileSelect("S16", defaultFilename, "Save Mermaid Diagram", "SVG Files (*.svg)")
+        ; Use view to show dialog
+        selectedFile := this.view.ShowSaveFileDialog(defaultFilename, "Save Mermaid Diagram", "SVG Files (*.svg)")
 
-        ; Check if user cancelled
-        if (selectedFile = "") {
-            return
-        }
-
-        ; Ensure .svg extension
-        if (!RegExMatch(selectedFile, "i)\.svg$")) {
-            selectedFile .= ".svg"
-        }
-
-        ; Save SVG to selected file
-        try FileDelete(selectedFile)
-        FileAppend(svgData, selectedFile, "UTF-8")
+        ; Execute command to save
+        this.saveDiagramCommand.Execute(selectedFile, svgData)
     }
 }

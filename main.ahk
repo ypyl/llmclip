@@ -6,7 +6,3 @@
 ; Initialize application
 global appInstance := App()
 appInstance.Start()
-
-F3:: {
-    appInstance.ToggleDisplay()
-}

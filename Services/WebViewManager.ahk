@@ -6,6 +6,8 @@ class WebViewManager {
     clipboardHost := {}
     articleHost := {}
     inputHost := {}
+    errorCallback := ""
+    saveDiagramCallback := ""
     cache := Map()  ; Cache to store loaded articles by URL
     articleReady := false
     currentArticle := ""
@@ -18,13 +20,13 @@ class WebViewManager {
     __New() {
         this.clipboardHost := {
             Copy: (text) => A_Clipboard := text,
-            SaveDiagram: (svgData) => this.SaveMermaidDiagram(svgData)
+            SaveDiagram: (svgData) => this.OnSaveDiagram(svgData)
         }
         this.articleHost := {
             OnArticle: (article) => this.HandleArticle(article)
         }
         this.inputHost := {
-            Append: (text) => MsgBox(text) ; Default placeholder
+            Append: (text) => 0 ; Default placeholder
         }
 
         this.cache := Map()  ; Initialize the cache
@@ -32,6 +34,14 @@ class WebViewManager {
 
     SetInputCallback(callback) {
         this.inputHost.Append := callback
+    }
+
+    SetErrorCallback(callback) {
+        this.errorCallback := callback
+    }
+
+    SetSaveDiagramCallback(callback) {
+        this.saveDiagramCallback := callback
     }
 
     Init(responseCtr) {
@@ -153,7 +163,9 @@ class WebViewManager {
                 obj.OnArticle(article);
             )')
         } catch as e {
-            MsgBox("Script error: " e.Message)
+            if (this.errorCallback) {
+                this.errorCallback.Call("Script error: " e.Message)
+            }
             this.articleReady := true  ; Set to true to prevent infinite waiting
         }
     }
@@ -227,26 +239,9 @@ class WebViewManager {
         }
     }
 
-    SaveMermaidDiagram(svgData) {
-        ; Generate a default filename with timestamp
-        timestamp := FormatTime(, "yyyyMMdd_HHmmss")
-        defaultFilename := "mermaid_" . timestamp . ".svg"
-
-        ; Show save dialog
-        selectedFile := FileSelect("S16", defaultFilename, "Save Mermaid Diagram", "SVG Files (*.svg)")
-
-        ; Check if user cancelled
-        if (selectedFile = "") {
-            return
+    OnSaveDiagram(svgData) {
+        if (this.saveDiagramCallback) {
+            this.saveDiagramCallback.Call(svgData)
         }
-
-        ; Ensure .svg extension
-        if (!RegExMatch(selectedFile, "i)\.svg$")) {
-            selectedFile .= ".svg"
-        }
-
-        ; Save SVG to selected file
-        try FileDelete(selectedFile)
-        FileAppend(svgData, selectedFile, "UTF-8")
     }
 }

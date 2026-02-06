@@ -135,9 +135,6 @@ class App {
 
     Start() {
         this.controller.Start()
-    }
-
-    ToggleDisplay() {
-        this.controller.ToggleDisplay()
+        Hotkey("F3", (*) => this.controller.ToggleDisplay())
     }
 }

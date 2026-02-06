@@ -125,6 +125,8 @@ class MainController {
         ; Initialize WebView after window is shown
         this.webViewManager.Init(this.view.gui["ResponseCtr"])
         this.webViewManager.SetInputCallback(ObjBindMethod(this.promptController, "AppendToPrompt"))
+        this.webViewManager.SetErrorCallback(ObjBindMethod(this, "OnWebViewError"))
+        this.webViewManager.SetSaveDiagramCallback(ObjBindMethod(this, "OnSaveWebViewDiagram"))
         
         ; Update views
         this.historyViewController.UpdateChatHistoryView()
@@ -172,5 +174,32 @@ class MainController {
     ClearAllContext(*) {
         this.clearContextCommand.Execute()
         this.contextViewController.UpdateContextView()
+    }
+
+    OnWebViewError(message) {
+        MsgBox(message)
+    }
+
+    OnSaveWebViewDiagram(svgData) {
+        ; Generate a default filename with timestamp
+        timestamp := FormatTime(, "yyyyMMdd_HHmmss")
+        defaultFilename := "mermaid_" . timestamp . ".svg"
+
+        ; Show save dialog
+        selectedFile := FileSelect("S16", defaultFilename, "Save Mermaid Diagram", "SVG Files (*.svg)")
+
+        ; Check if user cancelled
+        if (selectedFile = "") {
+            return
+        }
+
+        ; Ensure .svg extension
+        if (!RegExMatch(selectedFile, "i)\.svg$")) {
+            selectedFile .= ".svg"
+        }
+
+        ; Save SVG to selected file
+        try FileDelete(selectedFile)
+        FileAppend(svgData, selectedFile, "UTF-8")
     }
 }

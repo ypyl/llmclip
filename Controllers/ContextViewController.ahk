@@ -3,18 +3,17 @@
 class ContextViewController {
     controller := ""
     sessionManager := ""
-    configManager := ""
     contextManager := ""
     webViewManager := ""
     view := ""
     contextPresentationService := ""
     deleteContextItemsCommand := ""
+    prepareContextCommand := ""
 
-    __New(controller, view, sessionManager, configManager, contextManager, webViewManager, contextPresentationService, clearContextCommand, replaceLinkWithContentCommand, renderMarkdownCommand, deleteContextItemsCommand) {
+    __New(controller, view, sessionManager, contextManager, webViewManager, contextPresentationService, clearContextCommand, replaceLinkWithContentCommand, renderMarkdownCommand, deleteContextItemsCommand, prepareContextCommand) {
         this.controller := controller
         this.view := view
         this.sessionManager := sessionManager
-        this.configManager := configManager
         this.contextManager := contextManager
         this.webViewManager := webViewManager
         this.contextPresentationService := contextPresentationService
@@ -22,23 +21,17 @@ class ContextViewController {
         this.replaceLinkWithContentCommand := replaceLinkWithContentCommand
         this.renderMarkdownCommand := renderMarkdownCommand
         this.deleteContextItemsCommand := deleteContextItemsCommand
+        this.prepareContextCommand := prepareContextCommand
     }
 
     UpdateContextView(*) {
         if (!this.controller || !this.controller.view) ; Check if initialized
             return
 
-        ; Update local references
+        ; Execute command to merge predefined context
+        this.prepareContextCommand.Execute()
+
         context := this.sessionManager.GetCurrentSessionContext()
-        predefinedContext := this.configManager.GetContext(this.sessionManager.GetCurrentSessionLLMType(),
-        this.sessionManager.GetCurrentSessionSystemPrompt())
-        
-        for item in predefinedContext {
-            if (!this.HasVal(context, item)) {
-                context.Push(item)
-            }
-        }
-        this.sessionManager.SetCurrentSessionContext(context)
 
         ; Update UI
         this.view.DeleteContextBoxItems() ; Clear ListView
@@ -180,11 +173,4 @@ class ContextViewController {
         return false
     }
 
-    HasVal(haystack, needle) {
-        for index, value in haystack {
-            if (value = needle)
-                return true
-        }
-        return false
-    }
 }

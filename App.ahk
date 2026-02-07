@@ -54,7 +54,7 @@
 #Include Commands\CancelGenerationCommand.ahk
 #Include Commands\RenderLastMessageCommand.ahk
 #Include Commands\DeleteContextItemsCommand.ahk
-
+#Include Commands\PrepareContextCommand.ahk
 
 class App {
     controller := ""
@@ -121,6 +121,7 @@ class App {
         cancelGen := CancelGenerationCommand(llm)
         renderLastMsg := RenderLastMessageCommand(sess, mps, wv)
         deleteCtxItems := DeleteContextItemsCommand(sess)
+        prepareContext := PrepareContextCommand(sess, cfg)
 
 
         this.controller.SetCommands(
@@ -133,7 +134,7 @@ class App {
         conversationCtrl := ConversationController(this.controller, this.window, cfg, sess, llm, menuCtrl, saveConv, loadConv, compress, extract, resetAll)
         clipboardCtrl := ClipboardController(this.controller, processClip)
 
-        ctxView := ContextViewController(this.controller, this.window, sess, cfg, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems)
+        ctxView := ContextViewController(this.controller, this.window, sess, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems, prepareContext)
         histView := HistoryViewController(this.controller, this.window, sess, cfg, mps, deleteMsg, clearHist, renderMarkdown, copyToClip)
         notesContr := NotesController(copyToClip)
         promptCtrl := PromptController(this.window, chatCtrl)

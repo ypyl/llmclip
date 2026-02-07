@@ -9,9 +9,10 @@ class HistoryViewController {
     deleteMessageCommand := ""
     clearHistoryCommand := ""
     renderMarkdownCommand := ""
+    copyToClipboardCommand := ""
     view := ""
 
-    __New(controller, view, sessionManager, configManager, messagePresentationService, deleteMessageCommand, clearHistoryCommand, renderMarkdownCommand) {
+    __New(controller, view, sessionManager, configManager, messagePresentationService, deleteMessageCommand, clearHistoryCommand, renderMarkdownCommand, copyToClipboardCommand) {
         this.controller := controller
         this.view := view
         this.sessionManager := sessionManager
@@ -20,6 +21,7 @@ class HistoryViewController {
         this.deleteMessageCommand := deleteMessageCommand
         this.clearHistoryCommand := clearHistoryCommand
         this.renderMarkdownCommand := renderMarkdownCommand
+        this.copyToClipboardCommand := copyToClipboardCommand
     }
 
     UpdateChatHistoryView(*) {
@@ -29,15 +31,6 @@ class HistoryViewController {
         allMessages := this.sessionManager.GetCurrentSessionMessages()
         this.view.DeleteChatHistoryItems()
         
-        ; Identify first user message for presentation service
-        firstUserIndex := 0
-        for i, msg in allMessages {
-            if (msg.Role == "user") {
-                firstUserIndex := i
-                break
-            }
-        }
-
         for i, msg in allMessages {
             roleEmoji := msg.Role == "system" ? "⚙️" :
                 msg.Role == "user" ? "👤" :
@@ -97,11 +90,7 @@ class HistoryViewController {
             msg := messages[focused_row]
            
             messageText := this.messagePresentationService.GetPresentationText(msg, false)
-
-            ClipText := StrReplace(messageText, "`r`n", "`n")
-            ClipText := StrReplace(ClipText, "`r", "`n")
-            ClipText := StrReplace(ClipText, "`n", "`r`n")
-            A_Clipboard := ClipText
+            this.copyToClipboardCommand.Execute(messageText)
         }
     }
 

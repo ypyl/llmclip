@@ -8,11 +8,9 @@ class ContextViewController {
     webViewManager := ""
     view := ""
     contextPresentationService := ""
-    clearContextCommand := ""
-    replaceLinkWithContentCommand := ""
-    renderMarkdownCommand := ""
+    deleteContextItemsCommand := ""
 
-    __New(controller, view, sessionManager, configManager, contextManager, webViewManager, contextPresentationService, clearContextCommand, replaceLinkWithContentCommand, renderMarkdownCommand) {
+    __New(controller, view, sessionManager, configManager, contextManager, webViewManager, contextPresentationService, clearContextCommand, replaceLinkWithContentCommand, renderMarkdownCommand, deleteContextItemsCommand) {
         this.controller := controller
         this.view := view
         this.sessionManager := sessionManager
@@ -23,6 +21,7 @@ class ContextViewController {
         this.clearContextCommand := clearContextCommand
         this.replaceLinkWithContentCommand := replaceLinkWithContentCommand
         this.renderMarkdownCommand := renderMarkdownCommand
+        this.deleteContextItemsCommand := deleteContextItemsCommand
     }
 
 
@@ -116,7 +115,6 @@ class ContextViewController {
     }
 
     DeleteSelected(*) {
-        context := this.sessionManager.GetCurrentSessionContext()
         selectedIndices := []
 
         ; Get selected rows (highlighted, not necessarily checked)
@@ -125,10 +123,8 @@ class ContextViewController {
             selectedIndices.InsertAt(1, row) ; Insert at beginning to keep reverse order
         }
 
-        ; Remove selected items
-        for index in selectedIndices {
-            context.RemoveAt(index)
-        }
+        ; Execute command to remove selected items
+        this.deleteContextItemsCommand.Execute(selectedIndices)
 
         ; Refresh the listview
         this.UpdateContextView()

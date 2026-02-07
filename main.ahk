@@ -1,8 +1,7 @@
 #Requires AutoHotkey 2.0
-#SingleInstance Force  ; Prevent multiple instances
+#SingleInstance Force
 #Warn
 #Include App.ahk
 
-; Initialize application
 global appInstance := App()
 appInstance.Start()

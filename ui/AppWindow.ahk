@@ -183,8 +183,12 @@ class AppWindow {
         return this.gui["ChatHistory"].Add(, role, text, duration, tokens)
     }
 
-    ModifyChatHistory(row, options, text := "") {
-        this.gui["ChatHistory"].Modify(row, options, text)
+    ModifyChatHistory(row, options, text?) {
+        if (IsSet(text)) {
+            this.gui["ChatHistory"].Modify(row, options, text)
+        } else {
+            this.gui["ChatHistory"].Modify(row, options)
+        }
     }
 
     GetChatHistoryCount() {

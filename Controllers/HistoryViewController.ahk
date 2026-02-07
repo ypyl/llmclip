@@ -32,30 +32,10 @@ class HistoryViewController {
         this.view.DeleteChatHistoryItems()
         
         for i, msg in allMessages {
-            roleEmoji := msg.Role == "system" ? "⚙️" :
-                msg.Role == "user" ? "👤" :
-                msg.Role == "assistant" ? "🤖" :
-                msg.Role == "tool" ? "🛠️" : msg.Role
-
-            duration := msg.AdditionalProperties.Has("duration") ? msg.AdditionalProperties["duration"] : ""
-            tokens := msg.AdditionalProperties.Has("tokens") ? msg.AdditionalProperties["tokens"] : ""
-            
-            ; Get presentation text from service, excluding thinking content for the list view
-            presentationText := this.messagePresentationService.GetPresentationText(msg, false)
-            
-            ; Get content with truncation for ListView
-            contentText := SubStr(presentationText, 1, 70) (StrLen(presentationText) > 70 ? "..." : "")
+            item := this.messagePresentationService.GetListViewItem(msg)
             
             ; Add to ListView
-            row := this.view.AddChatHistoryItem(roleEmoji, contentText, duration, tokens)
-            
-            ; Check for batch indicators and modify the displayed content
-            if (msg.AdditionalProperties.Has("isBatchMode") && msg.AdditionalProperties["isBatchMode"]) {
-                this.view.ModifyChatHistory(row, "Col2", "🔄 [Batch] " . contentText)
-            } else if (msg.AdditionalProperties.Has("isBatchResponse") && msg.AdditionalProperties["isBatchResponse"]) {
-                itemLabel := msg.AdditionalProperties.Has("batchContextItem") ? msg.AdditionalProperties["batchContextItem"] : "Item"
-                this.view.ModifyChatHistory(row, "Col2", "✅ [" . itemLabel . "] " . contentText)
-            }
+            this.view.AddChatHistoryItem(item.roleEmoji, item.contentText, item.duration, item.tokens)
         }
         this.view.SetChatMessageActionButtonVisible(false)  ; Hide the action button
         if (this.view.GetChatHistoryCount() > 0) {

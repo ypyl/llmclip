@@ -3,6 +3,49 @@
 
 class MessagePresentationService {
     /**
+     * Get data for a ListView item representing this message.
+     * @param message - ChatMessage instance
+     * @returns {Object} {roleEmoji, contentText, duration, tokens}
+     */
+    GetListViewItem(message) {
+        roleEmoji := this.GetRoleEmoji(message.Role)
+        
+        duration := message.AdditionalProperties.Has("duration") ? message.AdditionalProperties["duration"] : ""
+        tokens := message.AdditionalProperties.Has("tokens") ? message.AdditionalProperties["tokens"] : ""
+        
+        ; Get presentation text from service, excluding thinking content for the list view
+        presentationText := this.GetPresentationText(message, false)
+        
+        ; Get content with truncation for ListView
+        contentText := SubStr(presentationText, 1, 70) (StrLen(presentationText) > 70 ? "..." : "")
+        
+        ; Check for batch indicators and modify the displayed content
+        if (message.AdditionalProperties.Has("isBatchMode") && message.AdditionalProperties["isBatchMode"]) {
+            contentText := "🔄 [Batch] " . contentText
+        } else if (message.AdditionalProperties.Has("isBatchResponse") && message.AdditionalProperties["isBatchResponse"]) {
+            itemLabel := message.AdditionalProperties.Has("batchContextItem") ? message.AdditionalProperties["batchContextItem"] : "Item"
+            contentText := "✅ [" . itemLabel . "] " . contentText
+        }
+
+        return {
+            roleEmoji: roleEmoji,
+            contentText: contentText,
+            duration: duration,
+            tokens: tokens
+        }
+    }
+
+    /**
+     * Get the emoji representation for a message role.
+     */
+    GetRoleEmoji(role) {
+        return role == "system" ? "⚙️" :
+               role == "user" ? "👤" :
+               role == "assistant" ? "🤖" :
+               role == "tool" ? "🛠️" : role
+    }
+
+    /**
      * Get the presentation text for a message, considering its role and context.
      * @param message - ChatMessage instance
      * @returns String Markdown/HTML for display
@@ -99,6 +142,10 @@ class MessagePresentationService {
 
     FormatToolCallMessage(toolCall) {
         ; JSON might not be available here directly, but we assume it's global or included via LLM\Types.ahk
-        return toolCall.Name "(" JSON.Stringify(toolCall.Arguments) ")"
+        try {
+            return toolCall.Name "(" JSON.Stringify(toolCall.Arguments) ")"
+        } catch {
+            return toolCall.Name "(...)"
+        }
     }
 }

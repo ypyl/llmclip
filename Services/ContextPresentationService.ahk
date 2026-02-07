@@ -7,6 +7,13 @@ class ContextPresentationService {
         this.contextManager := contextManager
     }
 
+    GetListViewItem(item) {
+        return {
+            label: this.GetLabelFromContextItem(item),
+            hasCheckbox: !this.contextManager.IsPdf(item)
+        }
+    }
+
     GetLabelFromContextItem(item) {
         if (this.contextManager.IsHttpLink(item)) {
             return "🌐 " item

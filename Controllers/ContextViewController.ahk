@@ -24,44 +24,32 @@ class ContextViewController {
         this.deleteContextItemsCommand := deleteContextItemsCommand
     }
 
+    UpdateContextView(*) {
+        if (!this.controller || !this.controller.view) ; Check if initialized
+            return
 
-    GetLabelsForContextItems() {
+        ; Update local references
         context := this.sessionManager.GetCurrentSessionContext()
         predefinedContext := this.configManager.GetContext(this.sessionManager.GetCurrentSessionLLMType(),
         this.sessionManager.GetCurrentSessionSystemPrompt())
-        labels := []
+        
         for item in predefinedContext {
             if (!this.HasVal(context, item)) {
                 context.Push(item)
             }
         }
         this.sessionManager.SetCurrentSessionContext(context)
-        for item in context {
-            labels.Push(this.contextPresentationService.GetLabelFromContextItem(item))
-        }
-        return labels
-    }
-
-    UpdateContextView(*) {
-        if (!this.controller || !this.controller.view) ; Check if initialized
-            return
-
-        ; Update local references
-        labels := this.GetLabelsForContextItems()
 
         ; Update UI
         this.view.DeleteContextBoxItems() ; Clear ListView
 
-        ; Add items and check them by default (except specific types)
-        for label in labels {
-            row := this.view.AddContextBoxItem(label)
-            ; Check if the underlying item is a PDF, if so, remove checkbox
-            currentContext := this.sessionManager.GetCurrentSessionContext()
-            if (A_Index <= currentContext.Length) {
-                item := currentContext[A_Index]
-                if (this.contextManager.IsPdf(item)) {
-                     this.view.RemoveContextBoxCheckbox(row)
-                }
+        ; Add items from context
+        for item in context {
+            listViewItem := this.contextPresentationService.GetListViewItem(item)
+            row := this.view.AddContextBoxItem(listViewItem.label)
+            
+            if (!listViewItem.hasCheckbox) {
+                this.view.RemoveContextBoxCheckbox(row)
             }
         }
 

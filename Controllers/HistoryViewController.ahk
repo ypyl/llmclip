@@ -47,8 +47,8 @@ class HistoryViewController {
             duration := msg.AdditionalProperties.Has("duration") ? msg.AdditionalProperties["duration"] : ""
             tokens := msg.AdditionalProperties.Has("tokens") ? msg.AdditionalProperties["tokens"] : ""
             
-            ; Get presentation text from service
-            presentationText := this.messagePresentationService.GetPresentationText(msg)
+            ; Get presentation text from service, excluding thinking content for the list view
+            presentationText := this.messagePresentationService.GetPresentationText(msg, false)
             
             ; Get content with truncation for ListView
             contentText := SubStr(presentationText, 1, 70) (StrLen(presentationText) > 70 ? "..." : "")

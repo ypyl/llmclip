@@ -7,7 +7,7 @@ class MessagePresentationService {
      * @param message - ChatMessage instance
      * @returns String Markdown/HTML for display
      */
-    GetPresentationText(message) {
+    GetPresentationText(message, includeThinking := true) {
         if (message.Role == "user" && message.AdditionalProperties.Has("hasContext") && message.AdditionalProperties["hasContext"]) {
             ; For user message with context, show only the user prompt parts
             userContent := ""
@@ -35,14 +35,15 @@ class MessagePresentationService {
             return hasImage ? userContent . " [Image]" : userContent
         }
 
-        return this.GetMessageAsString(message)
+        return this.GetMessageAsString(message, includeThinking)
     }
 
     /**
      * Converts a ChatMessage to a string representation for display.
      * @param message - ChatMessage instance
+     * @param includeThinking - Whether to include thinking/reasoning blocks
      */
-    GetMessageAsString(message) {
+    GetMessageAsString(message, includeThinking := true) {
         ; Check for audio content
         audioData := message.GetAudio()
         if (audioData != "") {
@@ -72,7 +73,7 @@ class MessagePresentationService {
         
         ; Get text content and check for thinking
         text := message.GetText()
-        if (message.AdditionalProperties.Has("thinking") && message.AdditionalProperties["thinking"] != "") {
+        if (includeThinking && message.AdditionalProperties.Has("thinking") && message.AdditionalProperties["thinking"] != "") {
             ; Use 4 backticks for fence if content contains 3 backticks
             thinkingContent := message.AdditionalProperties["thinking"]
             fence := InStr(thinkingContent, "``````") ? "````````" : "``````"

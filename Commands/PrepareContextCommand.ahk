@@ -22,7 +22,7 @@ class PrepareContextCommand {
         addedAny := false
         for item in predefinedContext {
             if (!this.HasVal(context, item)) {
-                context.Push(item)
+                context.Push(ContextItem(item))
                 addedAny := true
             }
         }
@@ -35,8 +35,8 @@ class PrepareContextCommand {
     }
 
     HasVal(haystack, needle) {
-        for index, value in haystack {
-            if (value = needle)
+        for index, item in haystack {
+            if (item.Value = needle)
                 return true
         }
         return false

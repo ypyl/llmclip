@@ -38,8 +38,9 @@ class ContextViewController {
 
         ; Add items from context
         for item in context {
-            listViewItem := this.contextPresentationService.GetListViewItem(item)
-            row := this.view.AddContextBoxItem(listViewItem.label)
+            listViewItem := this.contextPresentationService.GetListViewItem(item.Value)
+            checkedOption := item.Checked ? "Check" : "-Check"
+            row := this.view.AddContextBoxItem(listViewItem.label, checkedOption)
             
             if (!listViewItem.hasCheckbox) {
                 this.view.RemoveContextBoxCheckbox(row)
@@ -62,16 +63,16 @@ class ContextViewController {
         contextText := ""
 
         if (Item > 0 && Item <= context.Length) {
-            contextItem := context[Item]
-            if (this.contextManager.IsPdf(contextItem)) {
-                this.webViewManager.Navigate(contextItem)
+            targetItem := context[Item]
+            if (this.contextManager.IsPdf(targetItem.Value)) {
+                this.webViewManager.Navigate(targetItem.Value)
                 return
             }
 
             ; Only load article if it is already cached or not a link
             ; For links that are not cached or replaced yet, we just show "URL: ..."
             ; The ContextManager now handles this based on IsHttpLink check.
-            contextText := this.GetTextFromContextItem(contextItem)
+            contextText := this.GetTextFromContextItem(targetItem)
         }
 
         this.renderMarkdownCommand.Execute(contextText)  ; Render the selected item(s) in the WebView
@@ -83,16 +84,20 @@ class ContextViewController {
             
         context := this.sessionManager.GetCurrentSessionContext()
         if (Item > 0 && Item <= context.Length) {
-            contextItem := context[Item]
-            if (this.contextManager.IsHttpLink(contextItem)) {
+            targetItem := context[Item]
+            if (this.contextManager.IsHttpLink(targetItem.Value)) {
                 ; Execute command to replace link with content
-                if (this.replaceLinkWithContentCommand.Execute(Item, contextItem)) {
+                if (this.replaceLinkWithContentCommand.Execute(Item, targetItem.Value)) {
                     ; Refresh view to show updated content (now text)
                     this.UpdateContextView()
                     this.ContextBoxSelect(GuiCtrl, Item, true)
                 }
             }
         }
+    }
+
+    ContextBoxItemCheck(Item, Checked) {
+        this.sessionManager.SetContextItemChecked(Item, Checked)
     }
 
     DeleteSelected(*) {
@@ -121,32 +126,28 @@ class ContextViewController {
     }
 
     UncheckSentImages() {
-        if (!this.controller || !this.controller.view)
-            return
-            
         context := this.sessionManager.GetCurrentSessionContext()
 
-        loop this.view.GetContextBoxCount() {
-            ; Check if the item corresponds to an image
-            if (A_Index <= context.Length) {
-                item := context[A_Index]
-                if (this.contextManager.IsImage(item) && this.view.IsContextItemChecked(A_Index)) {
-                    this.view.ModifyContextBox(A_Index, "-Check")
-                }
+        for index, item in context {
+            if (this.contextManager.IsImage(item.Value) && item.Checked) {
+                this.sessionManager.SetContextItemChecked(index, false)
             }
         }
+        
+        ; Refresh view to reflect model changes
+        this.UpdateContextView()
     }
 
     GetTextFromContextItem(item) {
-        return this.contextManager.GetTextFromContextItem(item)
+        return this.contextManager.GetTextFromContextItem(item.Value)
     }
 
     GetCheckedImages() {
         images := []
         context := this.sessionManager.GetCurrentSessionContext()
         for index, item in context {
-            if (this.view.IsContextItemChecked(index) && this.contextManager.IsImage(item)) {
-                images.Push(item)
+            if (item.Checked && this.contextManager.IsImage(item.Value)) {
+                images.Push(item.Value)
             }
         }
         return images
@@ -156,8 +157,8 @@ class ContextViewController {
         checkedItems := []
         context := this.sessionManager.GetCurrentSessionContext()
         for index, item in context {
-            if (this.view.IsContextItemChecked(index)) {
-                checkedItems.Push(item)
+            if (item.Checked) {
+                checkedItems.Push(item.Value)
             }
         }
         return checkedItems
@@ -165,8 +166,8 @@ class ContextViewController {
 
     HasAnyCheckedItem() {
         context := this.sessionManager.GetCurrentSessionContext()
-        loop context.Length {
-            if (this.view.IsContextItemChecked(A_Index)) {
+        for item in context {
+            if (item.Checked) {
                 return true
             }
         }

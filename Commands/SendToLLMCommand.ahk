@@ -29,12 +29,11 @@ class SendToLLMCommand {
      * @param isRegeneration Whether this is a regeneration of an existing message.
      * @returns {Object} {newMessages, hasUnexecutedToolCalls}
      */
-    Execute(promptText := "", images := [], checkedContextIndices := [], selectedContextIndices := [], isRegeneration := false) {
+    Execute(promptText := "", images := [], selectedContextIndices := [], isRegeneration := false) {
         ; 1. Build context
         currentContext := this.sessionManager.GetCurrentSessionContext()
         additionalContext := this.contextManager.BuildPromptContext(
             currentContext, 
-            checkedContextIndices, 
             selectedContextIndices
         )
 
@@ -42,7 +41,14 @@ class SendToLLMCommand {
         if (!isRegeneration) {
             userMessageContent := this.sessionManager.BuildUserMessage(promptText, images)
             
-            hasAnyChecked := (checkedContextIndices.Length > 0)
+            hasAnyChecked := false
+            for item in currentContext {
+                if (item.Checked) {
+                    hasAnyChecked := true
+                    break
+                }
+            }
+
             if (userMessageContent.Length > 0 || hasAnyChecked) {
                 this.sessionManager.GetCurrentSessionMessages().Push(ChatMessage("user", userMessageContent))
             }

@@ -18,7 +18,7 @@ class RecordingService {
                 recordedText := ""
                 context := sessionManager.GetCurrentSessionContext()
                 for item in context {
-                    recordedText .= contextManager.GetTextFromContextItem(item)
+                    recordedText .= contextManager.GetTextFromContextItem(item.Value)
                 }
                 A_Clipboard := recordedText
             }

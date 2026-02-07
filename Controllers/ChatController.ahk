@@ -151,17 +151,9 @@ class ChatController {
     }
 
     SendToLLM(promptText := "", isRegeneration := false) {
-        ; 1. Collect GUI state (indices and images)
+        ; 1. Collect GUI state (images and selection)
         isImageEnabled := this.controller.IsImageInputEnabled[this.controller.CurrentLLMTypeIndex]
         images := isImageEnabled ? this.controller.contextViewController.GetCheckedImages() : []
-        
-        checkedIndices := []
-        ; Use UI control count instead of session manager context length
-        loop this.view.GetContextBoxCount() {
-            if (this.view.IsContextItemChecked(A_Index)) {
-                checkedIndices.Push(A_Index)
-            }
-        }
         
         selectedIndices := []
         if (selectedIndex := this.view.GetContextBoxValue()) {
@@ -178,7 +170,6 @@ class ChatController {
             result := this.sendToLLMCommand.Execute(
                 promptText, 
                 images, 
-                checkedIndices, 
                 selectedIndices,
                 isRegeneration
             )

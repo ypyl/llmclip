@@ -1,5 +1,6 @@
 #Include FileUtils.ahk
 #Include LLM\Types.ahk
+#Include ContextItem.ahk
 
 class SessionManager {
     currentSessionIndex := 1
@@ -94,7 +95,7 @@ class SessionManager {
         
         for item in items {
             if !this.IsContentDuplicate(item) {
-                context.Push(item)
+                context.Push(ContextItem(item))
                 addedAny := true
             }
         }
@@ -106,13 +107,30 @@ class SessionManager {
         return addedAny
     }
 
-    UpdateContextItem(index, newItem) {
+    UpdateContextItem(index, newItemValue) {
         context := this.GetCurrentSessionContext()
         if (index > 0 && index <= context.Length) {
-            context[index] := newItem
+            context[index].Value := newItemValue
             return true
         }
         return false
+    }
+
+    SetContextItemChecked(index, checked) {
+        context := this.GetCurrentSessionContext()
+        if (index > 0 && index <= context.Length) {
+            context[index].Checked := checked
+            return true
+        }
+        return false
+    }
+
+    IsContextItemChecked(index) {
+        context := this.GetCurrentSessionContext()
+        if (index > 0 && index <= context.Length) {
+            return context[index].Checked
+        }
+        return true ; Default
     }
 
     GetCurrentSessionLLMType() {
@@ -309,9 +327,14 @@ class SessionManager {
             messages.Push(msg.ToObject(true))
         }
 
+        context := []
+        for item in this.sessionContexts[this.currentSessionIndex] {
+            context.Push(item.ToObject())
+        }
+
         return {
             messages: messages,
-            context: this.sessionContexts[this.currentSessionIndex],
+            context: context,
             llmType: this.sessionLLMTypes[this.currentSessionIndex],
             systemPrompt: this.sessionSystemPrompts[this.currentSessionIndex]
         }
@@ -363,8 +386,14 @@ class SessionManager {
             chatMessages.Push(ChatMessage.FromObject(plainObj))
         }
 
+        ; Convert context to ContextItem instances
+        chatContext := []
+        for item in context {
+            chatContext.Push(ContextItem.FromObject(item))
+        }
+
         this.sessionMessages[this.currentSessionIndex] := chatMessages
-        this.sessionContexts[this.currentSessionIndex] := this.ConvertMapToObject(context)
+        this.sessionContexts[this.currentSessionIndex] := chatContext
         this.sessionLLMTypes[this.currentSessionIndex] := llmType
         this.sessionSystemPrompts[this.currentSessionIndex] := systemPrompt
 
@@ -425,8 +454,10 @@ class SessionManager {
 
         ; Check in current session context
         currentContext := this.GetCurrentSessionContext()
-        if (this.HasVal(currentContext, newContent))
-            return true
+        for item in currentContext {
+            if (item.Value = newContent)
+                return true
+        }
 
         ; Check in chat history
         if (this.CheckContentInMessages(this.GetCurrentSessionMessages(), newContent))

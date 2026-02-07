@@ -107,7 +107,7 @@ class ContextManager {
     }
 
 
-    BuildPromptContext(context, checkedIndices, selectedIndices) {
+    BuildPromptContext(context, selectedIndices) {
         if (context.Length = 0)
             return ""
 
@@ -115,14 +115,6 @@ class ContextManager {
         
         ; Build general context from checked items (that are not selected and not images/PDFs)
         for index, item in context {
-            isChecked := false
-            for checkedIndex in checkedIndices {
-                if (checkedIndex = index) {
-                    isChecked := true
-                    break
-                }
-            }
-
             isSelected := false
             for selectedIndex in selectedIndices {
                 if (selectedIndex = index) {
@@ -131,8 +123,8 @@ class ContextManager {
                 }
             }
 
-            if (isChecked && !isSelected && !this.IsImage(item) && !this.IsPdf(item)) {
-                contextText .= this.GetTextFromContextItem(item)
+            if (item.Checked && !isSelected && !this.IsImage(item.Value) && !this.IsPdf(item.Value)) {
+                contextText .= this.GetTextFromContextItem(item.Value)
             }
         }
 
@@ -149,17 +141,8 @@ class ContextManager {
             for index in selectedIndices {
                 if (index > 0 && index <= context.Length) {
                     item := context[index]
-                    ; Check if it was checked
-                    isChecked := false
-                    for checkedIndex in checkedIndices {
-                        if (checkedIndex = index) {
-                            isChecked := true
-                            break
-                        }
-                    }
-
-                    if (isChecked && !this.IsImage(item) && !this.IsPdf(item)) {
-                        selectedContextText .= this.GetTextFromContextItem(item)
+                    if (item.Checked && !this.IsImage(item.Value) && !this.IsPdf(item.Value)) {
+                        selectedContextText .= this.GetTextFromContextItem(item.Value)
                     }
                 }
             }

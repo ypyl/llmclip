@@ -113,6 +113,40 @@ class AppWindow {
             }
         }
     }
+
+    OnContextItemCheck(GuiCtrl, Item) {
+        checked := this.IsContextItemChecked(Item)
+        this.contextViewController.ContextBoxItemCheck(Item, checked)
+    }
+
+    OnContextBoxNotify(GuiCtrl, lParam) {
+        ; LVN_ITEMCHANGED = -101
+        ; iItem is at offset 3 * A_PtrSize
+        ; uNewState is at offset 3 * A_PtrSize + 8
+        ; uOldState is at offset 3 * A_PtrSize + 12
+        
+        iItem := NumGet(lParam, 3 * A_PtrSize, "Int") + 1
+        uNewState := NumGet(lParam, 3 * A_PtrSize + 8, "UInt")
+        uOldState := NumGet(lParam, 3 * A_PtrSize + 12, "UInt")
+        
+        ; LVIS_STATEIMAGEMASK = 0xF000
+        if ((uNewState & 0xF000) != (uOldState & 0xF000)) {
+            this.OnContextItemCheck(GuiCtrl, iItem)
+        }
+    }
+
+    IsContextItemChecked(index) {
+        if (!this.guiShown)
+            return true ; Default to true if GUI not available
+
+        try {
+            Result := SendMessage(0x102C, index-1, 0xF000, this.GetContextBoxHwnd()) ; LVM_GETITEMSTATE
+            State := (Result >> 12) - 1
+            return State == 1
+        } catch {
+            return true ; Fallback
+        }
+    }
     
     GetPromptValue() {
         return this.gui["PromptEdit"].Value
@@ -186,8 +220,8 @@ class AppWindow {
         this.gui["ContextBox"].Delete()
     }
 
-    AddContextBoxItem(label) {
-        return this.gui["ContextBox"].Add("Check", label)
+    AddContextBoxItem(label, checkedOption := "Check") {
+        return this.gui["ContextBox"].Add(checkedOption, label)
     }
 
     ModifyContextBox(row, options) {
@@ -271,19 +305,6 @@ class AppWindow {
         NumPut("UInt", 0xF000, LVITEM, 16)  ; stateMask = LVIS_STATEIMAGEMASK (0xF000)
 
         SendMessage(0x102B, row - 1, LVITEM.Ptr, hwnd)
-    }
-
-    IsContextItemChecked(index) {
-        if (!this.guiShown)
-            return true ; Default to true if GUI not available
-
-        try {
-            Result := SendMessage(0x102C, index-1, 0xF000, this.GetContextBoxHwnd()) ; LVM_GETITEMSTATE
-            State := (Result >> 12) - 1
-            return State == 1
-        } catch {
-            return true ; Fallback
-        }
     }
 
     ShowSaveFileDialog(defaultFilename, title, filter) {

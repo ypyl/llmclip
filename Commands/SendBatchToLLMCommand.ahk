@@ -21,11 +21,12 @@ class SendBatchToLLMCommand {
     /**
      * Executes the batch command.
      * @param promptText The user's prompt text.
-     * @param batchContextProviders An array of context items to process.
+     * @param items An array of context items (raw paths/URLs/text) to process.
      * @param updateCallback A callback function(itemLabel, responseMessages) for each completed item.
      * @param isCancelled Callback function returning true if processing should stop.
+     * @param webViewLoader Callback to load articles via WebView.
      */
-    Execute(promptText, batchContextProviders, updateCallback, isCancelled) {
+    Execute(promptText, items, updateCallback, isCancelled, webViewLoader := "") {
         ; Create and mark the user message in main session
         userContent := [TextContent(promptText)]
         userMsg := ChatMessage("user", userContent)
@@ -44,7 +45,7 @@ class SendBatchToLLMCommand {
         ; Prepare base history (filtered but WITHOUT the current trigger message)
         baseHistory := this.sessionManager.GetMessagesExcludingBatch()
 
-        for provider in batchContextProviders {
+        for item in items {
             if (isCancelled())
                 break
 
@@ -58,8 +59,8 @@ class SendBatchToLLMCommand {
             clonedMessages.Push(activePromptClone)
             
             ; Get context for this item
-            itemLabel := this.contextManager.GetLabelFromContextItem(provider.item)
-            itemText := provider.text
+            itemLabel := this.contextManager.GetLabelFromContextItem(item)
+            itemText := this.contextManager.GetTextFromContextItem(item, webViewLoader)
             
             ; Attach context to the clone
             firstUserMsg := ""

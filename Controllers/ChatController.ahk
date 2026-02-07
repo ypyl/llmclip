@@ -70,7 +70,7 @@ class ChatController {
             this.view.SetPromptValue(result.text)
             return true
         } else if (result.status == "sent") {
-            this.SendToLLM()
+            this.SendToLLM("", true)
             this.view.ClearPrompt()
             this.view.DeselectHistoryItem(focusedRow)
             return true
@@ -105,16 +105,7 @@ class ChatController {
         }
 
         ; 4. Normal Send Mode
-        isImageEnabled := this.configManager.IsImageInputEnabled(this.sessionManager.GetCurrentSessionLLMType())
-        images := isImageEnabled ? this.controller.contextViewController.GetCheckedImages() : []
-        userMessageContent := this.sessionManager.BuildUserMessage(promptText, images)
-
-        hasContext := this.controller.contextViewController.HasAnyCheckedItem()
-        if (userMessageContent.Length > 0 || hasContext) {
-            this.sessionManager.GetCurrentSessionMessages().Push(ChatMessage("user", userMessageContent))
-        }
-
-        this.SendToLLM()
+        this.SendToLLM(promptText)
         
         this.view.ClearPrompt()
         if (this.controller.recordingService.isRecording) {
@@ -133,23 +124,16 @@ class ChatController {
         ; Update UI to show "Cancel"
         if (this.view.gui) {
             this.view.SetAskButtonText("Cancel")
-        }
-
-        ; Prepare context providers (logic-only data)
-        contextProviders := []
-        for item in checkedItems {
-            contextProviders.Push({
-                item: item,
-                text: this.contextManager.GetTextFromContextItem(item, (url) => this.controller.webViewManager.LoadArticle(url))
-            })
+            this.view.SetAskButtonEnabled(true)
         }
 
         try {
             this.sendBatchToLLMCommand.Execute(
                 promptText, 
-                contextProviders, 
+                checkedItems, 
                 (label, messages) => this.controller.historyViewController.UpdateChatHistoryView(),
-                () => (this.view.askButton.Text != "Cancel")
+                () => (this.view.askButton.Text != "Cancel"),
+                (url) => this.controller.webViewManager.LoadArticle(url)
             )
         } catch as e {
             if (e.Message != "Request cancelled")
@@ -164,12 +148,14 @@ class ChatController {
         }
     }
 
-    SendToLLM() {
-        ; Capture GUI dependencies
-        context := this.sessionManager.GetCurrentSessionContext()
+    SendToLLM(promptText := "", isRegeneration := false) {
+        ; 1. Collect GUI state (indices and images)
+        isImageEnabled := this.configManager.IsImageInputEnabled(this.sessionManager.GetCurrentSessionLLMType())
+        images := isImageEnabled ? this.controller.contextViewController.GetCheckedImages() : []
         
         checkedIndices := []
-        loop context.Length {
+        currentContext := this.sessionManager.GetCurrentSessionContext()
+        loop currentContext.Length {
             if (this.view.IsContextItemChecked(A_Index)) {
                 checkedIndices.Push(A_Index)
             }
@@ -180,22 +166,23 @@ class ChatController {
             selectedIndices.Push(selectedIndex)
         }
 
-        additionalContext := this.contextManager.BuildPromptContext(
-            context, 
-            checkedIndices, 
-            selectedIndices,
-            (url) => this.controller.webViewManager.LoadArticle(url)
-        )
-
-        ; Update UI State
+        ; 2. Update UI State before execution
         if (this.view.gui) {
             this.view.SetAskButtonText("Cancel")
         }
 
         try {
-            this.sendToLLMCommand.Execute(additionalContext)
+            ; 3. Execute Command with collected UI data
+            this.sendToLLMCommand.Execute(
+                promptText, 
+                images, 
+                checkedIndices, 
+                selectedIndices,
+                (url) => this.controller.webViewManager.LoadArticle(url),
+                isRegeneration
+            )
             
-            ; Check for unexecuted Tool Calls to update button text
+            ; 4. Check for unexecuted Tool Calls to update button text
             if (this.sessionManager.HasUnexecutedToolCalls()) {
                 this.view.SetAskButtonText("Confirm Tool Run")
             } else {
@@ -214,14 +201,15 @@ class ChatController {
             }
         }
 
-        ; Update UI views
+        ; 5. Refresh UI components
         this.controller.historyViewController.UpdateChatHistoryView()
         messages := this.sessionManager.GetCurrentSessionMessages()
         if (messages.Length > 0) {
-            this.controller.RenderMarkdown(this.messagePresentationService.GetMessageAsString(messages[messages.Length]))
+            lastMsg := messages[messages.Length]
+            this.controller.RenderMarkdown(this.messagePresentationService.GetMessageAsString(lastMsg))
         }
 
-        ; Uncheck images after sending
+        ; 6. UI-specific cleanup
         this.controller.contextViewController.UncheckSentImages()
     }
 }

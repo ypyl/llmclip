@@ -90,7 +90,7 @@ class App {
         saveConv := SaveConversationCommand(sess, fs)
         loadConv := LoadConversationCommand(sess, fs)
         clearCtx := ClearContextCommand(sess)
-        sendLLM := SendToLLMCommand(sess, cfg, llm)
+        sendLLM := SendToLLMCommand(sess, cfg, llm, ctx)
         sendBatch := SendBatchToLLMCommand(sess, cfg, llm, ctx)
         confirmTool := ConfirmToolCommand(sess, llm, sendLLM)
         regenerate := RegenerateMessageCommand(sess, cfg)

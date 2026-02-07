@@ -3,22 +3,23 @@
 class HistoryViewController {
     controller := ""
     sessionManager := ""
-    webViewManager := ""
     configManager := ""
 
     ; Commands
     deleteMessageCommand := ""
+    clearHistoryCommand := ""
+    renderMarkdownCommand := ""
     view := ""
 
-    __New(controller, view, sessionManager, webViewManager, configManager, messagePresentationService, deleteMessageCommand, clearHistoryCommand) {
+    __New(controller, view, sessionManager, configManager, messagePresentationService, deleteMessageCommand, clearHistoryCommand, renderMarkdownCommand) {
         this.controller := controller
         this.view := view
         this.sessionManager := sessionManager
-        this.webViewManager := webViewManager
         this.configManager := configManager
         this.messagePresentationService := messagePresentationService
         this.deleteMessageCommand := deleteMessageCommand
         this.clearHistoryCommand := clearHistoryCommand
+        this.renderMarkdownCommand := renderMarkdownCommand
     }
 
     UpdateChatHistoryView(*) {
@@ -95,7 +96,7 @@ class HistoryViewController {
             presentationText := this.messagePresentationService.GetPresentationText(msg, isFirstUserMsg)
             
             this.view.SetChatMessageActionButtonVisible(true)  ; Show the Copy button
-            this.webViewManager.RenderMarkdown(presentationText)  ; Render the selected message in the WebView
+            this.renderMarkdownCommand.Execute(presentationText)  ; Render the selected message in the WebView
         }
     }
 
@@ -128,12 +129,12 @@ class HistoryViewController {
         selectedIndices := this.view.GetChatHistorySelectedIndices()
         this.deleteMessageCommand.Execute(selectedIndices)
         this.UpdateChatHistoryView()
-        this.webViewManager.RenderMarkdown("")  ; Clear the response area
+        this.renderMarkdownCommand.Execute("")  ; Clear the response area
     }
 
     ClearChatHistory(*) {
         this.clearHistoryCommand.Execute()
         this.UpdateChatHistoryView()  ; Update the chat history view
-        this.webViewManager.RenderMarkdown("")  ; Clear the response area
+        this.renderMarkdownCommand.Execute("")  ; Clear the response area
     }
 }

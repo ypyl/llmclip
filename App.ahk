@@ -50,6 +50,7 @@
 #Include Commands\ProcessClipboardCommand.ahk
 #Include Commands\SaveDiagramCommand.ahk
 #Include Commands\ReplaceLinkWithContentCommand.ahk
+#Include Commands\RenderMarkdownCommand.ahk
 
 
 
@@ -114,24 +115,26 @@ class App {
         processClip := ProcessClipboardCommand(rec, cp, sess)
         saveDiagram := SaveDiagramCommand(fs)
         replaceLink := ReplaceLinkWithContentCommand(wv, sess, ctx)
+        renderMarkdown := RenderMarkdownCommand(wv)
 
 
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram
+            saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown
         )
 
         ; 4. Initialize Sub-Controllers
         menuCtrl := MenuController(this.controller, this.window, cfg, sess, selectModel, getToolsState, getCompressionState, toggleTool)
-        chatCtrl := ChatController(this.controller, this.window, cfg, sess, llm, ctx, mps, sendLLM, sendBatch, confirmTool, regenerate)
+        chatCtrl := ChatController(this.controller, this.window, cfg, sess, llm, ctx, mps, sendLLM, sendBatch, confirmTool, regenerate, renderMarkdown)
         conversationCtrl := ConversationController(this.controller, this.window, cfg, sess, llm, menuCtrl, saveConv, loadConv, compress, extract, resetAll)
         clipboardCtrl := ClipboardController(this.controller, processClip)
 
-        ctxView := ContextViewController(this.controller, this.window, sess, cfg, ctx, wv, cps, clearCtx, replaceLink)
-        histView := HistoryViewController(this.controller, this.window, sess, wv, cfg, mps, deleteMsg, clearHist)
+        ctxView := ContextViewController(this.controller, this.window, sess, cfg, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown)
+        histView := HistoryViewController(this.controller, this.window, sess, cfg, mps, deleteMsg, clearHist, renderMarkdown)
         notesContr := NotesController(copyToClip)
         promptCtrl := PromptController(this.window, chatCtrl)
 
         this.controller.SetSubControllers(menuCtrl, chatCtrl, conversationCtrl, clipboardCtrl, ctxView, histView, notesContr, promptCtrl)
+        this.window.SetSubControllers(ctxView, histView, menuCtrl, conversationCtrl, chatCtrl)
 
 
         ; 5. Initialize Views

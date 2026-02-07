@@ -15,11 +15,12 @@ class ChatController {
     confirmToolCommand := ""
     regenerateMessageCommand := ""
     messagePresentationService := ""
+    renderMarkdownCommand := ""
 
     ; Internal State
     processingState := "idle" ; idle, processing, tool_pending
 
-    __New(controller, view, configManager, sessionManager, llmService, contextManager, messagePresentationService, sendToLLMCommand, sendBatchToLLMCommand, confirmToolCommand, regenerateMessageCommand) {
+    __New(controller, view, configManager, sessionManager, llmService, contextManager, messagePresentationService, sendToLLMCommand, sendBatchToLLMCommand, confirmToolCommand, regenerateMessageCommand, renderMarkdownCommand) {
         this.controller := controller
         this.view := view
         this.configManager := configManager
@@ -32,6 +33,7 @@ class ChatController {
         this.sendBatchToLLMCommand := sendBatchToLLMCommand
         this.confirmToolCommand := confirmToolCommand
         this.regenerateMessageCommand := regenerateMessageCommand
+        this.renderMarkdownCommand := renderMarkdownCommand
     }
 
     ToggleBatchMode(*) {
@@ -47,7 +49,7 @@ class ChatController {
             this.controller.historyViewController.UpdateChatHistoryView()
             if (this.sessionManager.GetCurrentSessionMessages().Length > 0) {
                 lastMsg := this.sessionManager.GetCurrentSessionMessages()[-1]
-                this.controller.RenderMarkdown(this.messagePresentationService.GetMessageAsString(lastMsg))
+                this.renderMarkdownCommand.Execute(this.messagePresentationService.GetMessageAsString(lastMsg))
             }
         }
         this.SetProcessingState("idle")
@@ -212,7 +214,7 @@ class ChatController {
         messages := this.sessionManager.GetCurrentSessionMessages()
         if (messages.Length > 0) {
             lastMsg := messages[messages.Length]
-            this.controller.RenderMarkdown(this.messagePresentationService.GetMessageAsString(lastMsg))
+            this.renderMarkdownCommand.Execute(this.messagePresentationService.GetMessageAsString(lastMsg))
         }
 
         ; 6. UI-specific cleanup

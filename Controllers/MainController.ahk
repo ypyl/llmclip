@@ -31,6 +31,7 @@ class MainController {
     toggleRecordingCommand := ""
     initializeAppCommand := ""
     saveDiagramCommand := ""
+    renderMarkdownCommand := ""
 
     ; Sub-Controllers
     menuController := ""
@@ -53,7 +54,7 @@ class MainController {
         this.clipboardParser := clipboardParser
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram) {
+    SetCommands(saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown) {
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
         this.clearContextCommand := clearCtx
@@ -69,6 +70,7 @@ class MainController {
         this.toggleRecordingCommand := toggleRec
         this.initializeAppCommand := initializeApp
         this.saveDiagramCommand := saveDiagram
+        this.renderMarkdownCommand := renderMarkdown
     }
 
     SetSubControllers(menu, chat, conv, clip, ctxView, histView, notes, prompt) {
@@ -107,7 +109,7 @@ class MainController {
     }
 
     RenderMarkdown(content) {
-        this.webViewManager.RenderMarkdown(content)
+        this.renderMarkdownCommand.Execute(content)
     }
 
     UpdateUiBasesOnRecordingStatus(*) {
@@ -125,7 +127,7 @@ class MainController {
 
     OnViewReady() {
         ; Initialize WebView after window is shown
-        this.webViewManager.Init(this.view.gui["ResponseCtr"])
+        this.webViewManager.Init(this.view.GetResponseCtrHwnd())
         this.webViewManager.SetInputCallback(ObjBindMethod(this.promptController, "AppendToPrompt"))
         this.webViewManager.SetErrorCallback(ObjBindMethod(this, "OnWebViewError"))
         this.webViewManager.SetSaveDiagramCallback(ObjBindMethod(this, "OnSaveWebViewDiagram"))
@@ -192,5 +194,34 @@ class MainController {
 
         ; Execute command to save
         this.saveDiagramCommand.Execute(selectedFile, svgData)
+    }
+
+    ; Data Properties for UI
+    LLMTypes {
+        get => this.configManager.llmTypes
+    }
+
+    CurrentLLMTypeIndex {
+        get => this.sessionManager.GetCurrentSessionLLMType()
+    }
+
+    SessionNames {
+        get => this.sessionManager.sessionNames
+    }
+
+    CurrentSessionIndex {
+        get => this.sessionManager.currentSessionIndex
+    }
+
+    IsRecording {
+        get => this.recordingService.isRecording
+    }
+
+    GetSystemPrompts(llmTypeIndex) {
+        return this.configManager.GetSystemPromptNames(llmTypeIndex)
+    }
+
+    CurrentSystemPromptIndex {
+        get => this.sessionManager.GetCurrentSessionSystemPrompt()
     }
 }

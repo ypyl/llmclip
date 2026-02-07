@@ -44,8 +44,8 @@ class WebViewManager {
         this.saveDiagramCallback := callback
     }
 
-    Init(responseCtr) {
-        this.wvc := WebView2.CreateControllerAsync(responseCtr.Hwnd).await2()
+    Init(hwnd) {
+        this.wvc := WebView2.CreateControllerAsync(hwnd).await2()
         this.wv := this.wvc.CoreWebView2
 
         this.wv.AddHostObjectToScript("clipboard", this.clipboardHost)

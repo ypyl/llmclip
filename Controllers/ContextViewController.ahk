@@ -7,12 +7,12 @@ class ContextViewController {
     contextManager := ""
     webViewManager := ""
     view := ""
-    MyGui := ""
     contextPresentationService := ""
     clearContextCommand := ""
     replaceLinkWithContentCommand := ""
+    renderMarkdownCommand := ""
 
-    __New(controller, view, sessionManager, configManager, contextManager, webViewManager, contextPresentationService, clearContextCommand, replaceLinkWithContentCommand) {
+    __New(controller, view, sessionManager, configManager, contextManager, webViewManager, contextPresentationService, clearContextCommand, replaceLinkWithContentCommand, renderMarkdownCommand) {
         this.controller := controller
         this.view := view
         this.sessionManager := sessionManager
@@ -22,11 +22,9 @@ class ContextViewController {
         this.contextPresentationService := contextPresentationService
         this.clearContextCommand := clearContextCommand
         this.replaceLinkWithContentCommand := replaceLinkWithContentCommand
+        this.renderMarkdownCommand := renderMarkdownCommand
     }
 
-    SetGui(gui) {
-        this.MyGui := gui
-    }
 
     GetLabelsForContextItems() {
         context := this.sessionManager.GetCurrentSessionContext()
@@ -96,7 +94,7 @@ class ContextViewController {
             contextText := this.GetTextFromContextItem(contextItem)
         }
 
-        this.webViewManager.RenderMarkdown(contextText)  ; Render the selected item(s) in the WebView
+        this.renderMarkdownCommand.Execute(contextText)  ; Render the selected item(s) in the WebView
     }
 
     ContextBoxDoubleClick(GuiCtrl, Item) {

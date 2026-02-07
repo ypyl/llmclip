@@ -16,8 +16,23 @@ class AppWindow {
     ; Control references
     askButton := ""
     
+    ; Sub-Controllers
+    contextViewController := ""
+    historyViewController := ""
+    menuController := ""
+    conversationController := ""
+    chatController := ""
+    
     __New(controller) {
         this.controller := controller
+    }
+
+    SetSubControllers(contextViewController, historyViewController, menuController, conversationController, chatController) {
+        this.contextViewController := contextViewController
+        this.historyViewController := historyViewController
+        this.menuController := menuController
+        this.conversationController := conversationController
+        this.chatController := chatController
     }
 
     Show() {
@@ -42,13 +57,17 @@ class AppWindow {
         this.gui.Opt("+Resize +MinSize800x610")
         
         this.gui.OnEvent("Size", (gui, minMax, width, height) => UIBuilder.GuiResize(gui, minMax, width, height, this.controller))
-        this.gui.OnEvent("Close", ObjBindMethod(this, "GuiClose"))
-        
-        ; Set GUI for VCs
-        this.controller.contextViewController.SetGui(this.gui)
         
         ; Create Menus
-        menus := UIBuilder.CreateMenuBar(this.gui, this.controller, this.controller.configManager, this.controller.sessionManager, this.controller.menuController, this.controller.conversationController, this.controller.chatController)
+        menus := UIBuilder.CreateMenuBar(
+            this.gui, 
+            this.controller, 
+            this.controller.LLMTypes, 
+            this.controller.CurrentLLMTypeIndex, 
+            this.menuController, 
+            this.conversationController, 
+            this.chatController
+        )
         this.menuBar := menus.menuBar
         this.modelMenu := menus.modelMenu
         this.historyMenu := menus.historyMenu
@@ -56,16 +75,28 @@ class AppWindow {
         this.modeMenu := menus.modeMenu
         
         ; Initial menu states
-        this.controller.menuController.UpdateCompressionMenuState()
-        this.controller.menuController.UpdateToolsMenuState()
+        this.menuController.UpdateCompressionMenuState()
+        this.menuController.UpdateToolsMenuState()
         
         ; Create Controls
-        UIBuilder.CreateTopControls(this.gui, this.controller.sessionManager, this.controller.recordingService, this.controller, this.controller.conversationController)
-        UIBuilder.CreateContextSection(this.gui, this.controller.contextViewController)
-        UIBuilder.CreateChatHistorySection(this.gui, this.controller.historyViewController)
-        UIBuilder.CreatePromptSection(this.gui, this.controller.sessionManager, this.controller.configManager, this)
+        UIBuilder.CreateTopControls(
+            this.gui, 
+            this.controller.SessionNames, 
+            this.controller.CurrentSessionIndex, 
+            this.controller.IsRecording, 
+            this.controller, 
+            this.conversationController
+        )
+        UIBuilder.CreateContextSection(this.gui, this.contextViewController)
+        UIBuilder.CreateChatHistorySection(this.gui, this.historyViewController)
+        UIBuilder.CreatePromptSection(this.gui, this)
         
-        this.askButton := UIBuilder.CreateBottomControls(this.gui, this.controller.sessionManager, this.controller.configManager, this.controller)
+        this.askButton := UIBuilder.CreateBottomControls(
+            this.gui, 
+            this.controller.GetSystemPrompts(this.controller.CurrentLLMTypeIndex), 
+            this.controller.CurrentSystemPromptIndex, 
+            this.controller
+        )
         
         UIBuilder.CreateResponseArea(this.gui)
     }
@@ -265,5 +296,9 @@ class AppWindow {
 
     ShowError(text, title := "Error") {
         MsgBox(text, title, "Iconx")
+    }
+
+    GetResponseCtrHwnd() {
+        return this.gui["ResponseCtr"].Hwnd
     }
 }

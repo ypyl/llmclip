@@ -177,9 +177,3 @@ The architecture is already broken.
 
 **This is not MVC.**
 It is **Controller-centric, Command-driven, UI-contained** architecture optimized for AHK.
-
-If you want, I can also produce:
-
-* a one-page diagram
-* an agent “lint checklist”
-* a refactoring guide from existing scripts

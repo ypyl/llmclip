@@ -2,7 +2,7 @@
 #Include UIConfig.ahk
 
 class UIBuilder {
-    static CreateMenuBar(gui, controller, configManager, sessionManager, menuController, conversationController, chatController) {
+    static CreateMenuBar(gui, controller, llmTypes, currentLLMTypeIndex, menuController, conversationController, chatController) {
         FileMenu := Menu()
         FileMenu.Add("Save Conversation", ObjBindMethod(conversationController, "SaveConversation"))
         FileMenu.Add("Load Conversation", ObjBindMethod(conversationController, "LoadConversation"))
@@ -12,17 +12,16 @@ class UIBuilder {
         FileMenu.Add("Exit", ObjBindMethod(controller, "ExitApplication"))
 
         ModelMenu := Menu()
-        for index, modelName in configManager.llmTypes {
+        for index, modelName in llmTypes {
             ModelMenu.Add(modelName, ObjBindMethod(menuController, "SelectModel"))
         }
 
         ; Get current model name for menu label
-        currentModelIndex := sessionManager.GetCurrentSessionLLMType()
-        currentModelName := "Model: " . configManager.llmTypes[currentModelIndex]
+        currentModelName := "Model: " . llmTypes[currentLLMTypeIndex]
 
         ; Set initial checkmark in Model menu
-        for index, modelName in configManager.llmTypes {
-            if (index = currentModelIndex) {
+        for index, modelName in llmTypes {
+            if (index = currentLLMTypeIndex) {
                 ModelMenu.Check(modelName)
             }
         }
@@ -68,14 +67,14 @@ class UIBuilder {
         return {menuBar: MyMenuBar, modelMenu: ModelMenu, historyMenu: HistoryMenu, toolsMenu: ToolsMenu, modeMenu: ModeMenu}  ; Return menuBar, modelMenu, historyMenu, toolsMenu and modeMenu
     }
 
-    static CreateTopControls(gui, sessionManager, recordingService, controller, conversationController) {
+    static CreateTopControls(gui, sessionNames, currentSessionIndex, isRecording, controller, conversationController) {
         ; Add session selector
-        sessionCombo := gui.Add("DropDownList", "x10 y12 w70 vSessionSelect", sessionManager.sessionNames)
-        sessionCombo.Value := sessionManager.currentSessionIndex
+        sessionCombo := gui.Add("DropDownList", "x10 y12 w70 vSessionSelect", sessionNames)
+        sessionCombo.Value := currentSessionIndex
         sessionCombo.OnEvent("Change", ObjBindMethod(conversationController, "SessionChanged"))
 
         ; Add record button
-        recordButtonTitle := recordingService.isRecording ? "Stop" : "Record"
+        recordButtonTitle := isRecording ? "Stop" : "Record"
         recordButton := gui.Add("Button", "x90 y10 w90 vRecordButton", recordButtonTitle)
         recordButton.OnEvent("Click", ObjBindMethod(controller, "ToggleRecording"))
 
@@ -123,18 +122,18 @@ class UIBuilder {
     }
 
 
-    static CreatePromptSection(gui, sessionManager, configManager, window) {
+    static CreatePromptSection(gui, window) {
         ; Prompt edit control
         promptEdit := gui.Add("Edit", "vPromptEdit x" UIConfig.promptEditX " y" UIConfig.promptEditY " w" UIConfig.promptEditWidth " h" UIConfig.promptEditHeight " Multi WantReturn", "")
         promptEdit.OnEvent("Change", ObjBindMethod(window, "OnPromptChange"))
     }
 
-    static CreateBottomControls(gui, sessionManager, configManager, controller) {
+    static CreateBottomControls(gui, systemPromptNames, currentSystemPromptIndex, controller) {
         ; PowerShell tool checkbox and icon removed
 
         ; Add system prompt selector
-        systemPromptCombo := gui.Add("DropDownList", "x" UIConfig.systemPromptX " y" (UIConfig.systemPromptY + 2) " w" UIConfig.systemPromptWidth " vSystemPrompt", configManager.GetSystemPromptNames(sessionManager.GetCurrentSessionLLMType()))
-        systemPromptCombo.Value := sessionManager.GetCurrentSessionSystemPrompt()
+        systemPromptCombo := gui.Add("DropDownList", "x" UIConfig.systemPromptX " y" (UIConfig.systemPromptY + 2) " w" UIConfig.systemPromptWidth " vSystemPrompt", systemPromptNames)
+        systemPromptCombo.Value := currentSystemPromptIndex
         systemPromptCombo.OnEvent("Change", ObjBindMethod(controller, "SystemPromptChanged"))
 
         ; Add Ask LLM button

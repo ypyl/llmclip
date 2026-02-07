@@ -224,4 +224,8 @@ class MainController {
     CurrentSystemPromptIndex {
         get => this.sessionManager.GetCurrentSessionSystemPrompt()
     }
+
+    IsImageInputEnabled[llmTypeIndex] {
+        get => this.configManager.IsImageInputEnabled(llmTypeIndex)
+    }
 }

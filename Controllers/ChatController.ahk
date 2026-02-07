@@ -2,11 +2,6 @@
 
 class ChatController {
     controller := ""
-    configManager := ""
-    sessionManager := ""
-    llmService := ""
-    contextManager := ""
-    
     view := ""
     
     ; Commands
@@ -14,26 +9,24 @@ class ChatController {
     sendBatchToLLMCommand := ""
     confirmToolCommand := ""
     regenerateMessageCommand := ""
-    messagePresentationService := ""
     renderMarkdownCommand := ""
+    cancelGenerationCommand := ""
+    renderLastMessageCommand := ""
 
     ; Internal State
     processingState := "idle" ; idle, processing, tool_pending
 
-    __New(controller, view, configManager, sessionManager, llmService, contextManager, messagePresentationService, sendToLLMCommand, sendBatchToLLMCommand, confirmToolCommand, regenerateMessageCommand, renderMarkdownCommand) {
+    __New(controller, view, sendToLLMCommand, sendBatchToLLMCommand, confirmToolCommand, regenerateMessageCommand, renderMarkdownCommand, cancelGenerationCommand, renderLastMessageCommand) {
         this.controller := controller
         this.view := view
-        this.configManager := configManager
-        this.sessionManager := sessionManager
-        this.llmService := llmService
-        this.contextManager := contextManager
-        this.messagePresentationService := messagePresentationService
         
         this.sendToLLMCommand := sendToLLMCommand
         this.sendBatchToLLMCommand := sendBatchToLLMCommand
         this.confirmToolCommand := confirmToolCommand
         this.regenerateMessageCommand := regenerateMessageCommand
         this.renderMarkdownCommand := renderMarkdownCommand
+        this.cancelGenerationCommand := cancelGenerationCommand
+        this.renderLastMessageCommand := renderLastMessageCommand
     }
 
     ToggleBatchMode(*) {
@@ -47,18 +40,13 @@ class ChatController {
     HandleToolConfirmation() {
         if (this.confirmToolCommand.Execute()) {
             this.controller.historyViewController.UpdateChatHistoryView()
-            if (this.sessionManager.GetCurrentSessionMessages().Length > 0) {
-                lastMsg := this.sessionManager.GetCurrentSessionMessages()[-1]
-                this.renderMarkdownCommand.Execute(this.messagePresentationService.GetMessageAsString(lastMsg))
-            }
+            this.renderLastMessageCommand.Execute()
         }
         this.SetProcessingState("idle")
     }
 
     HandleCancellation() {
-        if (this.llmService) {
-            this.llmService.Cancel()
-        }
+        this.cancelGenerationCommand.Execute()
         this.SetProcessingState("idle")
     }
 
@@ -164,12 +152,12 @@ class ChatController {
 
     SendToLLM(promptText := "", isRegeneration := false) {
         ; 1. Collect GUI state (indices and images)
-        isImageEnabled := this.configManager.IsImageInputEnabled(this.sessionManager.GetCurrentSessionLLMType())
+        isImageEnabled := this.controller.IsImageInputEnabled[this.controller.CurrentLLMTypeIndex]
         images := isImageEnabled ? this.controller.contextViewController.GetCheckedImages() : []
         
         checkedIndices := []
-        currentContext := this.sessionManager.GetCurrentSessionContext()
-        loop currentContext.Length {
+        ; Use UI control count instead of session manager context length
+        loop this.view.GetContextBoxCount() {
             if (this.view.IsContextItemChecked(A_Index)) {
                 checkedIndices.Push(A_Index)
             }
@@ -187,7 +175,7 @@ class ChatController {
 
         try {
             ; 3. Execute Command with collected UI data
-            this.sendToLLMCommand.Execute(
+            result := this.sendToLLMCommand.Execute(
                 promptText, 
                 images, 
                 checkedIndices, 
@@ -196,7 +184,7 @@ class ChatController {
             )
             
             ; 4. Check for unexecuted Tool Calls to update button text
-            if (this.sessionManager.HasUnexecutedToolCalls()) {
+            if (result.hasUnexecutedToolCalls) {
                 this.SetProcessingState("tool_pending")
             } else {
                 this.SetProcessingState("idle")
@@ -211,11 +199,7 @@ class ChatController {
 
         ; 5. Refresh UI components
         this.controller.historyViewController.UpdateChatHistoryView()
-        messages := this.sessionManager.GetCurrentSessionMessages()
-        if (messages.Length > 0) {
-            lastMsg := messages[messages.Length]
-            this.renderMarkdownCommand.Execute(this.messagePresentationService.GetMessageAsString(lastMsg))
-        }
+        this.renderLastMessageCommand.Execute()
 
         ; 6. UI-specific cleanup
         this.controller.contextViewController.UncheckSentImages()

@@ -51,6 +51,8 @@
 #Include Commands\SaveDiagramCommand.ahk
 #Include Commands\ReplaceLinkWithContentCommand.ahk
 #Include Commands\RenderMarkdownCommand.ahk
+#Include Commands\CancelGenerationCommand.ahk
+#Include Commands\RenderLastMessageCommand.ahk
 
 
 
@@ -116,6 +118,8 @@ class App {
         saveDiagram := SaveDiagramCommand(fs)
         replaceLink := ReplaceLinkWithContentCommand(wv, sess, ctx)
         renderMarkdown := RenderMarkdownCommand(wv)
+        cancelGen := CancelGenerationCommand(llm)
+        renderLastMsg := RenderLastMessageCommand(sess, mps, wv)
 
 
         this.controller.SetCommands(
@@ -124,7 +128,7 @@ class App {
 
         ; 4. Initialize Sub-Controllers
         menuCtrl := MenuController(this.controller, this.window, cfg, sess, selectModel, getToolsState, getCompressionState, toggleTool)
-        chatCtrl := ChatController(this.controller, this.window, cfg, sess, llm, ctx, mps, sendLLM, sendBatch, confirmTool, regenerate, renderMarkdown)
+        chatCtrl := ChatController(this.controller, this.window, sendLLM, sendBatch, confirmTool, regenerate, renderMarkdown, cancelGen, renderLastMsg)
         conversationCtrl := ConversationController(this.controller, this.window, cfg, sess, llm, menuCtrl, saveConv, loadConv, compress, extract, resetAll)
         clipboardCtrl := ClipboardController(this.controller, processClip)
 

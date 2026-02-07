@@ -27,7 +27,7 @@ class SendToLLMCommand {
      * @param selectedContextIndices Indices of selected items in context box.
      * @param webViewLoader Callback to load articles via WebView.
      * @param isRegeneration Whether this is a regeneration of an existing message.
-     * @returns {Array} New messages received from LLM.
+     * @returns {Object} {newMessages, hasUnexecutedToolCalls}
      */
     Execute(promptText := "", images := [], checkedContextIndices := [], selectedContextIndices := [], isRegeneration := false) {
         ; 1. Build context
@@ -74,13 +74,29 @@ class SendToLLMCommand {
         webFetchEnabled := this.configManager.IsToolEnabled(currentLLM, "webFetch")
 
         ; 6. Call LLM Service
-        return this.llmService.SendToLLM(
-            this.sessionManager, 
-            this.answerSize, 
-            powerShellEnabled, 
-            webSearchEnabled, 
-            webFetchEnabled, 
-            fileSystemEnabled
-        )
+        try {
+            newMessages := this.llmService.SendToLLM(
+                this.sessionManager, 
+                this.answerSize, 
+                powerShellEnabled, 
+                webSearchEnabled, 
+                webFetchEnabled, 
+                fileSystemEnabled
+            )
+            return {
+                newMessages: newMessages,
+                hasUnexecutedToolCalls: this.sessionManager.HasUnexecutedToolCalls()
+            }
+        } catch as e {
+            if (e.Message == "Request cancelled") {
+                ; Do nothing on cancellation
+                return {
+                    newMessages: [],
+                    hasUnexecutedToolCalls: false
+                }
+            } else {
+                throw e
+            }
+        }
     }
 }

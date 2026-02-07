@@ -5,12 +5,11 @@ class MessagePresentationService {
     /**
      * Get the presentation text for a message, considering its role and context.
      * @param message - ChatMessage instance
-     * @param isFirstUserMsg - Boolean indicating if this is the first user message (to handle context hiding)
      * @returns String Markdown/HTML for display
      */
-    GetPresentationText(message, isFirstUserMsg := false) {
-        if (isFirstUserMsg && message.Role == "user" && message.AdditionalProperties.Has("hasContext") && message.AdditionalProperties["hasContext"]) {
-            ; For first user message with context, show only the user prompt parts
+    GetPresentationText(message) {
+        if (message.Role == "user" && message.AdditionalProperties.Has("hasContext") && message.AdditionalProperties["hasContext"]) {
+            ; For user message with context, show only the user prompt parts
             userContent := ""
             for i, part in message.Contents {
                 if (i > 1 && part is TextContent) {

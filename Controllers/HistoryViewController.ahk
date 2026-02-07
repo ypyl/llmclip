@@ -48,8 +48,7 @@ class HistoryViewController {
             tokens := msg.AdditionalProperties.Has("tokens") ? msg.AdditionalProperties["tokens"] : ""
             
             ; Get presentation text from service
-            isFirstUserMsg := (i == firstUserIndex)
-            presentationText := this.messagePresentationService.GetPresentationText(msg, isFirstUserMsg)
+            presentationText := this.messagePresentationService.GetPresentationText(msg)
             
             ; Get content with truncation for ListView
             contentText := SubStr(presentationText, 1, 70) (StrLen(presentationText) > 70 ? "..." : "")
@@ -83,17 +82,8 @@ class HistoryViewController {
         if (Item > 0 && Item <= messages.Length) {
             msg := messages[Item]
             
-            ; Identify first user message for presentation service
-            isFirstUserMsg := false
-            for i, m in messages {
-                if (m.Role == "user") {
-                    isFirstUserMsg := (i == Item)
-                    break
-                }
-            }
-            
             ; Use presentation service
-            presentationText := this.messagePresentationService.GetPresentationText(msg, isFirstUserMsg)
+            presentationText := this.messagePresentationService.GetPresentationText(msg)
             
             this.view.SetChatMessageActionButtonVisible(true)  ; Show the Copy button
             this.renderMarkdownCommand.Execute(presentationText)  ; Render the selected message in the WebView
@@ -106,17 +96,9 @@ class HistoryViewController {
             messages := this.sessionManager.GetCurrentSessionMessages()
             msg := messages[focused_row]
             
-            ; Check if this is the first user message with context
-            isFirstUserMsg := false
-            for i, m in messages {
-                if (m.Role == "user") {
-                    isFirstUserMsg := (i == focused_row)
-                    break
-                }
-            }
-            
+           
             ; Get text without context if first user message
-            messageText := this.messagePresentationService.GetPresentationText(msg, isFirstUserMsg)
+            messageText := this.messagePresentationService.GetPresentationText(msg)
 
             ClipText := StrReplace(messageText, "`r`n", "`n")
             ClipText := StrReplace(ClipText, "`r", "`n")

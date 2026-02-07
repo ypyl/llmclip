@@ -88,6 +88,7 @@ class UIBuilder {
         ; Add context list with reduced height - ListView with Checkboxes
         contextBox := gui.Add("ListView", "vContextBox x10 y40 w380 h150 Checked -Hdr", ["Item"]) ; -Hdr to hide header
         contextBox.OnEvent("ItemSelect", ObjBindMethod(contextViewController, "ContextBoxSelect"))
+        contextBox.OnEvent("DoubleClick", ObjBindMethod(contextViewController, "ContextBoxDoubleClick"))
         ; We will populate it in ContextViewController.UpdateContextView
 
         ; Context buttons

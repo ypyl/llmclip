@@ -26,7 +26,7 @@ class SendBatchToLLMCommand {
      * @param isCancelled Callback function returning true if processing should stop.
      * @param webViewLoader Callback to load articles via WebView.
      */
-    Execute(promptText, items, updateCallback, isCancelled, webViewLoader := "") {
+    Execute(promptText, items, updateCallback, isCancelled) {
         ; Create and mark the user message in main session
         userContent := [TextContent(promptText)]
         userMsg := ChatMessage("user", userContent)
@@ -60,7 +60,7 @@ class SendBatchToLLMCommand {
             
             ; Get context for this item
             itemLabel := this.contextManager.GetLabelFromContextItem(item)
-            itemText := this.contextManager.GetTextFromContextItem(item, webViewLoader)
+            itemText := this.contextManager.GetTextFromContextItem(item)
             
             ; Attach context to the clone
             firstUserMsg := ""

@@ -9,8 +9,10 @@ class ContextViewController {
     view := ""
     MyGui := ""
     contextPresentationService := ""
+    clearContextCommand := ""
+    replaceLinkWithContentCommand := ""
 
-    __New(controller, view, sessionManager, configManager, contextManager, webViewManager, contextPresentationService, clearContextCommand) {
+    __New(controller, view, sessionManager, configManager, contextManager, webViewManager, contextPresentationService, clearContextCommand, replaceLinkWithContentCommand) {
         this.controller := controller
         this.view := view
         this.sessionManager := sessionManager
@@ -19,6 +21,7 @@ class ContextViewController {
         this.webViewManager := webViewManager
         this.contextPresentationService := contextPresentationService
         this.clearContextCommand := clearContextCommand
+        this.replaceLinkWithContentCommand := replaceLinkWithContentCommand
     }
 
     SetGui(gui) {
@@ -81,15 +84,37 @@ class ContextViewController {
         contextText := ""
 
         if (Item > 0 && Item <= context.Length) {
-            item := context[Item]
-            if (this.contextManager.IsPdf(item)) {
-                this.webViewManager.Navigate(item)
+            contextItem := context[Item]
+            if (this.contextManager.IsPdf(contextItem)) {
+                this.webViewManager.Navigate(contextItem)
                 return
             }
-            contextText := this.GetTextFromContextItem(item)
+
+            ; Only load article if it is already cached or not a link
+            ; For links that are not cached or replaced yet, we just show "URL: ..."
+            ; The ContextManager now handles this based on IsHttpLink check.
+            contextText := this.GetTextFromContextItem(contextItem)
         }
 
         this.webViewManager.RenderMarkdown(contextText)  ; Render the selected item(s) in the WebView
+    }
+
+    ContextBoxDoubleClick(GuiCtrl, Item) {
+        if (!Item)
+            return
+            
+        context := this.sessionManager.GetCurrentSessionContext()
+        if (Item > 0 && Item <= context.Length) {
+            contextItem := context[Item]
+            if (this.contextManager.IsHttpLink(contextItem)) {
+                ; Execute command to replace link with content
+                if (this.replaceLinkWithContentCommand.Execute(Item, contextItem)) {
+                    ; Refresh view to show updated content (now text)
+                    this.UpdateContextView()
+                    this.ContextBoxSelect(GuiCtrl, Item, true)
+                }
+            }
+        }
     }
 
     DeleteSelected(*) {
@@ -138,7 +163,7 @@ class ContextViewController {
     }
 
     GetTextFromContextItem(item) {
-        return this.contextManager.GetTextFromContextItem(item, (url) => this.webViewManager.LoadArticle(url))
+        return this.contextManager.GetTextFromContextItem(item)
     }
 
     GetCheckedImages() {

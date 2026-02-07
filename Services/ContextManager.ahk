@@ -2,23 +2,10 @@
 
 class ContextManager {
     ; Get text content from a context item (file, folder, plain text or URL)
-    GetTextFromContextItem(item, articleExtract := "") {
+    GetTextFromContextItem(item) {
         itemText := ""
-        if (articleExtract && this.IsHttpLink(item)) {
-            try {
-                article := articleExtract.Call(item)  ; Use .Call() method to properly invoke the function
-                if (IsObject(article)) {
-                    ; Normalize whitespace in textContent
-                    normalizedText := RegExReplace(article.textContent, "\s+", " ")
-                    itemText := "URL: " item "`n`nTitle: " article.title "`n`n" normalizedText
-                } else if (article != "") {
-                    itemText := "URL: " item "`n[" article "]"
-                } else {
-                    itemText := "URL: " item
-                }
-            } catch as e {
-                itemText := "URL: " item "`n[Error extracting article: " e.Message "]"
-            }
+        if (this.IsHttpLink(item)) {
+             itemText := "URL: " item
         } else if (DirExist(item)) {
             itemText := "Folder:`n" this.ProcessFolder(item)
         } else if (FileExist(item)) {
@@ -39,6 +26,22 @@ class ContextManager {
             itemText := "`n```````n" item "`n```````n"
         }
         return itemText
+    }
+
+    FormatArticleFromObject(item, article) {
+        try {
+            if (IsObject(article)) {
+                ; Normalize whitespace in textContent
+                normalizedText := RegExReplace(article.textContent, "\s+", " ")
+                return "URL: " item "`n`nTitle: " article.title "`n`n" normalizedText
+            } else if (article != "") {
+                return "URL: " item "`n[" article "]"
+            } else {
+                return "URL: " item
+            }
+        } catch as e {
+            return "URL: " item "`n[Error formatting article: " e.Message "]"
+        }
     }
 
     ; Check if the item is an HTTP link
@@ -104,7 +107,7 @@ class ContextManager {
     }
 
 
-    BuildPromptContext(context, checkedIndices, selectedIndices, articleExtract := "") {
+    BuildPromptContext(context, checkedIndices, selectedIndices) {
         if (context.Length = 0)
             return ""
 
@@ -129,7 +132,7 @@ class ContextManager {
             }
 
             if (isChecked && !isSelected && !this.IsImage(item) && !this.IsPdf(item)) {
-                contextText .= this.GetTextFromContextItem(item, articleExtract)
+                contextText .= this.GetTextFromContextItem(item)
             }
         }
 
@@ -156,7 +159,7 @@ class ContextManager {
                     }
 
                     if (isChecked && !this.IsImage(item) && !this.IsPdf(item)) {
-                        selectedContextText .= this.GetTextFromContextItem(item, articleExtract)
+                        selectedContextText .= this.GetTextFromContextItem(item)
                     }
                 }
             }

@@ -183,12 +183,10 @@ class WebViewManager {
         ; Clean up
         if HasProp(this, "scriptId")
             this.wv.RemoveScriptToExecuteOnDocumentCreated(this.scriptId)
-
-        this.NavigateToUi()
-        ; We don't set isHtmlLoaded here immediately, it will be set in OnNavigationCompleted
-        ; But we probably want to trigger a render of the article content once UI loads?
-        ; For now, just navigating back to UI empty or default state is expected behavior based on previous code
-        ; Actually, previous code called NavigateToHtml(GetHtmlContent()) which resets everything.
+        ; which in turn will ensure we navigate back to UI if needed.
+        ; We don't need to navigate back to UI here.
+        ; The caller (e.g. ContextViewController) will trigger an update which calls RenderMarkdown,
+      
     }
 
     EscapeForJs(content) {
@@ -216,7 +214,7 @@ class WebViewManager {
 
     RenderMarkdown(content) {
         if (this.isHtmlLoaded) {
-            this.wv.ExecuteScript("renderMarkdown(``" . this.EscapeForJs(content) . "``)")
+            this.wv.ExecuteScriptAsync("renderMarkdown(``" . this.EscapeForJs(content) . "``)")
         } else {
             this.pendingRenderType := "markdown"
             this.pendingRenderContent := content

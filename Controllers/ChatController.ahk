@@ -132,8 +132,7 @@ class ChatController {
                 promptText, 
                 checkedItems, 
                 (label, messages) => this.controller.historyViewController.UpdateChatHistoryView(),
-                () => (this.view.askButton.Text != "Cancel"),
-                (url) => this.controller.webViewManager.LoadArticle(url)
+                () => (this.view.askButton.Text != "Cancel")
             )
         } catch as e {
             if (e.Message != "Request cancelled")
@@ -178,7 +177,6 @@ class ChatController {
                 images, 
                 checkedIndices, 
                 selectedIndices,
-                (url) => this.controller.webViewManager.LoadArticle(url),
                 isRegeneration
             )
             

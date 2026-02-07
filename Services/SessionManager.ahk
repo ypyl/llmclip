@@ -106,6 +106,15 @@ class SessionManager {
         return addedAny
     }
 
+    UpdateContextItem(index, newItem) {
+        context := this.GetCurrentSessionContext()
+        if (index > 0 && index <= context.Length) {
+            context[index] := newItem
+            return true
+        }
+        return false
+    }
+
     GetCurrentSessionLLMType() {
         return this.sessionLLMTypes[this.currentSessionIndex]
     }

@@ -29,14 +29,13 @@ class SendToLLMCommand {
      * @param isRegeneration Whether this is a regeneration of an existing message.
      * @returns {Array} New messages received from LLM.
      */
-    Execute(promptText := "", images := [], checkedContextIndices := [], selectedContextIndices := [], webViewLoader := "", isRegeneration := false) {
+    Execute(promptText := "", images := [], checkedContextIndices := [], selectedContextIndices := [], isRegeneration := false) {
         ; 1. Build context
         currentContext := this.sessionManager.GetCurrentSessionContext()
         additionalContext := this.contextManager.BuildPromptContext(
             currentContext, 
             checkedContextIndices, 
-            selectedContextIndices,
-            webViewLoader
+            selectedContextIndices
         )
 
         ; 2. Build and push user message if it has content or context (skip if regeneration)

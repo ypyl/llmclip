@@ -49,6 +49,7 @@
 #Include Commands\InitializeAppCommand.ahk
 #Include Commands\ProcessClipboardCommand.ahk
 #Include Commands\SaveDiagramCommand.ahk
+#Include Commands\ReplaceLinkWithContentCommand.ahk
 
 
 
@@ -112,6 +113,7 @@ class App {
         initializeApp := InitializeAppCommand()
         processClip := ProcessClipboardCommand(rec, cp, sess)
         saveDiagram := SaveDiagramCommand(fs)
+        replaceLink := ReplaceLinkWithContentCommand(wv, sess, ctx)
 
 
         this.controller.SetCommands(
@@ -124,7 +126,7 @@ class App {
         conversationCtrl := ConversationController(this.controller, this.window, cfg, sess, llm, menuCtrl, saveConv, loadConv, compress, extract, resetAll)
         clipboardCtrl := ClipboardController(this.controller, processClip)
 
-        ctxView := ContextViewController(this.controller, this.window, sess, cfg, ctx, wv, cps, clearCtx)
+        ctxView := ContextViewController(this.controller, this.window, sess, cfg, ctx, wv, cps, clearCtx, replaceLink)
         histView := HistoryViewController(this.controller, this.window, sess, wv, cfg, mps, deleteMsg, clearHist)
         notesContr := NotesController(copyToClip)
         promptCtrl := PromptController(this.window, chatCtrl)

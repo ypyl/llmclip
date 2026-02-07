@@ -16,6 +16,9 @@ class ChatController {
     regenerateMessageCommand := ""
     messagePresentationService := ""
 
+    ; Internal State
+    processingState := "idle" ; idle, processing, tool_pending
+
     __New(controller, view, configManager, sessionManager, llmService, contextManager, messagePresentationService, sendToLLMCommand, sendBatchToLLMCommand, confirmToolCommand, regenerateMessageCommand) {
         this.controller := controller
         this.view := view
@@ -47,14 +50,29 @@ class ChatController {
                 this.controller.RenderMarkdown(this.messagePresentationService.GetMessageAsString(lastMsg))
             }
         }
-        this.view.SetAskButtonText("Ask LLM")
+        this.SetProcessingState("idle")
     }
 
     HandleCancellation() {
         if (this.llmService) {
             this.llmService.Cancel()
         }
-        this.view.SetAskButtonText("Ask LLM")
+        this.SetProcessingState("idle")
+    }
+
+    SetProcessingState(state) {
+        this.processingState := state
+        
+        if (state == "idle") {
+            this.view.SetAskButtonText("Ask LLM")
+            this.view.SetAskButtonEnabled(true)
+        } else if (state == "processing") {
+            this.view.SetAskButtonText("Cancel")
+            this.view.SetAskButtonEnabled(true)
+        } else if (state == "tool_pending") {
+            this.view.SetAskButtonText("Confirm Tool Run")
+            this.view.SetAskButtonEnabled(true)
+        }
     }
 
     HandleRegenerationOrEdit(promptText) {
@@ -80,13 +98,12 @@ class ChatController {
     }
 
     AskToLLM(*) {
-        ; 1. Check current button state
-        btnText := this.view.GetAskButtonText()
-        if (btnText == "Confirm Tool Run") {
+        ; 1. Check current state
+        if (this.processingState == "tool_pending") {
             this.HandleToolConfirmation()
             return
         }
-        if (btnText == "Cancel") {
+        if (this.processingState == "processing") {
             this.HandleCancellation()
             return
         }
@@ -117,14 +134,13 @@ class ChatController {
     SendBatchToLLM(promptText) {
         checkedItems := this.controller.contextViewController.GetAllCheckedContextItems()
         if (checkedItems.Length == 0) {
-            MsgBox("Please check at least one item in the context list for batch mode.", "No Items Selected", "Iconi")
+            this.view.ShowMessage("Please check at least one item in the context list for batch mode.", "No Items Selected")
             return
         }
 
         ; Update UI to show "Cancel"
-        if (this.view.gui) {
-            this.view.SetAskButtonText("Cancel")
-            this.view.SetAskButtonEnabled(true)
+        if (this.view.guiShown) {
+            this.SetProcessingState("processing")
         }
 
         try {
@@ -132,16 +148,13 @@ class ChatController {
                 promptText, 
                 checkedItems, 
                 (label, messages) => this.controller.historyViewController.UpdateChatHistoryView(),
-                () => (this.view.askButton.Text != "Cancel")
+                () => (this.processingState == "processing")
             )
         } catch as e {
             if (e.Message != "Request cancelled")
-                MsgBox("Batch processing error: " . e.Message, "Error", "Iconx")
+                this.view.ShowError("Batch processing error: " . e.Message)
         } finally {
-            if (this.view.gui) {
-                this.view.SetAskButtonText("Ask LLM")
-                this.view.SetAskButtonEnabled(true)
-            }
+            this.SetProcessingState("idle")
             this.view.ClearPrompt()
             this.controller.historyViewController.UpdateChatHistoryView()
         }
@@ -166,8 +179,8 @@ class ChatController {
         }
 
         ; 2. Update UI State before execution
-        if (this.view.gui) {
-            this.view.SetAskButtonText("Cancel")
+        if (this.view.guiShown) {
+            this.SetProcessingState("processing")
         }
 
         try {
@@ -182,21 +195,16 @@ class ChatController {
             
             ; 4. Check for unexecuted Tool Calls to update button text
             if (this.sessionManager.HasUnexecutedToolCalls()) {
-                this.view.SetAskButtonText("Confirm Tool Run")
+                this.SetProcessingState("tool_pending")
             } else {
-                this.view.SetAskButtonText("Ask LLM")
+                this.SetProcessingState("idle")
             }
         } catch as e {
-            if (e.Message != "Request cancelled")
+            if (e.Message != "Request cancelled") {
+                this.SetProcessingState("idle")
                 throw e
-        } finally {
-            ; Re-enable/Reset Ask LLM button
-            if (this.view.guiShown) {
-                if (this.view.GetAskButtonText() == "Cancel") {
-                    this.view.SetAskButtonText("Ask LLM")
-                }
-                this.view.SetAskButtonEnabled(true)
             }
+            this.SetProcessingState("idle")
         }
 
         ; 5. Refresh UI components

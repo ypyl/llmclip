@@ -258,4 +258,12 @@ class AppWindow {
     ShowSaveFileDialog(defaultFilename, title, filter) {
         return FileSelect("S16", defaultFilename, title, filter)
     }
+
+    ShowMessage(text, title := "Information", options := "Iconi") {
+        MsgBox(text, title, options)
+    }
+
+    ShowError(text, title := "Error") {
+        MsgBox(text, title, "Iconx")
+    }
 }

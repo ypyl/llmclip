@@ -179,7 +179,7 @@ class MainController {
     }
 
     OnWebViewError(message) {
-        MsgBox(message)
+        this.view.ShowError(message)
     }
 
     OnSaveWebViewDiagram(svgData) {

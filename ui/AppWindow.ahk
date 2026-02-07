@@ -224,6 +224,20 @@ class AppWindow {
         this.gui["SystemPrompt"].Enabled := enabled
     }
 
+    RemoveContextBoxCheckbox(row) {
+        hwnd := this.GetContextBoxHwnd()
+        ; Remove state image (checkbox) by setting state image index to 0
+        ; LVM_SETITEMSTATE = 0x102B
+        LVITEM := Buffer(60, 0)
+        NumPut("UInt", 0x8, LVITEM, 0)      ; mask = LVIF_STATE (0x0008)
+        NumPut("Int", row - 1, LVITEM, 4)   ; iItem (0-based)
+        NumPut("Int", 0, LVITEM, 8)         ; iSubItem
+        NumPut("UInt", 0, LVITEM, 12)       ; state (0 = no image)
+        NumPut("UInt", 0xF000, LVITEM, 16)  ; stateMask = LVIS_STATEIMAGEMASK (0xF000)
+
+        SendMessage(0x102B, row - 1, LVITEM.Ptr, hwnd)
+    }
+
     IsContextItemChecked(index) {
         if (!this.guiShown)
             return true ; Default to true if GUI not available

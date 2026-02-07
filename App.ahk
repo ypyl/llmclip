@@ -9,6 +9,7 @@
 #Include Services\ContextManager.ahk
 #Include Services\RecordingService.ahk
 #Include Services\MessagePresentationService.ahk
+#Include Services\ContextPresentationService.ahk
 #Include ui\TrayView.ahk
 #Include ui\UIConfig.ahk
 #Include ui\UIBuilder.ahk
@@ -71,6 +72,7 @@ class App {
         fs := FileService()
         cls := ClipboardService()
         mps := MessagePresentationService()
+        cps := ContextPresentationService(ctx)
 
         this.controller := MainController(
             cfg, 
@@ -122,8 +124,7 @@ class App {
         conversationCtrl := ConversationController(this.controller, this.window, cfg, sess, llm, menuCtrl, saveConv, loadConv, compress, extract, resetAll)
         clipboardCtrl := ClipboardController(this.controller, processClip)
 
-        
-        ctxView := ContextViewController(this.controller, this.window, sess, cfg, ctx, wv, clearCtx)
+        ctxView := ContextViewController(this.controller, this.window, sess, cfg, ctx, wv, cps, clearCtx)
         histView := HistoryViewController(this.controller, this.window, sess, wv, cfg, mps, deleteMsg, clearHist)
         notesContr := NotesController(copyToClip)
         promptCtrl := PromptController(this.window, chatCtrl)

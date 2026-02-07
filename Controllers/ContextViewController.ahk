@@ -8,14 +8,16 @@ class ContextViewController {
     webViewManager := ""
     view := ""
     MyGui := ""
+    contextPresentationService := ""
 
-    __New(controller, view, sessionManager, configManager, contextManager, webViewManager, clearContextCommand) {
+    __New(controller, view, sessionManager, configManager, contextManager, webViewManager, contextPresentationService, clearContextCommand) {
         this.controller := controller
         this.view := view
         this.sessionManager := sessionManager
         this.configManager := configManager
         this.contextManager := contextManager
         this.webViewManager := webViewManager
+        this.contextPresentationService := contextPresentationService
         this.clearContextCommand := clearContextCommand
     }
 
@@ -35,7 +37,7 @@ class ContextViewController {
         }
         this.sessionManager.SetCurrentSessionContext(context)
         for item in context {
-            labels.Push(this.contextManager.GetLabelFromContextItem(item))
+            labels.Push(this.contextPresentationService.GetLabelFromContextItem(item))
         }
         return labels
     }
@@ -58,7 +60,7 @@ class ContextViewController {
             if (A_Index <= currentContext.Length) {
                 item := currentContext[A_Index]
                 if (this.contextManager.IsPdf(item)) {
-                     this.RemoveCheckbox(this.view.GetContextBoxHwnd(), row)
+                     this.view.RemoveContextBoxCheckbox(row)
                 }
             }
         }
@@ -67,22 +69,6 @@ class ContextViewController {
         this.view.ModifyContextBoxCol(1, 350)
     }
 
-    RemoveCheckbox(hwnd, row) {
-        ; Remove state image (checkbox) by setting state image index to 0
-        ; LVM_SETITEMSTATE = 0x102B
-        ; LVITEM structure needed. 
-        ; Mask coordinates might vary by architecture but simplified struct:
-        ; UINT mask (0); int iItem (4); int iSubItem (8); UINT state (12); UINT stateMask (16)
-        
-        LVITEM := Buffer(60, 0) ; Sufficient size
-        NumPut("UInt", 0x8, LVITEM, 0) ; mask = LVIF_STATE (0x0008)
-        NumPut("Int", row - 1, LVITEM, 4) ; iItem (0-based)
-        NumPut("Int", 0, LVITEM, 8) ; iSubItem
-        NumPut("UInt", 0, LVITEM, 12) ; state (0 = no image)
-        NumPut("UInt", 0xF000, LVITEM, 16) ; stateMask = LVIS_STATEIMAGEMASK (0xF000)
-
-        SendMessage(0x102B, row - 1, LVITEM.Ptr, hwnd)
-    }
 
     ContextBoxSelect(GuiCtrl, Item, Selected) {
         if (!Selected)

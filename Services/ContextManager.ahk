@@ -103,31 +103,6 @@ class ContextManager {
         return ext && InStr("," allowedExts ",", "," ext ",")
     }
 
-    GetLabelFromContextItem(item) {
-        if (this.IsHttpLink(item)) {
-            return "🌐 " item
-        }
-        if (DirExist(item)) {
-            SplitPath item, &name
-            return "📁 " name " - " item
-        }
-        else if (FileExist(item)) {
-            SplitPath item, &name, &dir
-            if (this.IsImage(item)) {
-                return "🖼️ " name " - " dir
-            }
-            if (this.IsPdf(item)) {
-                return "📕 " name " - " dir
-            }
-            return "📄 " name " - " dir
-        }
-        else {
-            truncatedText := SubStr(item, 1, 50)
-            if (StrLen(item) > 50)
-                truncatedText .= "..."
-            return "📝 " truncatedText
-        }
-    }
 
     BuildPromptContext(context, checkedIndices, selectedIndices, articleExtract := "") {
         if (context.Length = 0)

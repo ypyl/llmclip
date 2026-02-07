@@ -128,6 +128,14 @@
         button.textContent = wrapper.classList.contains("collapsed") ? "Expand" : "Collapse";
       }
 
+      // Function to copy thinking block to clipboard
+      function copyThinking(button) {
+        const wrapper = button.closest(".thinking-block-wrapper");
+        const thinkingElement = wrapper.querySelector(".thinking-block");
+        const text = thinkingElement.textContent;
+        window.chrome.webview.hostObjects.sync.clipboard.Copy(text);
+      }
+
       // Function to save Mermaid diagram as SVG
       function saveMermaidDiagram(button) {
         const wrapper = button.closest(".mermaid-wrapper");
@@ -159,7 +167,7 @@
 
         // Handle Thinking
         if (lang === "thinking") {
-          return `<div class="thinking-block-wrapper collapsed"><div class="thinking-block">${text}</div><button class="custom-button" onclick="toggleThinking(this)">Expand</button></div>`;
+          return `<div class="thinking-block-wrapper collapsed"><div class="thinking-block">${text}</div><button class="custom-button" onclick="copyThinking(this)">Copy</button><button class="custom-button" onclick="toggleThinking(this)">Expand</button></div>`;
         }
 
         // Handle Standard Code

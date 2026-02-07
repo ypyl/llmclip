@@ -95,10 +95,8 @@ class HistoryViewController {
         if (focused_row) {
             messages := this.sessionManager.GetCurrentSessionMessages()
             msg := messages[focused_row]
-            
            
-            ; Get text without context if first user message
-            messageText := this.messagePresentationService.GetPresentationText(msg)
+            messageText := this.messagePresentationService.GetPresentationText(msg, false)
 
             ClipText := StrReplace(messageText, "`r`n", "`n")
             ClipText := StrReplace(ClipText, "`r", "`n")

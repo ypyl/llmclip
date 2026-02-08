@@ -56,6 +56,8 @@
 #Include Commands\DeleteContextItemsCommand.ahk
 #Include Commands\PrepareContextCommand.ahk
 #Include Commands\ToggleWindowCommand.ahk
+#Include Commands\GetHistoryListItemsCommand.ahk
+#Include Commands\GetMessagePresentationCommand.ahk
 
 class App {
     controller := ""
@@ -125,6 +127,8 @@ class App {
         deleteCtxItems := DeleteContextItemsCommand(sess)
         prepareContext := PrepareContextCommand(sess, cfg)
         toggleWindow := ToggleWindowCommand(rec, this.window, startRec, stopRec)
+        getHistoryItems := GetHistoryListItemsCommand(sess, mps)
+        getMessagePresentation := GetMessagePresentationCommand(sess, mps)
 
 
         this.controller.SetCommands(
@@ -138,7 +142,7 @@ class App {
         clipboardCtrl := ClipboardController(this.controller, processClip)
 
         ctxView := ContextViewController(this.controller, this.window, sess, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems, prepareContext)
-        histView := HistoryViewController(this.controller, this.window, sess, cfg, mps, deleteMsg, clearHist, renderMarkdown, copyToClip)
+        histView := HistoryViewController(this.controller, this.window, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip)
         notesContr := NotesController(copyToClip)
         promptCtrl := PromptController(this.window, chatCtrl)
 

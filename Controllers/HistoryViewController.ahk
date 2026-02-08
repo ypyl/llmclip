@@ -2,22 +2,21 @@
 
 class HistoryViewController {
     controller := ""
-    sessionManager := ""
-    configManager := ""
+    view := ""
 
     ; Commands
+    getHistoryListItemsCommand := ""
+    getMessagePresentationCommand := ""
     deleteMessageCommand := ""
     clearHistoryCommand := ""
     renderMarkdownCommand := ""
     copyToClipboardCommand := ""
-    view := ""
 
-    __New(controller, view, sessionManager, configManager, messagePresentationService, deleteMessageCommand, clearHistoryCommand, renderMarkdownCommand, copyToClipboardCommand) {
+    __New(controller, view, getHistoryListItemsCommand, getMessagePresentationCommand, deleteMessageCommand, clearHistoryCommand, renderMarkdownCommand, copyToClipboardCommand) {
         this.controller := controller
         this.view := view
-        this.sessionManager := sessionManager
-        this.configManager := configManager
-        this.messagePresentationService := messagePresentationService
+        this.getHistoryListItemsCommand := getHistoryListItemsCommand
+        this.getMessagePresentationCommand := getMessagePresentationCommand
         this.deleteMessageCommand := deleteMessageCommand
         this.clearHistoryCommand := clearHistoryCommand
         this.renderMarkdownCommand := renderMarkdownCommand
@@ -28,12 +27,10 @@ class HistoryViewController {
         if (!this.controller || !this.controller.view) ; Check if initialized
             return
 
-        allMessages := this.sessionManager.GetCurrentSessionMessages()
+        items := this.getHistoryListItemsCommand.Execute()
         this.view.DeleteChatHistoryItems()
         
-        for i, msg in allMessages {
-            item := this.messagePresentationService.GetListViewItem(msg)
-            
+        for item in items {
             ; Add to ListView
             this.view.AddChatHistoryItem(item.roleEmoji, item.contentText, item.duration, item.tokens)
         }
@@ -50,13 +47,8 @@ class HistoryViewController {
         ; Deselect ContextBox to ensure mutual exclusion
         this.view.ModifyContextBox(0, "-Select")
 
-        messages := this.sessionManager.GetCurrentSessionMessages()
-        
-        if (Item > 0 && Item <= messages.Length) {
-            msg := messages[Item]
-            
-            ; Use presentation service
-            presentationText := this.messagePresentationService.GetPresentationText(msg)
+        if (Item > 0) {
+            presentationText := this.getMessagePresentationCommand.Execute(Item)
             
             this.view.SetChatMessageActionButtonVisible(true)  ; Show the Copy button
             this.renderMarkdownCommand.Execute(presentationText)  ; Render the selected message in the WebView
@@ -66,10 +58,7 @@ class HistoryViewController {
     CopySelectedMessage(*) {
         focused_row := this.view.GetChatHistoryFocus()
         if (focused_row) {
-            messages := this.sessionManager.GetCurrentSessionMessages()
-            msg := messages[focused_row]
-           
-            messageText := this.messagePresentationService.GetPresentationText(msg, false)
+            messageText := this.getMessagePresentationCommand.Execute(focused_row, false)
             this.copyToClipboardCommand.Execute(messageText)
         }
     }

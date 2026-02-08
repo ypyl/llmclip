@@ -55,6 +55,7 @@
 #Include Commands\RenderLastMessageCommand.ahk
 #Include Commands\DeleteContextItemsCommand.ahk
 #Include Commands\PrepareContextCommand.ahk
+#Include Commands\ToggleWindowCommand.ahk
 
 class App {
     controller := ""
@@ -123,10 +124,11 @@ class App {
         renderLastMsg := RenderLastMessageCommand(sess, mps, wv)
         deleteCtxItems := DeleteContextItemsCommand(sess)
         prepareContext := PrepareContextCommand(sess, cfg)
+        toggleWindow := ToggleWindowCommand(rec, this.window, startRec, stopRec)
 
 
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown
+            saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, toggleWindow
         )
 
         ; 4. Initialize Sub-Controllers

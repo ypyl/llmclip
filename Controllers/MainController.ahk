@@ -33,6 +33,7 @@ class MainController {
     initializeAppCommand := ""
     saveDiagramCommand := ""
     renderMarkdownCommand := ""
+    toggleWindowCommand := ""
 
     ; Sub-Controllers
     menuController := ""
@@ -56,7 +57,7 @@ class MainController {
         this.fileService := fileService
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown) {
+    SetCommands(saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, toggleWindow) {
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
         this.clearContextCommand := clearCtx
@@ -73,6 +74,7 @@ class MainController {
         this.initializeAppCommand := initializeApp
         this.saveDiagramCommand := saveDiagram
         this.renderMarkdownCommand := renderMarkdown
+        this.toggleWindowCommand := toggleWindow
     }
 
     SetSubControllers(menu, chat, conv, clip, ctxView, histView, notes, prompt) {
@@ -99,15 +101,7 @@ class MainController {
     }
 
     ToggleDisplay() {
-        if (!this.recordingService.isRecording) {
-            this.startRecordingCommand.Execute()
-            this.UpdateUiBasesOnRecordingStatus()
-        } else if (!this.view.guiShown) {
-            this.Show()
-        } else {
-            this.stopRecordingCommand.Execute()
-            this.UpdateUiBasesOnRecordingStatus()
-        }
+        this.toggleWindowCommand.Execute()
     }
 
     RenderMarkdown(content) {
@@ -115,9 +109,6 @@ class MainController {
     }
 
     UpdateUiBasesOnRecordingStatus(*) {
-        ; This needs to be coordinated via TrayView as well if we had one here
-        ; But AppController had TrayViewValue.
-        ; For now, I'll keep the logic here and App will wire TrayView to call MainController.
         if (this.view.guiShown) {
              this.view.UpdateRecordButton(this.recordingService.isRecording)
         }

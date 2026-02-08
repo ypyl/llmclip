@@ -25,10 +25,6 @@
 #Include Commands\SaveConversationCommand.ahk
 #Include Commands\LoadConversationCommand.ahk
 #Include Commands\ClearContextCommand.ahk
-#Include Commands\SendToLLMCommand.ahk
-#Include Commands\SendBatchToLLMCommand.ahk
-#Include Commands\ConfirmToolCommand.ahk
-#Include Commands\RegenerateMessageCommand.ahk
 #Include Commands\StopRecordingCommand.ahk
 #Include Commands\StartRecordingCommand.ahk
 #Include Commands\ToggleRecordingCommand.ahk
@@ -50,7 +46,6 @@
 #Include Commands\SaveDiagramCommand.ahk
 #Include Commands\ReplaceLinkWithContentCommand.ahk
 #Include Commands\RenderMarkdownCommand.ahk
-#Include Commands\CancelGenerationCommand.ahk
 #Include Commands\RenderLastMessageCommand.ahk
 #Include Commands\DeleteContextItemsCommand.ahk
 #Include Commands\PrepareContextCommand.ahk
@@ -58,6 +53,7 @@
 #Include Commands\GetHistoryListItemsCommand.ahk
 #Include Commands\GetMessagePresentationCommand.ahk
 #Include Commands\UncheckImagesCommand.ahk
+#Include Commands\SubmitPromptCommand.ahk
 
 
 class App {
@@ -102,10 +98,6 @@ class App {
         saveConv := SaveConversationCommand(sess, fs)
         loadConv := LoadConversationCommand(sess, fs)
         clearCtx := ClearContextCommand(sess)
-        sendLLM := SendToLLMCommand(sess, cfg, llm, ctx)
-        sendBatch := SendBatchToLLMCommand(sess, cfg, llm, ctx)
-        confirmTool := ConfirmToolCommand(sess, llm, sendLLM)
-        regenerate := RegenerateMessageCommand(sess, cfg)
         stopRec := StopRecordingCommand(rec, sess, ctx)
         startRec := StartRecordingCommand(rec)
         toggleRec := ToggleRecordingCommand(rec, sess, ctx)
@@ -124,7 +116,6 @@ class App {
         saveDiagram := SaveDiagramCommand(fs)
         replaceLink := ReplaceLinkWithContentCommand(wv, sess, ctx)
         renderMarkdown := RenderMarkdownCommand(wv)
-        cancelGen := CancelGenerationCommand(llm)
         renderLastMsg := RenderLastMessageCommand(sess, mps, wv)
         deleteCtxItems := DeleteContextItemsCommand(sess)
         prepareContext := PrepareContextCommand(sess, cfg)
@@ -134,13 +125,15 @@ class App {
         uncheckImages := UncheckImagesCommand(sess)
 
 
+        submitPrompt := SubmitPromptCommand(sess, cfg, llm, ctx, rec)
+
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, toggleWindow
+            saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, toggleWindow
         )
 
         ; 4. Initialize Sub-Controllers
         menuCtrl := MenuController(this.controller, this.window, cfg, sess, selectModel, getToolsState, getCompressionState, toggleTool)
-        chatCtrl := ChatController(this.controller, this.window, sendLLM, sendBatch, confirmTool, regenerate, renderMarkdown, cancelGen, renderLastMsg, uncheckImages)
+        chatCtrl := ChatController(this.controller, this.window, submitPrompt, renderMarkdown, renderLastMsg, uncheckImages)
         conversationCtrl := ConversationController(this.controller, this.window, cfg, sess, llm, menuCtrl, saveConv, loadConv, compress, extract, resetAll)
         clipboardCtrl := ClipboardController(this.controller, processClip)
 

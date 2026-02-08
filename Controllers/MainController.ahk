@@ -20,10 +20,6 @@ class MainController {
     saveConversationCommand := ""
     loadConversationCommand := ""
     clearContextCommand := ""
-    sendToLLMCommand := ""
-    sendBatchToLLMCommand := ""
-    confirmToolCommand := ""
-    regenerateMessageCommand := ""
     stopRecordingCommand := ""
     startRecordingCommand := ""
     compressHistoryCommand := ""
@@ -57,14 +53,10 @@ class MainController {
         this.fileService := fileService
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, sendLLM, sendBatch, confirmTool, regenerate, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, toggleWindow) {
+    SetCommands(saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, toggleWindow) {
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
         this.clearContextCommand := clearCtx
-        this.sendToLLMCommand := sendLLM
-        this.sendBatchToLLMCommand := sendBatch
-        this.confirmToolCommand := confirmTool
-        this.regenerateMessageCommand := regenerate
         this.stopRecordingCommand := stopRec
         this.startRecordingCommand := startRec
         this.compressHistoryCommand := compress
@@ -131,12 +123,7 @@ class MainController {
 
     SystemPromptChanged(*) => this.conversationController.SystemPromptChanged()
     
-    HandleToolConfirmation() => this.chatController.HandleToolConfirmation()
-    HandleCancellation() => this.chatController.HandleCancellation()
-    HandleRegenerationOrEdit(promptText) => this.chatController.HandleRegenerationOrEdit(promptText)
     AskToLLM(*) => this.chatController.AskToLLM()
-    SendBatchToLLM(promptText) => this.chatController.SendBatchToLLM(promptText)
-    SendToLLM() => this.chatController.SendToLLM()
     
     ExitApplication(*) => ExitApp()
     ClipChanged(DataType) => this.clipboardController.ClipChanged(DataType)

@@ -12,11 +12,12 @@ class ChatController {
     renderMarkdownCommand := ""
     cancelGenerationCommand := ""
     renderLastMessageCommand := ""
+    uncheckImagesCommand := ""
 
     ; Internal State
     processingState := "idle" ; idle, processing, tool_pending
 
-    __New(controller, view, sendToLLMCommand, sendBatchToLLMCommand, confirmToolCommand, regenerateMessageCommand, renderMarkdownCommand, cancelGenerationCommand, renderLastMessageCommand) {
+    __New(controller, view, sendToLLMCommand, sendBatchToLLMCommand, confirmToolCommand, regenerateMessageCommand, renderMarkdownCommand, cancelGenerationCommand, renderLastMessageCommand, uncheckImagesCommand) {
         this.controller := controller
         this.view := view
         
@@ -27,6 +28,7 @@ class ChatController {
         this.renderMarkdownCommand := renderMarkdownCommand
         this.cancelGenerationCommand := cancelGenerationCommand
         this.renderLastMessageCommand := renderLastMessageCommand
+        this.uncheckImagesCommand := uncheckImagesCommand
     }
 
     ToggleBatchMode(*) {
@@ -71,7 +73,7 @@ class ChatController {
         result := this.regenerateMessageCommand.Execute(
             focusedRow, 
             promptText, 
-            () => this.controller.contextViewController.GetCheckedImages()
+            () => this.controller.sessionManager.GetCheckedImages()
         )
 
         if (result.status == "load_to_prompt") {
@@ -122,7 +124,7 @@ class ChatController {
     }
 
     SendBatchToLLM(promptText) {
-        checkedItems := this.controller.contextViewController.GetAllCheckedContextItems()
+        checkedItems := this.controller.sessionManager.GetCheckedContextItems()
         if (checkedItems.Length == 0) {
             this.view.ShowMessage("Please check at least one item in the context list for batch mode.", "No Items Selected")
             return
@@ -153,7 +155,7 @@ class ChatController {
     SendToLLM(promptText := "", isRegeneration := false) {
         ; 1. Collect GUI state (images and selection)
         isImageEnabled := this.controller.IsImageInputEnabled[this.controller.CurrentLLMTypeIndex]
-        images := isImageEnabled ? this.controller.contextViewController.GetCheckedImages() : []
+        images := isImageEnabled ? this.controller.sessionManager.GetCheckedImages() : []
         
         selectedIndices := []
         if (selectedIndex := this.view.GetContextBoxValue()) {
@@ -193,6 +195,8 @@ class ChatController {
         this.renderLastMessageCommand.Execute()
 
         ; 6. UI-specific cleanup
-        this.controller.contextViewController.UncheckSentImages()
+        if (this.uncheckImagesCommand.Execute()) {
+            this.controller.contextViewController.UpdateContextView()
+        }
     }
 }

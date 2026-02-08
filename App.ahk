@@ -57,6 +57,8 @@
 #Include Commands\ToggleWindowCommand.ahk
 #Include Commands\GetHistoryListItemsCommand.ahk
 #Include Commands\GetMessagePresentationCommand.ahk
+#Include Commands\UncheckImagesCommand.ahk
+
 
 class App {
     controller := ""
@@ -66,13 +68,14 @@ class App {
     __New() {
         ; 1. Initialize Services
         cfg := ConfigurationService.GetInstance()
+        ctx := ContextManager()
         sess := SessionManager(
             cfg.selectedLLMTypeIndex,
-            cfg.GetSystemPromptValue(cfg.selectedLLMTypeIndex, 1)
+            cfg.GetSystemPromptValue(cfg.selectedLLMTypeIndex, 1),
+            ctx
         )
         cp := ClipboardParserService()
         wv := WebViewManager()
-        ctx := ContextManager()
         rec := RecordingService()
         llm := LLMService(cfg)
         fs := FileService()
@@ -128,6 +131,7 @@ class App {
         toggleWindow := ToggleWindowCommand(rec, this.window, startRec, stopRec)
         getHistoryItems := GetHistoryListItemsCommand(sess, mps)
         getMessagePresentation := GetMessagePresentationCommand(sess, mps)
+        uncheckImages := UncheckImagesCommand(sess)
 
 
         this.controller.SetCommands(
@@ -136,7 +140,7 @@ class App {
 
         ; 4. Initialize Sub-Controllers
         menuCtrl := MenuController(this.controller, this.window, cfg, sess, selectModel, getToolsState, getCompressionState, toggleTool)
-        chatCtrl := ChatController(this.controller, this.window, sendLLM, sendBatch, confirmTool, regenerate, renderMarkdown, cancelGen, renderLastMsg)
+        chatCtrl := ChatController(this.controller, this.window, sendLLM, sendBatch, confirmTool, regenerate, renderMarkdown, cancelGen, renderLastMsg, uncheckImages)
         conversationCtrl := ConversationController(this.controller, this.window, cfg, sess, llm, menuCtrl, saveConv, loadConv, compress, extract, resetAll)
         clipboardCtrl := ClipboardController(this.controller, processClip)
 

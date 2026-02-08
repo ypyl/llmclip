@@ -13,9 +13,11 @@ class SessionManager {
     ; Store default values to be used when no settings are provided
     defaultSystemPrompt := "You are a helpful assistant. Be concise and direct in your responses."
     defaultLLMType := 1
+    contextManager := ""
 
-    __New(defaultLLMType := 1, defaultSystemPrompt := "") {
+    __New(defaultLLMType := 1, defaultSystemPrompt := "", contextManager := "") {
         this.defaultLLMType := defaultLLMType
+        this.contextManager := contextManager
         if (defaultSystemPrompt)
             this.defaultSystemPrompt := defaultSystemPrompt
 
@@ -463,5 +465,51 @@ class SessionManager {
             return true
 
         return false
+    }
+
+    GetCheckedImages() {
+        images := []
+        context := this.GetCurrentSessionContext()
+        for index, item in context {
+            if (item.Checked && this.contextManager.IsImage(item.Value)) {
+                checkedValue := item.Value
+                images.Push(checkedValue)
+            }
+        }
+        return images
+    }
+
+    GetCheckedContextItems() {
+        checkedItems := []
+        context := this.GetCurrentSessionContext()
+        for index, item in context {
+            if (item.Checked) {
+                checkedItems.Push(item.Value)
+            }
+        }
+        return checkedItems
+    }
+
+    HasAnyCheckedItem() {
+        context := this.GetCurrentSessionContext()
+        for item in context {
+            if (item.Checked) {
+                return true
+            }
+        }
+        return false
+    }
+
+    UncheckAllImages() {
+        context := this.GetCurrentSessionContext()
+        changed := false
+
+        for index, item in context {
+            if (this.contextManager.IsImage(item.Value) && item.Checked) {
+                this.SetContextItemChecked(index, false)
+                changed := true
+            }
+        }
+        return changed
     }
 }

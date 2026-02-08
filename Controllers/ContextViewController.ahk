@@ -125,53 +125,7 @@ class ContextViewController {
         this.UpdateContextView()
     }
 
-    UncheckSentImages() {
-        context := this.sessionManager.GetCurrentSessionContext()
-
-        for index, item in context {
-            if (this.contextManager.IsImage(item.Value) && item.Checked) {
-                this.sessionManager.SetContextItemChecked(index, false)
-            }
-        }
-        
-        ; Refresh view to reflect model changes
-        this.UpdateContextView()
-    }
-
     GetTextFromContextItem(item) {
         return this.contextManager.GetTextFromContextItem(item.Value)
     }
-
-    GetCheckedImages() {
-        images := []
-        context := this.sessionManager.GetCurrentSessionContext()
-        for index, item in context {
-            if (item.Checked && this.contextManager.IsImage(item.Value)) {
-                images.Push(item.Value)
-            }
-        }
-        return images
-    }
-
-    GetAllCheckedContextItems() {
-        checkedItems := []
-        context := this.sessionManager.GetCurrentSessionContext()
-        for index, item in context {
-            if (item.Checked) {
-                checkedItems.Push(item.Value)
-            }
-        }
-        return checkedItems
-    }
-
-    HasAnyCheckedItem() {
-        context := this.sessionManager.GetCurrentSessionContext()
-        for item in context {
-            if (item.Checked) {
-                return true
-            }
-        }
-        return false
-    }
-
 }

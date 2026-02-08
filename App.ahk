@@ -1,10 +1,9 @@
 #Requires AutoHotkey 2.0
 #Include Services\Configuration\ConfigurationService.ahk
-#Include Services\Base64.ahk
-#Include Services\FileUtils.ahk
+#Include Services\Base64Service.ahk
 #Include Services\LLM\LLMService.ahk
 #Include Services\SessionManager.ahk
-#Include Services\ClipboardParser.ahk
+#Include Services\ClipboardParserService.ahk
 #Include Services\WebViewManager.ahk
 #Include Services\ContextManager.ahk
 #Include Services\RecordingService.ahk
@@ -71,7 +70,7 @@ class App {
             cfg.selectedLLMTypeIndex,
             cfg.GetSystemPromptValue(cfg.selectedLLMTypeIndex, 1)
         )
-        cp := ClipboardParser()
+        cp := ClipboardParserService()
         wv := WebViewManager()
         ctx := ContextManager()
         rec := RecordingService()

@@ -1,7 +1,7 @@
 #Requires AutoHotkey 2.0
-#Include ../LLM/TempFileManager.ahk
+#Include LLM\TempFileManager.ahk
 
-class PdfProcessor {
+class PdfService {
     static PdfToolsDir := "pdf"
 
     static ExtractText(toolPath, pdfPath) {

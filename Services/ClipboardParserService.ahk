@@ -1,7 +1,7 @@
 #Requires AutoHotkey 2.0
-#Include ImageFromClipboard.ahk
+#Include ClipboardImageService.ahk
 
-class ClipboardParser {
+class ClipboardParserService {
     ; Parse clipboard content and return an array of items (text or paths)
     Parse() {
         ; First try plain text from A_Clipboard
@@ -75,7 +75,7 @@ class ClipboardParser {
         }
 
         if (localTxtFromClipboardArray.Length = 0 || localTxtFromClipboardArray[1] = "") {
-            isImage := ClipboardUtil.TryGetPngFromClipboard()
+            isImage := ClipboardImageService.TryGetPngFromClipboard()
             if isImage
                 return [isImage]
         }

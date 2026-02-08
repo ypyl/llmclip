@@ -1,6 +1,24 @@
-#Requires AutoHotkey 2.0
-
+#Include Base64Service.ahk
 class FileService {
+    static GetFileAsBase64(filePath) {
+        try {
+            if (FileExist(filePath)) {
+                fileObj := FileOpen(filePath, "r")
+                if (fileObj) {
+                    fileSize := fileObj.Length
+                    fileBuffer := Buffer(fileSize)
+                    fileObj.RawRead(fileBuffer, fileSize)
+                    fileObj.Close()
+
+                    return Base64Service.Encode(fileBuffer)
+                }
+            }
+            return ""
+        } catch Error as e {
+            return ""
+        }
+    }
+
     /**
      * Write content to a file. Overwrites if exists.
      * @param filePath The absolute path to the file

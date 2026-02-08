@@ -1,4 +1,3 @@
-#Include FileUtils.ahk
 #Include LLM\Types.ahk
 
 class MessagePresentationService {
@@ -136,7 +135,7 @@ class MessagePresentationService {
     }
 
     FormatAudioMessage(audioLink) {
-        audioBase64 := FileUtils.GetFileAsBase64(audioLink)
+        audioBase64 := FileService.GetFileAsBase64(audioLink)
         return '<audio controls><source src="data:audio/wav;base64,' audioBase64 '" type="audio/wav"></audio>'
     }
 

@@ -26,4 +26,15 @@ class FileService {
         }
         return FileRead(filePath, encoding)
     }
+
+    /**
+     * Generates a filename with a timestamp.
+     * @param prefix String to prepend to the timestamp
+     * @param extension File extension (including the dot)
+     * @returns A string like "prefix_YYYYMMDD_HHMMSS.extension"
+     */
+    GetTimestampedFilename(prefix, extension) {
+        timestamp := FormatTime(, "yyyyMMdd_HHmmss")
+        return prefix . "_" . timestamp . extension
+    }
 }

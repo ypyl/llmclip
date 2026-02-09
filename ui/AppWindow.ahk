@@ -21,18 +21,16 @@ class AppWindow {
     historyViewController := ""
     menuController := ""
     conversationController := ""
-    chatController := ""
     
     __New(controller) {
         this.controller := controller
     }
 
-    SetSubControllers(contextViewController, historyViewController, menuController, conversationController, chatController) {
+    SetSubControllers(contextViewController, historyViewController, menuController, conversationController) {
         this.contextViewController := contextViewController
         this.historyViewController := historyViewController
         this.menuController := menuController
         this.conversationController := conversationController
-        this.chatController := chatController
     }
 
     Show() {
@@ -65,8 +63,7 @@ class AppWindow {
             this.controller.LLMTypes, 
             this.controller.CurrentLLMTypeIndex, 
             this.menuController, 
-            this.conversationController, 
-            this.chatController
+            this.conversationController
         )
         this.menuBar := menus.menuBar
         this.modelMenu := menus.modelMenu

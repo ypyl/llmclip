@@ -2,7 +2,7 @@
 #Include UIConfig.ahk
 
 class UIBuilder {
-    static CreateMenuBar(gui, controller, llmTypes, currentLLMTypeIndex, menuController, conversationController, chatController) {
+    static CreateMenuBar(gui, controller, llmTypes, currentLLMTypeIndex, menuController, conversationController) {
         FileMenu := Menu()
         FileMenu.Add("Save Conversation", ObjBindMethod(conversationController, "SaveConversation"))
         FileMenu.Add("Load Conversation", ObjBindMethod(conversationController, "LoadConversation"))
@@ -42,7 +42,7 @@ class UIBuilder {
 
         ; Create Mode menu
         ModeMenu := Menu()
-        ModeMenu.Add("Batch Mode", ObjBindMethod(chatController, "ToggleBatchMode"))
+        ModeMenu.Add("Batch Mode", ObjBindMethod(controller, "ToggleBatchMode"))
 
         MyMenuBar := MenuBar()
         MyMenuBar.Add("&File", FileMenu)

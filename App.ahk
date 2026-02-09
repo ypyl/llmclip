@@ -17,7 +17,6 @@
 #Include Controllers\ContextViewController.ahk
 #Include Controllers\HistoryViewController.ahk
 #Include Controllers\MenuController.ahk
-#Include Controllers\ChatController.ahk
 #Include Controllers\ConversationController.ahk
 #Include Controllers\ClipboardController.ahk
 #Include Controllers\ClipboardController.ahk
@@ -127,12 +126,11 @@ class App {
         submitPrompt := SubmitPromptCommand(sess, cfg, llm, ctx, rec)
 
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown
+            saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages
         )
 
         ; 4. Initialize Sub-Controllers
         menuCtrl := MenuController(this.controller, this.window, cfg, sess, selectModel, getToolsState, getCompressionState, toggleTool)
-        chatCtrl := ChatController(this.controller, this.window, sess, submitPrompt, renderMarkdown, renderLastMsg, uncheckImages)
         conversationCtrl := ConversationController(this.controller, this.window, cfg, sess, llm, menuCtrl, saveConv, loadConv, compress, extract, resetAll)
         clipboardCtrl := ClipboardController(this.controller, processClip)
 
@@ -140,8 +138,8 @@ class App {
         histView := HistoryViewController(this.controller, this.window, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip)
         notesContr := NotesController(copyToClip)
 
-        this.controller.SetSubControllers(menuCtrl, chatCtrl, conversationCtrl, clipboardCtrl, ctxView, histView, notesContr)
-        this.window.SetSubControllers(ctxView, histView, menuCtrl, conversationCtrl, chatCtrl)
+        this.controller.SetSubControllers(menuCtrl, conversationCtrl, clipboardCtrl, ctxView, histView, notesContr)
+        this.window.SetSubControllers(ctxView, histView, menuCtrl, conversationCtrl)
 
 
         ; 5. Initialize Views

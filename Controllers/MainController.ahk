@@ -4,7 +4,6 @@ class MainController {
     view := ""
     currentAnswerSize := "Default"
     currentModelName := ""
-    batchModeEnabled := false
 
     ; Dependencies
     configManager := ""

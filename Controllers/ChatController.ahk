@@ -10,12 +10,14 @@ class ChatController {
     renderLastMessageCommand := ""
     uncheckImagesCommand := ""
 
-    ; Internal State
+    sessionManager := ""
+    batchModeEnabled := false
     processingState := "idle" ; idle, processing, tool_pending
 
-    __New(controller, view, submitPromptCommand, renderMarkdownCommand, renderLastMessageCommand, uncheckImagesCommand) {
+    __New(controller, view, sessionManager, submitPromptCommand, renderMarkdownCommand, renderLastMessageCommand, uncheckImagesCommand) {
         this.controller := controller
         this.view := view
+        this.sessionManager := sessionManager
         
         this.submitPromptCommand := submitPromptCommand
         this.renderMarkdownCommand := renderMarkdownCommand
@@ -25,10 +27,10 @@ class ChatController {
 
     ToggleBatchMode(*) {
         ; Toggle batch mode state
-        this.controller.batchModeEnabled := !this.controller.batchModeEnabled
+        this.batchModeEnabled := !this.batchModeEnabled
         
         ; Update menu checkmark
-        this.view.UpdateBatchModeMenu(this.controller.batchModeEnabled)
+        this.view.UpdateBatchModeMenu(this.batchModeEnabled)
     }
 
     SetProcessingState(state) {
@@ -51,17 +53,17 @@ class ChatController {
         currentState := this.processingState
         promptText := this.view.GetPromptValue()
         focusedRow := this.view.GetSelectedHistoryIndex()
-        isBatchMode := this.controller.batchModeEnabled
+        isBatchMode := this.batchModeEnabled
         
         isImageEnabled := this.controller.IsImageInputEnabled[this.controller.CurrentLLMTypeIndex]
-        images := isImageEnabled ? this.controller.sessionManager.GetCheckedImages() : []
+        images := isImageEnabled ? this.sessionManager.GetCheckedImages() : []
 
         selectedIndices := []
         if (selectedIndex := this.view.GetContextBoxValue()) {
             selectedIndices.Push(selectedIndex)
         }
 
-        batchItems := isBatchMode ? this.controller.sessionManager.GetCheckedContextItems() : []
+        batchItems := isBatchMode ? this.sessionManager.GetCheckedContextItems() : []
         
         if (isBatchMode && batchItems.Length == 0) {
             this.view.ShowMessage("Please check at least one item in the context list for batch mode.", "No Items Selected")

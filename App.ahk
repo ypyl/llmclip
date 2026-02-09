@@ -132,7 +132,7 @@ class App {
 
         ; 4. Initialize Sub-Controllers
         menuCtrl := MenuController(this.controller, this.window, cfg, sess, selectModel, getToolsState, getCompressionState, toggleTool)
-        chatCtrl := ChatController(this.controller, this.window, submitPrompt, renderMarkdown, renderLastMsg, uncheckImages)
+        chatCtrl := ChatController(this.controller, this.window, sess, submitPrompt, renderMarkdown, renderLastMsg, uncheckImages)
         conversationCtrl := ConversationController(this.controller, this.window, cfg, sess, llm, menuCtrl, saveConv, loadConv, compress, extract, resetAll)
         clipboardCtrl := ClipboardController(this.controller, processClip)
 

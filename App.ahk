@@ -20,7 +20,7 @@
 #Include Controllers\ChatController.ahk
 #Include Controllers\ConversationController.ahk
 #Include Controllers\ClipboardController.ahk
-#Include Controllers\PromptController.ahk
+#Include Controllers\ClipboardController.ahk
 #Include Services\FileService.ahk
 #Include Commands\SaveConversationCommand.ahk
 #Include Commands\LoadConversationCommand.ahk
@@ -139,9 +139,8 @@ class App {
         ctxView := ContextViewController(this.controller, this.window, sess, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems, prepareContext)
         histView := HistoryViewController(this.controller, this.window, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip)
         notesContr := NotesController(copyToClip)
-        promptCtrl := PromptController(this.window, chatCtrl)
 
-        this.controller.SetSubControllers(menuCtrl, chatCtrl, conversationCtrl, clipboardCtrl, ctxView, histView, notesContr, promptCtrl)
+        this.controller.SetSubControllers(menuCtrl, chatCtrl, conversationCtrl, clipboardCtrl, ctxView, histView, notesContr)
         this.window.SetSubControllers(ctxView, histView, menuCtrl, conversationCtrl, chatCtrl)
 
 

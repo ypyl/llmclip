@@ -39,7 +39,6 @@ class MainController {
     contextViewController := ""
     historyViewController := ""
     notesController := ""
-    promptController := ""
 
 
     __New(configManager, sessionManager, llmService, webViewManager, recordingService, contextManager, clipboardParser, fileService) {
@@ -70,7 +69,7 @@ class MainController {
     }
 
 
-    SetSubControllers(menu, chat, conv, clip, ctxView, histView, notes, prompt) {
+    SetSubControllers(menu, chat, conv, clip, ctxView, histView, notes) {
         this.menuController := menu
         this.chatController := chat
         this.conversationController := conv
@@ -78,7 +77,6 @@ class MainController {
         this.contextViewController := ctxView
         this.historyViewController := histView
         this.notesController := notes
-        this.promptController := prompt
     }
 
 
@@ -123,7 +121,7 @@ class MainController {
     OnViewReady() {
         ; Initialize WebView after window is shown
         this.webViewManager.Init(this.view.GetResponseCtrHwnd())
-        this.webViewManager.SetInputCallback(ObjBindMethod(this.promptController, "AppendToPrompt"))
+        this.webViewManager.SetInputCallback(ObjBindMethod(this.chatController, "AppendToPrompt"))
         this.webViewManager.SetErrorCallback(ObjBindMethod(this, "OnWebViewError"))
         this.webViewManager.SetSaveDiagramCallback(ObjBindMethod(this, "OnSaveWebViewDiagram"))
         
@@ -138,8 +136,8 @@ class MainController {
     ExitApplication(*) => ExitApp()
     ClipChanged(DataType) => this.clipboardController.ClipChanged(DataType)
 
-    OnPromptInput() => this.promptController.OnPromptInput()
-    AppendToPrompt(text) => this.promptController.AppendToPrompt(text)
+    OnPromptInput() => this.chatController.OnPromptInput()
+    AppendToPrompt(text) => this.chatController.AppendToPrompt(text)
 
     ToggleRecording(*) {
         this.ToggleDisplay()

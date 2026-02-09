@@ -18,8 +18,6 @@
 #Include Controllers\HistoryViewController.ahk
 #Include Controllers\MenuController.ahk
 #Include Controllers\ConversationController.ahk
-#Include Controllers\ClipboardController.ahk
-#Include Controllers\ClipboardController.ahk
 #Include Services\FileService.ahk
 #Include Commands\SaveConversationCommand.ahk
 #Include Commands\LoadConversationCommand.ahk
@@ -49,11 +47,9 @@
 #Include Commands\DeleteContextItemsCommand.ahk
 #Include Commands\PrepareContextCommand.ahk
 #Include Commands\GetHistoryListItemsCommand.ahk
-#Include Commands\GetHistoryListItemsCommand.ahk
 #Include Commands\GetMessagePresentationCommand.ahk
 #Include Commands\UncheckImagesCommand.ahk
 #Include Commands\SubmitPromptCommand.ahk
-
 
 class App {
     controller := ""
@@ -122,25 +118,22 @@ class App {
         getMessagePresentation := GetMessagePresentationCommand(sess, mps)
         uncheckImages := UncheckImagesCommand(sess)
 
-
         submitPrompt := SubmitPromptCommand(sess, cfg, llm, ctx, rec)
 
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages
+            saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages, processClip
         )
 
         ; 4. Initialize Sub-Controllers
         menuCtrl := MenuController(this.controller, this.window, cfg, sess, selectModel, getToolsState, getCompressionState, toggleTool)
         conversationCtrl := ConversationController(this.controller, this.window, cfg, sess, llm, menuCtrl, saveConv, loadConv, compress, extract, resetAll)
-        clipboardCtrl := ClipboardController(this.controller, processClip)
 
         ctxView := ContextViewController(this.controller, this.window, sess, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems, prepareContext)
-        histView := HistoryViewController(this.controller, this.window, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip)
+        histView := HistoryViewController(this.window, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip)
         notesContr := NotesController(copyToClip)
 
-        this.controller.SetSubControllers(menuCtrl, conversationCtrl, clipboardCtrl, ctxView, histView, notesContr)
+        this.controller.SetSubControllers(menuCtrl, conversationCtrl, ctxView, histView, notesContr)
         this.window.SetSubControllers(ctxView, histView, menuCtrl, conversationCtrl)
-
 
         ; 5. Initialize Views
         this.trayView := TrayView(this.controller)

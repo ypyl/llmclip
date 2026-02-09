@@ -1,7 +1,6 @@
 #Requires AutoHotkey 2.0
 
 class HistoryViewController {
-    controller := ""
     view := ""
 
     ; Commands
@@ -12,8 +11,7 @@ class HistoryViewController {
     renderMarkdownCommand := ""
     copyToClipboardCommand := ""
 
-    __New(controller, view, getHistoryListItemsCommand, getMessagePresentationCommand, deleteMessageCommand, clearHistoryCommand, renderMarkdownCommand, copyToClipboardCommand) {
-        this.controller := controller
+    __New(view, getHistoryListItemsCommand, getMessagePresentationCommand, deleteMessageCommand, clearHistoryCommand, renderMarkdownCommand, copyToClipboardCommand) {
         this.view := view
         this.getHistoryListItemsCommand := getHistoryListItemsCommand
         this.getMessagePresentationCommand := getMessagePresentationCommand
@@ -24,7 +22,7 @@ class HistoryViewController {
     }
 
     UpdateChatHistoryView(*) {
-        if (!this.controller || !this.controller.view) ; Check if initialized
+        if (!this.view)
             return
 
         items := this.getHistoryListItemsCommand.Execute()

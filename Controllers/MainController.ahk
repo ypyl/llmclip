@@ -30,13 +30,13 @@ class MainController {
     renderMarkdownCommand := ""
     submitPromptCommand := ""
     renderLastMessageCommand := ""
+    processClipboardCommand := ""
     uncheckImagesCommand := ""
 
 
     ; Sub-Controllers
     menuController := ""
     conversationController := ""
-    clipboardController := ""
     contextViewController := ""
     historyViewController := ""
     notesController := ""
@@ -56,7 +56,7 @@ class MainController {
         this.fileService := fileService
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages) {
+    SetCommands(saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages, processClipboard) {
 
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
@@ -73,13 +73,13 @@ class MainController {
         this.submitPromptCommand := submitPrompt
         this.renderLastMessageCommand := renderLastMsg
         this.uncheckImagesCommand := uncheckImages
+        this.processClipboardCommand := processClipboard
     }
 
 
-    SetSubControllers(menu, conv, clip, ctxView, histView, notes) {
+    SetSubControllers(menu, conv, ctxView, histView, notes) {
         this.menuController := menu
         this.conversationController := conv
-        this.clipboardController := clip
         this.contextViewController := ctxView
         this.historyViewController := histView
         this.notesController := notes
@@ -220,7 +220,15 @@ class MainController {
     }
     
     ExitApplication(*) => ExitApp()
-    ClipChanged(DataType) => this.clipboardController.ClipChanged(DataType)
+
+    ClipChanged(DataType) {
+        if (this.processClipboardCommand.Execute()) {
+            ; Update Context in GUI if shown
+            if (this.view.guiShown) {
+                this.contextViewController.UpdateContextView()
+            }
+        }
+    }
 
     OnPromptInput() {
         if (GetKeyState("Enter") && !GetKeyState("Shift")) {

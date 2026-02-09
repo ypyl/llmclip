@@ -1,14 +1,15 @@
 #Requires AutoHotkey 2.0
 
 class MenuController {
-    controller := ""
     selectModelCommand := ""
     getToolsStateCommand := ""
     getCompressionStateCommand := ""
     view := ""
+    currentModelName := ""
+    currentAnswerSize := "Default"
 
-    __New(controller, view, configManager, sessionManager, selectModelCommand, getToolsStateCommand, getCompressionStateCommand, toggleToolCommand) {
-        this.controller := controller
+
+    __New(view, configManager, sessionManager, selectModelCommand, getToolsStateCommand, getCompressionStateCommand, toggleToolCommand) {
         this.view := view
         this.configManager := configManager
         this.sessionManager := sessionManager
@@ -20,7 +21,7 @@ class MenuController {
 
     SelectModel(ItemName, ItemPos, MyMenu) {
         ; Get old model name for renaming menu
-        oldModelName := this.controller.currentModelName
+        oldModelName := this.currentModelName
 
         ; Update session with new model index
         this.selectModelCommand.Execute(ItemPos)
@@ -37,7 +38,7 @@ class MenuController {
         ; Update menu bar label to show new model name
         newModelName := "Model: " . this.configManager.llmTypes[ItemPos]
         this.view.menuBar.Rename(oldModelName, newModelName)
-        this.controller.currentModelName := newModelName
+        this.currentModelName := newModelName
 
         ; Update system prompts for the new model
         this.view.ClearSystemPrompt()
@@ -66,11 +67,11 @@ class MenuController {
         }
 
         ; Store current answer size
-        this.controller.currentAnswerSize := ItemName
+        this.currentAnswerSize := ItemName
     }
 
     UpdateCompressionMenuState() {
-        if (!this.controller.view || !this.view.historyMenu)
+        if (!this.view || !this.view.historyMenu)
             return
 
         isEnabled := this.getCompressionStateCommand.Execute()
@@ -83,7 +84,7 @@ class MenuController {
     }
 
     UpdateToolsMenuState() {
-        if (!this.controller.view || !this.view.toolsMenu)
+        if (!this.view || !this.view.toolsMenu)
             return
 
         toolStates := this.getToolsStateCommand.Execute()

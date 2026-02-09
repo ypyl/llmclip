@@ -116,17 +116,18 @@ class SubmitPromptCommand {
         fileSystemEnabled := this.configManager.IsToolEnabled(currentLLM, "fileSystemTool")
         webSearchEnabled := this.configManager.IsToolEnabled(currentLLM, "webSearch")
         webFetchEnabled := this.configManager.IsToolEnabled(currentLLM, "webFetch")
+        answerSize := params.HasOwnProp("answerSize") ? params.answerSize : "Default"
 
         try {
             newMessages := this.llmService.SendToLLM(
                 this.sessionManager, 
-                "Default", 
+                answerSize, 
                 powerShellEnabled, 
                 webSearchEnabled, 
                 webFetchEnabled, 
                 fileSystemEnabled
             )
-            
+
             hasUnexecuted := this.sessionManager.HasUnexecutedToolCalls()
             return { 
                 action: hasUnexecuted ? "tool_pending" : "idle",
@@ -192,7 +193,8 @@ class SubmitPromptCommand {
                 HasUnexecutedToolCalls: (*) => false
             }
 
-            newMessages := this.llmService.SendToLLM(tempSession, "Default", powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled)
+            answerSize := params.HasOwnProp("answerSize") ? params.answerSize : "Default"
+            newMessages := this.llmService.SendToLLM(tempSession, answerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled)
 
             for respMsg in newMessages {
                 respMsg.AdditionalProperties["isBatchResponse"] := true

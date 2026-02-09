@@ -45,7 +45,7 @@ class ConversationController {
     }
 
     SessionChanged(*) {
-        oldModelName := this.controller.currentModelName
+        oldModelName := this.menuController.currentModelName
 
         ; Switch to new session
         this.sessionManager.SwitchSession(this.view.GetSessionSelectValue())
@@ -68,7 +68,7 @@ class ConversationController {
         ; Update menu bar label if model changed
         if (oldModelName != newModelName) {
             try this.view.menuBar.Rename(oldModelName, newModelName)
-            this.controller.currentModelName := newModelName
+            this.menuController.currentModelName := newModelName
         }
 
         ; Update system prompts for the selected LLM type
@@ -174,10 +174,10 @@ class ConversationController {
                 }
 
                 ; Update model name label
-                oldModelName := this.controller.currentModelName
+                oldModelName := this.menuController.currentModelName
                 newModelName := "Model: " . this.configManager.llmTypes[currentModelIndex]
                 try this.view.menuBar.Rename(oldModelName, newModelName)
-                this.controller.currentModelName := newModelName
+                this.menuController.currentModelName := newModelName
 
                 ; Update Session UI
                 this.view.SetSessionSelectValue(this.sessionManager.currentSessionIndex)
@@ -232,10 +232,10 @@ class ConversationController {
         }
 
         ; Update MenuBar label
-        oldModelName := this.controller.currentModelName
+        oldModelName := this.menuController.currentModelName
         newModelName := "Model: " . this.configManager.llmTypes[this.sessionManager.GetCurrentSessionLLMType()]
         try this.view.menuBar.Rename(oldModelName, newModelName)
-        this.controller.currentModelName := newModelName
+        this.menuController.currentModelName := newModelName
 
         ; Refresh System Prompt Combo
         currentSystemPrompt := this.view.GetSystemPromptValue()

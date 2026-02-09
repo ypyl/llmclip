@@ -2,8 +2,6 @@
 
 class MainController {
     view := ""
-    currentAnswerSize := "Default"
-    currentModelName := ""
 
     ; Dependencies
     configManager := ""
@@ -143,6 +141,7 @@ class MainController {
         promptText := this.view.GetPromptValue()
         focusedRow := this.view.GetSelectedHistoryIndex()
         isBatchMode := this.batchModeEnabled
+        answerSize := this.menuController.currentAnswerSize
         
         isImageEnabled := this.IsImageInputEnabled[this.CurrentLLMTypeIndex]
         images := isImageEnabled ? this.sessionManager.GetCheckedImages() : []
@@ -174,6 +173,7 @@ class MainController {
                 images: images,
                 isBatchMode: isBatchMode,
                 batchItems: batchItems,
+                answerSize: answerSize,
                 batchUpdateCallback: (label, messages) => this.historyViewController.UpdateChatHistoryView(),
                 isCancelledCallback: () => (this.processingState == "processing")
             })

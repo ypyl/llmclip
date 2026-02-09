@@ -62,7 +62,8 @@ class UIBuilder {
         gui.MenuBar := MyMenuBar
         
         ; Initialize controller's current model name to match the menu
-        controller.currentModelName := currentModelName
+        menuController.currentModelName := currentModelName
+
 
         return {menuBar: MyMenuBar, modelMenu: ModelMenu, historyMenu: HistoryMenu, toolsMenu: ToolsMenu, modeMenu: ModeMenu}  ; Return menuBar, modelMenu, historyMenu, toolsMenu and modeMenu
     }

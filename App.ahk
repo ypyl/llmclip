@@ -49,7 +49,7 @@
 #Include Commands\RenderLastMessageCommand.ahk
 #Include Commands\DeleteContextItemsCommand.ahk
 #Include Commands\PrepareContextCommand.ahk
-#Include Commands\ToggleWindowCommand.ahk
+#Include Commands\GetHistoryListItemsCommand.ahk
 #Include Commands\GetHistoryListItemsCommand.ahk
 #Include Commands\GetMessagePresentationCommand.ahk
 #Include Commands\UncheckImagesCommand.ahk
@@ -119,7 +119,6 @@ class App {
         renderLastMsg := RenderLastMessageCommand(sess, mps, wv)
         deleteCtxItems := DeleteContextItemsCommand(sess)
         prepareContext := PrepareContextCommand(sess, cfg)
-        toggleWindow := ToggleWindowCommand(rec, this.window, startRec, stopRec)
         getHistoryItems := GetHistoryListItemsCommand(sess, mps)
         getMessagePresentation := GetMessagePresentationCommand(sess, mps)
         uncheckImages := UncheckImagesCommand(sess)
@@ -128,7 +127,7 @@ class App {
         submitPrompt := SubmitPromptCommand(sess, cfg, llm, ctx, rec)
 
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, toggleWindow
+            saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown
         )
 
         ; 4. Initialize Sub-Controllers

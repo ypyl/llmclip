@@ -29,7 +29,7 @@ class MainController {
     initializeAppCommand := ""
     saveDiagramCommand := ""
     renderMarkdownCommand := ""
-    toggleWindowCommand := ""
+
 
     ; Sub-Controllers
     menuController := ""
@@ -53,7 +53,8 @@ class MainController {
         this.fileService := fileService
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, toggleWindow) {
+    SetCommands(saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown) {
+
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
         this.clearContextCommand := clearCtx
@@ -66,8 +67,8 @@ class MainController {
         this.initializeAppCommand := initializeApp
         this.saveDiagramCommand := saveDiagram
         this.renderMarkdownCommand := renderMarkdown
-        this.toggleWindowCommand := toggleWindow
     }
+
 
     SetSubControllers(menu, chat, conv, clip, ctxView, histView, notes, prompt) {
         this.menuController := menu
@@ -93,8 +94,17 @@ class MainController {
     }
 
     ToggleDisplay() {
-        this.toggleWindowCommand.Execute()
+        if (!this.recordingService.isRecording) {
+            this.startRecordingCommand.Execute()
+            this.UpdateUiBasesOnRecordingStatus()
+        } else if (!this.view.guiShown) {
+            this.view.Show()
+        } else {
+            this.stopRecordingCommand.Execute()
+            this.UpdateUiBasesOnRecordingStatus()
+        }
     }
+
 
     RenderMarkdown(content) {
         this.renderMarkdownCommand.Execute(content)

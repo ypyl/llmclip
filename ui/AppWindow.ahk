@@ -19,16 +19,14 @@ class AppWindow {
     ; Sub-Controllers
     contextViewController := ""
     historyViewController := ""
-    menuController := ""
     
     __New(controller) {
         this.controller := controller
     }
 
-    SetSubControllers(contextViewController, historyViewController, menuController) {
+    SetSubControllers(contextViewController, historyViewController) {
         this.contextViewController := contextViewController
         this.historyViewController := historyViewController
-        this.menuController := menuController
     }
 
     Show() {
@@ -59,8 +57,7 @@ class AppWindow {
             this.gui, 
             this.controller, 
             this.controller.LLMTypes, 
-            this.controller.CurrentLLMTypeIndex, 
-            this.menuController
+            this.controller.CurrentLLMTypeIndex
         )
         this.menuBar := menus.menuBar
         this.modelMenu := menus.modelMenu
@@ -69,8 +66,8 @@ class AppWindow {
         this.modeMenu := menus.modeMenu
         
         ; Initial menu states
-        this.menuController.UpdateCompressionMenuState()
-        this.menuController.UpdateToolsMenuState()
+        this.controller.UpdateCompressionMenuState()
+        this.controller.UpdateToolsMenuState()
         
         ; Create Controls
         UIBuilder.CreateTopControls(

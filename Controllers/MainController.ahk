@@ -30,16 +30,21 @@ class MainController {
     renderLastMessageCommand := ""
     processClipboardCommand := ""
     uncheckImagesCommand := ""
+    selectModelCommand := ""
+    getToolsStateCommand := ""
+    getCompressionStateCommand := ""
+    toggleToolCommand := ""
 
 
     ; Sub-Controllers
-    menuController := ""
     contextViewController := ""
     historyViewController := ""
     notesController := ""
 
     batchModeEnabled := false
     processingState := "idle" ; idle, processing, tool_pending
+    currentModelName := ""
+    currentAnswerSize := "Default"
 
 
     __New(configManager, sessionManager, llmService, webViewManager, recordingService, contextManager, clipboardParser, fileService) {
@@ -53,7 +58,7 @@ class MainController {
         this.fileService := fileService
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages, processClipboard) {
+    SetCommands(saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages, processClipboard, selectModel, getToolsState, getCompressionState, toggleTool) {
 
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
@@ -71,11 +76,14 @@ class MainController {
         this.renderLastMessageCommand := renderLastMsg
         this.uncheckImagesCommand := uncheckImages
         this.processClipboardCommand := processClipboard
+        this.selectModelCommand := selectModel
+        this.getToolsStateCommand := getToolsState
+        this.getCompressionStateCommand := getCompressionState
+        this.toggleToolCommand := toggleTool
     }
 
 
-    SetSubControllers(menu, ctxView, histView, notes) {
-        this.menuController := menu
+    SetSubControllers(ctxView, histView, notes) {
         this.contextViewController := ctxView
         this.historyViewController := histView
         this.notesController := notes
@@ -84,6 +92,113 @@ class MainController {
 
     SetView(view) {
         this.view := view
+    }
+
+    SelectModel(ItemName, ItemPos, MyMenu) {
+        ; Update session with new model index
+        this.selectModelCommand.Execute(ItemPos)
+
+        ; Update menu checkmarks
+        for index, modelName in this.configManager.llmTypes {
+            if (index = ItemPos) {
+                MyMenu.Check(modelName)
+            } else {
+                MyMenu.Uncheck(modelName)
+            }
+        }
+
+        ; Update menu bar label
+        oldModelName := this.currentModelName
+        newModelName := "Model: " . this.configManager.llmTypes[ItemPos]
+        if (oldModelName != newModelName) {
+            try this.view.menuBar.Rename(oldModelName, newModelName)
+            this.currentModelName := newModelName
+        }
+
+        ; Update system prompts for the new model
+        this.view.ClearSystemPrompt()
+        systemPromptNames := this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType())
+        this.view.AddSystemPromptItems(systemPromptNames)
+
+        if (systemPromptNames.Length > 0) {
+            this.view.SetSystemPromptValue(1)
+            this.view.SetSystemPromptEnabled(true)
+        } else {
+            this.view.SetSystemPromptEnabled(false)
+        }
+
+        this.UpdateToolsMenuState()
+        this.UpdateCompressionMenuState()
+    }
+
+    SelectAnswerSize(ItemName, ItemPos, MyMenu) {
+        ; Update checkmarks
+        for _, size in ["Small", "Default", "Long"] {
+            if (size = ItemName) {
+                MyMenu.Check(size)
+            } else {
+                MyMenu.Uncheck(size)
+            }
+        }
+
+        ; Update state
+        this.currentAnswerSize := ItemName
+    }
+
+    UpdateCompressionMenuState() {
+        if (!this.view || !this.view.historyMenu)
+            return
+
+        isEnabled := this.getCompressionStateCommand.Execute()
+
+        if (isEnabled) {
+            this.view.historyMenu.Enable("Compress")
+        } else {
+            this.view.historyMenu.Disable("Compress")
+        }
+    }
+
+    UpdateToolsMenuState() {
+        if (!this.view || !this.view.toolsMenu)
+            return
+
+        toolStates := this.getToolsStateCommand.Execute()
+        
+        ; Update PowerShell
+        if (toolStates.powerShell) {
+            this.view.toolsMenu.Check("PowerShell")
+        } else {
+            this.view.toolsMenu.Uncheck("PowerShell")
+        }
+
+        ; Update File System
+        if (toolStates.fileSystem) {
+             this.view.toolsMenu.Check("File System")
+        } else {
+             this.view.toolsMenu.Uncheck("File System")
+        }
+
+        ; Update Web Search
+        if (toolStates.webSearch) {
+            this.view.toolsMenu.Check("Web Search")
+        } else {
+            this.view.toolsMenu.Uncheck("Web Search")
+        }
+
+        ; Update Web Fetch
+        if (toolStates.webFetch) {
+            this.view.toolsMenu.Check("Web Fetch")
+        } else {
+            this.view.toolsMenu.Uncheck("Web Fetch")
+        }
+    }
+
+    ToggleTool(toolName, *) {
+        ; Execute toggle command
+        this.toggleToolCommand.Execute(toolName)
+        
+        ; Update UI
+        this.UpdateToolsMenuState()
     }
 
     Start() {
@@ -156,7 +271,7 @@ class MainController {
         promptText := this.view.GetPromptValue()
         focusedRow := this.view.GetSelectedHistoryIndex()
         isBatchMode := this.batchModeEnabled
-        answerSize := this.menuController.currentAnswerSize
+        answerSize := this.currentAnswerSize
         
         isImageEnabled := this.IsImageInputEnabled[this.CurrentLLMTypeIndex]
         images := isImageEnabled ? this.sessionManager.GetCheckedImages() : []
@@ -367,7 +482,7 @@ class MainController {
     }
 
     SessionChanged(*) {
-        oldModelName := this.menuController.currentModelName
+        oldModelName := this.currentModelName
 
         ; Switch to new session
         this.sessionManager.SwitchSession(this.view.GetSessionSelectValue())
@@ -390,7 +505,7 @@ class MainController {
         ; Update menu bar label if model changed
         if (oldModelName != newModelName) {
             try this.view.menuBar.Rename(oldModelName, newModelName)
-            this.menuController.currentModelName := newModelName
+            this.currentModelName := newModelName
         }
 
         ; Update system prompts for the selected LLM type
@@ -496,10 +611,10 @@ class MainController {
                 }
 
                 ; Update model name label
-                oldModelName := this.menuController.currentModelName
+                oldModelName := this.currentModelName
                 newModelName := "Model: " . this.configManager.llmTypes[currentModelIndex]
                 try this.view.menuBar.Rename(oldModelName, newModelName)
-                this.menuController.currentModelName := newModelName
+                this.currentModelName := newModelName
 
                 ; Update Session UI
                 this.view.SetSessionSelectValue(this.sessionManager.currentSessionIndex)
@@ -540,7 +655,7 @@ class MainController {
         ; Refresh Model Menu
         this.view.modelMenu.Delete() ; Delete all items
         for index, modelName in this.configManager.llmTypes {
-            this.view.modelMenu.Add(modelName, ObjBindMethod(this.menuController, "SelectModel"))
+            this.view.modelMenu.Add(modelName, ObjBindMethod(this, "SelectModel"))
         }
 
         ; Restore model checkmark
@@ -554,10 +669,10 @@ class MainController {
         }
 
         ; Update MenuBar label
-        oldModelName := this.menuController.currentModelName
+        oldModelName := this.currentModelName
         newModelName := "Model: " . this.configManager.llmTypes[this.sessionManager.GetCurrentSessionLLMType()]
         try this.view.menuBar.Rename(oldModelName, newModelName)
-        this.menuController.currentModelName := newModelName
+        this.currentModelName := newModelName
 
         ; Refresh System Prompt Combo
         currentSystemPrompt := this.view.GetSystemPromptValue()
@@ -573,7 +688,7 @@ class MainController {
             this.sessionManager.SetCurrentSessionSystemPrompt(1)
         }
 
-        this.menuController.UpdateToolsMenuState()
-        this.menuController.UpdateCompressionMenuState()
+        this.UpdateToolsMenuState()
+        this.UpdateCompressionMenuState()
     }
 }

@@ -16,7 +16,6 @@
 #Include Controllers\MainController.ahk
 #Include Controllers\ContextViewController.ahk
 #Include Controllers\HistoryViewController.ahk
-#Include Controllers\MenuController.ahk
 #Include Services\FileService.ahk
 #Include Commands\SaveConversationCommand.ahk
 #Include Commands\LoadConversationCommand.ahk
@@ -120,18 +119,16 @@ class App {
         submitPrompt := SubmitPromptCommand(sess, cfg, llm, ctx, rec)
 
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages, processClip
+            saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages, processClip, selectModel, getToolsState, getCompressionState, toggleTool
         )
 
         ; 4. Initialize Sub-Controllers
-        menuCtrl := MenuController(this.window, cfg, sess, selectModel, getToolsState, getCompressionState, toggleTool)
-
         ctxView := ContextViewController(this.window, sess, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems, prepareContext)
         histView := HistoryViewController(this.window, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip)
         notesContr := NotesController(copyToClip)
 
-        this.controller.SetSubControllers(menuCtrl, ctxView, histView, notesContr)
-        this.window.SetSubControllers(ctxView, histView, menuCtrl)
+        this.controller.SetSubControllers(ctxView, histView, notesContr)
+        this.window.SetSubControllers(ctxView, histView)
 
         ; 5. Initialize Views
         this.trayView := TrayView(this.controller)

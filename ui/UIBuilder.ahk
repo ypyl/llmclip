@@ -2,7 +2,7 @@
 #Include UIConfig.ahk
 
 class UIBuilder {
-    static CreateMenuBar(gui, controller, llmTypes, currentLLMTypeIndex, menuController) {
+    static CreateMenuBar(gui, controller, llmTypes, currentLLMTypeIndex) {
         FileMenu := Menu()
         FileMenu.Add("Save Conversation", ObjBindMethod(controller, "SaveConversation"))
         FileMenu.Add("Load Conversation", ObjBindMethod(controller, "LoadConversation"))
@@ -13,7 +13,7 @@ class UIBuilder {
 
         ModelMenu := Menu()
         for index, modelName in llmTypes {
-            ModelMenu.Add(modelName, ObjBindMethod(menuController, "SelectModel"))
+            ModelMenu.Add(modelName, ObjBindMethod(controller, "SelectModel"))
         }
 
         ; Get current model name for menu label
@@ -28,9 +28,9 @@ class UIBuilder {
 
         ; Create Answer Size menu
         AnswerSizeMenu := Menu()
-        AnswerSizeMenu.Add("Small", ObjBindMethod(menuController, "SelectAnswerSize"))
-        AnswerSizeMenu.Add("Default", ObjBindMethod(menuController, "SelectAnswerSize"))
-        AnswerSizeMenu.Add("Long", ObjBindMethod(menuController, "SelectAnswerSize"))
+        AnswerSizeMenu.Add("Small", ObjBindMethod(controller, "SelectAnswerSize"))
+        AnswerSizeMenu.Add("Default", ObjBindMethod(controller, "SelectAnswerSize"))
+        AnswerSizeMenu.Add("Long", ObjBindMethod(controller, "SelectAnswerSize"))
 
         ; Set initial checkmark (Default = index 2)
         AnswerSizeMenu.Check("Default")
@@ -51,10 +51,10 @@ class UIBuilder {
         
         ; Create Tools menu
         ToolsMenu := Menu()
-        ToolsMenu.Add("PowerShell", ObjBindMethod(menuController, "ToggleTool", "powerShellTool"))
-        ToolsMenu.Add("File System", ObjBindMethod(menuController, "ToggleTool", "fileSystemTool"))
-        ToolsMenu.Add("Web Search", ObjBindMethod(menuController, "ToggleTool", "webSearch"))
-        ToolsMenu.Add("Web Fetch", ObjBindMethod(menuController, "ToggleTool", "webFetch"))
+        ToolsMenu.Add("PowerShell", ObjBindMethod(controller, "ToggleTool", "powerShellTool"))
+        ToolsMenu.Add("File System", ObjBindMethod(controller, "ToggleTool", "fileSystemTool"))
+        ToolsMenu.Add("Web Search", ObjBindMethod(controller, "ToggleTool", "webSearch"))
+        ToolsMenu.Add("Web Fetch", ObjBindMethod(controller, "ToggleTool", "webFetch"))
         MyMenuBar.Add("Tools", ToolsMenu)
 
         MyMenuBar.Add("Answer Size", AnswerSizeMenu)
@@ -62,7 +62,7 @@ class UIBuilder {
         gui.MenuBar := MyMenuBar
         
         ; Initialize controller's current model name to match the menu
-        menuController.currentModelName := currentModelName
+        controller.currentModelName := currentModelName
 
 
         return {menuBar: MyMenuBar, modelMenu: ModelMenu, historyMenu: HistoryMenu, toolsMenu: ToolsMenu, modeMenu: ModeMenu}  ; Return menuBar, modelMenu, historyMenu, toolsMenu and modeMenu

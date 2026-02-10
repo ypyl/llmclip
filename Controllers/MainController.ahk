@@ -516,7 +516,7 @@ class MainController {
         ; Clear response field
         this.RenderMarkdown("")
 
-        this.menuController.UpdateCompressionMenuState()
+        this.UpdateCompressionMenuState()
     }
 
     ResetAll(*) {
@@ -636,7 +636,7 @@ class MainController {
                 this.historyViewController.UpdateChatHistoryView()
                 
                 ; Update Tools Menu
-                this.menuController.UpdateToolsMenuState()
+                this.UpdateToolsMenuState()
 
                 ; Clear Response Area
                 this.RenderMarkdown("")

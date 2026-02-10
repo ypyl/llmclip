@@ -48,6 +48,7 @@
 #Include Commands\GetMessagePresentationCommand.ahk
 #Include Commands\UncheckImagesCommand.ahk
 #Include Commands\SubmitPromptCommand.ahk
+#Include Commands\SetContextItemCheckedCommand.ahk
 
 class App {
     controller := ""
@@ -115,6 +116,7 @@ class App {
         getHistoryItems := GetHistoryListItemsCommand(sess, mps)
         getMessagePresentation := GetMessagePresentationCommand(sess, mps)
         uncheckImages := UncheckImagesCommand(sess)
+        setContextItemChecked := SetContextItemCheckedCommand(sess)
 
         submitPrompt := SubmitPromptCommand(sess, cfg, llm, ctx, rec)
 
@@ -123,7 +125,7 @@ class App {
         )
 
         ; 4. Initialize Sub-Controllers
-        ctxView := ContextViewController(this.window, sess, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems, prepareContext)
+        ctxView := ContextViewController(this.window, sess, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems, prepareContext, setContextItemChecked)
         histView := HistoryViewController(this.window, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip)
         notesContr := NotesController(copyToClip)
 

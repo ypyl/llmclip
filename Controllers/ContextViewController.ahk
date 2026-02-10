@@ -8,8 +8,9 @@ class ContextViewController {
     contextPresentationService := ""
     deleteContextItemsCommand := ""
     prepareContextCommand := ""
+    setContextItemCheckedCommand := ""
 
-    __New(view, sessionManager, contextManager, webViewManager, contextPresentationService, clearContextCommand, replaceLinkWithContentCommand, renderMarkdownCommand, deleteContextItemsCommand, prepareContextCommand) {
+    __New(view, sessionManager, contextManager, webViewManager, contextPresentationService, clearContextCommand, replaceLinkWithContentCommand, renderMarkdownCommand, deleteContextItemsCommand, prepareContextCommand, setContextItemCheckedCommand) {
         this.view := view
         this.sessionManager := sessionManager
         this.contextManager := contextManager
@@ -20,6 +21,7 @@ class ContextViewController {
         this.renderMarkdownCommand := renderMarkdownCommand
         this.deleteContextItemsCommand := deleteContextItemsCommand
         this.prepareContextCommand := prepareContextCommand
+        this.setContextItemCheckedCommand := setContextItemCheckedCommand
     }
 
     UpdateContextView(*) {
@@ -95,7 +97,7 @@ class ContextViewController {
     }
 
     ContextBoxItemCheck(Item, Checked) {
-        this.sessionManager.SetContextItemChecked(Item, Checked)
+        this.setContextItemCheckedCommand.Execute(Item, Checked)
     }
 
     DeleteSelected(*) {

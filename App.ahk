@@ -126,7 +126,7 @@ class App {
         ; 4. Initialize Sub-Controllers
         menuCtrl := MenuController(this.window, cfg, sess, selectModel, getToolsState, getCompressionState, toggleTool)
 
-        ctxView := ContextViewController(this.controller, this.window, sess, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems, prepareContext)
+        ctxView := ContextViewController(this.window, sess, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems, prepareContext)
         histView := HistoryViewController(this.window, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip)
         notesContr := NotesController(copyToClip)
 

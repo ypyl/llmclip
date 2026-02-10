@@ -1,7 +1,6 @@
 #Requires AutoHotkey 2.0
 
 class ContextViewController {
-    controller := ""
     sessionManager := ""
     contextManager := ""
     webViewManager := ""
@@ -10,8 +9,7 @@ class ContextViewController {
     deleteContextItemsCommand := ""
     prepareContextCommand := ""
 
-    __New(controller, view, sessionManager, contextManager, webViewManager, contextPresentationService, clearContextCommand, replaceLinkWithContentCommand, renderMarkdownCommand, deleteContextItemsCommand, prepareContextCommand) {
-        this.controller := controller
+    __New(view, sessionManager, contextManager, webViewManager, contextPresentationService, clearContextCommand, replaceLinkWithContentCommand, renderMarkdownCommand, deleteContextItemsCommand, prepareContextCommand) {
         this.view := view
         this.sessionManager := sessionManager
         this.contextManager := contextManager
@@ -25,7 +23,7 @@ class ContextViewController {
     }
 
     UpdateContextView(*) {
-        if (!this.controller || !this.controller.view) ; Check if initialized
+        if (!this.view) ; Check if initialized
             return
 
         ; Execute command to merge predefined context

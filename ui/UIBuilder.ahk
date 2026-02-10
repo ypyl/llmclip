@@ -2,12 +2,12 @@
 #Include UIConfig.ahk
 
 class UIBuilder {
-    static CreateMenuBar(gui, controller, llmTypes, currentLLMTypeIndex, menuController, conversationController) {
+    static CreateMenuBar(gui, controller, llmTypes, currentLLMTypeIndex, menuController) {
         FileMenu := Menu()
-        FileMenu.Add("Save Conversation", ObjBindMethod(conversationController, "SaveConversation"))
-        FileMenu.Add("Load Conversation", ObjBindMethod(conversationController, "LoadConversation"))
+        FileMenu.Add("Save Conversation", ObjBindMethod(controller, "SaveConversation"))
+        FileMenu.Add("Load Conversation", ObjBindMethod(controller, "LoadConversation"))
         FileMenu.Add()  ; Separator
-        FileMenu.Add("Reload Settings", ObjBindMethod(conversationController, "ReloadSettings"))
+        FileMenu.Add("Reload Settings", ObjBindMethod(controller, "ReloadSettings"))
         FileMenu.Add()  ; Separator
         FileMenu.Add("Exit", ObjBindMethod(controller, "ExitApplication"))
 
@@ -37,8 +37,8 @@ class UIBuilder {
 
         ; Create History menu
         HistoryMenu := Menu()
-        HistoryMenu.Add("Compress", ObjBindMethod(conversationController, "CompressHistory"))
-        HistoryMenu.Add("Extract Notes", ObjBindMethod(conversationController, "ExtractLearnings"))
+        HistoryMenu.Add("Compress", ObjBindMethod(controller, "CompressHistory"))
+        HistoryMenu.Add("Extract Notes", ObjBindMethod(controller, "ExtractLearnings"))
 
         ; Create Mode menu
         ModeMenu := Menu()
@@ -68,11 +68,11 @@ class UIBuilder {
         return {menuBar: MyMenuBar, modelMenu: ModelMenu, historyMenu: HistoryMenu, toolsMenu: ToolsMenu, modeMenu: ModeMenu}  ; Return menuBar, modelMenu, historyMenu, toolsMenu and modeMenu
     }
 
-    static CreateTopControls(gui, sessionNames, currentSessionIndex, isRecording, controller, conversationController) {
+    static CreateTopControls(gui, sessionNames, currentSessionIndex, isRecording, controller) {
         ; Add session selector
         sessionCombo := gui.Add("DropDownList", "x10 y12 w70 vSessionSelect", sessionNames)
         sessionCombo.Value := currentSessionIndex
-        sessionCombo.OnEvent("Change", ObjBindMethod(conversationController, "SessionChanged"))
+        sessionCombo.OnEvent("Change", ObjBindMethod(controller, "SessionChanged"))
 
         ; Add record button
         recordButtonTitle := isRecording ? "Stop" : "Record"
@@ -81,7 +81,7 @@ class UIBuilder {
 
         ; Add reset button
         resetButton := gui.Add("Button", "x300 y10 w90", "Reset All")
-        resetButton.OnEvent("Click", ObjBindMethod(conversationController, "ResetAll"))
+        resetButton.OnEvent("Click", ObjBindMethod(controller, "ResetAll"))
     }
 
     static CreateContextSection(gui, contextViewController) {

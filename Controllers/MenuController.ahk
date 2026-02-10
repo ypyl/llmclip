@@ -8,7 +8,6 @@ class MenuController {
     currentModelName := ""
     currentAnswerSize := "Default"
 
-
     __New(view, configManager, sessionManager, selectModelCommand, getToolsStateCommand, getCompressionStateCommand, toggleToolCommand) {
         this.view := view
         this.configManager := configManager

@@ -17,7 +17,6 @@
 #Include Controllers\ContextViewController.ahk
 #Include Controllers\HistoryViewController.ahk
 #Include Controllers\MenuController.ahk
-#Include Controllers\ConversationController.ahk
 #Include Services\FileService.ahk
 #Include Commands\SaveConversationCommand.ahk
 #Include Commands\LoadConversationCommand.ahk
@@ -126,14 +125,13 @@ class App {
 
         ; 4. Initialize Sub-Controllers
         menuCtrl := MenuController(this.window, cfg, sess, selectModel, getToolsState, getCompressionState, toggleTool)
-        conversationCtrl := ConversationController(this.controller, this.window, cfg, sess, llm, menuCtrl, saveConv, loadConv, compress, extract, resetAll)
 
         ctxView := ContextViewController(this.controller, this.window, sess, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems, prepareContext)
         histView := HistoryViewController(this.window, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip)
         notesContr := NotesController(copyToClip)
 
-        this.controller.SetSubControllers(menuCtrl, conversationCtrl, ctxView, histView, notesContr)
-        this.window.SetSubControllers(ctxView, histView, menuCtrl, conversationCtrl)
+        this.controller.SetSubControllers(menuCtrl, ctxView, histView, notesContr)
+        this.window.SetSubControllers(ctxView, histView, menuCtrl)
 
         ; 5. Initialize Views
         this.trayView := TrayView(this.controller)

@@ -20,17 +20,15 @@ class AppWindow {
     contextViewController := ""
     historyViewController := ""
     menuController := ""
-    conversationController := ""
     
     __New(controller) {
         this.controller := controller
     }
 
-    SetSubControllers(contextViewController, historyViewController, menuController, conversationController) {
+    SetSubControllers(contextViewController, historyViewController, menuController) {
         this.contextViewController := contextViewController
         this.historyViewController := historyViewController
         this.menuController := menuController
-        this.conversationController := conversationController
     }
 
     Show() {
@@ -62,8 +60,7 @@ class AppWindow {
             this.controller, 
             this.controller.LLMTypes, 
             this.controller.CurrentLLMTypeIndex, 
-            this.menuController, 
-            this.conversationController
+            this.menuController
         )
         this.menuBar := menus.menuBar
         this.modelMenu := menus.modelMenu
@@ -81,8 +78,7 @@ class AppWindow {
             this.controller.SessionNames, 
             this.controller.CurrentSessionIndex, 
             this.controller.IsRecording, 
-            this.controller, 
-            this.conversationController
+            this.controller
         )
         UIBuilder.CreateContextSection(this.gui, this.contextViewController)
         UIBuilder.CreateChatHistorySection(this.gui, this.historyViewController)

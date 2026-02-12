@@ -33,12 +33,12 @@ class FileSystemTool {
             }
 
             if (append) {
-                FileAppend(content, path, "UTF-8")
+                FileAppend(content, path, "UTF-8-RAW")
             } else {
                 if (FileExist(path)) {
                     FileDelete(path)
                 }
-                FileAppend(content, path, "UTF-8")
+                FileAppend(content, path, "UTF-8-RAW")
             }
             return "File written successfully: " . path
         } catch as e {

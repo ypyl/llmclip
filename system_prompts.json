@@ -45,5 +45,8 @@
   },
   "Skill Generator": {
     "value": ".\\skill-generator.md"
+  },
+  "tools_record": {
+    "value": ".\\tool-generator.md"
   }
 }

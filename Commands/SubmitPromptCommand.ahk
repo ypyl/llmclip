@@ -11,7 +11,7 @@ class SubmitPromptCommand {
     llmService := ""
     contextManager := ""
     recordingService := ""
-    
+
     __New(sessionManager, configManager, llmService, contextManager, recordingService) {
         this.sessionManager := sessionManager
         this.configManager := configManager
@@ -47,7 +47,7 @@ class SubmitPromptCommand {
         ; 2. Handle Tool Confirmation
         if (params.processingState == "tool_pending") {
             if (this.ExecuteToolCalls()) {
-                return this.PerformSend(params)
+                return this.PerformSend(params, true)
             }
             return { action: "idle" }
         }
@@ -77,14 +77,14 @@ class SubmitPromptCommand {
         ; Logic from SendToLLMCommand
         currentContext := this.sessionManager.GetCurrentSessionContext()
         additionalContext := this.contextManager.BuildPromptContext(
-            currentContext, 
+            currentContext,
             params.HasOwnProp("selectedContextIndices") ? params.selectedContextIndices : []
         )
 
         if (!isRegeneration) {
             images := params.HasOwnProp("images") ? params.images : []
             userMessageContent := this.sessionManager.BuildUserMessage(params.promptText, images)
-            
+
             hasAnyChecked := this.sessionManager.HasAnyCheckedItem()
 
             if (userMessageContent.Length > 0 || hasAnyChecked) {
@@ -120,16 +120,16 @@ class SubmitPromptCommand {
 
         try {
             newMessages := this.llmService.SendToLLM(
-                this.sessionManager, 
-                answerSize, 
-                powerShellEnabled, 
-                webSearchEnabled, 
-                webFetchEnabled, 
+                this.sessionManager,
+                answerSize,
+                powerShellEnabled,
+                webSearchEnabled,
+                webFetchEnabled,
                 fileSystemEnabled
             )
 
             hasUnexecuted := this.sessionManager.HasUnexecutedToolCalls()
-            return { 
+            return {
                 action: hasUnexecuted ? "tool_pending" : "idle",
                 hasUnexecutedToolCalls: hasUnexecuted
             }
@@ -146,7 +146,7 @@ class SubmitPromptCommand {
         userContent := [TextContent(params.promptText)]
         userMsg := ChatMessage("user", userContent)
         userMsg.AdditionalProperties["isBatchMode"] := true
-        
+
         mainMessages := this.sessionManager.GetCurrentSessionMessages()
         mainMessages.Push(userMsg)
 
@@ -166,13 +166,13 @@ class SubmitPromptCommand {
             for msg in baseHistory {
                 clonedMessages.Push(msg.Clone())
             }
-            
+
             activePromptClone := userMsg.Clone()
             clonedMessages.Push(activePromptClone)
-            
+
             itemLabel := this.contextManager.GetLabelFromContextItem(item)
             itemText := this.contextManager.GetTextFromContextItem(item)
-            
+
             firstUserMsg := ""
             for msg in clonedMessages {
                 if (msg.Role == "user") {
@@ -180,7 +180,7 @@ class SubmitPromptCommand {
                     break
                 }
             }
-            
+
             if (firstUserMsg) {
                 firstUserMsg.Contents.InsertAt(1, TextContent("Context for this request: [" . itemLabel . "]`n" . itemText))
                 firstUserMsg.AdditionalProperties["hasContext"] := true
@@ -212,7 +212,7 @@ class SubmitPromptCommand {
         ; Logic from ConfirmToolCommand
         messages := this.sessionManager.GetCurrentSessionMessages()
         executedAny := false
-        
+
         i := 1
         while (i <= messages.Length) {
             msg := messages[i]
@@ -244,9 +244,9 @@ class SubmitPromptCommand {
         }
 
         if (promptText == "") {
-            return { 
-                status: "load_to_prompt", 
-                text: this.sessionManager.GetUserMessageTextWithoutContext(selectedMsg) 
+            return {
+                status: "load_to_prompt",
+                text: this.sessionManager.GetUserMessageTextWithoutContext(selectedMsg)
             }
         }
 

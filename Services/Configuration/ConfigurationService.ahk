@@ -6,19 +6,19 @@
 
 class ConfigurationService {
     static instance := ""
-    
+
     ; Configuration data
     providers := Map()
     selectedLLMType := ""
     selectedLLMTypeIndex := 1
     llmTypes := []
     ollamaApiKey := ""
-    
+
     ; Sub-managers
     systemPromptsManager := unset
     providersManager := unset
     rolesManager := unset
-    
+
     static GetInstance() {
         if (!ConfigurationService.instance)
             ConfigurationService.instance := ConfigurationService()
@@ -37,9 +37,9 @@ class ConfigurationService {
         this.systemPromptsManager.Reload()
         this.providersManager.Reload()
         this.rolesManager.Reload()
-        
+
         this.providers := this.providersManager.GetAll()
-        
+
         ; Initialize LLM types
         this.llmTypes := []
         for key in this.providers {
@@ -74,13 +74,13 @@ class ConfigurationService {
         selectedLLMType := this.llmTypes[llmIndex]
         settings := this.providersManager.Get(selectedLLMType)
         settings["type"] := selectedLLMType
-        
+
         ; Load API key
         apiKey := this.GetApiKey(selectedLLMType)
         if (apiKey != "") {
             settings["api_key"] := apiKey
         }
-        
+
         return settings
     }
 
@@ -90,7 +90,12 @@ class ConfigurationService {
 
         selectedLLMType := this.llmTypes[llmIndex]
         promptNames := this.rolesManager.GetPromptsForProvider(selectedLLMType)
-        
+
+        ; If no prompts returned (roles disabled), use all system prompts
+        if (promptNames.Length = 0) {
+            promptNames := this.systemPromptsManager.GetNames()
+        }
+
         visiblePrompts := []
         for name in promptNames {
             promptData := this.systemPromptsManager.Get(name)
@@ -100,7 +105,7 @@ class ConfigurationService {
                 for k, v in promptData {
                     promptEntry[k] := v
                 }
-                
+
                 if (!promptEntry.Get("hidden", false)) {
                     visiblePrompts.Push(promptEntry)
                 }
@@ -117,10 +122,10 @@ class ConfigurationService {
             if (FileExist(value)) {
                 value := FileRead(value)
             }
-            
+
             currentTime := FormatTime(, "yyyy-MM-dd HH:mm:ss")
             value .= "`n`nCurrent Date and Time: " . currentTime
-            
+
             return value
         }
         return defaultPrompt . "`n`nCurrent Date and Time: " . FormatTime(, "yyyy-MM-dd HH:mm:ss")
@@ -165,7 +170,7 @@ class ConfigurationService {
             settings["tools"] := []
         }
         currentTools := settings["tools"]
-        
+
         if (enabled) {
             hasTool := false
             for t in currentTools {

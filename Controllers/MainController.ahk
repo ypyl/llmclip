@@ -12,7 +12,7 @@ class MainController {
     contextManager := ""
     clipboardParser := ""
     fileService := ""
-    
+
     ; Commands
     saveConversationCommand := ""
     loadConversationCommand := ""
@@ -42,7 +42,7 @@ class MainController {
     notesController := ""
 
     batchModeEnabled := false
-    processingState := "idle" ; idle, processing, tool_pending
+    processingState := "idle" ; idle, processing, tool_pending, tool_running
     currentModelName := ""
     currentAnswerSize := "Default"
 
@@ -163,7 +163,7 @@ class MainController {
             return
 
         toolStates := this.getToolsStateCommand.Execute()
-        
+
         ; Update PowerShell
         if (toolStates.powerShell) {
             this.view.toolsMenu.Check("PowerShell")
@@ -196,7 +196,7 @@ class MainController {
     ToggleTool(toolName, *) {
         ; Execute toggle command
         this.toggleToolCommand.Execute(toolName)
-        
+
         ; Update UI
         this.UpdateToolsMenuState()
     }
@@ -241,7 +241,7 @@ class MainController {
         this.webViewManager.SetInputCallback(ObjBindMethod(this, "AppendToPrompt"))
         this.webViewManager.SetErrorCallback(ObjBindMethod(this, "OnWebViewError"))
         this.webViewManager.SetSaveDiagramCallback(ObjBindMethod(this, "OnSaveWebViewDiagram"))
-        
+
         ; Update views
         this.historyViewController.UpdateChatHistoryView()
     }
@@ -264,15 +264,22 @@ class MainController {
         this.sessionManager.UpdateSystemPromptContent(systemPrompt)
         this.contextViewController.UpdateContextView()
     }
-    
+
     AskToLLM(*) {
+        ; Check if user clicked to cancel tool execution
+        if (this.processingState == "tool_running") {
+            this.llmService.CancelTools()
+            this.SetProcessingState("idle")
+            return
+        }
+
         ; 1. Gather UI state
         currentState := this.processingState
         promptText := this.view.GetPromptValue()
         focusedRow := this.view.GetSelectedHistoryIndex()
         isBatchMode := this.batchModeEnabled
         answerSize := this.currentAnswerSize
-        
+
         isImageEnabled := this.IsImageInputEnabled[this.CurrentLLMTypeIndex]
         images := isImageEnabled ? this.sessionManager.GetCheckedImages() : []
 
@@ -282,7 +289,7 @@ class MainController {
         }
 
         batchItems := isBatchMode ? this.sessionManager.GetCheckedContextItems() : []
-        
+
         if (isBatchMode && batchItems.Length == 0) {
             this.view.ShowMessage("Please check at least one item in the context list for batch mode.", "No Items Selected")
             return
@@ -291,6 +298,11 @@ class MainController {
         ; 2. Update UI state before execution
         if (this.view.guiShown && this.processingState == "idle") {
             this.SetProcessingState("processing")
+        }
+
+        ; If we're about to execute pending tools, transition to tool_running state
+        if (currentState == "tool_pending") {
+            this.SetProcessingState("tool_running")
         }
 
         try {
@@ -327,7 +339,7 @@ class MainController {
                 if (focusedRow > 0) {
                     this.view.DeselectHistoryItem(focusedRow)
                 }
-                
+
                 if (this.recordingService.isRecording) {
                     this.stopRecordingCommand.Execute()
                     this.UpdateUiBasesOnRecordingStatus()
@@ -348,7 +360,7 @@ class MainController {
             }
         }
     }
-    
+
     ExitApplication(*) => ExitApp()
 
     ClipChanged(DataType) {
@@ -384,14 +396,14 @@ class MainController {
     ToggleBatchMode(*) {
         ; Toggle batch mode state
         this.batchModeEnabled := !this.batchModeEnabled
-        
+
         ; Update menu checkmark
         this.view.UpdateBatchModeMenu(this.batchModeEnabled)
     }
 
     SetProcessingState(state) {
         this.processingState := state
-        
+
         if (state == "idle") {
             this.view.SetAskButtonText("Ask LLM")
             this.view.SetAskButtonEnabled(true)
@@ -400,6 +412,9 @@ class MainController {
             this.view.SetAskButtonEnabled(true)
         } else if (state == "tool_pending") {
             this.view.SetAskButtonText("Confirm Tool Run")
+            this.view.SetAskButtonEnabled(true)
+        } else if (state == "tool_running") {
+            this.view.SetAskButtonText("Cancel Tool")
             this.view.SetAskButtonEnabled(true)
         }
     }
@@ -634,7 +649,7 @@ class MainController {
 
                 ; Update History View
                 this.historyViewController.UpdateChatHistoryView()
-                
+
                 ; Update Tools Menu
                 this.UpdateToolsMenuState()
 

@@ -5,21 +5,21 @@ class AppWindow {
     gui := ""
     controller := ""
     guiShown := false
-    
+
     ; Menu references
     menuBar := ""
     modelMenu := ""
     historyMenu := ""
     toolsMenu := ""
     modeMenu := ""
-    
+
     ; Control references
     askButton := ""
-    
+
     ; Sub-Controllers
     contextViewController := ""
     historyViewController := ""
-    
+
     __New(controller) {
         this.controller := controller
     }
@@ -34,29 +34,29 @@ class AppWindow {
             this.gui.Show()
             return
         }
-        
+
         this.BuildUI()
         this.gui.Show("w1230 h610")
-        
+
         this.guiShown := true
-        
+
         ; Notify controller that view is ready
         this.controller.OnViewReady()
     }
-    
+
     BuildUI() {
         this.gui := Gui()
         this.gui.Title := "LLM Assistant"
         this.gui.SetFont("s9", "Segoe UI")
         this.gui.Opt("+Resize +MinSize800x610")
-        
+
         this.gui.OnEvent("Size", (gui, minMax, width, height) => UIBuilder.GuiResize(gui, minMax, width, height, this.controller))
-        
+
         ; Create Menus
         menus := UIBuilder.CreateMenuBar(
-            this.gui, 
-            this.controller, 
-            this.controller.LLMTypes, 
+            this.gui,
+            this.controller,
+            this.controller.LLMTypes,
             this.controller.CurrentLLMTypeIndex
         )
         this.menuBar := menus.menuBar
@@ -64,38 +64,38 @@ class AppWindow {
         this.historyMenu := menus.historyMenu
         this.toolsMenu := menus.toolsMenu
         this.modeMenu := menus.modeMenu
-        
+
         ; Initial menu states
         this.controller.UpdateCompressionMenuState()
         this.controller.UpdateToolsMenuState()
-        
+
         ; Create Controls
         UIBuilder.CreateTopControls(
-            this.gui, 
-            this.controller.SessionNames, 
-            this.controller.CurrentSessionIndex, 
-            this.controller.IsRecording, 
+            this.gui,
+            this.controller.SessionNames,
+            this.controller.CurrentSessionIndex,
+            this.controller.IsRecording,
             this.controller
         )
         UIBuilder.CreateContextSection(this.gui, this.contextViewController)
         UIBuilder.CreateChatHistorySection(this.gui, this.historyViewController)
         UIBuilder.CreatePromptSection(this.gui, this)
-        
+
         this.askButton := UIBuilder.CreateBottomControls(
-            this.gui, 
-            this.controller.GetSystemPrompts(this.controller.CurrentLLMTypeIndex), 
-            this.controller.CurrentSystemPromptIndex, 
+            this.gui,
+            this.controller.GetSystemPrompts(this.controller.CurrentLLMTypeIndex),
+            this.controller.CurrentSystemPromptIndex,
             this.controller
         )
-        
+
         UIBuilder.CreateResponseArea(this.gui)
     }
-    
+
     GuiClose(*) {
         this.gui.Destroy()
         this.guiShown := false
     }
-    
+
     UpdateRecordButton(isRecording) {
         if (this.guiShown) {
             try {
@@ -114,11 +114,11 @@ class AppWindow {
         ; iItem is at offset 3 * A_PtrSize
         ; uNewState is at offset 3 * A_PtrSize + 8
         ; uOldState is at offset 3 * A_PtrSize + 12
-        
+
         iItem := NumGet(lParam, 3 * A_PtrSize, "Int") + 1
         uNewState := NumGet(lParam, 3 * A_PtrSize + 8, "UInt")
         uOldState := NumGet(lParam, 3 * A_PtrSize + 12, "UInt")
-        
+
         ; LVIS_STATEIMAGEMASK = 0xF000
         if ((uNewState & 0xF000) != (uOldState & 0xF000)) {
             this.OnContextItemCheck(GuiCtrl, iItem)
@@ -137,7 +137,7 @@ class AppWindow {
             return true ; Fallback
         }
     }
-    
+
     GetPromptValue() {
         return this.gui["PromptEdit"].Value
     }

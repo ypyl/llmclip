@@ -1,13 +1,16 @@
 #Include ..\..\Lib\Json.ahk
 
 class PowerShellTool {
+    currentProcessPid := 0
+    isCancelled := false
+
     /**
      * Execute a PowerShell script and return the output
      * @param script - The PowerShell script to execute
      * @param workingDirectory - The working directory for the script (optional)
      * @returns The output from the PowerShell script
      */
-    static ExecuteScript(script, workingDirectory := A_ScriptDir) {
+    ExecuteScript(script, workingDirectory := A_ScriptDir) {
         try {
             shell := ComObject("WScript.Shell")
 
@@ -22,16 +25,24 @@ class PowerShellTool {
 
             ; Execute the PowerShell command
             exec := shell.Exec(psCommand)
+            this.currentProcessPid := exec.ProcessID
 
             ; Read output and error streams
             output := exec.StdOut.ReadAll()
             errorOutput := exec.StdErr.ReadAll()
 
-            ; Wait for the process to complete
+            ; Wait for the process to complete with cancellation check
             while (exec.Status = 0) {
+                ; Check for cancellation
+                if (this.isCancelled) {
+                    try ProcessClose(this.currentProcessPid)
+                    this.currentProcessPid := 0
+                    return "Operation cancelled by user"
+                }
                 Sleep(50)
             }
 
+            this.currentProcessPid := 0
             exitCode := exec.ExitCode
 
             ; Build result message
@@ -120,7 +131,7 @@ class PowerShellTool {
      * @param toolCall - The tool call object from the LLM
      * @returns The tool response message
      */
-    static ExecuteToolCall(toolCall) {
+    ExecuteToolCall(toolCall) {
         if (toolCall.Name != "execute_powershell") {
             return
         }
@@ -138,7 +149,7 @@ class PowerShellTool {
             workingDir := args.Has("working_directory") ? args["working_directory"] : A_ScriptDir
 
             ; Execute the PowerShell script
-            result := PowerShellTool.ExecuteScript(args["script"], workingDir)
+            result := this.ExecuteScript(args["script"], workingDir)
 
             msg := ChatMessage("tool")
             msg.Contents.Push(FunctionResultContent(toolCall.Id, result))
@@ -148,6 +159,17 @@ class PowerShellTool {
             msg := ChatMessage("tool")
             msg.Contents.Push(FunctionResultContent(toolCall.Id, "Error: " . e.Message))
             return msg
+        }
+    }
+
+    /**
+     * Cancel the PowerShell execution
+     */
+    Cancel() {
+        this.isCancelled := true
+        if (this.currentProcessPid > 0) {
+            try ProcessClose(this.currentProcessPid)
+            this.currentProcessPid := 0
         }
     }
 }

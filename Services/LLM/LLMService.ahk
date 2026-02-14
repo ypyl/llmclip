@@ -9,6 +9,8 @@
 class LLMService {
     configManager := ""
     llmClientInstance := ""
+    isCancelledForTools := false
+    currentTool := ""  ; Track currently executing tool instance for cancellation
 
     __New(configManager) {
         this.configManager := configManager
@@ -18,7 +20,7 @@ class LLMService {
         enabledTools := []
         if (powerShellEnabled)
             enabledTools.Push("powerShellTool")
-        
+
         if (fileSystemEnabled)
              enabledTools.Push("fileSystemTool")
 
@@ -29,7 +31,7 @@ class LLMService {
         if (webFetchEnabled && this.configManager.ollamaApiKey != "") {
             enabledTools.Push("web_fetch")
         }
-            
+
         return enabledTools
     }
 
@@ -38,20 +40,35 @@ class LLMService {
         results := []
 
         for tool_call in tool_calls {
+            ; Check if cancellation was requested
+            if (this.isCancelledForTools) {
+                break
+            }
+
             if (!sessionManager.IsToolCallExecuted(tool_call.id)) {
                 ; Measure tool execution time
                 startTime := A_TickCount
                 result := ""
-                
+
                 if (tool_call.Name == "execute_powershell") {
-                     result := PowerShellTool.ExecuteToolCall(tool_call)
+                     tool := PowerShellTool()
+                     this.currentTool := tool
+                     result := tool.ExecuteToolCall(tool_call)
                 } else if (tool_call.Name == "file_system") {
-                     result := FileSystemTool.ExecuteToolCall(tool_call)
+                     tool := FileSystemTool()
+                     this.currentTool := tool
+                     result := tool.ExecuteToolCall(tool_call)
                 } else if (tool_call.Name == "web_search") {
-                     result := WebSearchTool.ExecuteToolCall(tool_call, this.configManager.ollamaApiKey)
+                     tool := WebSearchTool()
+                     this.currentTool := tool
+                     result := tool.ExecuteToolCall(tool_call, this.configManager.ollamaApiKey)
                 } else if (tool_call.Name == "web_fetch") {
-                     result := WebFetchTool.ExecuteToolCall(tool_call, this.configManager.ollamaApiKey)
+                     tool := WebFetchTool()
+                     this.currentTool := tool
+                     result := tool.ExecuteToolCall(tool_call, this.configManager.ollamaApiKey)
                 }
+
+                this.currentTool := ""  ; Clear current tool reference
 
                 if (result) {
                     duration := (A_TickCount - startTime) / 1000
@@ -60,6 +77,9 @@ class LLMService {
                 }
             }
         }
+
+        ; Clear cancellation flag after execution completes (success or cancellation)
+        this.isCancelledForTools := false
         return results
     }
 
@@ -228,5 +248,16 @@ class LLMService {
         if (this.llmClientInstance) {
             this.llmClientInstance.Cancel()
         }
+    }
+
+    CancelTools() {
+        this.isCancelledForTools := true
+        if (this.currentTool != "") {
+            this.currentTool.Cancel()
+        }
+    }
+
+    ResetToolsCancellation() {
+        this.isCancelledForTools := false
     }
 }

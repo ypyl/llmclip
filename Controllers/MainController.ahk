@@ -352,7 +352,7 @@ class MainController {
             }
         } finally {
             ; 6. Refresh UI components
-            this.historyViewController.UpdateChatHistoryView()
+            this.historyViewController.UpdateChatHistoryView(focusedRow)
             this.renderLastMessageCommand.Execute()
 
             if (this.uncheckImagesCommand.Execute()) {

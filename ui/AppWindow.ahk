@@ -170,6 +170,10 @@ class AppWindow {
         this.gui["ChatHistory"].Modify(index, "-Select")
     }
 
+    SelectHistoryItem(index) {
+        this.gui["ChatHistory"].Modify(index, "Select")
+    }
+
     UpdateBatchModeMenu(enabled) {
         if (enabled) {
             this.modeMenu.Check("Batch Mode")

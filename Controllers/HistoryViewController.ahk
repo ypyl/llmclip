@@ -21,16 +21,19 @@ class HistoryViewController {
         this.copyToClipboardCommand := copyToClipboardCommand
     }
 
-    UpdateChatHistoryView(*) {
+    UpdateChatHistoryView(focusedRow := 0) {
         if (!this.view)
             return
 
         items := this.getHistoryListItemsCommand.Execute()
         this.view.DeleteChatHistoryItems()
-        
+
         for item in items {
             ; Add to ListView
             this.view.AddChatHistoryItem(item.roleEmoji, item.contentText, item.duration, item.tokens)
+        }
+        if (focusedRow) {
+            this.view.SelectHistoryItem(focusedRow)
         }
         this.view.SetChatMessageActionButtonVisible(false)  ; Hide the action button
         if (this.view.GetChatHistoryCount() > 0) {
@@ -47,7 +50,7 @@ class HistoryViewController {
 
         if (Item > 0) {
             presentationText := this.getMessagePresentationCommand.Execute(Item)
-            
+
             this.view.SetChatMessageActionButtonVisible(true)  ; Show the Copy button
             this.renderMarkdownCommand.Execute(presentationText)  ; Render the selected message in the WebView
         }

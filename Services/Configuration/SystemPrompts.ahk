@@ -28,6 +28,14 @@ class SystemPrompts {
         for name in this.prompts {
             names.Push(name)
         }
+        ; Ensure "Default" is first
+        for i, name in names {
+            if (name = "Default") {
+                names.RemoveAt(i)
+                names.InsertAt(1, "Default")
+                break
+            }
+        }
         return names
     }
 }

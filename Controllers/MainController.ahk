@@ -34,6 +34,8 @@ class MainController {
     getToolsStateCommand := ""
     getCompressionStateCommand := ""
     toggleToolCommand := ""
+    changeSystemPromptCommand := ""
+    switchSessionCommand := ""
 
 
     ; Sub-Controllers
@@ -58,7 +60,7 @@ class MainController {
         this.fileService := fileService
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages, processClipboard, selectModel, getToolsState, getCompressionState, toggleTool) {
+    SetCommands(saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages, processClipboard, selectModel, getToolsState, getCompressionState, toggleTool, changeSystemPrompt, switchSession) {
 
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
@@ -80,6 +82,8 @@ class MainController {
         this.getToolsStateCommand := getToolsState
         this.getCompressionStateCommand := getCompressionState
         this.toggleToolCommand := toggleTool
+        this.changeSystemPromptCommand := changeSystemPrompt
+        this.switchSessionCommand := switchSession
     }
 
 
@@ -247,21 +251,18 @@ class MainController {
     }
 
     SystemPromptChanged(*) {
-        this.sessionManager.SetCurrentSessionSystemPrompt(this.view.GetSystemPromptValue())
+        systemPromptIndex := this.view.GetSystemPromptValue()
+        this.changeSystemPromptCommand.Execute(systemPromptIndex)
 
-        ; Update the system prompt content
-        systemPrompt := this.configManager.GetSystemPromptValue(
-            this.sessionManager.GetCurrentSessionLLMType(),
-            this.sessionManager.GetCurrentSessionSystemPrompt()
-        )
+        ; Update UI based on new system prompt
         inputTemplate := this.configManager.GetInputTemplate(
             this.sessionManager.GetCurrentSessionLLMType(),
-            this.sessionManager.GetCurrentSessionSystemPrompt()
+            systemPromptIndex
         )
         if (inputTemplate) {
             this.view.SetPromptValue(inputTemplate)
         }
-        this.sessionManager.UpdateSystemPromptContent(systemPrompt)
+        
         this.contextViewController.UpdateContextView()
     }
 
@@ -499,8 +500,7 @@ class MainController {
     SessionChanged(*) {
         oldModelName := this.currentModelName
 
-        ; Switch to new session
-        this.sessionManager.SwitchSession(this.view.GetSessionSelectValue())
+        this.switchSessionCommand.Execute(this.view.GetSessionSelectValue())
 
         this.contextViewController.UpdateContextView()
         this.historyViewController.UpdateChatHistoryView()

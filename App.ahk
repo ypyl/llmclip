@@ -52,6 +52,7 @@
 #Include Commands\SetContextItemCheckedCommand.ahk
 #Include Commands\ChangeSystemPromptCommand.ahk
 #Include Commands\SwitchSessionCommand.ahk
+#Include Commands\ReloadSettingsCommand.ahk
 
 class App {
     controller := ""
@@ -127,9 +128,10 @@ class App {
         submitPrompt := SubmitPromptCommand(sess, cfg, llm, ctx, rec)
         changeSystemPrompt := ChangeSystemPromptCommand(sess, cfg)
         switchSession := SwitchSessionCommand(sess)
+        reloadSettings := ReloadSettingsCommand(cfg)
 
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages, processClip, selectModel, getToolsState, getCompressionState, toggleTool, changeSystemPrompt, switchSession
+            saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages, processClip, selectModel, getToolsState, getCompressionState, toggleTool, changeSystemPrompt, switchSession, reloadSettings
         )
 
         ; 4. Initialize Sub-Controllers

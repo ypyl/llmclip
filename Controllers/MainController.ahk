@@ -36,6 +36,7 @@ class MainController {
     toggleToolCommand := ""
     changeSystemPromptCommand := ""
     switchSessionCommand := ""
+    reloadSettingsCommand := ""
 
 
     ; Sub-Controllers
@@ -60,7 +61,7 @@ class MainController {
         this.fileService := fileService
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages, processClipboard, selectModel, getToolsState, getCompressionState, toggleTool, changeSystemPrompt, switchSession) {
+    SetCommands(saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages, processClipboard, selectModel, getToolsState, getCompressionState, toggleTool, changeSystemPrompt, switchSession, reloadSettings) {
 
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
@@ -84,6 +85,7 @@ class MainController {
         this.toggleToolCommand := toggleTool
         this.changeSystemPromptCommand := changeSystemPrompt
         this.switchSessionCommand := switchSession
+        this.reloadSettingsCommand := reloadSettings
     }
 
 
@@ -671,7 +673,7 @@ class MainController {
 
     ReloadSettings(*) {
         ; Reload settings from disk
-        this.configManager.Reload()
+        this.reloadSettingsCommand.Execute()
 
         ; Refresh LLM Type dropdown
         ; Refresh Model Menu

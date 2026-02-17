@@ -53,6 +53,8 @@
 #Include Commands\ChangeSystemPromptCommand.ahk
 #Include Commands\SwitchSessionCommand.ahk
 #Include Commands\ReloadSettingsCommand.ahk
+#Include Commands\ChangeAnswerSizeCommand.ahk
+#Include Commands\ToggleBatchModeCommand.ahk
 
 class App {
     controller := ""
@@ -129,9 +131,11 @@ class App {
         changeSystemPrompt := ChangeSystemPromptCommand(sess, cfg)
         switchSession := SwitchSessionCommand(sess)
         reloadSettings := ReloadSettingsCommand(cfg)
+        changeAnswerSize := ChangeAnswerSizeCommand(sess)
+        toggleBatchMode := ToggleBatchModeCommand(sess)
 
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages, processClip, selectModel, getToolsState, getCompressionState, toggleTool, changeSystemPrompt, switchSession, reloadSettings
+            saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages, processClip, selectModel, getToolsState, getCompressionState, toggleTool, changeSystemPrompt, switchSession, reloadSettings, changeAnswerSize, toggleBatchMode
         )
 
         ; 4. Initialize Sub-Controllers

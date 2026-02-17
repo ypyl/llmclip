@@ -305,6 +305,10 @@ class AppWindow {
         return FileSelect("S16", defaultFilename, title, filter)
     }
 
+    ShowOpenFileDialog(title, filter) {
+        return FileSelect("3", , title, filter)
+    }
+
     ShowMessage(text, title := "Information", options := "Iconi") {
         MsgBox(text, title, options)
     }

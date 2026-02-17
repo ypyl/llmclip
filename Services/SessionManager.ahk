@@ -14,6 +14,9 @@ class SessionManager {
     defaultSystemPrompt := "You are a helpful assistant. Be concise and direct in your responses."
     defaultLLMType := 1
     contextManager := ""
+    answerSize := "Default"
+    batchModeEnabled := false
+
 
     __New(defaultLLMType := 1, defaultSystemPrompt := "", contextManager := "") {
         this.defaultLLMType := defaultLLMType
@@ -156,6 +159,14 @@ class SessionManager {
             return true
         }
         return false
+    }
+
+    SetAnswerSize(size) {
+        this.answerSize := size
+    }
+
+    SetBatchMode(enabled) {
+        this.batchModeEnabled := enabled
     }
 
     UpdateSystemPromptContent(systemPromptContent) {

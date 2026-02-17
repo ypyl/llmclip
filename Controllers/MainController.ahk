@@ -37,7 +37,8 @@ class MainController {
     changeSystemPromptCommand := ""
     switchSessionCommand := ""
     reloadSettingsCommand := ""
-
+    changeAnswerSizeCommand := ""
+    toggleBatchModeCommand := ""
 
     ; Sub-Controllers
     contextViewController := ""
@@ -47,8 +48,6 @@ class MainController {
     batchModeEnabled := false
     processingState := "idle" ; idle, processing, tool_pending, tool_running
     currentModelName := ""
-    currentAnswerSize := "Default"
-
 
     __New(configManager, sessionManager, llmService, webViewManager, recordingService, contextManager, clipboardParser, fileService) {
         this.configManager := configManager
@@ -61,7 +60,7 @@ class MainController {
         this.fileService := fileService
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages, processClipboard, selectModel, getToolsState, getCompressionState, toggleTool, changeSystemPrompt, switchSession, reloadSettings) {
+    SetCommands(saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages, processClipboard, selectModel, getToolsState, getCompressionState, toggleTool, changeSystemPrompt, switchSession, reloadSettings, changeAnswerSize, toggleBatchMode) {
 
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
@@ -86,6 +85,8 @@ class MainController {
         this.changeSystemPromptCommand := changeSystemPrompt
         this.switchSessionCommand := switchSession
         this.reloadSettingsCommand := reloadSettings
+        this.changeAnswerSizeCommand := changeAnswerSize
+        this.toggleBatchModeCommand := toggleBatchMode
     }
 
 
@@ -147,8 +148,8 @@ class MainController {
             }
         }
 
-        ; Update state
-        this.currentAnswerSize := ItemName
+        ; Update state via command
+        this.changeAnswerSizeCommand.Execute(ItemName)
     }
 
     UpdateCompressionMenuState() {
@@ -287,8 +288,6 @@ class MainController {
         currentState := this.processingState
         promptText := this.view.GetPromptValue()
         focusedRow := this.view.GetSelectedHistoryIndex()
-        isBatchMode := this.batchModeEnabled
-        answerSize := this.currentAnswerSize
 
         isImageEnabled := this.IsImageInputEnabled[this.CurrentLLMTypeIndex]
         images := isImageEnabled ? this.sessionManager.GetCheckedImages() : []
@@ -298,9 +297,9 @@ class MainController {
             selectedIndices.Push(selectedIndex)
         }
 
-        batchItems := isBatchMode ? this.sessionManager.GetCheckedContextItems() : []
+        batchItems := this.sessionManager.batchModeEnabled ? this.sessionManager.GetCheckedContextItems() : []
 
-        if (isBatchMode && batchItems.Length == 0) {
+        if (this.sessionManager.batchModeEnabled && batchItems.Length == 0) {
             this.view.ShowMessage("Please check at least one item in the context list for batch mode.", "No Items Selected")
             return
         }
@@ -323,9 +322,7 @@ class MainController {
                 focusedRow: focusedRow,
                 selectedContextIndices: selectedIndices,
                 images: images,
-                isBatchMode: isBatchMode,
                 batchItems: batchItems,
-                answerSize: answerSize,
                 batchUpdateCallback: (label, messages) => this.historyViewController.UpdateChatHistoryView(),
                 isCancelledCallback: () => (this.processingState == "processing")
             })
@@ -404,11 +401,11 @@ class MainController {
     }
 
     ToggleBatchMode(*) {
-        ; Toggle batch mode state
-        this.batchModeEnabled := !this.batchModeEnabled
+        ; Toggle batch mode state via command
+        isEnabled := this.toggleBatchModeCommand.Execute()
 
         ; Update menu checkmark
-        this.view.UpdateBatchModeMenu(this.batchModeEnabled)
+        this.view.UpdateBatchModeMenu(isEnabled)
     }
 
     SetProcessingState(state) {
@@ -608,7 +605,7 @@ class MainController {
     }
 
     SaveConversation(*) {
-        selectedFile := FileSelect("S16", "conversation.json", "Save Conversation", "JSON Files (*.json)")
+        selectedFile := this.view.ShowSaveFileDialog("conversation.json", "Save Conversation", "JSON Files (*.json)")
         if (selectedFile) {
             try {
                 this.saveConversationCommand.Execute(selectedFile)
@@ -619,7 +616,7 @@ class MainController {
     }
 
     LoadConversation(*) {
-        selectedFile := FileSelect("3", , "Load Conversation", "JSON Files (*.json)")
+        selectedFile := this.view.ShowOpenFileDialog("Load Conversation", "JSON Files (*.json)")
         if (selectedFile) {
             try {
                 this.loadConversationCommand.Execute(selectedFile)

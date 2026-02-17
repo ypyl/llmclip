@@ -64,7 +64,7 @@ class SubmitPromptCommand {
         }
 
         ; 4. Handle Batch Mode
-        if (params.isBatchMode) {
+        if (this.sessionManager.batchModeEnabled) {
             this.PerformBatchSend(params)
             return { action: "idle" }
         }
@@ -117,7 +117,7 @@ class SubmitPromptCommand {
         webSearchEnabled := this.configManager.IsToolEnabled(currentLLM, "webSearch")
         webFetchEnabled := this.configManager.IsToolEnabled(currentLLM, "webFetch")
         readabilityEnabled := this.configManager.IsToolEnabled(currentLLM, "readability")
-        answerSize := params.HasOwnProp("answerSize") ? params.answerSize : "Default"
+        answerSize := this.sessionManager.answerSize
 
         try {
             newMessages := this.llmService.SendToLLM(
@@ -196,7 +196,7 @@ class SubmitPromptCommand {
                 HasUnexecutedToolCalls: (*) => false
             }
 
-            answerSize := params.HasOwnProp("answerSize") ? params.answerSize : "Default"
+            answerSize := this.sessionManager.answerSize
             newMessages := this.llmService.SendToLLM(tempSession, answerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, readabilityEnabled)
 
             for respMsg in newMessages {

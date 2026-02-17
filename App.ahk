@@ -2,6 +2,7 @@
 #Include Services\Configuration\ConfigurationService.ahk
 #Include Services\Base64Service.ahk
 #Include Services\LLM\LLMService.ahk
+#Include Services\LLM\MarkdownNewTool.ahk
 #Include Services\SessionManager.ahk
 #Include Services\ClipboardParserService.ahk
 #Include Services\WebViewManager.ahk
@@ -72,6 +73,7 @@ class App {
         llm := LLMService(cfg)
         fs := FileService()
         cls := ClipboardService()
+        
         mps := MessagePresentationService()
         cps := ContextPresentationService(ctx)
 
@@ -88,6 +90,7 @@ class App {
 
         ; 2.5 Initialize View
         this.window := AppWindow(this.controller)
+        
         this.controller.SetView(this.window)
 
         ; 3. Initialize Commands
@@ -110,7 +113,8 @@ class App {
         initializeApp := InitializeAppCommand()
         processClip := ProcessClipboardCommand(rec, cp, sess)
         saveDiagram := SaveDiagramCommand(fs)
-        replaceLink := ReplaceLinkWithContentCommand(wv, sess, ctx)
+        mdn := MarkdownNewTool()
+        replaceLink := ReplaceLinkWithContentCommand(mdn, sess, ctx)
         renderMarkdown := RenderMarkdownCommand(wv)
         renderLastMsg := RenderLastMessageCommand(sess, mps, wv)
         deleteCtxItems := DeleteContextItemsCommand(sess)

@@ -55,6 +55,7 @@ class UIBuilder {
         ToolsMenu.Add("File System", ObjBindMethod(controller, "ToggleTool", "fileSystemTool"))
         ToolsMenu.Add("Web Search", ObjBindMethod(controller, "ToggleTool", "webSearch"))
         ToolsMenu.Add("Web Fetch", ObjBindMethod(controller, "ToggleTool", "webFetch"))
+        ToolsMenu.Add("Markdown New", ObjBindMethod(controller, "ToggleTool", "markdownNew"))
         MyMenuBar.Add("Tools", ToolsMenu)
 
         MyMenuBar.Add("Answer Size", AnswerSizeMenu)

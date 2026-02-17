@@ -4,13 +4,9 @@ class WebViewManager {
     wv := ""
     wvc := ""
     clipboardHost := {}
-    articleHost := {}
     inputHost := {}
     errorCallback := ""
     saveDiagramCallback := ""
-    cache := Map()  ; Cache to store loaded articles by URL
-    articleReady := false
-    currentArticle := ""
     isHtmlLoaded := false
 
     uiFilePath := A_ScriptDir . "\ui.html"
@@ -22,14 +18,9 @@ class WebViewManager {
             Copy: (text) => A_Clipboard := text,
             SaveDiagram: (svgData) => this.OnSaveDiagram(svgData)
         }
-        this.articleHost := {
-            OnArticle: (article) => this.HandleArticle(article)
-        }
         this.inputHost := {
             Append: (text) => 0 ; Default placeholder
         }
-
-        this.cache := Map()  ; Initialize the cache
     }
 
     SetInputCallback(callback) {
@@ -49,7 +40,6 @@ class WebViewManager {
         this.wv := this.wvc.CoreWebView2
 
         this.wv.AddHostObjectToScript("clipboard", this.clipboardHost)
-        this.wv.AddHostObjectToScript("article", this.articleHost)
         this.wv.AddHostObjectToScript("input", this.inputHost)
 
         this.navStartingToken := this.wv.add_NavigationStarting((sender, args) => this.OnNavigationStarting(args))
@@ -62,48 +52,7 @@ class WebViewManager {
         this.wv.Navigate("file:///" . StrReplace(this.uiFilePath, "\", "/"))
     }
 
-    InitArticleMode() {
-        readabilityJS := FileRead(A_ScriptDir . "\readability.min.js")
-        this.scriptId := this.wv.AddScriptToExecuteOnDocumentCreatedAsync(readabilityJS).await()
-        ; We use the main navigation completed handler now
-    }
 
-    LoadArticle(url) {
-        ; Check if the article is already in the cache
-        if (this.cache.Has(url)) {
-            ; Article exists in cache, return it directly
-            return this.cache[url]
-        }
-
-        ; Reset synchronization variables
-        this.articleReady := false
-        this.currentArticle := ""
-
-        ; Article not in cache, load it
-        this.currentUrl := url  ; Store the URL for caching
-        this.InitArticleMode()
-        this.wv.Navigate(url)
-        this.isHtmlLoaded := false
-
-        ; Wait for article to be ready (with timeout)
-        startTime := A_TickCount
-        timeout := 5000  ; 5 seconds timeout
-
-        while (!this.articleReady) {
-            if (A_TickCount - startTime > timeout) {
-                this.HandleArticle("Not able to extract page content within " . (timeout / 1000) . " seconds.")  ; Handle timeout by returning empty article
-                break
-            }
-            Sleep(100)
-        }
-
-        return this.currentArticle
-    }
-
-    Navigate(url) {
-        this.wv.Navigate(url)
-        this.isHtmlLoaded := false
-    }
 
     OnNavigationStarting(args) {
         try {
@@ -126,67 +75,8 @@ class WebViewManager {
                 }
                 this.pendingRenderType := ""
                 this.pendingRenderContent := ""
-            } else if (InStr(uri, "http")) {
-                this.ExtractArticle()
             }
         }
-    }
-
-    ExtractArticle() {
-        try {
-            this.wv.ExecuteScriptAsync('
-            (
-                var contentType = document.contentType;
-                var article = null;
-
-                // Check if content type is text or xml based
-                if (contentType && (
-                    contentType.indexOf("text/plain") !== -1 ||
-                    contentType.indexOf("text/xml") !== -1 ||
-                    contentType.indexOf("application/xml") !== -1 ||
-                    contentType.indexOf("application/rss+xml") !== -1 ||
-                    contentType.indexOf("application/json") !== -1)) {
-                    // For text/xml, manually construct structure matching Readability output
-                    article = {
-                        title: document.title || "No Title",
-                        textContent: document.body ? document.body.innerText : (document.documentElement ? document.documentElement.textContent : ""),
-                        content: document.documentElement ? document.documentElement.outerHTML : "",
-                        byline: "",
-                        dir: ""
-                    };
-                } else {
-                    // Use Readability for HTML
-                    article = new Readability(document).parse();
-                }
-
-                var obj = window.chrome.webview.hostObjects.sync.article;
-                obj.OnArticle(article);
-            )')
-        } catch as e {
-            if (this.errorCallback) {
-                this.errorCallback.Call("Script error: " e.Message)
-            }
-            this.articleReady := true  ; Set to true to prevent infinite waiting
-        }
-    }
-
-    HandleArticle(article) {
-        ; Cache the article if we have a URL
-        if (HasProp(this, "currentUrl")) {
-            this.cache[this.currentUrl] := article
-        }
-
-        ; Store the article and signal it's ready
-        this.currentArticle := article
-        this.articleReady := true
-
-        ; Clean up
-        if HasProp(this, "scriptId")
-            this.wv.RemoveScriptToExecuteOnDocumentCreated(this.scriptId)
-        ; which in turn will ensure we navigate back to UI if needed.
-        ; We don't need to navigate back to UI here.
-        ; The caller (e.g. ContextViewController) will trigger an update which calls RenderMarkdown,
-      
     }
 
     EscapeForJs(content) {

@@ -4,6 +4,7 @@
 #Include FileSystemTool.ahk
 #Include WebSearchTool.ahk
 #Include WebFetchTool.ahk
+#Include MarkdownNewTool.ahk
 #Include ..\SessionManager.ahk
 
 class LLMService {
@@ -24,11 +25,12 @@ class LLMService {
         if (fileSystemEnabled)
              enabledTools.Push("fileSystemTool")
 
-        ; Enable web tools if API key is present
+        ; Enable web search if API key is present
         if (webSearchEnabled && this.configManager.ollamaApiKey != "") {
             enabledTools.Push("web_search")
         }
-        if (webFetchEnabled && this.configManager.ollamaApiKey != "") {
+        ; Enable web fetch unconditionally if enabled
+        if (webFetchEnabled) {
             enabledTools.Push("web_fetch")
         }
 
@@ -66,6 +68,10 @@ class LLMService {
                      tool := WebFetchTool()
                      this.currentTool := tool
                      result := tool.ExecuteToolCall(tool_call, this.configManager.ollamaApiKey)
+                } else if (tool_call.Name == "read_url_markdown") {
+                     tool := MarkdownNewTool()
+                     this.currentTool := tool
+                     result := tool.ExecuteToolCall(tool_call)
                 }
 
                 this.currentTool := ""  ; Clear current tool reference

@@ -14,7 +14,8 @@ class GetToolsMenuStateCommand {
             powerShell: this.configManager.IsToolEnabled(currentLLMIndex, "powerShellTool"),
             fileSystem: this.configManager.IsToolEnabled(currentLLMIndex, "fileSystemTool"),
             webSearch: this.configManager.IsToolEnabled(currentLLMIndex, "webSearch"),
-            webFetch: this.configManager.IsToolEnabled(currentLLMIndex, "webFetch")
+            webFetch: this.configManager.IsToolEnabled(currentLLMIndex, "webFetch"),
+            markdownNew: this.configManager.IsToolEnabled(currentLLMIndex, "markdownNew")
         }
     }
 }

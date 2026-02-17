@@ -3,6 +3,7 @@
 #Include "..\FileSystemTool.ahk"
 #Include "..\WebSearchTool.ahk"
 #Include "..\WebFetchTool.ahk"
+#Include "..\MarkdownNewTool.ahk"
 
 class GoogleProvider extends BaseProvider {
 
@@ -176,8 +177,11 @@ class GoogleProvider extends BaseProvider {
                 enabledTools.Push(FileSystemTool.GetGeminiToolDefinition())
             else if (t = "web_search")
                 enabledTools.Push(WebSearchTool.GetGeminiToolDefinition())
-            else if (t = "web_fetch")
+            else if (t = "web_fetch") {
                 enabledTools.Push(WebFetchTool.GetGeminiToolDefinition())
+            }
+            else if (t = "markdown_new")
+                enabledTools.Push(MarkdownNewTool.GetGeminiToolDefinition())
         }
         if (enabledTools.Length > 0)
             body["tools"] := enabledTools

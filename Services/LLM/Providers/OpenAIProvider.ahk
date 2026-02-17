@@ -3,6 +3,7 @@
 #Include "..\FileSystemTool.ahk"
 #Include "..\WebSearchTool.ahk"
 #Include "..\WebFetchTool.ahk"
+#Include "..\MarkdownNewTool.ahk"
 
 class OpenAIProvider extends BaseProvider {
 
@@ -28,8 +29,11 @@ class OpenAIProvider extends BaseProvider {
                 enabledTools.Push(FileSystemTool.GetOpenAiToolDefinition())
             else if (t = "web_search")
                 enabledTools.Push(WebSearchTool.GetOpenAiToolDefinition())
-            else if (t = "web_fetch")
+            else if (t = "web_fetch") {
                 enabledTools.Push(WebFetchTool.GetOpenAiToolDefinition())
+            } else if (t = "markdown_new") {
+                enabledTools.Push(MarkdownNewTool.GetOpenAiToolDefinition())
+            }
         }
         if (enabledTools.Length > 0)
             body["tools"] := enabledTools

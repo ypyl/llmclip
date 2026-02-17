@@ -195,6 +195,13 @@ class MainController {
         } else {
             this.view.toolsMenu.Uncheck("Web Fetch")
         }
+
+        ; Update Markdown New
+        if (toolStates.markdownNew) {
+            this.view.toolsMenu.Check("Markdown New")
+        } else {
+            this.view.toolsMenu.Uncheck("Markdown New")
+        }
     }
 
     ToggleTool(toolName, *) {

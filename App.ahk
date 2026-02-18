@@ -98,7 +98,7 @@ class App {
 
         ; 3. Initialize Commands
         saveConv := SaveConversationCommand(sess, fs)
-        loadConv := LoadConversationCommand(sess, fs)
+        loadConv := LoadConversationCommand(sess, cfg, fs)
         clearCtx := ClearContextCommand(sess)
         stopRec := StopRecordingCommand(rec, sess, ctx)
         startRec := StartRecordingCommand(rec)

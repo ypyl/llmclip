@@ -2,10 +2,12 @@
 
 class LoadConversationCommand {
     sessionManager := ""
+    configManager := ""
     fileService := ""
 
-    __New(sessionManager, fileService) {
+    __New(sessionManager, configManager, fileService) {
         this.sessionManager := sessionManager
+        this.configManager := configManager
         this.fileService := fileService
     }
 
@@ -23,5 +25,12 @@ class LoadConversationCommand {
         ; Parse JSON and import state
         state := JSON.Load(fileContent)
         this.sessionManager.ImportSessionState(state)
+
+        ; Update system prompt content to match loaded state
+        systemPrompt := this.configManager.GetSystemPromptValue(
+            this.sessionManager.GetCurrentSessionLLMType(),
+            this.sessionManager.GetCurrentSessionSystemPrompt()
+        )
+        this.sessionManager.UpdateSystemPromptContent(systemPrompt)
     }
 }

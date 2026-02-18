@@ -45,7 +45,6 @@ class MainController {
     historyViewController := ""
     notesController := ""
 
-    batchModeEnabled := false
     processingState := "idle" ; idle, processing, tool_pending, tool_running
     currentModelName := ""
 
@@ -324,7 +323,7 @@ class MainController {
                 images: images,
                 batchItems: batchItems,
                 batchUpdateCallback: (label, messages) => this.historyViewController.UpdateChatHistoryView(),
-                isCancelledCallback: () => (this.processingState == "processing")
+                isCancelledCallback: () => (this.processingState != "processing")
             })
 
             ; 4. Handle Result and update UI State
@@ -645,13 +644,6 @@ class MainController {
                 this.view.ClearSystemPrompt()
                 this.view.AddSystemPromptItems(this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType()))
                 this.view.SetSystemPromptValue(this.sessionManager.GetCurrentSessionSystemPrompt())
-
-                ; Update System Prompt Content
-                systemPrompt := this.configManager.GetSystemPromptValue(
-                    this.sessionManager.GetCurrentSessionLLMType(),
-                    this.sessionManager.GetCurrentSessionSystemPrompt()
-                )
-                this.sessionManager.UpdateSystemPromptContent(systemPrompt)
 
                 ; Update History View
                 this.historyViewController.UpdateChatHistoryView()

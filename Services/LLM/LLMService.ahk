@@ -17,7 +17,7 @@ class LLMService {
         this.configManager := configManager
     }
 
-    ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled) {
+    ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false) {
         enabledTools := []
         if (powerShellEnabled)
             enabledTools.Push("powerShellTool")
@@ -32,6 +32,10 @@ class LLMService {
         ; Enable web fetch unconditionally if enabled
         if (webFetchEnabled) {
             enabledTools.Push("web_fetch")
+        }
+        ; Enable markdown new if enabled
+        if (markdownNewEnabled) {
+            enabledTools.Push("read_url_markdown")
         }
 
         return enabledTools
@@ -89,7 +93,7 @@ class LLMService {
         return results
     }
 
-    SendToLLM(sessionManager, answerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled) {
+    SendToLLM(sessionManager, answerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false) {
         ; Use filtered messages to exclude previous batch processing
         messages := sessionManager.GetMessagesExcludingBatch()
 
@@ -98,7 +102,7 @@ class LLMService {
             settings := this.configManager.GetSelectedSettings(sessionManager.GetCurrentSessionLLMType())
 
             ; Update tools property based on checkbox values
-            settings["tools"] := this.ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled)
+            settings["tools"] := this.ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled)
 
             ; Add a user message to instruct the model on answer length based on menu selection
             answerSizeMsg := ""

@@ -381,17 +381,19 @@ class MainController {
     }
 
     SessionChanged(*) {
-        oldModelName := this.currentModelName
-
         this.switchSessionCommand.Execute(this.view.GetSessionSelectValue())
 
-        this.contextViewController.UpdateContextView()
-        this.historyViewController.UpdateChatHistoryView()
+        if (this.settingsController)
+            this.settingsController.UpdateCompressionMenuState()
 
+        this.UpdateSessionUI()
+    }
+
+    UpdateSessionUI() {
         currentModelIndex := this.sessionManager.GetCurrentSessionLLMType()
         newModelName := "Model: " . this.configManager.llmTypes[currentModelIndex]
 
-        ; Update menu checkmarks
+        ; 1. Update menu checkmarks
         for index, modelName in this.configManager.llmTypes {
             if (index = currentModelIndex) {
                 this.view.modelMenu.Check(modelName)
@@ -400,22 +402,30 @@ class MainController {
             }
         }
 
-        ; Update menu bar label if model changed
-        if (oldModelName != newModelName) {
-            try this.view.menuBar.Rename(oldModelName, newModelName)
+        ; 2. Update menu bar label if model changed
+        if (this.currentModelName != newModelName) {
+            try this.view.menuBar.Rename(this.currentModelName, newModelName)
             this.currentModelName := newModelName
         }
 
-        ; Update system prompts for the selected LLM type
+        ; 3. Update Session Select UI
+        this.view.SetSessionSelectValue(this.sessionManager.currentSessionIndex)
+
+        ; 4. Update System Prompt UI
         this.view.ClearSystemPrompt()
-        this.view.AddSystemPromptItems(this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType()))
+        this.view.AddSystemPromptItems(this.configManager.GetSystemPromptNames(currentModelIndex))
         this.view.SetSystemPromptValue(this.sessionManager.GetCurrentSessionSystemPrompt())
 
-        ; Clear response field
-        this.RenderMarkdown("")
-
+        ; 5. Update Tools Menu
         if (this.settingsController)
-            this.settingsController.UpdateCompressionMenuState()
+            this.settingsController.UpdateToolsMenuState()
+
+        ; 6. Refresh sub-views
+        this.contextViewController.UpdateContextView()
+        this.historyViewController.UpdateChatHistoryView()
+
+        ; 7. Clear response area
+        this.RenderMarkdown("")
     }
 
     ResetAll(*) {
@@ -423,12 +433,9 @@ class MainController {
         this.resetAllCommand.Execute()
 
         ; Update UI
-        this.historyViewController.UpdateChatHistoryView()
-        this.contextViewController.UpdateContextView()
-
-        ; Clear response and prompt
-        this.RenderMarkdown("")
+        this.UpdateSessionUI()
     }
+
 
     SaveConversation(*) {
         selectedFile := this.view.ShowSaveFileDialog("conversation.json", "Save Conversation", "JSON Files (*.json)")
@@ -446,45 +453,11 @@ class MainController {
         if (selectedFile) {
             try {
                 this.loadConversationCommand.Execute(selectedFile)
-
-                ; Update LLM Type
-                currentModelIndex := this.sessionManager.GetCurrentSessionLLMType()
-                for index, modelName in this.configManager.llmTypes {
-                    if (index = currentModelIndex) {
-                        this.view.modelMenu.Check(modelName)
-                    } else {
-                        this.view.modelMenu.Uncheck(modelName)
-                    }
-                }
-
-                ; Update model name label
-                oldModelName := this.currentModelName
-                newModelName := "Model: " . this.configManager.llmTypes[currentModelIndex]
-                try this.view.menuBar.Rename(oldModelName, newModelName)
-                this.currentModelName := newModelName
-
-                ; Update Session UI
-                this.view.SetSessionSelectValue(this.sessionManager.currentSessionIndex)
-                this.contextViewController.UpdateContextView()
-
-                ; Update System Prompt UI
-                this.view.ClearSystemPrompt()
-                this.view.AddSystemPromptItems(this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType()))
-                this.view.SetSystemPromptValue(this.sessionManager.GetCurrentSessionSystemPrompt())
-
-                ; Update History View
-                this.historyViewController.UpdateChatHistoryView()
-
-                ; Update Tools Menu
-                if (this.settingsController)
-                    this.settingsController.UpdateToolsMenuState()
-
-                ; Clear Response Area
-                this.RenderMarkdown("")
-
+                this.UpdateSessionUI()
             } catch as e {
                 MsgBox("Failed to load conversation: " . e.Message, "Error", "Iconx")
             }
         }
     }
+
 }

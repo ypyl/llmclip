@@ -28,7 +28,14 @@ class CompressHistoryCommand {
             throw Error("Compression prompt not configured for this provider.")
         }
 
-        ; Note: llmService.CompressHistory already handles adding the conversationText or using the sessionManager
-        return this.llmService.CompressHistory(this.sessionManager)
+        ; Call service to get compressed summary
+        compressedMsg := this.llmService.CompressHistory(this.sessionManager)
+        
+        ; Mutate state: replace history with compressed version
+        if (compressedMsg != "") {
+            this.sessionManager.ReplaceWithCompressed(compressedMsg)
+        }
+        
+        return compressedMsg
     }
 }

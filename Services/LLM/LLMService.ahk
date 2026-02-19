@@ -128,12 +128,9 @@ class LLMService {
                 messages.RemoveAt(messages.Length)
             }
 
-            ; Get the actual session messages array (not the filtered copy)
-            ; and add the new messages to it
-            actualSessionMessages := sessionManager.GetCurrentSessionMessages()
+            ; Attach metadata to new messages
             for newMessage in newMessages {
                 newMessage.AdditionalProperties["duration"] := duration
-                actualSessionMessages.Push(newMessage)
             }
 
             return newMessages
@@ -193,12 +190,6 @@ class LLMService {
             if (newMessages.Length > 0) {
                 compressedMsg := newMessages[1]
                 compressedMsg.AdditionalProperties["duration"] := duration
-
-                ; Replace session messages
-                currentSystemMsg := messages[1]
-                sessionManager.ClearCurrentMessages()
-                sessionManager.sessionMessages[sessionManager.currentSessionIndex].Push(currentSystemMsg)
-                sessionManager.sessionMessages[sessionManager.currentSessionIndex].Push(compressedMsg)
 
                 return compressedMsg
             }

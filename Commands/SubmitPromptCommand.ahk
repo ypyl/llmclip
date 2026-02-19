@@ -130,6 +130,11 @@ class SubmitPromptCommand {
                 markdownNewEnabled
             )
 
+            ; Mutate state: append new messages
+            if (newMessages.Length > 0) {
+                this.sessionManager.AddMessages(newMessages)
+            }
+
             hasUnexecuted := this.sessionManager.HasUnexecutedToolCalls()
             return {
                 action: hasUnexecuted ? "tool_pending" : "idle",
@@ -222,9 +227,8 @@ class SubmitPromptCommand {
             if (this.sessionManager.HasToolCalls(msg)) {
                 toolResults := this.llmService.ExecuteToolCalls(this.sessionManager, msg)
                 if (toolResults.Length > 0) {
-                    for res in toolResults {
-                        messages.Push(res)
-                    }
+                    ; Mutate state: append tool results
+                    this.sessionManager.AddMessages(toolResults)
                     executedAny := true
                 }
             }

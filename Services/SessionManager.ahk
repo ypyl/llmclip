@@ -60,6 +60,37 @@ class SessionManager {
     }
 
     /**
+     * Appends messages to the current session.
+     * @param {Array|ChatMessage} messages One or more ChatMessage instances
+     */
+    AddMessages(messages) {
+        current := this.GetCurrentSessionMessages()
+        if (Type(messages) == "Array") {
+            for msg in messages {
+                current.Push(msg)
+            }
+        } else {
+            current.Push(messages)
+        }
+    }
+
+    /**
+     * Replaces the current session's messages, preserving the system message.
+     * @param {ChatMessage} compressedMsg The new compressed summary message
+     */
+    ReplaceWithCompressed(compressedMsg) {
+        messages := this.GetCurrentSessionMessages()
+        systemMsg := messages[1] ; Capture current system message
+        
+        this.ClearCurrentMessages()
+        
+        ; Replace built-in default with actual current system message
+        current := this.GetCurrentSessionMessages()
+        current[1] := systemMsg
+        current.Push(compressedMsg)
+    }
+
+    /**
      * Get messages for the current session, excluding those marked as batch mode or batch response
      * @returns Array of ChatMessage instances
      */

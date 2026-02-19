@@ -17,12 +17,9 @@ class MainController {
     saveConversationCommand := ""
     loadConversationCommand := ""
     clearContextCommand := ""
-    stopRecordingCommand := ""
-    startRecordingCommand := ""
     compressHistoryCommand := ""
     extractLearningsCommand := ""
     resetAllCommand := ""
-    toggleRecordingCommand := ""
     initializeAppCommand := ""
     saveDiagramCommand := ""
     renderMarkdownCommand := ""
@@ -30,25 +27,22 @@ class MainController {
     renderLastMessageCommand := ""
     processClipboardCommand := ""
     uncheckImagesCommand := ""
-    selectModelCommand := ""
-    getToolsStateCommand := ""
-    getCompressionStateCommand := ""
-    toggleToolCommand := ""
-    changeSystemPromptCommand := ""
     switchSessionCommand := ""
-    reloadSettingsCommand := ""
-    changeAnswerSizeCommand := ""
     toggleBatchModeCommand := ""
 
     ; Sub-Controllers
     contextViewController := ""
     historyViewController := ""
     notesController := ""
+    settingsController := ""
+    recordingController := ""
 
     processingState := "idle" ; idle, processing, tool_pending, tool_running
     currentModelName := ""
 
-    __New(configManager, sessionManager, llmService, webViewManager, recordingService, contextManager, clipboardParser, fileService) {
+    messagePresentationService := ""
+
+    __New(configManager, sessionManager, llmService, webViewManager, recordingService, contextManager, clipboardParser, fileService, messagePresentationService) {
         this.configManager := configManager
         this.sessionManager := sessionManager
         this.llmService := llmService
@@ -57,19 +51,16 @@ class MainController {
         this.contextManager := contextManager
         this.clipboardParser := clipboardParser
         this.fileService := fileService
+        this.messagePresentationService := messagePresentationService
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages, processClipboard, selectModel, getToolsState, getCompressionState, toggleTool, changeSystemPrompt, switchSession, reloadSettings, changeAnswerSize, toggleBatchMode) {
-
+    SetCommands(saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages, processClipboard, switchSession, toggleBatchMode) {
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
         this.clearContextCommand := clearCtx
-        this.stopRecordingCommand := stopRec
-        this.startRecordingCommand := startRec
         this.compressHistoryCommand := compress
         this.extractLearningsCommand := extract
         this.resetAllCommand := resetAll
-        this.toggleRecordingCommand := toggleRec
         this.initializeAppCommand := initializeApp
         this.saveDiagramCommand := saveDiagram
         this.renderMarkdownCommand := renderMarkdown
@@ -77,171 +68,95 @@ class MainController {
         this.renderLastMessageCommand := renderLastMsg
         this.uncheckImagesCommand := uncheckImages
         this.processClipboardCommand := processClipboard
-        this.selectModelCommand := selectModel
-        this.getToolsStateCommand := getToolsState
-        this.getCompressionStateCommand := getCompressionState
-        this.toggleToolCommand := toggleTool
-        this.changeSystemPromptCommand := changeSystemPrompt
         this.switchSessionCommand := switchSession
-        this.reloadSettingsCommand := reloadSettings
-        this.changeAnswerSizeCommand := changeAnswerSize
         this.toggleBatchModeCommand := toggleBatchMode
     }
 
-
-    SetSubControllers(ctxView, histView, notes) {
+    SetSubControllers(ctxView, histView, notes, settings, recording) {
         this.contextViewController := ctxView
         this.historyViewController := histView
         this.notesController := notes
+        this.settingsController := settings
+        this.recordingController := recording
     }
-
 
     SetView(view) {
         this.view := view
     }
 
-    SelectModel(ItemName, ItemPos, MyMenu) {
-        ; Update session with new model index
-        this.selectModelCommand.Execute(ItemPos)
+    CompressHistory(*) {
+        ; Disable Ask LLM button while processing
+        if (this.view.guiShown) {
+            this.view.SetAskButtonText("Compressing...")
+            this.view.SetAskButtonEnabled(false)
+        }
 
-        ; Update menu checkmarks
-        for index, modelName in this.configManager.llmTypes {
-            if (index = ItemPos) {
-                MyMenu.Check(modelName)
-            } else {
-                MyMenu.Uncheck(modelName)
+        try {
+            compressedMsg := this.compressHistoryCommand.Execute()
+
+            if (compressedMsg != "") {
+                 ; Update UI
+                 this.historyViewController.UpdateChatHistoryView()
+                 this.RenderMarkdown(this.messagePresentationService.GetPresentationText(compressedMsg))
+            }
+
+        } catch as e {
+            MsgBox("Compression failed: " . e.Message, "Error", "Iconx")
+        } finally {
+            ; Re-enable Ask LLM button
+            if (this.view.guiShown) {
+                this.view.SetAskButtonText("Ask LLM")
+                this.view.SetAskButtonEnabled(true)
             }
         }
-
-        ; Update menu bar label
-        oldModelName := this.currentModelName
-        newModelName := "Model: " . this.configManager.llmTypes[ItemPos]
-        if (oldModelName != newModelName) {
-            try this.view.menuBar.Rename(oldModelName, newModelName)
-            this.currentModelName := newModelName
-        }
-
-        ; Update system prompts for the new model
-        this.view.ClearSystemPrompt()
-        systemPromptNames := this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType())
-        this.view.AddSystemPromptItems(systemPromptNames)
-
-        if (systemPromptNames.Length > 0) {
-            this.view.SetSystemPromptValue(1)
-            this.view.SetSystemPromptEnabled(true)
-        } else {
-            this.view.SetSystemPromptEnabled(false)
-        }
-
-        this.UpdateToolsMenuState()
-        this.UpdateCompressionMenuState()
     }
 
-    SelectAnswerSize(ItemName, ItemPos, MyMenu) {
-        ; Update checkmarks
-        for _, size in ["Small", "Default", "Long"] {
-            if (size = ItemName) {
-                MyMenu.Check(size)
-            } else {
-                MyMenu.Uncheck(size)
+    ExtractLearnings(*) {
+        ; Disable Ask LLM button while processing
+        if (this.view.guiShown) {
+            this.view.SetAskButtonText("Extracting...")
+            this.view.SetAskButtonEnabled(false)
+        }
+
+        try {
+            extractedNotes := this.extractLearningsCommand.Execute()
+
+            if (extractedNotes != "") {
+                presentationText := this.messagePresentationService.GetPresentationText(extractedNotes)
+                this.notesController.ShowNotes(presentationText)
+            }
+
+        } catch as e {
+            MsgBox("Extraction failed: " . e.Message, "Error", "Iconx")
+        } finally {
+            ; Re-enable Ask LLM button
+            if (this.view.guiShown) {
+                this.view.SetAskButtonText("Ask LLM")
+                this.view.SetAskButtonEnabled(true)
             }
         }
-
-        ; Update state via command
-        this.changeAnswerSizeCommand.Execute(ItemName)
-    }
-
-    UpdateCompressionMenuState() {
-        if (!this.view || !this.view.historyMenu)
-            return
-
-        isEnabled := this.getCompressionStateCommand.Execute()
-
-        if (isEnabled) {
-            this.view.historyMenu.Enable("Compress")
-        } else {
-            this.view.historyMenu.Disable("Compress")
-        }
-    }
-
-    UpdateToolsMenuState() {
-        if (!this.view || !this.view.toolsMenu)
-            return
-
-        toolStates := this.getToolsStateCommand.Execute()
-
-        ; Update PowerShell
-        if (toolStates.powerShell) {
-            this.view.toolsMenu.Check("PowerShell")
-        } else {
-            this.view.toolsMenu.Uncheck("PowerShell")
-        }
-
-        ; Update File System
-        if (toolStates.fileSystem) {
-             this.view.toolsMenu.Check("File System")
-        } else {
-             this.view.toolsMenu.Uncheck("File System")
-        }
-
-        ; Update Web Search
-        if (toolStates.webSearch) {
-            this.view.toolsMenu.Check("Web Search")
-        } else {
-            this.view.toolsMenu.Uncheck("Web Search")
-        }
-
-        ; Update Web Fetch
-        if (toolStates.webFetch) {
-            this.view.toolsMenu.Check("Web Fetch")
-        } else {
-            this.view.toolsMenu.Uncheck("Web Fetch")
-        }
-
-        ; Update Markdown New
-        if (toolStates.markdownNew) {
-            this.view.toolsMenu.Check("Markdown New")
-        } else {
-            this.view.toolsMenu.Uncheck("Markdown New")
-        }
-    }
-
-    ToggleTool(toolName, *) {
-        ; Execute toggle command
-        this.toggleToolCommand.Execute(toolName)
-
-        ; Update UI
-        this.UpdateToolsMenuState()
     }
 
     Start() {
         this.initializeAppCommand.Execute()
         this.Show()
-        this.UpdateUiBasesOnRecordingStatus()
+        if (this.recordingController)
+            this.recordingController.UpdateUiBasesOnRecordingStatus()
         OnClipboardChange ObjBindMethod(this, "ClipChanged")
     }
 
     ToggleDisplay() {
         if (!this.recordingService.isRecording) {
-            this.startRecordingCommand.Execute()
-            this.UpdateUiBasesOnRecordingStatus()
+            this.recordingController.OnStartRecording()
         } else if (!this.view.guiShown) {
             this.view.Show()
         } else {
-            this.stopRecordingCommand.Execute()
-            this.UpdateUiBasesOnRecordingStatus()
+            this.recordingController.OnStopRecording()
         }
     }
-
 
     RenderMarkdown(content) {
         this.renderMarkdownCommand.Execute(content)
-    }
-
-    UpdateUiBasesOnRecordingStatus(*) {
-        if (this.view.guiShown) {
-             this.view.UpdateRecordButton(this.recordingService.isRecording)
-        }
     }
 
     Show(*) {
@@ -257,22 +172,6 @@ class MainController {
 
         ; Update views
         this.historyViewController.UpdateChatHistoryView()
-    }
-
-    SystemPromptChanged(*) {
-        systemPromptIndex := this.view.GetSystemPromptValue()
-        this.changeSystemPromptCommand.Execute(systemPromptIndex)
-
-        ; Update UI based on new system prompt
-        inputTemplate := this.configManager.GetInputTemplate(
-            this.sessionManager.GetCurrentSessionLLMType(),
-            systemPromptIndex
-        )
-        if (inputTemplate) {
-            this.view.SetPromptValue(inputTemplate)
-        }
-        
-        this.contextViewController.UpdateContextView()
     }
 
     AskToLLM(*) {
@@ -347,8 +246,7 @@ class MainController {
                 }
 
                 if (this.recordingService.isRecording) {
-                    this.stopRecordingCommand.Execute()
-                    this.UpdateUiBasesOnRecordingStatus()
+                    this.recordingController.OnStopRecording()
                 }
             }
         } catch as e {
@@ -425,27 +323,7 @@ class MainController {
         }
     }
 
-    ToggleRecording(*) {
-        this.ToggleDisplay()
-    }
-
     ; Event Handlers from UI/Tray
-    OnStartRecording() {
-        this.startRecordingCommand.Execute()
-        this.UpdateUiBasesOnRecordingStatus()
-        ; Update tray status if needed - this should be handled by a listener or direct call
-    }
-
-    OnStopRecording() {
-        this.stopRecordingCommand.Execute()
-        this.UpdateUiBasesOnRecordingStatus()
-    }
-
-    OnToggleRecording() {
-        this.toggleRecordingCommand.Execute()
-        this.UpdateUiBasesOnRecordingStatus()
-    }
-
     OnDisplayLLM() => this.Show()
     OnExit() => this.ExitApplication()
 
@@ -536,7 +414,8 @@ class MainController {
         ; Clear response field
         this.RenderMarkdown("")
 
-        this.UpdateCompressionMenuState()
+        if (this.settingsController)
+            this.settingsController.UpdateCompressionMenuState()
     }
 
     ResetAll(*) {
@@ -549,58 +428,6 @@ class MainController {
 
         ; Clear response and prompt
         this.RenderMarkdown("")
-    }
-
-    CompressHistory(*) {
-        ; Disable Ask LLM button while processing
-        if (this.view.guiShown) {
-            this.view.SetAskButtonText("Compressing...")
-            this.view.SetAskButtonEnabled(false)
-        }
-
-        try {
-            compressedMsg := this.compressHistoryCommand.Execute()
-
-            if (compressedMsg != "") {
-                 ; Update UI
-                 this.historyViewController.UpdateChatHistoryView()
-                 this.RenderMarkdown(this.sessionManager.GetMessageAsString(compressedMsg))
-            }
-
-        } catch as e {
-            MsgBox("Compression failed: " . e.Message, "Error", "Iconx")
-        } finally {
-            ; Re-enable Ask LLM button
-            if (this.view.guiShown) {
-                this.view.SetAskButtonText("Ask LLM")
-                this.view.SetAskButtonEnabled(true)
-            }
-        }
-    }
-
-    ExtractLearnings(*) {
-        ; Disable Ask LLM button while processing
-        if (this.view.guiShown) {
-            this.view.SetAskButtonText("Extracting...")
-            this.view.SetAskButtonEnabled(false)
-        }
-
-        try {
-            extractedNotes := this.extractLearningsCommand.Execute()
-
-            if (extractedNotes != "") {
-                this.notesController.ShowNotes(extractedNotes)
-            }
-
-        } catch as e {
-            MsgBox("Extraction failed: " . e.Message, "Error", "Iconx")
-        } finally {
-            ; Re-enable Ask LLM button
-            if (this.view.guiShown) {
-                this.view.SetAskButtonText("Ask LLM")
-                this.view.SetAskButtonEnabled(true)
-            }
-        }
     }
 
     SaveConversation(*) {
@@ -649,7 +476,8 @@ class MainController {
                 this.historyViewController.UpdateChatHistoryView()
 
                 ; Update Tools Menu
-                this.UpdateToolsMenuState()
+                if (this.settingsController)
+                    this.settingsController.UpdateToolsMenuState()
 
                 ; Clear Response Area
                 this.RenderMarkdown("")
@@ -658,50 +486,5 @@ class MainController {
                 MsgBox("Failed to load conversation: " . e.Message, "Error", "Iconx")
             }
         }
-    }
-
-    ReloadSettings(*) {
-        ; Reload settings from disk
-        this.reloadSettingsCommand.Execute()
-
-        ; Refresh LLM Type dropdown
-        ; Refresh Model Menu
-        this.view.modelMenu.Delete() ; Delete all items
-        for index, modelName in this.configManager.llmTypes {
-            this.view.modelMenu.Add(modelName, ObjBindMethod(this, "SelectModel"))
-        }
-
-        ; Restore model checkmark
-        currentModelIndex := this.sessionManager.GetCurrentSessionLLMType()
-        if (currentModelIndex <= this.configManager.llmTypes.Length) {
-            this.view.modelMenu.Check(this.configManager.llmTypes[currentModelIndex])
-        } else {
-            ; If former selection no longer exists, default to first
-            this.sessionManager.SetCurrentSessionLLMType(1)
-            this.view.modelMenu.Check(this.configManager.llmTypes[1])
-        }
-
-        ; Update MenuBar label
-        oldModelName := this.currentModelName
-        newModelName := "Model: " . this.configManager.llmTypes[this.sessionManager.GetCurrentSessionLLMType()]
-        try this.view.menuBar.Rename(oldModelName, newModelName)
-        this.currentModelName := newModelName
-
-        ; Refresh System Prompt Combo
-        currentSystemPrompt := this.view.GetSystemPromptValue()
-
-        this.view.ClearSystemPrompt()
-        this.view.AddSystemPromptItems(this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType()))
-
-        ; Try to preserve current selection, otherwise default to first
-        try {
-            this.view.SetSystemPromptValue(currentSystemPrompt)
-        } catch {
-            this.view.SetSystemPromptValue(1)
-            this.sessionManager.SetCurrentSessionSystemPrompt(1)
-        }
-
-        this.UpdateToolsMenuState()
-        this.UpdateCompressionMenuState()
     }
 }

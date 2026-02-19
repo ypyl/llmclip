@@ -245,7 +245,7 @@ class LLMService {
             newMessages := this.llmClientInstance.Call(tempMessages)
 
             if (newMessages.Length > 0) {
-                return sessionManager.GetMessageAsString(newMessages[1])
+                return newMessages[1]
             }
             return ""
 

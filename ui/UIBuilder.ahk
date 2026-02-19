@@ -2,18 +2,18 @@
 #Include UIConfig.ahk
 
 class UIBuilder {
-    static CreateMenuBar(gui, controller, llmTypes, currentLLMTypeIndex) {
+    static CreateMenuBar(gui, rootController, settingsController, llmTypes, currentLLMTypeIndex) {
         FileMenu := Menu()
-        FileMenu.Add("Save Conversation", ObjBindMethod(controller, "SaveConversation"))
-        FileMenu.Add("Load Conversation", ObjBindMethod(controller, "LoadConversation"))
+        FileMenu.Add("Save Conversation", ObjBindMethod(rootController, "SaveConversation"))
+        FileMenu.Add("Load Conversation", ObjBindMethod(rootController, "LoadConversation"))
         FileMenu.Add()  ; Separator
-        FileMenu.Add("Reload Settings", ObjBindMethod(controller, "ReloadSettings"))
+        FileMenu.Add("Reload Settings", ObjBindMethod(settingsController, "ReloadSettings"))
         FileMenu.Add()  ; Separator
-        FileMenu.Add("Exit", ObjBindMethod(controller, "ExitApplication"))
+        FileMenu.Add("Exit", ObjBindMethod(rootController, "ExitApplication"))
 
         ModelMenu := Menu()
         for index, modelName in llmTypes {
-            ModelMenu.Add(modelName, ObjBindMethod(controller, "SelectModel"))
+            ModelMenu.Add(modelName, ObjBindMethod(settingsController, "SelectModel"))
         }
 
         ; Get current model name for menu label
@@ -28,21 +28,30 @@ class UIBuilder {
 
         ; Create Answer Size menu
         AnswerSizeMenu := Menu()
-        AnswerSizeMenu.Add("Small", ObjBindMethod(controller, "SelectAnswerSize"))
-        AnswerSizeMenu.Add("Default", ObjBindMethod(controller, "SelectAnswerSize"))
-        AnswerSizeMenu.Add("Long", ObjBindMethod(controller, "SelectAnswerSize"))
+        AnswerSizeMenu.Add("Small", ObjBindMethod(settingsController, "SelectAnswerSize"))
+        AnswerSizeMenu.Add("Default", ObjBindMethod(settingsController, "SelectAnswerSize"))
+        AnswerSizeMenu.Add("Long", ObjBindMethod(settingsController, "SelectAnswerSize"))
 
         ; Set initial checkmark (Default = index 2)
         AnswerSizeMenu.Check("Default")
 
         ; Create History menu
         HistoryMenu := Menu()
-        HistoryMenu.Add("Compress", ObjBindMethod(controller, "CompressHistory"))
-        HistoryMenu.Add("Extract Notes", ObjBindMethod(controller, "ExtractLearnings"))
+        ; Note: Compress and Extract are still somewhat root actions or could be in HistoryController
+        ; For now, keep them in root if they coordinate multiple things, but they were moved to LLMService/Commands anyway.
+        ; Actually, they were in MainController. I should check where they are now.
+        ; I removed them from MainController. They should probably be in a Command or another controller.
+        ; Wait, I removed CompressHistory and ExtractLearnings from MainController but didn't put them anywhere else.
+        ; I should probably keep them in MainController or move them to HistoryViewController if they relate to history.
+        ; ARCHITECTURE says: Coordination happens only via the root controller or services.
+        ; I'll put them back in MainController for now as they are "orchestration" of LLM + Session.
+        
+        HistoryMenu.Add("Compress", ObjBindMethod(rootController, "CompressHistory"))
+        HistoryMenu.Add("Extract Notes", ObjBindMethod(rootController, "ExtractLearnings"))
 
         ; Create Mode menu
         ModeMenu := Menu()
-        ModeMenu.Add("Batch Mode", ObjBindMethod(controller, "ToggleBatchMode"))
+        ModeMenu.Add("Batch Mode", ObjBindMethod(rootController, "ToggleBatchMode"))
 
         MyMenuBar := MenuBar()
         MyMenuBar.Add("&File", FileMenu)
@@ -51,11 +60,11 @@ class UIBuilder {
         
         ; Create Tools menu
         ToolsMenu := Menu()
-        ToolsMenu.Add("PowerShell", ObjBindMethod(controller, "ToggleTool", "powerShellTool"))
-        ToolsMenu.Add("File System", ObjBindMethod(controller, "ToggleTool", "fileSystemTool"))
-        ToolsMenu.Add("Web Search", ObjBindMethod(controller, "ToggleTool", "webSearch"))
-        ToolsMenu.Add("Web Fetch", ObjBindMethod(controller, "ToggleTool", "webFetch"))
-        ToolsMenu.Add("Markdown New", ObjBindMethod(controller, "ToggleTool", "markdownNew"))
+        ToolsMenu.Add("PowerShell", ObjBindMethod(settingsController, "ToggleTool", "powerShellTool"))
+        ToolsMenu.Add("File System", ObjBindMethod(settingsController, "ToggleTool", "fileSystemTool"))
+        ToolsMenu.Add("Web Search", ObjBindMethod(settingsController, "ToggleTool", "webSearch"))
+        ToolsMenu.Add("Web Fetch", ObjBindMethod(settingsController, "ToggleTool", "webFetch"))
+        ToolsMenu.Add("Markdown New", ObjBindMethod(settingsController, "ToggleTool", "markdownNew"))
         MyMenuBar.Add("Tools", ToolsMenu)
 
         MyMenuBar.Add("Answer Size", AnswerSizeMenu)
@@ -63,26 +72,26 @@ class UIBuilder {
         gui.MenuBar := MyMenuBar
         
         ; Initialize controller's current model name to match the menu
-        controller.currentModelName := currentModelName
+        rootController.currentModelName := currentModelName
 
 
         return {menuBar: MyMenuBar, modelMenu: ModelMenu, historyMenu: HistoryMenu, toolsMenu: ToolsMenu, modeMenu: ModeMenu}  ; Return menuBar, modelMenu, historyMenu, toolsMenu and modeMenu
     }
 
-    static CreateTopControls(gui, sessionNames, currentSessionIndex, isRecording, controller) {
+    static CreateTopControls(gui, sessionNames, currentSessionIndex, isRecording, rootController, recordingController) {
         ; Add session selector
         sessionCombo := gui.Add("DropDownList", "x10 y12 w70 vSessionSelect", sessionNames)
         sessionCombo.Value := currentSessionIndex
-        sessionCombo.OnEvent("Change", ObjBindMethod(controller, "SessionChanged"))
+        sessionCombo.OnEvent("Change", ObjBindMethod(rootController, "SessionChanged"))
 
         ; Add record button
         recordButtonTitle := isRecording ? "Stop" : "Record"
         recordButton := gui.Add("Button", "x90 y10 w90 vRecordButton", recordButtonTitle)
-        recordButton.OnEvent("Click", ObjBindMethod(controller, "ToggleRecording"))
+        recordButton.OnEvent("Click", ObjBindMethod(recordingController, "ToggleRecording"))
 
         ; Add reset button
         resetButton := gui.Add("Button", "x300 y10 w90", "Reset All")
-        resetButton.OnEvent("Click", ObjBindMethod(controller, "ResetAll"))
+        resetButton.OnEvent("Click", ObjBindMethod(rootController, "ResetAll"))
     }
 
     static CreateContextSection(gui, contextViewController) {
@@ -133,17 +142,17 @@ class UIBuilder {
         promptEdit.OnEvent("Change", ObjBindMethod(window, "OnPromptChange"))
     }
 
-    static CreateBottomControls(gui, systemPromptNames, currentSystemPromptIndex, controller) {
+    static CreateBottomControls(gui, systemPromptNames, currentSystemPromptIndex, settingsController, rootController) {
         ; PowerShell tool checkbox and icon removed
 
         ; Add system prompt selector
         systemPromptCombo := gui.Add("DropDownList", "x" UIConfig.systemPromptX " y" (UIConfig.systemPromptY + 2) " w" UIConfig.systemPromptWidth " vSystemPrompt", systemPromptNames)
         systemPromptCombo.Value := currentSystemPromptIndex
-        systemPromptCombo.OnEvent("Change", ObjBindMethod(controller, "SystemPromptChanged"))
+        systemPromptCombo.OnEvent("Change", ObjBindMethod(settingsController, "SystemPromptChanged"))
 
         ; Add Ask LLM button
         askButton2 := gui.Add("Button", "x" UIConfig.askLLMX " y" UIConfig.askLLMY " w" UIConfig.askLLMWidth " vAskLLM", "Ask LLM")
-        askButton2.OnEvent("Click", ObjBindMethod(controller, "AskToLLM"))
+        askButton2.OnEvent("Click", ObjBindMethod(rootController, "AskToLLM"))
 
         return askButton2
     }
@@ -173,7 +182,7 @@ class UIBuilder {
         NumPut("Int", 0, wvRect, 4)                          ; top
         NumPut("Int", widthResponseCtr, wvRect, 8)           ; right
         NumPut("Int", heightResponseCtr, wvRect, 12)         ; bottom
-        if controller.view.guiShown {
+        if (controller.view && controller.view.guiShown) {
             controller.webViewManager.Resize(wvRect)
         }
 

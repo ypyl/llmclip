@@ -19,14 +19,18 @@ class AppWindow {
     ; Sub-Controllers
     contextViewController := ""
     historyViewController := ""
+    settingsController := ""
+    recordingController := ""
 
     __New(controller) {
         this.controller := controller
     }
 
-    SetSubControllers(contextViewController, historyViewController) {
+    SetSubControllers(contextViewController, historyViewController, settingsController, recordingController) {
         this.contextViewController := contextViewController
         this.historyViewController := historyViewController
+        this.settingsController := settingsController
+        this.recordingController := recordingController
     }
 
     Show() {
@@ -56,6 +60,7 @@ class AppWindow {
         menus := UIBuilder.CreateMenuBar(
             this.gui,
             this.controller,
+            this.settingsController,
             this.controller.LLMTypes,
             this.controller.CurrentLLMTypeIndex
         )
@@ -66,8 +71,8 @@ class AppWindow {
         this.modeMenu := menus.modeMenu
 
         ; Initial menu states
-        this.controller.UpdateCompressionMenuState()
-        this.controller.UpdateToolsMenuState()
+        this.settingsController.UpdateCompressionMenuState()
+        this.settingsController.UpdateToolsMenuState()
 
         ; Create Controls
         UIBuilder.CreateTopControls(
@@ -75,7 +80,8 @@ class AppWindow {
             this.controller.SessionNames,
             this.controller.CurrentSessionIndex,
             this.controller.IsRecording,
-            this.controller
+            this.controller,
+            this.recordingController
         )
         UIBuilder.CreateContextSection(this.gui, this.contextViewController)
         UIBuilder.CreateChatHistorySection(this.gui, this.historyViewController)
@@ -85,6 +91,7 @@ class AppWindow {
             this.gui,
             this.controller.GetSystemPrompts(this.controller.CurrentLLMTypeIndex),
             this.controller.CurrentSystemPromptIndex,
+            this.settingsController,
             this.controller
         )
 

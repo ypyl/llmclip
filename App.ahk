@@ -17,6 +17,9 @@
 #Include Controllers\MainController.ahk
 #Include Controllers\ContextViewController.ahk
 #Include Controllers\HistoryViewController.ahk
+#Include Controllers\NotesController.ahk
+#Include Controllers\SettingsController.ahk
+#Include Controllers\RecordingController.ahk
 #Include Services\FileService.ahk
 #Include Commands\SaveConversationCommand.ahk
 #Include Commands\LoadConversationCommand.ahk
@@ -32,7 +35,6 @@
 #Include ui\NotesView.ahk
 #Include Services\ClipboardService.ahk
 #Include Commands\CopyToClipboardCommand.ahk
-#Include Controllers\NotesController.ahk
 #Include Commands\SelectModelCommand.ahk
 #Include Commands\GetToolsMenuStateCommand.ahk
 #Include Commands\GetCompressionMenuStateCommand.ahk
@@ -88,15 +90,11 @@ class App {
             rec, 
             ctx, 
             cp,
-            fs
+            fs,
+            mps
         )
 
-        ; 2.5 Initialize View
-        this.window := AppWindow(this.controller)
-        
-        this.controller.SetView(this.window)
-
-        ; 3. Initialize Commands
+        ; 2. Initialize Commands
         saveConv := SaveConversationCommand(sess, fs)
         loadConv := LoadConversationCommand(sess, cfg, fs)
         clearCtx := ClearContextCommand(sess)
@@ -135,18 +133,28 @@ class App {
         toggleBatchMode := ToggleBatchModeCommand(sess)
 
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, stopRec, startRec, compress, extract, resetAll, toggleRec, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages, processClip, selectModel, getToolsState, getCompressionState, toggleTool, changeSystemPrompt, switchSession, reloadSettings, changeAnswerSize, toggleBatchMode
+            saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages, processClip, switchSession, toggleBatchMode
         )
+
+        ; 3. Initialize View
+        this.window := AppWindow(this.controller)
+        this.controller.SetView(this.window)
 
         ; 4. Initialize Sub-Controllers
         ctxView := ContextViewController(this.window, sess, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems, prepareContext, setContextItemChecked)
         histView := HistoryViewController(this.window, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip)
         notesContr := NotesController(copyToClip)
+        
+        settingsContr := SettingsController(cfg, sess, selectModel, changeAnswerSize, toggleTool, getToolsState, getCompressionState, changeSystemPrompt, reloadSettings)
+        recordingContr := RecordingController(rec, startRec, stopRec, toggleRec)
 
-        this.controller.SetSubControllers(ctxView, histView, notesContr)
-        this.window.SetSubControllers(ctxView, histView)
+        this.controller.SetSubControllers(ctxView, histView, notesContr, settingsContr, recordingContr)
+        this.window.SetSubControllers(ctxView, histView, settingsContr, recordingContr)
+        
+        settingsContr.SetView(this.window)
+        recordingContr.SetView(this.window)
 
-        ; 5. Initialize Views
+        ; 5. Initialize Tray
         this.trayView := TrayView(this.controller)
     }
 

@@ -1,7 +1,8 @@
 #Requires AutoHotkey 2.0
 
 class RecordingController {
-    view := ""
+    topControlsView := ""
+    mainView := ""
     recordingService := ""
     startRecordingCommand := ""
     stopRecordingCommand := ""
@@ -14,16 +15,17 @@ class RecordingController {
         this.toggleRecordingCommand := toggleRecordingCommand
     }
 
-    SetView(view) {
-        this.view := view
+    SetViews(topControlsView, mainView) {
+        this.topControlsView := topControlsView
+        this.mainView := mainView
     }
 
     ToggleRecording(*) {
         if (!this.recordingService.isRecording) {
             this.startRecordingCommand.Execute()
             this.UpdateUiBasesOnRecordingStatus()
-        } else if (this.view && !this.view.guiShown) {
-            this.view.Show()
+        } else if (this.mainView && !this.mainView.guiShown) {
+            this.mainView.Show()
         } else {
             this.stopRecordingCommand.Execute()
             this.UpdateUiBasesOnRecordingStatus()
@@ -31,8 +33,8 @@ class RecordingController {
     }
 
     UpdateUiBasesOnRecordingStatus(*) {
-        if (this.view && this.view.guiShown) {
-             this.view.UpdateRecordButton(this.recordingService.isRecording)
+        if (this.mainView && this.mainView.guiShown) {
+             this.topControlsView.UpdateRecordButton(this.recordingService.isRecording)
         }
     }
 

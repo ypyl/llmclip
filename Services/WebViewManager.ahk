@@ -52,8 +52,6 @@ class WebViewManager {
         this.wv.Navigate("file:///" . StrReplace(this.uiFilePath, "\", "/"))
     }
 
-
-
     OnNavigationStarting(args) {
         try {
             uri := args.Uri

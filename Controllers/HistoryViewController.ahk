@@ -1,7 +1,8 @@
 #Requires AutoHotkey 2.0
 
 class HistoryViewController {
-    view := ""
+    historyView := ""
+    mainView := ""
 
     ; Commands
     getHistoryListItemsCommand := ""
@@ -11,8 +12,9 @@ class HistoryViewController {
     renderMarkdownCommand := ""
     copyToClipboardCommand := ""
 
-    __New(view, getHistoryListItemsCommand, getMessagePresentationCommand, deleteMessageCommand, clearHistoryCommand, renderMarkdownCommand, copyToClipboardCommand) {
-        this.view := view
+    __New(historyView, mainView, getHistoryListItemsCommand, getMessagePresentationCommand, deleteMessageCommand, clearHistoryCommand, renderMarkdownCommand, copyToClipboardCommand) {
+        this.historyView := historyView
+        this.mainView := mainView
         this.getHistoryListItemsCommand := getHistoryListItemsCommand
         this.getMessagePresentationCommand := getMessagePresentationCommand
         this.deleteMessageCommand := deleteMessageCommand
@@ -22,22 +24,22 @@ class HistoryViewController {
     }
 
     UpdateChatHistoryView(focusedRow := 0) {
-        if (!this.view)
+        if (!this.historyView)
             return
 
         items := this.getHistoryListItemsCommand.Execute()
-        this.view.DeleteChatHistoryItems()
+        this.historyView.DeleteItems()
 
         for item in items {
             ; Add to ListView
-            this.view.AddChatHistoryItem(item.roleEmoji, item.contentText, item.duration, item.tokens)
+            this.historyView.AddItem(item.roleEmoji, item.contentText, item.duration, item.tokens)
         }
         if (focusedRow) {
-            this.view.SelectHistoryItem(focusedRow)
+            this.historyView.Modify(focusedRow, "Select")
         }
-        this.view.SetChatMessageActionButtonVisible(false)  ; Hide the action button
-        if (this.view.GetChatHistoryCount() > 0) {
-            this.view.ScrollChatHistoryToBottom()  ; Scroll to bottom
+        this.historyView.SetActionButtonVisible(false)  ; Hide the action button
+        if (this.historyView.GetCount() > 0) {
+            this.historyView.ScrollToBottom()  ; Scroll to bottom
         }
     }
 
@@ -46,18 +48,19 @@ class HistoryViewController {
             return
 
         ; Deselect ContextBox to ensure mutual exclusion
-        this.view.ModifyContextBox(0, "-Select")
+        if (this.mainView)
+            this.mainView.contextView.Modify(0, "-Select")
 
         if (Item > 0) {
             presentationText := this.getMessagePresentationCommand.Execute(Item)
 
-            this.view.SetChatMessageActionButtonVisible(true)  ; Show the Copy button
+            this.historyView.SetActionButtonVisible(true)  ; Show the Copy button
             this.renderMarkdownCommand.Execute(presentationText)  ; Render the selected message in the WebView
         }
     }
 
     CopySelectedMessage(*) {
-        focused_row := this.view.GetChatHistoryFocus()
+        focused_row := this.historyView.GetNext()
         if (focused_row) {
             messageText := this.getMessagePresentationCommand.Execute(focused_row, false)
             this.copyToClipboardCommand.Execute(messageText)
@@ -65,7 +68,7 @@ class HistoryViewController {
     }
 
     DeleteSelectedMessage(*) {
-        selectedIndices := this.view.GetChatHistorySelectedIndices()
+        selectedIndices := this.historyView.GetSelectedIndices()
         this.deleteMessageCommand.Execute(selectedIndices)
         this.UpdateChatHistoryView()
         this.renderMarkdownCommand.Execute("")  ; Clear the response area

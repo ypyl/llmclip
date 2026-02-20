@@ -12,8 +12,7 @@
 #Include Services\ContextPresentationService.ahk
 #Include ui\TrayView.ahk
 #Include ui\UIConfig.ahk
-#Include ui\UIBuilder.ahk
-#Include ui\AppWindow.ahk
+#Include ui\MainView.ahk
 #Include Controllers\MainController.ahk
 #Include Controllers\ContextViewController.ahk
 #Include Controllers\HistoryViewController.ahk
@@ -61,7 +60,7 @@
 class App {
     controller := ""
     trayView := ""
-    window := ""
+    view := ""
 
     __New() {
         ; 1. Initialize Services
@@ -137,22 +136,22 @@ class App {
         )
 
         ; 3. Initialize View
-        this.window := AppWindow(this.controller)
-        this.controller.SetView(this.window)
+        this.view := MainView(this.controller)
+        this.controller.SetView(this.view)
 
         ; 4. Initialize Sub-Controllers
-        ctxView := ContextViewController(this.window, sess, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems, prepareContext, setContextItemChecked)
-        histView := HistoryViewController(this.window, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip)
+        ctxView := ContextViewController(this.view.contextView, this.view, sess, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems, prepareContext, setContextItemChecked)
+        histView := HistoryViewController(this.view.historyView, this.view, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip)
         notesContr := NotesController(copyToClip)
         
         settingsContr := SettingsController(cfg, sess, selectModel, changeAnswerSize, toggleTool, getToolsState, getCompressionState, changeSystemPrompt, reloadSettings)
         recordingContr := RecordingController(rec, startRec, stopRec, toggleRec)
 
         this.controller.SetSubControllers(ctxView, histView, notesContr, settingsContr, recordingContr)
-        this.window.SetSubControllers(ctxView, histView, settingsContr, recordingContr)
+        this.view.SetSubControllers(ctxView, histView, settingsContr, recordingContr)
         
-        settingsContr.SetView(this.window)
-        recordingContr.SetView(this.window)
+        settingsContr.SetViews(this.view.menuView, this.view.promptView, this.view)
+        recordingContr.SetViews(this.view.topControlsView, this.view)
 
         ; 5. Initialize Tray
         this.trayView := TrayView(this.controller)

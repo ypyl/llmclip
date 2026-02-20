@@ -4,14 +4,16 @@ class ContextViewController {
     sessionManager := ""
     contextManager := ""
     webViewManager := ""
-    view := ""
+    contextView := ""
+    mainView := ""
     contextPresentationService := ""
     deleteContextItemsCommand := ""
     prepareContextCommand := ""
     setContextItemCheckedCommand := ""
 
-    __New(view, sessionManager, contextManager, webViewManager, contextPresentationService, clearContextCommand, replaceLinkWithContentCommand, renderMarkdownCommand, deleteContextItemsCommand, prepareContextCommand, setContextItemCheckedCommand) {
-        this.view := view
+    __New(contextView, mainView, sessionManager, contextManager, webViewManager, contextPresentationService, clearContextCommand, replaceLinkWithContentCommand, renderMarkdownCommand, deleteContextItemsCommand, prepareContextCommand, setContextItemCheckedCommand) {
+        this.contextView := contextView
+        this.mainView := mainView
         this.sessionManager := sessionManager
         this.contextManager := contextManager
         this.webViewManager := webViewManager
@@ -25,7 +27,7 @@ class ContextViewController {
     }
 
     UpdateContextView(*) {
-        if (!this.view) ; Check if initialized
+        if (!this.contextView) ; Check if initialized
             return
 
         ; Execute command to merge predefined context
@@ -34,21 +36,21 @@ class ContextViewController {
         context := this.sessionManager.GetCurrentSessionContext()
 
         ; Update UI
-        this.view.DeleteContextBoxItems() ; Clear ListView
+        this.contextView.DeleteItems() ; Clear ListView
 
         ; Add items from context
         for item in context {
             listViewItem := this.contextPresentationService.GetListViewItem(item.Value)
             checkedOption := item.Checked ? "Check" : "-Check"
-            row := this.view.AddContextBoxItem(listViewItem.label, checkedOption)
+            row := this.contextView.AddItem(listViewItem.label, checkedOption)
             
             if (!listViewItem.hasCheckbox) {
-                this.view.RemoveContextBoxCheckbox(row)
+                this.contextView.RemoveCheckbox(row)
             }
         }
 
         ; Modify column width to avoid horizontal scrollbar if possible or auto-size
-        this.view.ModifyContextBoxCol(1, 350)
+        this.contextView.ModifyCol(1, 350)
     }
 
 
@@ -57,7 +59,8 @@ class ContextViewController {
             return
 
         ; Deselect ChatHistory to ensure mutual exclusion
-        this.view.ModifyChatHistory(0, "-Select")
+        if (this.mainView)
+            this.mainView.historyView.Modify(0, "-Select")
 
         context := this.sessionManager.GetCurrentSessionContext()
         contextText := ""
@@ -105,7 +108,7 @@ class ContextViewController {
 
         ; Get selected rows (highlighted, not necessarily checked)
         row := 0
-        while (row := this.view.GetContextBoxNext(row)) {
+        while (row := this.contextView.GetNext(row)) {
             selectedIndices.InsertAt(1, row) ; Insert at beginning to keep reverse order
         }
 
@@ -117,7 +120,7 @@ class ContextViewController {
     }
 
     ResetSelection(*) {
-        this.view.ModifyContextBox(0, "-Select")  ; Deselect all
+        this.contextView.Modify(0, "-Select")  ; Deselect all
     }
 
     ClearAllContext(*) {

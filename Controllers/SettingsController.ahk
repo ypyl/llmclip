@@ -1,7 +1,9 @@
 #Requires AutoHotkey 2.0
 
 class SettingsController {
-    view := ""
+    menuView := ""
+    promptView := ""
+    mainView := ""
     configManager := ""
     sessionManager := ""
     
@@ -26,8 +28,10 @@ class SettingsController {
         this.reloadSettingsCommand := reloadSettingsCommand
     }
 
-    SetView(view) {
-        this.view := view
+    SetViews(menuView, promptView, mainView) {
+        this.menuView := menuView
+        this.promptView := promptView
+        this.mainView := mainView
     }
 
     SelectModel(ItemName, ItemPos, MyMenu) {
@@ -44,24 +48,24 @@ class SettingsController {
         }
 
         ; Update menu bar label
-        rootController := this.view.controller
+        rootController := this.mainView.controller
         oldModelName := rootController.currentModelName
         newModelName := "Model: " . this.configManager.llmTypes[ItemPos]
         if (oldModelName != newModelName) {
-            try this.view.menuBar.Rename(oldModelName, newModelName)
+            try this.menuView.RenameMenu(oldModelName, newModelName)
             rootController.currentModelName := newModelName
         }
 
         ; Update system prompts for the new model
-        this.view.ClearSystemPrompt()
+        this.promptView.ClearSystemPrompt()
         systemPromptNames := this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType())
-        this.view.AddSystemPromptItems(systemPromptNames)
+        this.promptView.AddSystemPrompts(systemPromptNames)
 
         if (systemPromptNames.Length > 0) {
-            this.view.SetSystemPromptValue(1)
-            this.view.SetSystemPromptEnabled(true)
+            this.promptView.SetSystemPromptValue(1)
+            this.promptView.SetSystemPromptEnabled(true)
         } else {
-            this.view.SetSystemPromptEnabled(false)
+            this.promptView.SetSystemPromptEnabled(false)
         }
 
         this.UpdateToolsMenuState()
@@ -80,39 +84,39 @@ class SettingsController {
     }
 
     UpdateCompressionMenuState() {
-        if (!this.view || !this.view.historyMenu)
+        if (!this.menuView || !this.menuView.historyMenu)
             return
 
         isEnabled := this.getCompressionStateCommand.Execute()
         if (isEnabled) {
-            this.view.historyMenu.Enable("Compress")
+            this.menuView.historyMenu.Enable("Compress")
         } else {
-            this.view.historyMenu.Disable("Compress")
+            this.menuView.historyMenu.Disable("Compress")
         }
     }
 
     UpdateToolsMenuState() {
-        if (!this.view || !this.view.toolsMenu)
+        if (!this.menuView || !this.menuView.toolsMenu)
             return
 
         toolStates := this.getToolsStateCommand.Execute()
 
-        this.view.toolsMenu.Uncheck("PowerShell")
-        this.view.toolsMenu.Uncheck("File System")
-        this.view.toolsMenu.Uncheck("Web Search")
-        this.view.toolsMenu.Uncheck("Web Fetch")
-        this.view.toolsMenu.Uncheck("Markdown New")
+        this.menuView.toolsMenu.Uncheck("PowerShell")
+        this.menuView.toolsMenu.Uncheck("File System")
+        this.menuView.toolsMenu.Uncheck("Web Search")
+        this.menuView.toolsMenu.Uncheck("Web Fetch")
+        this.menuView.toolsMenu.Uncheck("Markdown New")
 
         if (toolStates.powerShell)
-            this.view.toolsMenu.Check("PowerShell")
+            this.menuView.toolsMenu.Check("PowerShell")
         if (toolStates.fileSystem)
-             this.view.toolsMenu.Check("File System")
+             this.menuView.toolsMenu.Check("File System")
         if (toolStates.webSearch)
-            this.view.toolsMenu.Check("Web Search")
+            this.menuView.toolsMenu.Check("Web Search")
         if (toolStates.webFetch)
-            this.view.toolsMenu.Check("Web Fetch")
+            this.menuView.toolsMenu.Check("Web Fetch")
         if (toolStates.markdownNew)
-            this.view.toolsMenu.Check("Markdown New")
+            this.menuView.toolsMenu.Check("Markdown New")
     }
 
     ToggleTool(toolName, *) {
@@ -121,7 +125,7 @@ class SettingsController {
     }
 
     SystemPromptChanged(*) {
-        systemPromptIndex := this.view.GetSystemPromptValue()
+        systemPromptIndex := this.promptView.GetSystemPromptValue()
         this.changeSystemPromptCommand.Execute(systemPromptIndex)
 
         inputTemplate := this.configManager.GetInputTemplate(
@@ -129,43 +133,43 @@ class SettingsController {
             systemPromptIndex
         )
         if (inputTemplate) {
-            this.view.SetPromptValue(inputTemplate)
+            this.promptView.SetValue(inputTemplate)
         }
         
-        if (this.view.contextViewController)
-            this.view.contextViewController.UpdateContextView()
+        if (this.mainView && this.mainView.contextViewController)
+            this.mainView.contextViewController.UpdateContextView()
     }
 
     ReloadSettings(*) {
         this.reloadSettingsCommand.Execute()
 
-        this.view.modelMenu.Delete()
+        this.menuView.modelMenu.Delete()
         for index, modelName in this.configManager.llmTypes {
-            this.view.modelMenu.Add(modelName, ObjBindMethod(this, "SelectModel"))
+            this.menuView.modelMenu.Add(modelName, ObjBindMethod(this, "SelectModel"))
         }
 
         currentModelIndex := this.sessionManager.GetCurrentSessionLLMType()
         if (currentModelIndex <= this.configManager.llmTypes.Length) {
-            this.view.modelMenu.Check(this.configManager.llmTypes[currentModelIndex])
+            this.menuView.CheckModel(this.configManager.llmTypes[currentModelIndex])
         } else {
             this.sessionManager.SetCurrentSessionLLMType(1)
-            this.view.modelMenu.Check(this.configManager.llmTypes[1])
+            this.menuView.CheckModel(this.configManager.llmTypes[1])
         }
 
-        rootController := this.view.controller
+        rootController := this.mainView.controller
         oldModelName := rootController.currentModelName
         newModelName := "Model: " . this.configManager.llmTypes[this.sessionManager.GetCurrentSessionLLMType()]
-        try this.view.menuBar.Rename(oldModelName, newModelName)
+        try this.menuView.RenameMenu(oldModelName, newModelName)
         rootController.currentModelName := newModelName
 
-        currentSystemPrompt := this.view.GetSystemPromptValue()
-        this.view.ClearSystemPrompt()
-        this.view.AddSystemPromptItems(this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType()))
+        currentSystemPrompt := this.promptView.GetSystemPromptValue()
+        this.promptView.ClearSystemPrompt()
+        this.promptView.AddSystemPrompts(this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType()))
 
         try {
-            this.view.SetSystemPromptValue(currentSystemPrompt)
+            this.promptView.SetSystemPromptValue(currentSystemPrompt)
         } catch {
-            this.view.SetSystemPromptValue(1)
+            this.promptView.SetSystemPromptValue(1)
             this.sessionManager.SetCurrentSessionSystemPrompt(1)
         }
 

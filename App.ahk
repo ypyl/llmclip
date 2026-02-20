@@ -49,7 +49,11 @@
 #Include Commands\GetHistoryListItemsCommand.ahk
 #Include Commands\GetMessagePresentationCommand.ahk
 #Include Commands\UncheckImagesCommand.ahk
-#Include Commands\SubmitPromptCommand.ahk
+#Include Commands\CancelRequestCommand.ahk
+#Include Commands\ExecuteToolCallsCommand.ahk
+#Include Commands\RegenerateMessageCommand.ahk
+#Include Commands\SendToLLMCommand.ahk
+#Include Commands\SendBatchToLLMCommand.ahk
 #Include Commands\SetContextItemCheckedCommand.ahk
 #Include Commands\ChangeSystemPromptCommand.ahk
 #Include Commands\SwitchSessionCommand.ahk
@@ -124,7 +128,11 @@ class App {
         uncheckImages := UncheckImagesCommand(sess)
         setContextItemChecked := SetContextItemCheckedCommand(sess)
 
-        submitPrompt := SubmitPromptCommand(sess, cfg, llm, ctx, rec)
+        cancelRequest := CancelRequestCommand(llm)
+        executeToolCalls := ExecuteToolCallsCommand(sess, llm)
+        regenerateMessage := RegenerateMessageCommand(sess)
+        sendToLLM := SendToLLMCommand(sess, cfg, llm, ctx)
+        sendBatchToLLM := SendBatchToLLMCommand(sess, cfg, llm, ctx)
         changeSystemPrompt := ChangeSystemPromptCommand(sess, cfg)
         switchSession := SwitchSessionCommand(sess)
         reloadSettings := ReloadSettingsCommand(cfg)
@@ -132,7 +140,7 @@ class App {
         toggleBatchMode := ToggleBatchModeCommand(sess)
 
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages, processClip, switchSession, toggleBatchMode
+            saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, regenerateMessage, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckImages, processClip, switchSession, toggleBatchMode
         )
 
         ; 3. Initialize View

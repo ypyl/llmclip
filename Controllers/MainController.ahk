@@ -23,7 +23,11 @@ class MainController {
     initializeAppCommand := ""
     saveDiagramCommand := ""
     renderMarkdownCommand := ""
-    submitPromptCommand := ""
+    cancelRequestCommand := ""
+    executeToolCallsCommand := ""
+    regenerateMessageCommand := ""
+    sendToLLMCommand := ""
+    sendBatchToLLMCommand := ""
     renderLastMessageCommand := ""
     processClipboardCommand := ""
     uncheckImagesCommand := ""
@@ -54,7 +58,7 @@ class MainController {
         this.messagePresentationService := messagePresentationService
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, submitPrompt, renderLastMsg, uncheckImages, processClipboard, switchSession, toggleBatchMode) {
+    SetCommands(saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, regenerateMessage, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckImages, processClipboard, switchSession, toggleBatchMode) {
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
         this.clearContextCommand := clearCtx
@@ -64,7 +68,11 @@ class MainController {
         this.initializeAppCommand := initializeApp
         this.saveDiagramCommand := saveDiagram
         this.renderMarkdownCommand := renderMarkdown
-        this.submitPromptCommand := submitPrompt
+        this.cancelRequestCommand := cancelRequest
+        this.executeToolCallsCommand := executeToolCalls
+        this.regenerateMessageCommand := regenerateMessage
+        this.sendToLLMCommand := sendToLLM
+        this.sendBatchToLLMCommand := sendBatchToLLM
         this.renderLastMessageCommand := renderLastMsg
         this.uncheckImagesCommand := uncheckImages
         this.processClipboardCommand := processClipboard
@@ -218,25 +226,46 @@ class MainController {
         }
 
         try {
-            ; 3. Execute Command with collected UI data
-            result := this.submitPromptCommand.Execute({
-                promptText: promptText,
-                processingState: currentState,
-                focusedRow: focusedRow,
-                selectedContextIndices: selectedIndices,
-                images: images,
-                batchItems: batchItems,
-                batchUpdateCallback: (label, messages) => this.historyViewController.UpdateChatHistoryView(),
-                isCancelledCallback: () => (this.processingState != "processing")
-            })
+            result := {}
 
-            ; 4. Handle Result and update UI State
-            if (result.action == "load_to_prompt") {
-                this.view.SetPromptValue(result.text)
-                this.SetProcessingState("idle")
-                return
+            ; 3. Route to appropriate command
+            if (currentState == "processing") {
+                ; Handle Cancellation
+                result := this.cancelRequestCommand.Execute()
+            } else if (currentState == "tool_pending") {
+                ; Handle Tool Confirmation
+                if (this.executeToolCallsCommand.Execute()) {
+                    result := this.sendToLLMCommand.Execute(promptText, images, selectedIndices, true)
+                } else {
+                    result := { action: "idle" }
+                }
+            } else if (focusedRow > 0) {
+                ; Handle Regeneration or Edit
+                regResult := this.regenerateMessageCommand.Execute(focusedRow, promptText, images)
+                if (regResult.status == "load_to_prompt") {
+                    this.view.SetPromptValue(regResult.text)
+                    this.SetProcessingState("idle")
+                    return
+                } else if (regResult.status == "sent") {
+                    result := this.sendToLLMCommand.Execute(promptText, images, selectedIndices, true)
+                } else {
+                    result := { action: "none" }
+                }
+            } else if (this.sessionManager.batchModeEnabled) {
+                ; Handle Batch Mode
+                this.sendBatchToLLMCommand.Execute(
+                    promptText,
+                    batchItems,
+                    () => (this.processingState != "processing"),
+                    (label, messages) => this.historyViewController.UpdateChatHistoryView()
+                )
+                result := { action: "idle" }
+            } else {
+                ; Normal Send Mode
+                result := this.sendToLLMCommand.Execute(promptText, images, selectedIndices)
             }
 
+            ; 4. Handle Result and update UI State
             if (result.action == "idle") {
                 this.SetProcessingState("idle")
             } else if (result.action == "tool_pending") {

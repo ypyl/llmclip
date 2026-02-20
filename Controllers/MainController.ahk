@@ -80,6 +80,11 @@ class MainController {
         this.recordingController := recording
     }
 
+    SetTrayView(trayView) {
+        if (this.recordingController)
+            this.recordingController.SetTrayView(trayView)
+    }
+
     SetView(view) {
         this.view := view
     }

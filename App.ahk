@@ -155,6 +155,7 @@ class App {
 
         ; 5. Initialize Tray
         this.trayView := TrayView(this.controller)
+        this.controller.SetTrayView(this.trayView)
     }
 
     Start() {

@@ -3,6 +3,7 @@
 class RecordingController {
     topControlsView := ""
     mainView := ""
+    trayView := ""
     recordingService := ""
     startRecordingCommand := ""
     stopRecordingCommand := ""
@@ -20,6 +21,10 @@ class RecordingController {
         this.mainView := mainView
     }
 
+    SetTrayView(trayView) {
+        this.trayView := trayView
+    }
+
     ToggleRecording(*) {
         if (!this.recordingService.isRecording) {
             this.startRecordingCommand.Execute()
@@ -35,6 +40,9 @@ class RecordingController {
     UpdateUiBasesOnRecordingStatus(*) {
         if (this.mainView && this.mainView.guiShown) {
              this.topControlsView.UpdateRecordButton(this.recordingService.isRecording)
+        }
+        if (this.trayView) {
+            this.trayView.UpdateStatus(this.recordingService.isRecording)
         }
     }
 

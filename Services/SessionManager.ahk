@@ -1,22 +1,18 @@
 #Include LLM\Types.ahk
 #Include ContextItem.ahk
+#Include Session.ahk
 
 class SessionManager {
     currentSessionIndex := 1
     MAX_SESSIONS := 5
     sessionNames := ["Session 1", "Session 2", "Session 3", "Session 4", "Session 5"]
-    sessionMessages := []
-    sessionContexts := []
-    sessionLLMTypes := []
-    sessionSystemPrompts := []
+    sessions := []
 
-    ; Store default values to be used when no settings are provided
     defaultSystemPrompt := "You are a helpful assistant. Be concise and direct in your responses."
     defaultLLMType := 1
     contextManager := ""
     answerSize := "Default"
     batchModeEnabled := false
-
 
     __New(defaultLLMType := 1, defaultSystemPrompt := "", contextManager := "") {
         this.defaultLLMType := defaultLLMType
@@ -24,22 +20,60 @@ class SessionManager {
         if (defaultSystemPrompt)
             this.defaultSystemPrompt := defaultSystemPrompt
 
-        ; Initialize session arrays with ChatMessage instances
-        Loop this.MAX_SESSIONS {
-            this.sessionMessages.Push([
-                ChatMessage("system", [TextContent(this.defaultSystemPrompt)])
-            ])
-            this.sessionContexts.Push([])
-            this.sessionLLMTypes.Push(this.defaultLLMType)
-            this.sessionSystemPrompts.Push(1)
-        }
+        Loop this.MAX_SESSIONS
+            this.sessions.Push(Session(this.defaultSystemPrompt, this.defaultLLMType))
     }
+
+    GetCurrentSession() => this.sessions[this.currentSessionIndex]
+
+    GetCurrentSessionMessages() => this.GetCurrentSession().GetCurrentMessages()
+
+    AddMessages(messages) => this.GetCurrentSession().AddMessages(messages)
+
+    CreateHistoryBranch(upToIndex) => this.GetCurrentSession().CreateHistoryBranch(upToIndex)
+
+    NavigateHistoryPrevious() => this.GetCurrentSession().NavigateHistoryPrevious()
+
+    NavigateHistoryNext() => this.GetCurrentSession().NavigateHistoryNext()
+
+    GetHistoryInfo() => this.GetCurrentSession().GetHistoryInfo()
+
+    GetCurrentSessionContext() => this.GetCurrentSession().context
+
+    SetCurrentSessionContext(newContext) => this.GetCurrentSession().context := newContext
+
+    GetCurrentSessionLLMType() => this.GetCurrentSession().llmType
+
+    SetCurrentSessionLLMType(index) => this.GetCurrentSession().llmType := index
+
+    GetCurrentSessionSystemPrompt() => this.GetCurrentSession().systemPromptIndex
+
+    SetCurrentSessionSystemPrompt(index) => this.GetCurrentSession().systemPromptIndex := index
+
+    UpdateSystemPromptContent(systemPromptContent) => this.GetCurrentSession().UpdateSystemPrompt(systemPromptContent)
+
+    SwitchSession(newIndex) {
+        if (newIndex > 0 && newIndex <= this.MAX_SESSIONS) {
+            this.currentSessionIndex := newIndex
+            return true
+        }
+        return false
+    }
+
+    ResetCurrentSession() => this.GetCurrentSession().Reset(this.defaultSystemPrompt)
+
+    ClearCurrentMessages() => this.GetCurrentSession().Reset(this.defaultSystemPrompt)
+
+    ClearCurrentContext() => this.GetCurrentSession().context := []
+
+    SetAnswerSize(size) => this.answerSize := size
+
+    SetBatchMode(enabled) => this.batchModeEnabled := enabled
 
     FormatMessagesForCompression() {
         messages := this.GetCurrentSessionMessages()
         formattedText := ""
         
-        ; Skip the system message (index 1) and format the rest
         i := 2
         loop messages.Length - 1 {
             msg := messages[i]
@@ -55,45 +89,17 @@ class SessionManager {
         return formattedText
     }
 
-    GetCurrentSessionMessages() {
-        return this.sessionMessages[this.currentSessionIndex]
-    }
-
-    /**
-     * Appends messages to the current session.
-     * @param {Array|ChatMessage} messages One or more ChatMessage instances
-     */
-    AddMessages(messages) {
-        current := this.GetCurrentSessionMessages()
-        if (Type(messages) == "Array") {
-            for msg in messages {
-                current.Push(msg)
-            }
-        } else {
-            current.Push(messages)
-        }
-    }
-
-    /**
-     * Replaces the current session's messages, preserving the system message.
-     * @param {ChatMessage} compressedMsg The new compressed summary message
-     */
     ReplaceWithCompressed(compressedMsg) {
         messages := this.GetCurrentSessionMessages()
-        systemMsg := messages[1] ; Capture current system message
+        systemMsg := messages[1]
         
         this.ClearCurrentMessages()
         
-        ; Replace built-in default with actual current system message
         current := this.GetCurrentSessionMessages()
         current[1] := systemMsg
         current.Push(compressedMsg)
     }
 
-    /**
-     * Get messages for the current session, excluding those marked as batch mode or batch response
-     * @returns Array of ChatMessage instances
-     */
     GetMessagesExcludingBatch() {
         allMessages := this.GetCurrentSessionMessages()
         filteredMessages := []
@@ -102,28 +108,12 @@ class SessionManager {
             isBatch := (msg.AdditionalProperties.Has("isBatchMode") && msg.AdditionalProperties["isBatchMode"])
                     || (msg.AdditionalProperties.Has("isBatchResponse") && msg.AdditionalProperties["isBatchResponse"])
             
-            if (!isBatch) {
+            if (!isBatch)
                 filteredMessages.Push(msg)
-            }
         }
         return filteredMessages
     }
 
-
-
-    GetCurrentSessionContext() {
-        return this.sessionContexts[this.currentSessionIndex]
-    }
-
-    SetCurrentSessionContext(newContext) {
-        this.sessionContexts[this.currentSessionIndex] := newContext
-    }
-
-    /**
-     * Add multiple items to the current session context, filtering duplicates.
-     * @param items - Array of items to add
-     * @returns Boolean indicating if any items were added
-     */
     AddContextItems(items) {
         addedAny := false
         context := this.GetCurrentSessionContext()
@@ -135,9 +125,8 @@ class SessionManager {
             }
         }
 
-        if (addedAny) {
+        if (addedAny)
             this.SetCurrentSessionContext(context)
-        }
 
         return addedAny
     }
@@ -162,67 +151,9 @@ class SessionManager {
 
     IsContextItemChecked(index) {
         context := this.GetCurrentSessionContext()
-        if (index > 0 && index <= context.Length) {
+        if (index > 0 && index <= context.Length)
             return context[index].Checked
-        }
-        return true ; Default
-    }
-
-    GetCurrentSessionLLMType() {
-        return this.sessionLLMTypes[this.currentSessionIndex]
-    }
-
-    GetCurrentSessionSystemPrompt() {
-        return this.sessionSystemPrompts[this.currentSessionIndex]
-    }
-
-    SetCurrentSessionLLMType(index) {
-        this.sessionLLMTypes[this.currentSessionIndex] := index
-    }
-
-    SetCurrentSessionSystemPrompt(index) {
-        this.sessionSystemPrompts[this.currentSessionIndex] := index
-    }
-
-    SwitchSession(newIndex) {
-        if (newIndex > 0 && newIndex <= this.MAX_SESSIONS) {
-            this.currentSessionIndex := newIndex
-            return true
-        }
-        return false
-    }
-
-    SetAnswerSize(size) {
-        this.answerSize := size
-    }
-
-    SetBatchMode(enabled) {
-        this.batchModeEnabled := enabled
-    }
-
-    UpdateSystemPromptContent(systemPromptContent) {
-        if (this.sessionMessages[this.currentSessionIndex].Length > 0) {
-            firstMsg := this.sessionMessages[this.currentSessionIndex][1]
-            if (firstMsg.Role == "system") {
-                ; Update the text content
-                firstMsg.Contents := [TextContent(systemPromptContent)]
-            }
-        }
-    }
-
-    ResetCurrentSession() {
-        this.ClearCurrentMessages()
-        this.ClearCurrentContext()
-    }
-
-    ClearCurrentMessages() {
-        this.sessionMessages[this.currentSessionIndex] := [
-            ChatMessage("system", [TextContent(this.defaultSystemPrompt)])
-        ]
-    }
-
-    ClearCurrentContext() {
-        this.sessionContexts[this.currentSessionIndex] := []
+        return true
     }
 
     HasToolResponse(message) {
@@ -235,9 +166,8 @@ class SessionManager {
             for msg in messages {
                 if (msg.Role = "tool") {
                     for part in msg.Contents {
-                        if (part is FunctionResultContent && part.CallId = toolCall.Id) {
+                        if (part is FunctionResultContent && part.CallId = toolCall.Id)
                             return true
-                        }
                     }
                 }
             }
@@ -268,9 +198,8 @@ class SessionManager {
             if (this.HasToolCalls(msg)) {
                 toolCalls := this.GetToolCalls(msg)
                 for toolCall in toolCalls {
-                    if (!this.IsToolCallExecuted(toolCall.Id)) {
+                    if (!this.IsToolCallExecuted(toolCall.Id))
                         return true
-                    }
                 }
             }
         }
@@ -282,51 +211,29 @@ class SessionManager {
         for m in messages {
             if (m.Role == "tool") {
                 for part in m.Contents {
-                    if (part is FunctionResultContent && part.CallId == toolCallId) {
+                    if (part is FunctionResultContent && part.CallId == toolCallId)
                         return true
-                    }
                 }
             }
         }
         return false
     }
 
-    TruncateMessages(index) {
-        if (index > 0 && index < this.sessionMessages[this.currentSessionIndex].Length) {
-            ; Remove all messages after the specified index
-            ; We loop from the end down to index + 1
-            loopCount := this.sessionMessages[this.currentSessionIndex].Length - index
-            Loop loopCount {
-                this.sessionMessages[this.currentSessionIndex].Pop()
-            }
-            return true
-        }
-        return false
-    }
-
     UpdateMessage(index, newContent) {
-        if (index > 0 && index <= this.sessionMessages[this.currentSessionIndex].Length) {
-            msg := this.sessionMessages[this.currentSessionIndex][index]
+        messages := this.GetCurrentSessionMessages()
+        if (index > 0 && index <= messages.Length) {
+            msg := messages[index]
             msg.Contents := [TextContent(newContent)]
             return true
         }
         return false
     }
 
-    GetMessageText(message) {
-        return message.GetText()
-    }
+    GetMessageText(message) => message.GetText()
 
-    /**
-     * Get user message text without context
-     * @param message - ChatMessage instance
-     * @returns String content without context
-     */
     GetUserMessageTextWithoutContext(message) {
-        ; Check if this is a user message with context
         if (message.Role == "user" && message.AdditionalProperties.Has("hasContext") 
             && message.AdditionalProperties["hasContext"]) {
-            ; Check if this is the first user message
             messages := this.GetCurrentSessionMessages()
             isFirstUserMsg := false
             for msg in messages {
@@ -337,7 +244,6 @@ class SessionManager {
             }
             
             if (isFirstUserMsg) {
-                ; Extract text without first TextContent (context)
                 text := ""
                 for i, part in message.Contents {
                     if (i > 1 && part is TextContent) {
@@ -350,52 +256,30 @@ class SessionManager {
             }
         }
         
-        ; Not first user message or no context - return all text
         return message.GetText()
     }
 
-
     DeleteMessage(index) {
-        if (index > 1 && index <= this.sessionMessages[this.currentSessionIndex].Length) {
-            this.sessionMessages[this.currentSessionIndex].RemoveAt(index)
+        messages := this.GetCurrentSessionMessages()
+        if (index > 1 && index <= messages.Length) {
+            messages.RemoveAt(index)
             return true
         }
         return false
     }
 
-    ExportSessionState() {
-        ; Convert ChatMessage instances to plain objects for JSON serialization
-        messages := []
-        for msg in this.sessionMessages[this.currentSessionIndex] {
-            messages.Push(msg.ToObject(true))
-        }
+    ExportSessionState() => this.GetCurrentSession().ToObject()
 
-        context := []
-        for item in this.sessionContexts[this.currentSessionIndex] {
-            context.Push(item.ToObject())
-        }
-
-        return {
-            messages: messages,
-            context: context,
-            llmType: this.sessionLLMTypes[this.currentSessionIndex],
-            systemPrompt: this.sessionSystemPrompts[this.currentSessionIndex]
-        }
-    }
-
-    ; Helper method to convert Map objects (from JSON parser) to regular objects
     ConvertMapToObject(value) {
         if (Type(value) = "Map") {
             obj := {}
-            for key, val in value {
+            for key, val in value
                 obj.%key% := this.ConvertMapToObject(val)
-            }
             return obj
         } else if (Type(value) = "Array") {
             arr := []
-            for item in value {
+            for item in value
                 arr.Push(this.ConvertMapToObject(item))
-            }
             return arr
         } else {
             return value
@@ -403,43 +287,16 @@ class SessionManager {
     }
 
     ImportSessionState(state) {
-        ; Check if state is a Map (from JSON parser) or an Object
         isMap := Type(state) = "Map"
 
-        ; Validate required properties exist
-        hasMessages := isMap ? state.Has("messages") : state.HasOwnProp("messages")
         hasContext := isMap ? state.Has("context") : state.HasOwnProp("context")
         hasLLMType := isMap ? state.Has("llmType") : state.HasOwnProp("llmType")
         hasSystemPrompt := isMap ? state.Has("systemPrompt") : state.HasOwnProp("systemPrompt")
 
-        if (!hasMessages || !hasContext || !hasLLMType || !hasSystemPrompt) {
+        if (!hasContext || !hasLLMType || !hasSystemPrompt)
             throw Error("Invalid session state file")
-        }
 
-        ; Get values and convert Maps to Objects if needed
-        messages := isMap ? state["messages"] : state.messages
-        context := isMap ? state["context"] : state.context
-        llmType := isMap ? state["llmType"] : state.llmType
-        systemPrompt := isMap ? state["systemPrompt"] : state.systemPrompt
-
-        ; Convert messages to ChatMessage instances
-        chatMessages := []
-        for msg in messages {
-            plainObj := this.ConvertMapToObject(msg)
-            chatMessages.Push(ChatMessage.FromObject(plainObj))
-        }
-
-        ; Convert context to ContextItem instances
-        chatContext := []
-        for item in context {
-            chatContext.Push(ContextItem.FromObject(item))
-        }
-
-        this.sessionMessages[this.currentSessionIndex] := chatMessages
-        this.sessionContexts[this.currentSessionIndex] := chatContext
-        this.sessionLLMTypes[this.currentSessionIndex] := llmType
-        this.sessionSystemPrompts[this.currentSessionIndex] := systemPrompt
-
+        this.sessions[this.currentSessionIndex] := Session.FromObject(state, ObjBindMethod(this, "ConvertMapToObject"))
         return true
     }
 
@@ -447,13 +304,11 @@ class SessionManager {
         contentParts := []
 
         if (imagePaths.Length > 0) {
-            if (userMessageContent != "") {
+            if (userMessageContent != "")
                 contentParts.Push(TextContent(userMessageContent))
-            }
 
             for imageValue in imagePaths {
                 if (RegExMatch(imageValue, "i)^data:image/")) {
-                    ; Already data URI
                     contentParts.Push(ImageContent(imageValue))
                 } else if (InStr(imageValue, "http") == 1) {
                     contentParts.Push(ImageContent(imageValue))
@@ -467,9 +322,8 @@ class SessionManager {
                 }
             }
         } else {
-            if (userMessageContent != "") {
+            if (userMessageContent != "")
                 contentParts.Push(TextContent(userMessageContent))
-            }
         }
 
         return contentParts
@@ -495,14 +349,12 @@ class SessionManager {
         if (newContent = "")
             return true
 
-        ; Check in current session context
         currentContext := this.GetCurrentSessionContext()
         for item in currentContext {
             if (item.Value = newContent)
                 return true
         }
 
-        ; Check in chat history
         if (this.CheckContentInMessages(this.GetCurrentSessionMessages(), newContent))
             return true
 
@@ -525,9 +377,8 @@ class SessionManager {
         checkedItems := []
         context := this.GetCurrentSessionContext()
         for index, item in context {
-            if (item.Checked) {
+            if (item.Checked)
                 checkedItems.Push(item.Value)
-            }
         }
         return checkedItems
     }
@@ -535,9 +386,8 @@ class SessionManager {
     HasAnyCheckedItem() {
         context := this.GetCurrentSessionContext()
         for item in context {
-            if (item.Checked) {
+            if (item.Checked)
                 return true
-            }
         }
         return false
     }

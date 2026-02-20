@@ -52,6 +52,8 @@
 #Include Commands\CancelRequestCommand.ahk
 #Include Commands\ExecuteToolCallsCommand.ahk
 #Include Commands\RegenerateMessageCommand.ahk
+#Include Commands\NavigateHistoryCommand.ahk
+#Include Commands\GetHistoryInfoCommand.ahk
 #Include Commands\SendToLLMCommand.ahk
 #Include Commands\SendBatchToLLMCommand.ahk
 #Include Commands\SetContextItemCheckedCommand.ahk
@@ -131,6 +133,9 @@ class App {
         cancelRequest := CancelRequestCommand(llm)
         executeToolCalls := ExecuteToolCallsCommand(sess, llm)
         regenerateMessage := RegenerateMessageCommand(sess)
+        navigateHistoryPrevious := NavigateHistoryCommand(sess, "previous")
+        navigateHistoryNext := NavigateHistoryCommand(sess, "next")
+        getHistoryInfo := GetHistoryInfoCommand(sess)
         sendToLLM := SendToLLMCommand(sess, cfg, llm, ctx)
         sendBatchToLLM := SendBatchToLLMCommand(sess, cfg, llm, ctx)
         changeSystemPrompt := ChangeSystemPromptCommand(sess, cfg)
@@ -140,7 +145,7 @@ class App {
         toggleBatchMode := ToggleBatchModeCommand(sess)
 
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, regenerateMessage, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckImages, processClip, switchSession, toggleBatchMode
+            saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckImages, processClip, switchSession, toggleBatchMode
         )
 
         ; 3. Initialize View
@@ -149,7 +154,7 @@ class App {
 
         ; 4. Initialize Sub-Controllers
         ctxView := ContextViewController(this.view.contextView, this.view, sess, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems, prepareContext, setContextItemChecked)
-        histView := HistoryViewController(this.view.historyView, this.view, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip)
+        histView := HistoryViewController(this.view.historyView, this.view, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip, regenerateMessage, navigateHistoryPrevious, navigateHistoryNext, getHistoryInfo)
         notesContr := NotesController(copyToClip)
         
         settingsContr := SettingsController(cfg, sess, selectModel, changeAnswerSize, toggleTool, getToolsState, getCompressionState, changeSystemPrompt, reloadSettings)

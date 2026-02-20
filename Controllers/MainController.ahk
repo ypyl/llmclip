@@ -25,7 +25,6 @@ class MainController {
     renderMarkdownCommand := ""
     cancelRequestCommand := ""
     executeToolCallsCommand := ""
-    regenerateMessageCommand := ""
     sendToLLMCommand := ""
     sendBatchToLLMCommand := ""
     renderLastMessageCommand := ""
@@ -58,7 +57,7 @@ class MainController {
         this.messagePresentationService := messagePresentationService
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, regenerateMessage, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckImages, processClipboard, switchSession, toggleBatchMode) {
+    SetCommands(saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckImages, processClipboard, switchSession, toggleBatchMode) {
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
         this.clearContextCommand := clearCtx
@@ -70,7 +69,6 @@ class MainController {
         this.renderMarkdownCommand := renderMarkdown
         this.cancelRequestCommand := cancelRequest
         this.executeToolCallsCommand := executeToolCalls
-        this.regenerateMessageCommand := regenerateMessage
         this.sendToLLMCommand := sendToLLM
         this.sendBatchToLLMCommand := sendBatchToLLM
         this.renderLastMessageCommand := renderLastMsg
@@ -198,7 +196,6 @@ class MainController {
         ; 1. Gather UI state
         currentState := this.processingState
         promptText := this.view.GetPromptValue()
-        focusedRow := this.view.GetSelectedHistoryIndex()
 
         isImageEnabled := this.IsImageInputEnabled[this.CurrentLLMTypeIndex]
         images := isImageEnabled ? this.sessionManager.GetCheckedImages() : []
@@ -239,18 +236,6 @@ class MainController {
                 } else {
                     result := { action: "idle" }
                 }
-            } else if (focusedRow > 0) {
-                ; Handle Regeneration or Edit
-                regResult := this.regenerateMessageCommand.Execute(focusedRow, promptText, images)
-                if (regResult.status == "load_to_prompt") {
-                    this.view.SetPromptValue(regResult.text)
-                    this.SetProcessingState("idle")
-                    return
-                } else if (regResult.status == "sent") {
-                    result := this.sendToLLMCommand.Execute(promptText, images, selectedIndices, true)
-                } else {
-                    result := { action: "none" }
-                }
             } else if (this.sessionManager.batchModeEnabled) {
                 ; Handle Batch Mode
                 this.sendBatchToLLMCommand.Execute(
@@ -275,9 +260,6 @@ class MainController {
             ; 5. UI Cleanup
             if (result.action != "none") {
                 this.view.ClearPrompt()
-                if (focusedRow > 0) {
-                    this.view.DeselectHistoryItem(focusedRow)
-                }
 
                 if (this.recordingService.isRecording) {
                     this.recordingController.OnStopRecording()
@@ -290,7 +272,7 @@ class MainController {
             }
         } finally {
             ; 6. Refresh UI components
-            this.historyViewController.UpdateChatHistoryView(focusedRow)
+            this.historyViewController.UpdateChatHistoryView()
             this.renderLastMessageCommand.Execute()
 
             if (this.uncheckImagesCommand.Execute()) {

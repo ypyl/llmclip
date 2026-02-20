@@ -5,52 +5,23 @@ class RegenerateMessageCommand {
         this.sessionManager := sessionManager
     }
     
-    Execute(focusedRow, promptText, images) {
-        if (focusedRow <= 0) {
-            return { status: "none" }
-        }
+    Execute(messageIndex) {
+        if (messageIndex <= 0)
+            return ""
 
         messages := this.sessionManager.GetCurrentSessionMessages()
-        selectedMsg := messages[focusedRow]
+        if (messageIndex >= messages.Length)
+            return ""
 
-        if (selectedMsg.Role != "user") {
-            return { status: "none" }
-        }
+        selectedMsg := messages[messageIndex]
+        if (selectedMsg.Role != "user")
+            return ""
 
-        if (promptText == "") {
-            return {
-                status: "load_to_prompt",
-                text: this.sessionManager.GetUserMessageTextWithoutContext(selectedMsg)
-            }
-        }
-
-        newContent := this.sessionManager.BuildUserMessage(promptText, images)
-
-        isFirstUserMsg := false
-        for i, msg in messages {
-            if (msg.Role == "user") {
-                isFirstUserMsg := (msg == selectedMsg)
-                break
-            }
-        }
-
-        if (isFirstUserMsg && selectedMsg.AdditionalProperties.Has("hasContext")
-            && selectedMsg.AdditionalProperties["hasContext"]
-            && selectedMsg.Contents.Length > 0 && (selectedMsg.Contents[1] is TextContent)) {
-            contextText := selectedMsg.Contents[1]
-            newContentWithContext := [contextText]
-            for part in newContent {
-                newContentWithContext.Push(part)
-            }
-            selectedMsg.Contents := newContentWithContext
-        } else {
-            selectedMsg.Contents := newContent
-        }
-
-        if (this.sessionManager.TruncateMessages(focusedRow)) {
-            return { status: "sent" }
-        }
-
-        return { status: "none" }
+        messageText := this.sessionManager.GetUserMessageTextWithoutContext(selectedMsg)
+        
+        if (this.sessionManager.CreateHistoryBranch(messageIndex - 1))
+            return messageText
+        
+        return ""
     }
 }

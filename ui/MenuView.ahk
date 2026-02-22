@@ -4,6 +4,7 @@ class MenuView {
     historyMenu := ""
     toolsMenu := ""
     modeMenu := ""
+    currentModelLabel := ""
 
     Create(gui, rootController, settingsController, llmTypes, currentLLMTypeIndex) {
         FileMenu := Menu()
@@ -53,6 +54,7 @@ class MenuView {
         this.menuBar.Add(currentModelLabel, this.modelMenu)
 
         gui.MenuBar := this.menuBar
+        this.currentModelLabel := currentModelLabel
         rootController.currentModelName := currentModelLabel
     }
     
@@ -63,6 +65,33 @@ class MenuView {
             this.modeMenu.Check("Batch Mode")
         } else {
             this.modeMenu.Uncheck("Batch Mode")
+        }
+    }
+
+    UpdateModelMenu(selectedIndex, modelNames) {
+        if (!this.modelMenu)
+            return
+
+        currentModelName := modelNames[selectedIndex]
+        currentModelLabel := "Model: " . currentModelName
+
+        ; Update checkmarks
+        for index, modelName in modelNames {
+            if (index = selectedIndex) {
+                this.modelMenu.Check(modelName)
+            } else {
+                this.modelMenu.Uncheck(modelName)
+            }
+        }
+
+        ; Renaming the menu bar item
+        try {
+            ; We need a way to track the previous label to rename it correctly
+            ; This is usually handled by a property in MenuView
+            if (this.currentModelLabel != currentModelLabel) {
+                this.menuBar.Rename(this.currentModelLabel, currentModelLabel)
+                this.currentModelLabel := currentModelLabel
+            }
         }
     }
 

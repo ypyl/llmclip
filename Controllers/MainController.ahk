@@ -96,11 +96,7 @@ class MainController {
     }
 
     CompressHistory(*) {
-        ; Disable Ask LLM button while processing
-        if (this.view.guiShown) {
-            this.view.SetAskButtonText("Compressing...")
-            this.view.SetAskButtonEnabled(false)
-        }
+        this.SetProcessingState("compressing")
 
         try {
             compressedMsg := this.compressHistoryCommand.Execute()
@@ -112,22 +108,14 @@ class MainController {
             }
 
         } catch as e {
-            MsgBox("Compression failed: " . e.Message, "Error", "Iconx")
+            this.view.ShowError("Compression failed: " . e.Message)
         } finally {
-            ; Re-enable Ask LLM button
-            if (this.view.guiShown) {
-                this.view.SetAskButtonText("Ask LLM")
-                this.view.SetAskButtonEnabled(true)
-            }
+            this.SetProcessingState("idle")
         }
     }
 
     ExtractLearnings(*) {
-        ; Disable Ask LLM button while processing
-        if (this.view.guiShown) {
-            this.view.SetAskButtonText("Extracting...")
-            this.view.SetAskButtonEnabled(false)
-        }
+        this.SetProcessingState("extracting")
 
         try {
             extractedNotes := this.extractLearningsCommand.Execute()
@@ -138,13 +126,9 @@ class MainController {
             }
 
         } catch as e {
-            MsgBox("Extraction failed: " . e.Message, "Error", "Iconx")
+            this.view.ShowError("Extraction failed: " . e.Message)
         } finally {
-            ; Re-enable Ask LLM button
-            if (this.view.guiShown) {
-                this.view.SetAskButtonText("Ask LLM")
-                this.view.SetAskButtonEnabled(true)
-            }
+            this.SetProcessingState("idle")
         }
     }
 
@@ -336,6 +320,12 @@ class MainController {
         } else if (state == "tool_running") {
             this.view.SetAskButtonText("Cancel Tool")
             this.view.SetAskButtonEnabled(true)
+        } else if (state == "compressing") {
+            this.view.SetAskButtonText("Compressing...")
+            this.view.SetAskButtonEnabled(false)
+        } else if (state == "extracting") {
+            this.view.SetAskButtonText("Extracting...")
+            this.view.SetAskButtonEnabled(false)
         }
     }
 
@@ -407,24 +397,11 @@ class MainController {
 
     UpdateSessionUI() {
         currentModelIndex := this.sessionManager.GetCurrentSessionLLMType()
-        newModelName := "Model: " . this.configManager.llmTypes[currentModelIndex]
+        
+        ; 1. Update Models Menu (delegated to View)
+        this.view.UpdateModelMenu(currentModelIndex, this.configManager.llmTypes)
 
-        ; 1. Update menu checkmarks
-        for index, modelName in this.configManager.llmTypes {
-            if (index = currentModelIndex) {
-                this.view.modelMenu.Check(modelName)
-            } else {
-                this.view.modelMenu.Uncheck(modelName)
-            }
-        }
-
-        ; 2. Update menu bar label if model changed
-        if (this.currentModelName != newModelName) {
-            try this.view.menuBar.Rename(this.currentModelName, newModelName)
-            this.currentModelName := newModelName
-        }
-
-        ; 3. Update Session Select UI
+        ; 2. Update Session Select UI
         this.view.SetSessionSelectValue(this.sessionManager.currentSessionIndex)
 
         ; 4. Update System Prompt UI
@@ -459,7 +436,7 @@ class MainController {
             try {
                 this.saveConversationCommand.Execute(selectedFile)
             } catch as e {
-                 MsgBox("Failed to save conversation: " . e.Message, "Error", "Iconx")
+                this.view.ShowError("Failed to save conversation: " . e.Message)
             }
         }
     }
@@ -471,7 +448,7 @@ class MainController {
                 this.loadConversationCommand.Execute(selectedFile)
                 this.UpdateSessionUI()
             } catch as e {
-                MsgBox("Failed to load conversation: " . e.Message, "Error", "Iconx")
+                this.view.ShowError("Failed to load conversation: " . e.Message)
             }
         }
     }

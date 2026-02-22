@@ -4,6 +4,7 @@ class MenuView {
     historyMenu := ""
     toolsMenu := ""
     modeMenu := ""
+    answerSizeMenu := ""
     currentModelLabel := ""
 
     static ToolMapping := [
@@ -33,11 +34,11 @@ class MenuView {
 
         currentModelLabel := "Model: " . llmTypes[currentLLMTypeIndex]
 
-        AnswerSizeMenu := Menu()
-        AnswerSizeMenu.Add("Small", ObjBindMethod(settingsController, "SelectAnswerSize"))
-        AnswerSizeMenu.Add("Default", ObjBindMethod(settingsController, "SelectAnswerSize"))
-        AnswerSizeMenu.Add("Long", ObjBindMethod(settingsController, "SelectAnswerSize"))
-        AnswerSizeMenu.Check("Default")
+        this.answerSizeMenu := Menu()
+        this.answerSizeMenu.Add("Small", ObjBindMethod(settingsController, "SelectAnswerSize"))
+        this.answerSizeMenu.Add("Default", ObjBindMethod(settingsController, "SelectAnswerSize"))
+        this.answerSizeMenu.Add("Long", ObjBindMethod(settingsController, "SelectAnswerSize"))
+        this.answerSizeMenu.Check("Default")
 
         this.historyMenu := Menu()
         this.historyMenu.Add("Compress", ObjBindMethod(rootController, "CompressHistory"))
@@ -56,7 +57,7 @@ class MenuView {
         this.menuBar.Add("History", this.historyMenu)
         this.menuBar.Add("Mode", this.modeMenu)
         this.menuBar.Add("Tools", this.toolsMenu)
-        this.menuBar.Add("Answer Size", AnswerSizeMenu)
+        this.menuBar.Add("Answer Size", this.answerSizeMenu)
         this.menuBar.Add(currentModelLabel, this.modelMenu)
 
         gui.MenuBar := this.menuBar
@@ -92,12 +93,57 @@ class MenuView {
 
         ; Renaming the menu bar item
         try {
-            ; We need a way to track the previous label to rename it correctly
-            ; This is usually handled by a property in MenuView
             if (this.currentModelLabel != currentModelLabel) {
                 this.menuBar.Rename(this.currentModelLabel, currentModelLabel)
                 this.currentModelLabel := currentModelLabel
             }
+        }
+    }
+
+    UpdateAnswerSizeMenu(selectedSize) {
+        if (!this.answerSizeMenu)
+            return
+
+        for _, size in ["Small", "Default", "Long"] {
+            if (size = selectedSize) {
+                this.answerSizeMenu.Check(size)
+            } else {
+                this.answerSizeMenu.Uncheck(size)
+            }
+        }
+    }
+
+    UpdateToolsMenu(toolStates) {
+        if (!this.toolsMenu)
+            return
+
+        for toolInfo in MenuView.ToolMapping {
+            if (toolStates.HasProp(toolInfo.stateKey) && toolStates.%toolInfo.stateKey%) {
+                this.toolsMenu.Check(toolInfo.label)
+            } else {
+                this.toolsMenu.Uncheck(toolInfo.label)
+            }
+        }
+    }
+
+    UpdateCompressionState(isEnabled) {
+        if (!this.historyMenu)
+            return
+
+        if (isEnabled) {
+            this.historyMenu.Enable("Compress")
+        } else {
+            this.historyMenu.Disable("Compress")
+        }
+    }
+
+    RebuildModelMenu(modelNames, selectModelCallback) {
+        if (!this.modelMenu)
+            return
+
+        this.modelMenu.Delete()
+        for index, modelName in modelNames {
+            this.modelMenu.Add(modelName, selectModelCallback)
         }
     }
 

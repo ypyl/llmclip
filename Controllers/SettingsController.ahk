@@ -38,23 +38,8 @@ class SettingsController {
         ; Update session with new model index
         this.selectModelCommand.Execute(ItemPos)
 
-        ; Update menu checkmarks
-        for index, modelName in this.configManager.llmTypes {
-            if (index = ItemPos) {
-                MyMenu.Check(modelName)
-            } else {
-                MyMenu.Uncheck(modelName)
-            }
-        }
-
-        ; Update menu bar label
-        rootController := this.mainView.controller
-        oldModelName := rootController.currentModelName
-        newModelName := "Model: " . this.configManager.llmTypes[ItemPos]
-        if (oldModelName != newModelName) {
-            try this.menuView.RenameMenu(oldModelName, newModelName)
-            rootController.currentModelName := newModelName
-        }
+        ; Update UI
+        this.menuView.UpdateModelMenu(ItemPos, this.configManager.llmTypes)
 
         ; Update system prompts for the new model
         this.promptView.ClearSystemPrompt()
@@ -73,41 +58,24 @@ class SettingsController {
     }
 
     SelectAnswerSize(ItemName, ItemPos, MyMenu) {
-        for _, size in ["Small", "Default", "Long"] {
-            if (size = ItemName) {
-                MyMenu.Check(size)
-            } else {
-                MyMenu.Uncheck(size)
-            }
-        }
+        this.menuView.UpdateAnswerSizeMenu(ItemName)
         this.changeAnswerSizeCommand.Execute(ItemName)
     }
 
     UpdateCompressionMenuState() {
-        if (!this.menuView || !this.menuView.historyMenu)
+        if (!this.menuView)
             return
 
         isEnabled := this.getCompressionStateCommand.Execute()
-        if (isEnabled) {
-            this.menuView.historyMenu.Enable("Compress")
-        } else {
-            this.menuView.historyMenu.Disable("Compress")
-        }
+        this.menuView.UpdateCompressionState(isEnabled)
     }
 
     UpdateToolsMenuState() {
-        if (!this.menuView || !this.menuView.toolsMenu)
+        if (!this.menuView)
             return
 
         toolStates := this.getToolsStateCommand.Execute()
-
-        for toolInfo in MenuView.ToolMapping {
-            if (toolStates.%toolInfo.stateKey%) {
-                this.menuView.toolsMenu.Check(toolInfo.label)
-            } else {
-                this.menuView.toolsMenu.Uncheck(toolInfo.label)
-            }
-        }
+        this.menuView.UpdateToolsMenu(toolStates)
     }
 
     ToggleTool(toolName, *) {
@@ -134,25 +102,18 @@ class SettingsController {
     ReloadSettings(*) {
         this.reloadSettingsCommand.Execute()
 
-        this.menuView.modelMenu.Delete()
-        for index, modelName in this.configManager.llmTypes {
-            this.menuView.modelMenu.Add(modelName, ObjBindMethod(this, "SelectModel"))
-        }
+        ; Refresh models menu
+        this.menuView.RebuildModelMenu(this.configManager.llmTypes, ObjBindMethod(this, "SelectModel"))
 
+        ; Update current selection
         currentModelIndex := this.sessionManager.GetCurrentSessionLLMType()
-        if (currentModelIndex <= this.configManager.llmTypes.Length) {
-            this.menuView.CheckModel(this.configManager.llmTypes[currentModelIndex])
-        } else {
+        if (currentModelIndex > this.configManager.llmTypes.Length) {
+            currentModelIndex := 1
             this.sessionManager.SetCurrentSessionLLMType(1)
-            this.menuView.CheckModel(this.configManager.llmTypes[1])
         }
+        this.menuView.UpdateModelMenu(currentModelIndex, this.configManager.llmTypes)
 
-        rootController := this.mainView.controller
-        oldModelName := rootController.currentModelName
-        newModelName := "Model: " . this.configManager.llmTypes[this.sessionManager.GetCurrentSessionLLMType()]
-        try this.menuView.RenameMenu(oldModelName, newModelName)
-        rootController.currentModelName := newModelName
-
+        ; Update system prompts
         currentSystemPrompt := this.promptView.GetSystemPromptValue()
         this.promptView.ClearSystemPrompt()
         this.promptView.AddSystemPrompts(this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType()))

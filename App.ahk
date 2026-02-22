@@ -48,7 +48,7 @@
 #Include Commands\PrepareContextCommand.ahk
 #Include Commands\GetHistoryListItemsCommand.ahk
 #Include Commands\GetMessagePresentationCommand.ahk
-#Include Commands\UncheckImagesCommand.ahk
+#Include Commands\UncheckContextCommand.ahk
 #Include Commands\CancelRequestCommand.ahk
 #Include Commands\ExecuteToolCallsCommand.ahk
 #Include Commands\RegenerateMessageCommand.ahk
@@ -127,7 +127,7 @@ class App {
         prepareContext := PrepareContextCommand(sess, cfg)
         getHistoryItems := GetHistoryListItemsCommand(sess, mps)
         getMessagePresentation := GetMessagePresentationCommand(sess, mps)
-        uncheckImages := UncheckImagesCommand(sess)
+        uncheckContext := UncheckContextCommand(sess)
         setContextItemChecked := SetContextItemCheckedCommand(sess)
 
         cancelRequest := CancelRequestCommand(llm)
@@ -145,7 +145,7 @@ class App {
         toggleBatchMode := ToggleBatchModeCommand(sess)
 
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckImages, processClip, switchSession, toggleBatchMode
+            saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClip, switchSession, toggleBatchMode
         )
 
         ; 3. Initialize View

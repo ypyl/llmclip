@@ -3,24 +3,29 @@ class SendToLLMCommand {
     configManager := ""
     llmService := ""
     contextManager := ""
-    
+
     __New(sessionManager, configManager, llmService, contextManager) {
         this.sessionManager := sessionManager
         this.configManager := configManager
         this.llmService := llmService
         this.contextManager := contextManager
     }
-    
+
     Execute(promptText, images := [], selectedContextIndices := [], isRegeneration := false) {
         currentContext := this.sessionManager.GetCurrentSessionContext()
         additionalContext := this.contextManager.BuildPromptContext(currentContext, selectedContextIndices)
 
         if (!isRegeneration) {
             userMessageContent := this.sessionManager.BuildUserMessage(promptText, images)
-            hasAnyChecked := this.sessionManager.HasAnyCheckedItem()
 
-            if (userMessageContent.Length > 0 || hasAnyChecked) {
-                this.sessionManager.GetCurrentSessionMessages().Push(ChatMessage("user", userMessageContent))
+            if (additionalContext != "") {
+                userMessageContent.InsertAt(1, TextContent(additionalContext))
+            }
+
+            if (userMessageContent.Length > 0) {
+                userChangeMessage := ChatMessage("user", userMessageContent)
+                userChangeMessage.AdditionalProperties["hasContext"] := additionalContext != ""
+                this.sessionManager.GetCurrentSessionMessages().Push(userChangeMessage)
             }
         }
 
@@ -31,14 +36,6 @@ class SendToLLMCommand {
             this.sessionManager.GetCurrentSessionSystemPrompt()
         )
         this.sessionManager.UpdateSystemPromptContent(systemPrompt)
-
-        if (messages.Length > 0 && messages[messages.Length].Role == "user") {
-            lastUserMsg := messages[messages.Length]
-            if (additionalContext != "") {
-                lastUserMsg.Contents.InsertAt(1, TextContent(additionalContext))
-                lastUserMsg.AdditionalProperties["hasContext"] := true
-            }
-        }
 
         currentLLM := this.sessionManager.GetCurrentSessionLLMType()
         powerShellEnabled := this.configManager.IsToolEnabled(currentLLM, "powerShellTool")

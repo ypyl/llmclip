@@ -73,28 +73,28 @@ class SessionManager {
     FormatMessagesForCompression() {
         messages := this.GetCurrentSessionMessages()
         formattedText := ""
-        
+
         i := 2
         loop messages.Length - 1 {
             msg := messages[i]
-            roleLabel := msg.Role == "user" ? "User" : 
-                msg.Role == "assistant" ? "Assistant" : 
+            roleLabel := msg.Role == "user" ? "User" :
+                msg.Role == "assistant" ? "Assistant" :
                 msg.Role == "tool" ? "Tool" : msg.Role
-            
+
             messageText := msg.GetText()
             formattedText .= roleLabel ": " messageText "`n`n"
             i++
         }
-        
+
         return formattedText
     }
 
     ReplaceWithCompressed(compressedMsg) {
         messages := this.GetCurrentSessionMessages()
         systemMsg := messages[1]
-        
+
         this.ClearCurrentMessages()
-        
+
         current := this.GetCurrentSessionMessages()
         current[1] := systemMsg
         current.Push(compressedMsg)
@@ -103,11 +103,11 @@ class SessionManager {
     GetMessagesExcludingBatch() {
         allMessages := this.GetCurrentSessionMessages()
         filteredMessages := []
-        
+
         for msg in allMessages {
             isBatch := (msg.AdditionalProperties.Has("isBatchMode") && msg.AdditionalProperties["isBatchMode"])
                     || (msg.AdditionalProperties.Has("isBatchResponse") && msg.AdditionalProperties["isBatchResponse"])
-            
+
             if (!isBatch)
                 filteredMessages.Push(msg)
         }
@@ -117,7 +117,7 @@ class SessionManager {
     AddContextItems(items) {
         addedAny := false
         context := this.GetCurrentSessionContext()
-        
+
         for item in items {
             if !this.IsContentDuplicate(item) {
                 context.Push(ContextItem(item))
@@ -232,7 +232,7 @@ class SessionManager {
     GetMessageText(message) => message.GetText()
 
     GetUserMessageTextWithoutContext(message) {
-        if (message.Role == "user" && message.AdditionalProperties.Has("hasContext") 
+        if (message.Role == "user" && message.AdditionalProperties.Has("hasContext")
             && message.AdditionalProperties["hasContext"]) {
             messages := this.GetCurrentSessionMessages()
             isFirstUserMsg := false
@@ -242,7 +242,7 @@ class SessionManager {
                     break
                 }
             }
-            
+
             if (isFirstUserMsg) {
                 text := ""
                 for i, part in message.Contents {
@@ -255,7 +255,7 @@ class SessionManager {
                 return text
             }
         }
-        
+
         return message.GetText()
     }
 
@@ -392,12 +392,12 @@ class SessionManager {
         return false
     }
 
-    UncheckAllImages() {
+    UncheckAllContext() {
         context := this.GetCurrentSessionContext()
         changed := false
 
         for index, item in context {
-            if (this.contextManager.IsImage(item.Value) && item.Checked) {
+            if (item.Checked) {
                 this.SetContextItemChecked(index, false)
                 changed := true
             }

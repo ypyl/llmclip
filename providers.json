@@ -1,40 +1,4 @@
 {
-  "ol-qwen3-vl": {
-    "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
-    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble.",
-    "model": "qwen3-vl:8b",
-    "stream": false,
-    "temperature": 0.7,
-    "image": true
-  },
-  "ol-ministral:8b": {
-    "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
-    "model": "ministral-3:8b",
-    "stream": false,
-    "temperature": 0.7,
-    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
-  },
-  "ol-qwen3:8b": {
-    "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
-    "model": "qwen3:8b",
-    "stream": false,
-    "temperature": 0.7,
-    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
-  },
-  "ol-qwen3-30b": {
-    "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
-    "model": "qwen3:30b",
-    "stream": false,
-    "temperature": 0.7,
-    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
-  },
-  "ol-qwen3-coder": {
-    "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
-    "model": "qwen3-coder",
-    "stream": false,
-    "temperature": 0.7,
-    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
-  },
   "github-4o-mini": {
     "curl": "curl -s -S -X POST \"https://models.github.ai/inference/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
     "model": "openai/gpt-4o-mini",
@@ -210,20 +174,6 @@
     ],
     "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
   },
-  "ol-gemma3n": {
-    "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
-    "model": "gemma3n",
-    "stream": false,
-    "temperature": 0.7,
-    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
-  },
-  "ol-qwen3-4b": {
-    "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
-    "model": "qwen3:4b",
-    "stream": false,
-    "temperature": 0.7,
-    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
-  },
   "ol-gpt-oss": {
     "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
     "model": "gpt-oss:20b",
@@ -231,16 +181,37 @@
     "temperature": 0.7,
     "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
   },
-  "ol-cl-gpt-oss": {
-    "curl": "curl -s -S -X POST \"https://ollama.com/api/chat\" -H \"Authorization: Bearer {API_KEY}\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
-    "model": "gpt-oss:120b",
+  "ol-lfm2.5-thinking:latest": {
+    "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
+    "model": "lfm2.5-thinking:latest",
     "stream": false,
+    "tools": [
+      "powerShellTool",
+      "fileSystemTool",
+      "webSearch",
+      "webFetch",
+      "markdownNew"
+    ],
     "temperature": 0.7,
     "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
   },
-  "ol-gemma3-270m": {
+  "ol-granite4:latest": {
     "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
-    "model": "gemma3:270m",
+    "model": "granite4:latest",
+    "stream": false,
+    "tools": [
+      "powerShellTool",
+      "fileSystemTool",
+      "webSearch",
+      "webFetch",
+      "markdownNew"
+    ],
+    "temperature": 0.7,
+    "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
+  },
+  "ol-cl-gpt-oss": {
+    "curl": "curl -s -S -X POST \"https://ollama.com/api/chat\" -H \"Authorization: Bearer {API_KEY}\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
+    "model": "gpt-oss:120b",
     "stream": false,
     "temperature": 0.7,
     "compression_prompt": "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."

@@ -29,7 +29,7 @@ class MainController {
     sendBatchToLLMCommand := ""
     renderLastMessageCommand := ""
     processClipboardCommand := ""
-    uncheckImagesCommand := ""
+    uncheckContextCommand := ""
     switchSessionCommand := ""
     toggleBatchModeCommand := ""
 
@@ -57,7 +57,7 @@ class MainController {
         this.messagePresentationService := messagePresentationService
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckImages, processClipboard, switchSession, toggleBatchMode) {
+    SetCommands(saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClipboard, switchSession, toggleBatchMode) {
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
         this.clearContextCommand := clearCtx
@@ -72,7 +72,7 @@ class MainController {
         this.sendToLLMCommand := sendToLLM
         this.sendBatchToLLMCommand := sendBatchToLLM
         this.renderLastMessageCommand := renderLastMsg
-        this.uncheckImagesCommand := uncheckImages
+        this.uncheckContextCommand := uncheckContext
         this.processClipboardCommand := processClipboard
         this.switchSessionCommand := switchSession
         this.toggleBatchModeCommand := toggleBatchMode
@@ -275,7 +275,7 @@ class MainController {
             this.historyViewController.UpdateChatHistoryView()
             this.renderLastMessageCommand.Execute()
 
-            if (this.uncheckImagesCommand.Execute()) {
+            if (this.uncheckContextCommand.Execute()) {
                 this.contextViewController.UpdateContextView()
             }
         }

@@ -1,10 +1,10 @@
 #Requires AutoHotkey 2.0
 
 /**
- * Command to uncheck all image items in the current session context.
+ * Command to uncheck all context items in the current session.
  * UI-agnostic logic for modifying session state.
  */
-class UncheckImagesCommand {
+class UncheckContextCommand {
     sessionManager := ""
     
     __New(sessionManager) {
@@ -16,6 +16,6 @@ class UncheckImagesCommand {
      * @returns {Boolean} True if any items were unchecked, false otherwise.
      */
     Execute() {
-        return this.sessionManager.UncheckAllImages()
+        return this.sessionManager.UncheckAllContext()
     }
 }

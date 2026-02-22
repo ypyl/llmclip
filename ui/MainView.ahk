@@ -153,7 +153,7 @@ class MainView {
     GetSessionSelectValue() => this.topControlsView.GetValue()
     UpdateRecordButton(isRecording) => this.topControlsView.UpdateRecordButton(isRecording)
     
-    UpdateBatchModeMenu(enabled) => this.menuView.UpdateBatchMode(enabled)
+    UpdateBatchMode(enabled) => this.menuView.UpdateBatchMode(enabled)
     UpdateModelMenu(selectedIndex, modelNames) => this.menuView.UpdateModelMenu(selectedIndex, modelNames)
     
     ShowSaveFileDialog(defaultFilename, title, filter) => FileSelect("S16", defaultFilename, title, filter)

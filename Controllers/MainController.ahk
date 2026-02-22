@@ -41,7 +41,6 @@ class MainController {
     recordingController := ""
 
     processingState := "idle" ; idle, processing, tool_pending, tool_running
-    currentModelName := ""
 
     messagePresentationService := ""
 
@@ -302,7 +301,7 @@ class MainController {
         isEnabled := this.toggleBatchModeCommand.Execute()
 
         ; Update menu checkmark
-        this.view.UpdateBatchModeMenu(isEnabled)
+        this.view.UpdateBatchMode(isEnabled)
     }
 
     SetProcessingState(state) {

@@ -33,6 +33,7 @@ class MenuView {
         }
 
         currentModelLabel := "Model: " . llmTypes[currentLLMTypeIndex]
+        this.currentModelLabel := currentModelLabel
 
         this.answerSizeMenu := Menu()
         this.answerSizeMenu.Add("Small", ObjBindMethod(settingsController, "SelectAnswerSize"))
@@ -61,8 +62,6 @@ class MenuView {
         this.menuBar.Add(currentModelLabel, this.modelMenu)
 
         gui.MenuBar := this.menuBar
-        this.currentModelLabel := currentModelLabel
-        rootController.currentModelName := currentModelLabel
     }
     
     UpdateBatchMode(enabled) {

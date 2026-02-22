@@ -48,8 +48,8 @@ Generate a record in this exact format:
 name: [Tool Name]
 link: [URL]
 category: [Single Category]
-tags: [tag1, tag2, tag3]
-description: [Concise description in sentence case, ending with period]
+tags: [tag1, tag2, tag3, YYYY-MM-DD]
+description: [Concise description in sentence case, ending with period.]
 ---
 ```
 
@@ -80,6 +80,7 @@ description: [Concise description in sentence case, ending with period]
 
 ### Tags
 - Select 3-5 relevant tags
+- **Always append the current date as the last tag**, formatted as `YYYY-MM-DD` (e.g., `2026-02-22`)
 - **PREFER existing tags** from the retrieved list when applicable
 - **You MAY create new tags** if:
   - Existing tags don't adequately describe the tool's key features or technologies
@@ -141,7 +142,7 @@ Content:
 name: Crawlee
 link: https://crawlee.dev
 category: Programming
-tags: [web-scraping, nodejs, automation, browser-automation, typescript]
+tags: [web-scraping, nodejs, automation, browser-automation, typescript, 2026-02-22]
 description: Web scraping and browser automation library for Node.js supporting multiple engines and data extraction.
 ---
 ```
@@ -161,7 +162,7 @@ File: `C:\Users\ypyl\projects\yauhenpylgithubio\_tools\grafana.md`
 name: Grafana
 link: https://grafana.com
 category: Monitoring
-tags: [monitoring, visualization, analytics, metrics, dashboards]
+tags: [monitoring, visualization, analytics, metrics, dashboards, 2026-02-22]
 description: Open source analytics and visualization platform for monitoring and observability.
 ---
 ```
@@ -173,6 +174,7 @@ description: Open source analytics and visualization platform for monitoring and
 4. Extract or construct the complete URL
 5. Analyze the tool's primary function and select the best category (existing or new)
 6. Review existing tags and select/create 3-5 relevant tags
-7. Write a concise, clear description
-8. Generate the filename (lowercase, hyphenated tool name)
-9. Save the formatted output to `C:\Users\ypyl\projects\yauhenpylgithubio\_tools\[tool-name].md`
+7. Append the current date as the last tag in `YYYY-MM-DD` format
+8. Write a concise, clear description
+9. Generate the filename (lowercase, hyphenated tool name)
+10. Save the formatted output to `C:\Users\ypyl\projects\yauhenpylgithubio\_tools\[tool-name].md`

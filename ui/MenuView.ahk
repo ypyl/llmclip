@@ -6,6 +6,14 @@ class MenuView {
     modeMenu := ""
     currentModelLabel := ""
 
+    static ToolMapping := [
+        { id: "powerShellTool", label: "PowerShell", stateKey: "powerShell" },
+        { id: "fileSystemTool", label: "File System", stateKey: "fileSystem" },
+        { id: "webSearch",      label: "Web Search",  stateKey: "webSearch" },
+        { id: "webFetch",       label: "Web Fetch",   stateKey: "webFetch" },
+        { id: "markdownNew",    label: "Markdown New", stateKey: "markdownNew" }
+    ]
+
     Create(gui, rootController, settingsController, llmTypes, currentLLMTypeIndex) {
         FileMenu := Menu()
         FileMenu.Add("Save Conversation", ObjBindMethod(rootController, "SaveConversation"))
@@ -39,11 +47,9 @@ class MenuView {
         this.modeMenu.Add("Batch Mode", ObjBindMethod(rootController, "ToggleBatchMode"))
 
         this.toolsMenu := Menu()
-        this.toolsMenu.Add("PowerShell", ObjBindMethod(settingsController, "ToggleTool", "powerShellTool"))
-        this.toolsMenu.Add("File System", ObjBindMethod(settingsController, "ToggleTool", "fileSystemTool"))
-        this.toolsMenu.Add("Web Search", ObjBindMethod(settingsController, "ToggleTool", "webSearch"))
-        this.toolsMenu.Add("Web Fetch", ObjBindMethod(settingsController, "ToggleTool", "webFetch"))
-        this.toolsMenu.Add("Markdown New", ObjBindMethod(settingsController, "ToggleTool", "markdownNew"))
+        for toolInfo in MenuView.ToolMapping {
+            this.toolsMenu.Add(toolInfo.label, ObjBindMethod(settingsController, "ToggleTool", toolInfo.id))
+        }
 
         this.menuBar := MenuBar()
         this.menuBar.Add("&File", FileMenu)

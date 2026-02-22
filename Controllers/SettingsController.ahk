@@ -101,22 +101,13 @@ class SettingsController {
 
         toolStates := this.getToolsStateCommand.Execute()
 
-        this.menuView.toolsMenu.Uncheck("PowerShell")
-        this.menuView.toolsMenu.Uncheck("File System")
-        this.menuView.toolsMenu.Uncheck("Web Search")
-        this.menuView.toolsMenu.Uncheck("Web Fetch")
-        this.menuView.toolsMenu.Uncheck("Markdown New")
-
-        if (toolStates.powerShell)
-            this.menuView.toolsMenu.Check("PowerShell")
-        if (toolStates.fileSystem)
-             this.menuView.toolsMenu.Check("File System")
-        if (toolStates.webSearch)
-            this.menuView.toolsMenu.Check("Web Search")
-        if (toolStates.webFetch)
-            this.menuView.toolsMenu.Check("Web Fetch")
-        if (toolStates.markdownNew)
-            this.menuView.toolsMenu.Check("Markdown New")
+        for toolInfo in MenuView.ToolMapping {
+            if (toolStates.%toolInfo.stateKey%) {
+                this.menuView.toolsMenu.Check(toolInfo.label)
+            } else {
+                this.menuView.toolsMenu.Uncheck(toolInfo.label)
+            }
+        }
     }
 
     ToggleTool(toolName, *) {

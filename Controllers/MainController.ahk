@@ -212,7 +212,7 @@ class MainController {
             if (currentState == "processing") {
                 ; Handle Cancellation
                 result := this.cancelRequestCommand.Execute()
-            } else if (currentState == "tool_pending") {
+            } else if (currentState == "tool_pending" || currentState == "tool_running") {
                 ; Handle Tool Confirmation
                 if (this.executeToolCallsCommand.Execute()) {
                     result := this.sendToLLMCommand.Execute(promptText, images, selectedIndices, true)

@@ -140,9 +140,15 @@ class MessagePresentationService {
     }
 
     FormatToolCallMessage(toolCall) {
-        ; JSON might not be available here directly, but we assume it's global or included via LLM\Types.ahk
         try {
-            return toolCall.Name "(" JSON.Stringify(toolCall.Arguments) ")"
+            result := "**" toolCall.Name "**"
+            if (toolCall.Arguments.Count > 0) {
+                result .= "`n"
+                for key, value in toolCall.Arguments {
+                    result .= "- **" key "**:`n" value "`n"
+                }
+            }
+            return result
         } catch {
             return toolCall.Name "(...)"
         }

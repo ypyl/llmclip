@@ -113,9 +113,9 @@ class ConfigurationService {
             value := prompts[promptIndex]["value"]
             
             try {
-                pathInSystemPrompts := "system_prompts\" . value
+                pathInSystemPrompts := "prompts\" . value
                 if (SubStr(value, 1, 2) = ".\") {
-                    pathInSystemPrompts := "system_prompts\" . SubStr(value, 3)
+                    pathInSystemPrompts := "prompts\" . SubStr(value, 3)
                 }
 
                 if (FileExist(pathInSystemPrompts)) {

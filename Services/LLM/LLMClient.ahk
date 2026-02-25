@@ -39,8 +39,10 @@ class LLMClient {
             curl := selectedSettings["curl"]
             selectedLLMType := selectedSettings.Has("type") ? selectedSettings["type"] : "groq"
 
+            providerName := selectedSettings.Has("provider_name") ? selectedSettings["provider_name"] : ""
+
             ; Get the appropriate provider
-            provider := this.GetProvider(selectedLLMType)
+            provider := this.GetProvider(selectedSettings)
 
             ; Prepare request body
             body := provider.GetRequestBody(messages, selectedSettings)
@@ -49,7 +51,7 @@ class LLMClient {
             inputFile := this.tempDir "\request.json"
 
             ; Handle audio output differently
-            if (InStr(selectedLLMType, "gr-audio") = 1) {
+            if (providerName = "GroqAudio" || providerName = "Groq Audio" || providerName = "Audio") {
                 outputFile := this.tempDir "\response.wav"
             } else {
                 outputFile := this.tempDir "\response.json"
@@ -70,6 +72,11 @@ class LLMClient {
             ; Report error if API_KEY is still missing but required by the template
             if (InStr(curlCmd, "{API_KEY}")) {
                 throw Error("Missing API_KEY for provider: " . selectedLLMType)
+            }
+
+            ; Replace MODEL placeholder if present
+            if (selectedSettings.Has("model")) {
+                curlCmd := StrReplace(curlCmd, "{MODEL}", selectedSettings["model"])
             }
 
             ; Execute curl
@@ -94,7 +101,7 @@ class LLMClient {
             }
 
             ; Handle audio response
-            if (InStr(selectedLLMType, "gr-audio") = 1) {
+            if (providerName = "GroqAudio" || providerName = "Groq Audio" || providerName = "Audio") {
                 audioMsg := ChatMessage("assistant")
                 audioMsg.Contents.Push(AudioContent(outputFile, "wav"))
                 return [audioMsg]
@@ -130,15 +137,18 @@ class LLMClient {
         }
     }
 
-    GetProvider(type) {
-        if (InStr(type, "gr-audio") = 1)
+    GetProvider(settings) {
+        providerName := settings.Has("provider_name") ? settings["provider_name"] : ""
+        
+        if (providerName = "GroqAudio" || providerName = "Groq Audio" || providerName = "Audio")
             return this.providers["audio"]
-        else if (InStr(type, "gr") = 1 || InStr(type, "az") = 1 || InStr(type, "git") = 1 || InStr(type, "or") = 1)
+        else if (providerName = "Groq" || providerName = "GitHub" || providerName = "OpenRouter" || providerName = "OpenAI")
             return this.providers["openai"]
-        else if (InStr(type, "ol-") = 1)
+        else if (InStr(providerName, "Ollama") = 1)
             return this.providers["ollama"]
-        else if (InStr(type, "go") = 1)
+        else if (providerName = "Google")
             return this.providers["google"]
-        throw Error("Unknown model type: " type)
+            
+        throw Error("Unknown provider type: " providerName " (" settings.Get("type", "") ")")
     }
 }

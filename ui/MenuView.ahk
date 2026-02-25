@@ -32,7 +32,7 @@ class MenuView {
             }
         }
 
-        currentModelLabel := "Model: " . llmTypes[currentLLMTypeIndex]
+        currentModelLabel := llmTypes[currentLLMTypeIndex]
         this.currentModelLabel := currentModelLabel
 
         this.answerSizeMenu := Menu()
@@ -79,7 +79,7 @@ class MenuView {
             return
 
         currentModelName := modelNames[selectedIndex]
-        currentModelLabel := "Model: " . currentModelName
+        currentModelLabel := currentModelName
 
         ; Update checkmarks
         for index, modelName in modelNames {

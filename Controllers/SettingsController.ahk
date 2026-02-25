@@ -39,7 +39,7 @@ class SettingsController {
         this.selectModelCommand.Execute(ItemPos)
 
         ; Update UI
-        this.menuView.UpdateModelMenu(ItemPos, this.configManager.llmTypes)
+        this.menuView.UpdateModelMenu(ItemPos, this.configManager.llmDisplayNames)
 
         ; Update system prompts for the new model
         this.promptView.ClearSystemPrompt()
@@ -103,7 +103,7 @@ class SettingsController {
         this.reloadSettingsCommand.Execute()
 
         ; Refresh models menu
-        this.menuView.RebuildModelMenu(this.configManager.llmTypes, ObjBindMethod(this, "SelectModel"))
+        this.menuView.RebuildModelMenu(this.configManager.llmDisplayNames, ObjBindMethod(this, "SelectModel"))
 
         ; Update current selection
         currentModelIndex := this.sessionManager.GetCurrentSessionLLMType()
@@ -111,7 +111,7 @@ class SettingsController {
             currentModelIndex := 1
             this.sessionManager.SetCurrentSessionLLMType(1)
         }
-        this.menuView.UpdateModelMenu(currentModelIndex, this.configManager.llmTypes)
+        this.menuView.UpdateModelMenu(currentModelIndex, this.configManager.llmDisplayNames)
 
         ; Update system prompts
         currentSystemPrompt := this.promptView.GetSystemPromptValue()

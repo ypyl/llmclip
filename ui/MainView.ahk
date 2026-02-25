@@ -72,7 +72,7 @@ class MainView {
             this.gui,
             this.controller,
             this.settingsController,
-            this.controller.LLMTypes,
+            this.controller.LLMDisplayNames,
             this.controller.CurrentLLMTypeIndex
         )
 

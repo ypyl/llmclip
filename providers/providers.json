@@ -1,226 +1,235 @@
 {
-  "github-4o-mini": {
+  "GitHub": {
     "curl": "curl -s -S -X POST \"https://models.github.ai/inference/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
-    "model": "openai/gpt-4o-mini",
-    "image": true,
-    "tools": [
-      "powerShellTool",
-      "fileSystemTool",
-      "webSearch",
-      "webFetch"
+    "models": [
+      {
+        "model": "openai/gpt-4o-mini",
+        "image": true,
+        "tools": [
+          "powerShellTool",
+          "fileSystemTool",
+          "webSearch",
+          "webFetch"
+        ]
+      },
+      {
+        "model": "openai/gpt-4o",
+        "tools": [
+          "powerShellTool",
+          "fileSystemTool",
+          "webSearch",
+          "webFetch"
+        ]
+      },
+      {
+        "model": "openai/gpt-4.1",
+        "image": true,
+        "tools": [
+          "powerShellTool",
+          "fileSystemTool",
+          "webSearch",
+          "webFetch"
+        ]
+      },
+      {
+        "model": "openai/gpt-4.1-nano",
+        "tools": [
+          "powerShellTool",
+          "fileSystemTool",
+          "webSearch",
+          "webFetch"
+        ]
+      },
+      {
+        "model": "openai/gpt-4.1-mini",
+        "image": true,
+        "tools": [
+          "powerShellTool",
+          "fileSystemTool",
+          "webSearch",
+          "webFetch"
+        ]
+      }
     ]
   },
-  "github-4o": {
-    "curl": "curl -s -S -X POST \"https://models.github.ai/inference/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
-    "model": "openai/gpt-4o",
-    "tools": [
-      "powerShellTool",
-      "fileSystemTool",
-      "webSearch",
-      "webFetch"
-    ]
-  },
-  "github-41": {
-    "curl": "curl -s -S -X POST \"https://models.github.ai/inference/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
-    "model": "openai/gpt-4.1",
-    "image": true,
-    "tools": [
-      "powerShellTool",
-      "fileSystemTool",
-      "webSearch",
-      "webFetch"
-    ]
-  },
-  "github-41-nano": {
-    "curl": "curl -s -S -X POST \"https://models.github.ai/inference/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
-    "model": "openai/gpt-4.1-nano",
-    "tools": [
-      "powerShellTool",
-      "fileSystemTool",
-      "webSearch",
-      "webFetch"
-    ]
-  },
-  "github-41-mini": {
-    "curl": "curl -s -S -X POST \"https://models.github.ai/inference/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
-    "model": "openai/gpt-4.1-mini",
-    "image": true,
-    "tools": [
-      "powerShellTool",
-      "fileSystemTool",
-      "webSearch",
-      "webFetch"
-    ]
-  },
-  "gr-ll3.3-70b": {
+  "Groq": {
     "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
-    "model": "llama-3.3-70b-versatile",
-    "temperature": 0.7,
-    "tools": [
-      "powerShellTool",
-      "fileSystemTool",
-      "webSearch",
-      "webFetch"
+    "models": [
+      {
+        "model": "llama-3.3-70b-versatile",
+        "temperature": 0.7,
+        "tools": [
+          "powerShellTool",
+          "fileSystemTool",
+          "webSearch",
+          "webFetch"
+        ]
+      },
+      {
+        "model": "openai/gpt-oss-20b",
+        "temperature": 0.7,
+        "tools": [
+          "powerShellTool",
+          "fileSystemTool",
+          "webSearch",
+          "webFetch"
+        ]
+      },
+      {
+        "model": "openai/gpt-oss-120b",
+        "temperature": 0.7,
+        "tools": [
+          "powerShellTool",
+          "fileSystemTool",
+          "webSearch",
+          "webFetch"
+        ]
+      },
+      {
+        "model": "groq/compound",
+        "temperature": 0.7,
+        "tools": false
+      },
+      {
+        "model": "moonshotai/kimi-k2-instruct",
+        "temperature": 0.7,
+        "tools": [
+          "powerShellTool",
+          "fileSystemTool",
+          "webSearch",
+          "webFetch"
+        ]
+      },
+      {
+        "model": "meta-llama/llama-4-scout-17b-16e-instruct",
+        "temperature": 0.7,
+        "image": true,
+        "tools": [
+          "powerShellTool",
+          "fileSystemTool",
+          "webSearch",
+          "webFetch"
+        ]
+      },
+      {
+        "model": "qwen/qwen3-32b",
+        "temperature": 0.7,
+        "tools": [
+          "powerShellTool",
+          "fileSystemTool",
+          "webSearch",
+          "webFetch"
+        ]
+      }
     ]
   },
-  "gr-gpt-oss-20b": {
-    "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
-    "model": "openai/gpt-oss-20b",
-    "temperature": 0.7,
-    "tools": [
-      "powerShellTool",
-      "fileSystemTool",
-      "webSearch",
-      "webFetch"
-    ]
-  },
-  "gr-gpt-oss-120b": {
-    "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
-    "model": "openai/gpt-oss-120b",
-    "temperature": 0.7,
-    "tools": [
-      "powerShellTool",
-      "fileSystemTool",
-      "webSearch",
-      "webFetch"
-    ]
-  },
-  "gr-compound": {
-    "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
-    "model": "groq/compound",
-    "temperature": 0.7,
-    "tools": false
-  },
-  "gr-kimi-k2": {
-    "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
-    "model": "moonshotai/kimi-k2-instruct",
-    "temperature": 0.7,
-    "tools": [
-      "powerShellTool",
-      "fileSystemTool",
-      "webSearch",
-      "webFetch"
-    ]
-  },
-  "gr-ll4-scout": {
-    "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
-    "model": "meta-llama/llama-4-scout-17b-16e-instruct",
-    "temperature": 0.7,
-    "tools": [
-      "powerShellTool",
-      "fileSystemTool",
-      "webSearch",
-      "webFetch"
-    ],
-    "image": true
-  },
-  "gr-audio": {
+  "GroqAudio": {
     "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/audio/speech\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
-    "model": "canopylabs/orpheus-v1-english"
-  },
-  "gr-qwen-32b": {
-    "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
-    "model": "qwen/qwen3-32b",
-    "temperature": 0.7,
-    "tools": [
-      "powerShellTool",
-      "fileSystemTool",
-      "webSearch",
-      "webFetch"
+    "models": [
+      {
+        "model": "canopylabs/orpheus-v1-english"
+      }
     ]
   },
-  "go-f2.5": {
-    "curl": "curl -s -S -X POST \"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={API_KEY}\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
-    "temperature": 0.7,
-    "tools": [
-      "powerShellTool",
-      "fileSystemTool",
-      "webSearch",
-      "webFetch"
+  "Google": {
+    "curl": "curl -s -S -X POST \"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent?key={API_KEY}\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
+    "models": [
+      {
+        "model": "gemini-2.5-flash",
+        "temperature": 0.7,
+        "tools": [
+          "powerShellTool",
+          "fileSystemTool",
+          "webSearch",
+          "webFetch"
+        ]
+      },
+      {
+        "model": "gemini-2.5-pro",
+        "temperature": 0.7,
+        "tools": [
+          "powerShellTool",
+          "fileSystemTool",
+          "webSearch",
+          "webFetch"
+        ]
+      },
+      {
+        "model": "gemini-2.5-flash-lite",
+        "temperature": 0.7,
+        "tools": [
+          "powerShellTool",
+          "fileSystemTool",
+          "webSearch",
+          "webFetch"
+        ]
+      }
     ]
   },
-  "go-pro2.5": {
-    "curl": "curl -s -S -X POST \"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key={API_KEY}\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
-    "temperature": 0.7,
-    "tools": [
-      "powerShellTool",
-      "fileSystemTool",
-      "webSearch",
-      "webFetch"
-    ]
-  },
-  "go-f2.5-lite": {
-    "curl": "curl -s -S -X POST \"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={API_KEY}\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
-    "temperature": 0.7,
-    "tools": [
-      "powerShellTool",
-      "fileSystemTool",
-      "webSearch",
-      "webFetch"
-    ]
-  },
-  "ol-gpt-oss": {
+  "OllamaLocal": {
     "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
-    "model": "gpt-oss:20b",
-    "stream": false,
-    "temperature": 0.7
+    "models": [
+      {
+        "model": "gpt-oss:20b",
+        "stream": false,
+        "temperature": 0.7
+      },
+      {
+        "model": "lfm2.5-thinking:latest",
+        "stream": false,
+        "temperature": 0.7,
+        "tools": [
+          "powerShellTool",
+          "fileSystemTool",
+          "webSearch",
+          "webFetch",
+          "markdownNew"
+        ]
+      },
+      {
+        "model": "granite4:latest",
+        "stream": false,
+        "temperature": 0.7,
+        "tools": [
+          "powerShellTool",
+          "fileSystemTool",
+          "webSearch",
+          "webFetch",
+          "markdownNew"
+        ]
+      }
+    ]
   },
-  "ol-lfm2.5-thinking:latest": {
-    "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
-    "model": "lfm2.5-thinking:latest",
-    "stream": false,
-    "tools": [
-      "powerShellTool",
-      "fileSystemTool",
-      "webSearch",
-      "webFetch",
-      "markdownNew"
-    ],
-    "temperature": 0.7
-  },
-  "ol-granite4:latest": {
-    "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
-    "model": "granite4:latest",
-    "stream": false,
-    "tools": [
-      "powerShellTool",
-      "fileSystemTool",
-      "webSearch",
-      "webFetch",
-      "markdownNew"
-    ],
-    "temperature": 0.7
-  },
-  "ol-cl-gpt-oss": {
+  "OllamaCloud": {
     "curl": "curl -s -S -X POST \"https://ollama.com/api/chat\" -H \"Authorization: Bearer {API_KEY}\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
-    "model": "gpt-oss:120b",
-    "stream": false,
-    "temperature": 0.7
+    "models": [
+      {
+        "model": "gpt-oss:120b",
+        "stream": false,
+        "temperature": 0.7
+      }
+    ]
   },
-  "or-nemotron-3-nano-30b-a3b": {
+  "OpenRouter": {
     "curl": "curl -s -S -X POST \"https://openrouter.ai/api/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
-    "model": "nvidia/nemotron-3-nano-30b-a3b:free",
-    "stream": false,
-    "temperature": 0.7
-  },
-  "or-olmo-3.1-32b-think": {
-    "curl": "curl -s -S -X POST \"https://openrouter.ai/api/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
-    "model": "allenai/olmo-3.1-32b-think:free",
-    "stream": false,
-    "temperature": 0.7
-  },
-  "or-nemotron-nano-12b-v2-vl": {
-    "curl": "curl -s -S -X POST \"https://openrouter.ai/api/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
-    "model": "nvidia/nemotron-nano-12b-v2-vl:free",
-    "stream": false,
-    "image": true,
-    "temperature": 0.7
-  },
-  "or-openrouter": {
-    "curl": "curl -s -S -X POST \"https://openrouter.ai/api/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
-    "model": "openrouter/free",
-    "stream": false,
-    "image": true,
-    "temperature": 0.7
+    "models": [
+      {
+        "model": "nvidia/nemotron-3-nano-30b-a3b:free",
+        "stream": false,
+        "temperature": 0.7
+      },
+      {
+        "model": "nvidia/nemotron-nano-12b-v2-vl:free",
+        "stream": false,
+        "image": true,
+        "temperature": 0.7
+      },
+      {
+        "model": "openrouter/free",
+        "stream": false,
+        "image": true,
+        "temperature": 0.7
+      }
+    ]
   }
 }

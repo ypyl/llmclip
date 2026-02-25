@@ -14,7 +14,29 @@ class Providers {
                 try {
                     parsed := JSON.LoadFile(A_LoopFilePath)
                     for key, value in parsed {
-                        this.providers[key] := value
+                        if (value.Has("models")) {
+                            for _, modelConfig in value["models"] {
+                                if (modelConfig.Has("model")) {
+                                    modelName := modelConfig["model"]
+                                    mergedConfig := Map()
+                                    
+                                    for k, v in value {
+                                        if (k != "models") {
+                                            mergedConfig[k] := v
+                                        }
+                                    }
+                                    
+                                    for k, v in modelConfig {
+                                        mergedConfig[k] := v
+                                    }
+                                    
+                                    mergedConfig["provider_name"] := key
+                                    this.providers[modelName] := mergedConfig
+                                }
+                            }
+                        } else {
+                            this.providers[key] := value
+                        }
                     }
                 }
             }

@@ -9,6 +9,7 @@ class ConfigurationService {
     providers := Map()
     selectedLLMTypeIndex := 1
     llmTypes := []
+    llmDisplayNames := []
     ollamaApiKey := ""
 
     ; Sub-managers
@@ -37,24 +38,34 @@ class ConfigurationService {
 
         this.providers := this.providersManager.GetAll()
 
-        ; Initialize LLM types
+        ; Initialize LLM types and display names
         this.llmTypes := []
-        for key in this.providers {
+        this.llmDisplayNames := []
+        for key, value in this.providers {
             this.llmTypes.Push(key)
+            providerName := value.Has("provider_name") ? value["provider_name"] : "Unknown"
+            this.llmDisplayNames.Push(providerName . ": " . key)
         }
     }
 
     LoadAppSettings() {
         if (FileExist("keys.ini")) {
-            this.ollamaApiKey := IniRead("keys.ini", "Ollama", "api_key", "")
+            this.ollamaApiKey := IniRead("keys.ini", "Ollama Cloud", "api_key", "")
         } else {
             this.ollamaApiKey := ""
         }
     }
 
-    GetApiKey(provider) {
+    GetApiKey(selectedLLMType, providerName := "") {
         if (FileExist("keys.ini")) {
-            return IniRead("keys.ini", "Keys", provider, "")
+            key := ""
+            if (providerName != "") {
+                key := IniRead("keys.ini", providerName, "api_key", "")
+            }
+            if (key == "") {
+                key := IniRead("keys.ini", "Keys", selectedLLMType, "")
+            }
+            return key
         }
         return ""
     }
@@ -68,7 +79,7 @@ class ConfigurationService {
         settings["type"] := selectedLLMType
 
         ; Load API key
-        apiKey := this.GetApiKey(selectedLLMType)
+        apiKey := this.GetApiKey(selectedLLMType, settings.Has("provider_name") ? settings["provider_name"] : "")
         if (apiKey != "") {
             settings["api_key"] := apiKey
         }

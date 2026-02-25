@@ -357,6 +357,10 @@ class MainController {
         get => this.configManager.llmTypes
     }
 
+    LLMDisplayNames {
+        get => this.configManager.llmDisplayNames
+    }
+
     CurrentLLMTypeIndex {
         get => this.sessionManager.GetCurrentSessionLLMType()
     }
@@ -398,7 +402,7 @@ class MainController {
         currentModelIndex := this.sessionManager.GetCurrentSessionLLMType()
         
         ; 1. Update Models Menu (delegated to View)
-        this.view.UpdateModelMenu(currentModelIndex, this.configManager.llmTypes)
+        this.view.UpdateModelMenu(currentModelIndex, this.configManager.llmDisplayNames)
 
         ; 2. Update Session Select UI
         this.view.SetSessionSelectValue(this.sessionManager.currentSessionIndex)

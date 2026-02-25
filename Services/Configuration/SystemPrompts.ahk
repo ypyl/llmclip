@@ -4,7 +4,7 @@
 class SystemPrompts {
     prompts := Map()
     static PROMPTS_DIR := "prompts"
-    static DEFAULT_NAME := "default"
+    static DEFAULT_NAME := "_"
 
     __New() {
         this.Reload()

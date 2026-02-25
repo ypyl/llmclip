@@ -9,10 +9,16 @@ class Providers {
     }
 
     Reload() {
-        if (FileExist("providers.json")) {
-            this.providers := JSON.LoadFile("providers.json")
-        } else {
-            this.providers := Map()
+        this.providers := Map()
+        if (DirExist("providers")) {
+            Loop Files, "providers\*.json" {
+                try {
+                    parsed := JSON.LoadFile(A_LoopFilePath)
+                    for key, value in parsed {
+                        this.providers[key] := value
+                    }
+                }
+            }
         }
     }
 

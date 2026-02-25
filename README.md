@@ -20,7 +20,7 @@ LLMClip monitors your clipboard and aggregates copied text, files, and folders i
 
 ### 🤖 LLM Integration
 - **Multi-Provider**: Pre-configured support for **Groq**, **Ollama**, **Google (Gemini)**, and **OpenAI**.
-- **Customizable**: Flexible configuration via `settings.json`, `roles.json`, and `system_prompts.json` for models and behavior.
+- **Customizable**: Flexible configuration via `roles.json`, and `system_prompts.json` for models and behavior.
 - **Tools**: Capable of executing **PowerShell** commands for file system operations when enabled.
 
 ### 💬 Advanced Chat Interface

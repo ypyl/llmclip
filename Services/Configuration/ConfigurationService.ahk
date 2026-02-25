@@ -1,5 +1,3 @@
-
-#Include ..\..\Lib\Json.ahk
 #Include SystemPrompts.ahk
 #Include Providers.ahk
 #Include Roles.ahk
@@ -9,7 +7,6 @@ class ConfigurationService {
 
     ; Configuration data
     providers := Map()
-    selectedLLMType := ""
     selectedLLMTypeIndex := 1
     llmTypes := []
     ollamaApiKey := ""
@@ -44,17 +41,12 @@ class ConfigurationService {
         this.llmTypes := []
         for key in this.providers {
             this.llmTypes.Push(key)
-            if (key = this.selectedLLMType) {
-                this.selectedLLMTypeIndex := A_Index
-            }
         }
     }
 
     LoadAppSettings() {
-        settings := JSON.LoadFile("settings.json")
-        this.selectedLLMType := settings["selectedLLMType"]
-        if (settings.Has("ollama_api_key")) {
-            this.ollamaApiKey := settings["ollama_api_key"]
+        if (FileExist("keys.ini")) {
+            this.ollamaApiKey := IniRead("keys.ini", "Ollama", "api_key", "")
         } else {
             this.ollamaApiKey := ""
         }
@@ -119,8 +111,20 @@ class ConfigurationService {
         prompts := this.GetVisiblePrompts(llmIndex)
         if (prompts.Length >= promptIndex) {
             value := prompts[promptIndex]["value"]
-            if (FileExist(value)) {
-                value := FileRead(value)
+            
+            try {
+                pathInSystemPrompts := "system_prompts\" . value
+                if (SubStr(value, 1, 2) = ".\") {
+                    pathInSystemPrompts := "system_prompts\" . SubStr(value, 3)
+                }
+
+                if (FileExist(pathInSystemPrompts)) {
+                    value := FileRead(pathInSystemPrompts)
+                } else if (FileExist(value)) {
+                    value := FileRead(value)
+                }
+            } catch {
+                ; Ignore errors for long strings
             }
 
             currentTime := FormatTime(, "yyyy-MM-dd HH:mm:ss")
@@ -199,9 +203,7 @@ class ConfigurationService {
     }
 
     GetCompressionPrompt(llmIndex) {
-        settings := this.GetSelectedSettings(llmIndex)
-        defaultPrompt := "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
-        return settings.Get("compression_prompt", defaultPrompt)
+        return "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
     }
 
     GetLearningsPrompt(llmIndex) {

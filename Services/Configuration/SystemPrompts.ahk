@@ -9,10 +9,16 @@ class SystemPrompts {
     }
 
     Reload() {
-        if (FileExist("system_prompts.json")) {
-            this.prompts := JSON.LoadFile("system_prompts.json")
-        } else {
-            this.prompts := Map()
+        this.prompts := Map()
+        if (DirExist("system_prompts")) {
+            Loop Files, "system_prompts\*.json" {
+                try {
+                    parsed := JSON.LoadFile(A_LoopFilePath)
+                    for key, value in parsed {
+                        this.prompts[key] := value
+                    }
+                }
+            }
         }
     }
 

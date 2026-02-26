@@ -32,6 +32,10 @@ class MainController {
     uncheckContextCommand := ""
     switchSessionCommand := ""
     toggleBatchModeCommand := ""
+    saveStateOnExitCommand := ""
+    saveConversationOnExitCommand := ""
+    loadStateOnStartCommand := ""
+    loadConversationOnStartCommand := ""
 
     ; Sub-Controllers
     contextViewController := ""
@@ -56,7 +60,7 @@ class MainController {
         this.messagePresentationService := messagePresentationService
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClipboard, switchSession, toggleBatchMode) {
+    SetCommands(saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClipboard, switchSession, toggleBatchMode, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart) {
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
         this.clearContextCommand := clearCtx
@@ -75,6 +79,10 @@ class MainController {
         this.processClipboardCommand := processClipboard
         this.switchSessionCommand := switchSession
         this.toggleBatchModeCommand := toggleBatchMode
+        this.saveStateOnExitCommand := saveStateOnExit
+        this.saveConversationOnExitCommand := saveConvOnExit
+        this.loadStateOnStartCommand := loadStateOnStart
+        this.loadConversationOnStartCommand := loadConvOnStart
     }
 
     SetSubControllers(ctxView, histView, notes, settings, recording) {
@@ -132,8 +140,15 @@ class MainController {
     }
 
     Start() {
+        ; Load persisted state and conversation before initializing
+        try {
+            this.loadStateOnStartCommand.Execute()
+            this.loadConversationOnStartCommand.Execute()
+        }
+
         this.initializeAppCommand.Execute()
         this.Show()
+        this.UpdateSessionUI()
         if (this.recordingController)
             this.recordingController.UpdateUiBasesOnRecordingStatus()
         OnClipboardChange ObjBindMethod(this, "ClipChanged")
@@ -261,6 +276,13 @@ class MainController {
             if (this.uncheckContextCommand.Execute()) {
                 this.contextViewController.UpdateContextView()
             }
+        }
+    }
+
+    SaveStateAndConversation() {
+        try {
+            this.saveStateOnExitCommand.Execute()
+            this.saveConversationOnExitCommand.Execute()
         }
     }
 

@@ -62,6 +62,11 @@
 #Include Commands\ReloadSettingsCommand.ahk
 #Include Commands\ChangeAnswerSizeCommand.ahk
 #Include Commands\ToggleBatchModeCommand.ahk
+#Include Services\StateService.ahk
+#Include Commands\SaveStateOnExitCommand.ahk
+#Include Commands\SaveConversationOnExitCommand.ahk
+#Include Commands\LoadStateOnStartCommand.ahk
+#Include Commands\LoadConversationOnStartCommand.ahk
 
 class App {
     controller := ""
@@ -144,8 +149,15 @@ class App {
         changeAnswerSize := ChangeAnswerSizeCommand(sess)
         toggleBatchMode := ToggleBatchModeCommand(sess)
 
+        ; State persistence commands
+        stateSvc := StateService()
+        saveStateOnExit := SaveStateOnExitCommand(sess, stateSvc)
+        saveConvOnExit := SaveConversationOnExitCommand(sess, stateSvc)
+        loadStateOnStart := LoadStateOnStartCommand(sess, cfg, stateSvc)
+        loadConvOnStart := LoadConversationOnStartCommand(sess, cfg, stateSvc)
+
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClip, switchSession, toggleBatchMode
+            saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClip, switchSession, toggleBatchMode, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart
         )
 
         ; 3. Initialize View

@@ -4,4 +4,5 @@
 #Include App.ahk
 
 global appInstance := App()
+OnExit((*) => appInstance.controller.SaveStateAndConversation())
 appInstance.Start()

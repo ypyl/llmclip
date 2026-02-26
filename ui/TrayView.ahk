@@ -20,7 +20,7 @@ class TrayView {
 
     TrayIconClick(wParam, lParam, msg, hwnd) {
         if (lParam = 0x202) {  ; Left click
-            this.controller.OnToggleRecording()
+            this.controller.ToggleDisplay()
         }
     }
 

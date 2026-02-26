@@ -9,3 +9,5 @@ temp
 ic.ps1
 keys.ini
 prompts
+conversation.json
+state.json

@@ -142,7 +142,7 @@ class LLMClient {
         
         if (providerName = "GroqAudio" || providerName = "Groq Audio" || providerName = "Audio")
             return this.providers["audio"]
-        else if (providerName = "Groq" || providerName = "GitHub" || providerName = "OpenRouter" || providerName = "OpenAI")
+        else if (providerName = "Groq" || providerName = "GitHub" || providerName = "OpenRouter" || providerName = "OpenAI" || providerName = "Azure")
             return this.providers["openai"]
         else if (InStr(providerName, "Ollama") = 1)
             return this.providers["ollama"]

@@ -20,8 +20,13 @@ LLMClip monitors your clipboard and aggregates copied text, files, and folders i
 
 ### 🤖 LLM Integration
 - **Multi-Provider**: Pre-configured support for **Groq**, **Ollama**, **Google (Gemini)**, and **OpenAI**.
-- **Customizable**: Flexible configuration via `roles.json`, and `system_prompts.json` for models and behavior.
-- **Tools**: Capable of executing **PowerShell** commands for file system operations when enabled.
+- **Customizable**: Flexible configuration via `providers/` and `prompts/` directories for models and behavior.
+- **Tools**: Allow models to execute terminal commands on your system for file system operations, reading context, and running scripts when enabled. Available tools include:
+    - `web_search`: Perform a web search to get the latest information.
+    - `web_fetch`: Read the content of a specific web page by URL.
+    - `read_url_markdown`: Cleanly convert web pages to Markdown.
+    - `execute_powershell`: Execute PowerShell scripts for system operations.
+    - `file_system`: Perform local file read, write, and list operations.
 
 ### 💬 Advanced Chat Interface
 - **Markdown Rendering**: chat history is rendered with Markdown, including syntax highlighting for code blocks.
@@ -30,7 +35,7 @@ LLMClip monitors your clipboard and aggregates copied text, files, and folders i
 - **History Management**:
     - **Compression**: "Compress" feature to summarize long conversations and save tokens.
     - **Extract Notes**: "Extract Learnings" to summarize key information from a session.
-    - **Editing**: Edit previous user messages and regenerate responses.
+    - **Branching**: Double-click any previous **user** message to create a new history branch (timeline). This populates the input box with the message text for editing and regeneration.
 - **Session Management**: Switch between multiple independent chat sessions.
 
 ## Installation
@@ -40,8 +45,8 @@ LLMClip monitors your clipboard and aggregates copied text, files, and folders i
 3.  **Clone Repository**: Clone or download this project.
 4.  **Configuration**: 
     - Create a `keys.ini` file for your API keys.
-    - (Optional) Customize `providers.json`, `roles.json`, and `system_prompts.json` in the root directory.
-5.  **Run**: Execute `clip.ahk`.
+    - (Optional) Customize files in `providers/` and `prompts/` directories.
+5.  **Run**: Execute `main.ahk`.
 
 ## Configuration
 
@@ -50,19 +55,31 @@ LLMClip monitors your clipboard and aggregates copied text, files, and folders i
 Create a file named `keys.ini` inside the root directory. Use the following format:
 
 ```ini
-[Keys]
-groq=gsk_your_groq_api_key_here
-openai=sk-your-openai-api-key-here
-google=your-google-gemini-api-key-here
+[GitHub]
+api_key=your_github_token_here
+
+[Groq]
+api_key=your_groq_api_key_here
+
+[GroqAudio]
+api_key=your_groq_audio_api_key_here
+
+[Google]
+api_key=your_google_gemini_api_key_here
+
+[OllamaCloud]
+api_key=your_ollama_cloud_api_key_here
+
+[OpenRouter]
+api_key=your_openrouter_api_key_here
 ```
 
 The key name (e.g., `groq`) should match the provider name defined in your configuration.
 
 ### Advanced Configuration
 
-- **`providers.json`**: Define LLM endpoints, models, and curl commands.
-- **`system_prompts.json`**: Store your reusable system prompts.
-- **`roles.json`**: Map providers to specific system prompts and models.
+- **`providers/`**: Folder containing multiple JSON files to define LLM endpoints, models, and curl commands. They are combined at runtime.
+- **`prompts/`**: Folder containing multiple JSON files to store your reusable system prompts (e.g. `_init.json`). They are combined at runtime.
 
 ## Usage
 
@@ -74,7 +91,18 @@ The key name (e.g., `groq`) should match the provider name defined in your confi
 ### Interface Tips
 - **Context List**: Uncheck items you don't want to send to the LLM.
 - **Images**: If an image is in the clipboard or selected context, it will be sent to multimodal models (like Gemini or GPT-4o).
-- **Tools**: Enable the `ps1` checkbox to allow the LLM to write and execute PowerShell scripts (Use with caution!).
+- **Tools**: Enable tools to allow the LLM to write and execute commands on your system (Use with caution!).
+
+## Architecture
+
+This project strictly separates UI, logic, intent, and state domains:
+- **`main.ahk`**: Composition root bringing the app components together.
+- **`ui/` (Views)**: Manages UI creation and events. Zero logic and state.
+- **`controllers/`**: Isolates and owns the UI state. Receives UI events and executes commands.
+- **`commands/`**: Represents distinct use-cases mutating application state. No UI.
+- **`services/`**: Application state owners and pure UI-agnostic logic.
+
+Read the exhaustive architectural guidelines in [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## License
 

@@ -4,6 +4,11 @@ class PowerShellTool {
     currentProcessPid := 0
     isCancelled := false
 
+    ; Detect best available PowerShell executable (pwsh is faster than powershell)
+    static PsExe := FileExist(EnvGet("ProgramFiles") "\PowerShell\7\pwsh.exe")
+        ? '"' . EnvGet("ProgramFiles") . '\PowerShell\7\pwsh.exe"'
+        : "powershell.exe"
+
     /**
      * Execute a PowerShell script and return the output
      * @param script - The PowerShell script to execute
@@ -11,31 +16,36 @@ class PowerShellTool {
      * @returns The output from the PowerShell script
      */
     ExecuteScript(script, workingDirectory := A_ScriptDir) {
+        ; Unique temp file names
+        tempDir := TempFileManager.TempDir
+        tmpScript := tempDir "\ahk_ps_" A_TickCount ".ps1"
+        tmpOut    := tempDir "\ahk_ps_" A_TickCount "_out.txt"
+
         try {
-            shell := ComObject("WScript.Shell")
+            ; Write script to temp .ps1 file — avoids -Command quoting hell
+            scriptContent := "Set-Location -LiteralPath '" . workingDirectory . "'`n"
+                . "$ErrorActionPreference = 'Continue'`n"
+                . script
+            FileOpen(tmpScript, "w", "UTF-8-RAW").Write(scriptContent)
 
-            ; Construct the PowerShell command
-            ; -NoProfile: Don't load PowerShell profile (faster)
-            ; -NonInteractive: Don't prompt for user input
-            ; -ExecutionPolicy Bypass: Allow script execution
-            ; -Command: Execute the provided script
-            psCommand := 'powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "'
-                . 'Set-Location -Path \"' . workingDirectory . '\"; '
-                . script . '"'
+            ; Must wrap in cmd /c so the > redirect is handled by the shell
+            psExe := PowerShellTool.PsExe
+            psCmd := 'cmd.exe /c "' . psExe
+                . ' -NoProfile -NonInteractive -ExecutionPolicy Bypass'
+                . ' -File "' . tmpScript . '"'
+                . ' > "' . tmpOut . '" 2>&1"'
 
-            ; Execute the PowerShell command
-            exec := shell.Exec(psCommand)
-            this.currentProcessPid := exec.ProcessID
+            ; Run hidden, get PID of cmd.exe wrapper
+            this.isCancelled := false
+            pid := 0
+            Run(psCmd, "", "Hide", &pid)
+            this.currentProcessPid := pid
 
-            ; Read output and error streams
-            output := exec.StdOut.ReadAll()
-            errorOutput := exec.StdErr.ReadAll()
-
-            ; Wait for the process to complete with cancellation check
-            while (exec.Status = 0) {
-                ; Check for cancellation
+            ; Wait for cmd.exe (and its child powershell) to finish
+            while ProcessExist(pid) {
                 if (this.isCancelled) {
-                    try ProcessClose(this.currentProcessPid)
+                    ; Kill the whole process tree
+                    try RunWait('taskkill /F /T /PID ' . pid,, "Hide")
                     this.currentProcessPid := 0
                     return "Operation cancelled by user"
                 }
@@ -43,23 +53,12 @@ class PowerShellTool {
             }
 
             this.currentProcessPid := 0
-            exitCode := exec.ExitCode
 
-            ; Build result message
+            ; Read output file
             result := ""
-            if (output != "") {
-                result .= output
-            }
-
-            if (errorOutput != "") {
-                if (result != "") {
-                    result .= "`n`n--- Errors ---`n"
-                }
-                result .= errorOutput
-            }
-
-            if (exitCode != 0 && result = "") {
-                result := "Command failed with exit code: " . exitCode
+            if FileExist(tmpOut) {
+                result := FileRead(tmpOut, "UTF-8")
+                result := RTrim(result, "`r`n")
             }
 
             if (result = "") {
@@ -70,6 +69,10 @@ class PowerShellTool {
 
         } catch as e {
             return "Error executing PowerShell script: " . e.Message
+        } finally {
+            ; Always clean up temp files
+            try FileDelete(tmpScript)
+            try FileDelete(tmpOut)
         }
     }
 
@@ -87,7 +90,7 @@ class PowerShellTool {
                     properties: {
                         script: {
                             type: "string",
-                            description: "The PowerShell script to execute. Can be a single command or multiple commands separated by semicolons. Examples: 'Get-ChildItem', 'Get-Content file.txt', 'Set-Content -Path file.txt -Value `"content`"', 'Remove-Item file.txt'"
+                            description: "The PowerShell script to execute. Can be a single command or multiple commands separated by semicolons or newlines."
                         },
                         working_directory: {
                             type: "string",
@@ -113,7 +116,7 @@ class PowerShellTool {
                     properties: {
                         script: {
                             type: "string",
-                            description: "The PowerShell script to execute. Can be a single command or multiple commands separated by semicolons. Examples: 'Get-ChildItem', 'Get-Content file.txt', 'Set-Content -Path file.txt -Value `"content`"', 'Remove-Item file.txt'"
+                            description: "The PowerShell script to execute. Can be a single command or multiple commands separated by semicolons or newlines."
                         },
                         working_directory: {
                             type: "string",
@@ -145,10 +148,8 @@ class PowerShellTool {
                 return msg
             }
 
-            ; Get working directory if provided, otherwise use default
             workingDir := args.Has("working_directory") ? args["working_directory"] : A_ScriptDir
 
-            ; Execute the PowerShell script
             result := this.ExecuteScript(args["script"], workingDir)
 
             msg := ChatMessage("tool")
@@ -168,7 +169,7 @@ class PowerShellTool {
     Cancel() {
         this.isCancelled := true
         if (this.currentProcessPid > 0) {
-            try ProcessClose(this.currentProcessPid)
+            try RunWait('taskkill /F /T /PID ' . this.currentProcessPid,, "Hide")
             this.currentProcessPid := 0
         }
     }

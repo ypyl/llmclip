@@ -3,14 +3,14 @@ class SendBatchToLLMCommand {
     configManager := ""
     llmService := ""
     contextManager := ""
-    
+
     __New(sessionManager, configManager, llmService, contextManager) {
         this.sessionManager := sessionManager
         this.configManager := configManager
         this.llmService := llmService
         this.contextManager := contextManager
     }
-    
+
     Execute(promptText, batchItems, isCancelledCallback, batchUpdateCallback := "") {
         userContent := [TextContent(promptText)]
         userMsg := ChatMessage("user", userContent)
@@ -20,11 +20,11 @@ class SendBatchToLLMCommand {
         mainMessages.Push(userMsg)
 
         currentLLM := this.sessionManager.GetCurrentSessionLLMType()
-        powerShellEnabled := this.configManager.IsToolEnabled(currentLLM, "powerShellTool")
-        fileSystemEnabled := this.configManager.IsToolEnabled(currentLLM, "fileSystemTool")
-        webSearchEnabled := this.configManager.IsToolEnabled(currentLLM, "webSearch")
-        webFetchEnabled := this.configManager.IsToolEnabled(currentLLM, "webFetch")
-        markdownNewEnabled := this.configManager.IsToolEnabled(currentLLM, "markdownNew")
+        powerShellEnabled := this.configManager.IsToolEnabled(currentLLM, PowerShellTool.TOOL_NAME)
+        fileSystemEnabled := this.configManager.IsToolEnabled(currentLLM, FileSystemTool.TOOL_NAME)
+        webSearchEnabled := this.configManager.IsToolEnabled(currentLLM, WebSearchTool.TOOL_NAME)
+        webFetchEnabled := this.configManager.IsToolEnabled(currentLLM, WebFetchTool.TOOL_NAME)
+        markdownNewEnabled := this.configManager.IsToolEnabled(currentLLM, MarkdownNewTool.TOOL_NAME)
 
         baseHistory := this.sessionManager.GetMessagesExcludingBatch()
 

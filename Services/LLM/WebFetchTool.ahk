@@ -3,6 +3,7 @@
 class WebFetchTool {
     currentHttpObject := ""
     isCancelled := false
+    static TOOL_NAME := "web_fetch"
 
     /**
      * Execute a web fetch request using Ollama API
@@ -83,7 +84,7 @@ class WebFetchTool {
         return {
             type: "function",
             function: {
-                name: "web_fetch",
+                name: WebFetchTool.TOOL_NAME,
                 description: "Fetches a single web page by URL and returns its content. Use this to read the content of a specific page.",
                 parameters: {
                     type: "object",
@@ -105,7 +106,7 @@ class WebFetchTool {
     static GetGeminiToolDefinition() {
         return {
             functionDeclarations: [{
-                name: "web_fetch",
+                name: WebFetchTool.TOOL_NAME,
                 description: "Fetches a single web page by URL and returns its content. Use this to read the content of a specific page.",
                 parameters: {
                     type: "object",
@@ -128,7 +129,7 @@ class WebFetchTool {
      * @returns The tool response message
      */
     ExecuteToolCall(toolCall, apiKey) {
-        if (toolCall.Name != "web_fetch") {
+        if (toolCall.Name != WebFetchTool.TOOL_NAME) {
             return
         }
 

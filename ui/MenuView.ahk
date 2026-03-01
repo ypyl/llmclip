@@ -8,11 +8,11 @@ class MenuView {
     currentModelLabel := ""
 
     static ToolMapping := [
-        { id: "powerShellTool", label: "PowerShell", stateKey: "powerShell" },
-        { id: "fileSystemTool", label: "File System", stateKey: "fileSystem" },
-        { id: "webSearch",      label: "Web Search",  stateKey: "webSearch" },
-        { id: "webFetch",       label: "Web Fetch",   stateKey: "webFetch" },
-        { id: "markdownNew",    label: "Markdown New", stateKey: "markdownNew" }
+        { id: PowerShellTool.TOOL_NAME, label: "PowerShell", stateKey: PowerShellTool.TOOL_NAME },
+        { id: FileSystemTool.TOOL_NAME, label: "File System", stateKey: FileSystemTool.TOOL_NAME },
+        { id: WebSearchTool.TOOL_NAME, label: "Web Search",  stateKey: WebSearchTool.TOOL_NAME },
+        { id: WebFetchTool.TOOL_NAME, label: "Web Fetch",   stateKey: WebFetchTool.TOOL_NAME },
+        { id: MarkdownNewTool.TOOL_NAME, label: "Read URL Markdown", stateKey: MarkdownNewTool.TOOL_NAME }
     ]
 
     Create(gui, rootController, settingsController, llmTypes, currentLLMTypeIndex) {
@@ -63,7 +63,7 @@ class MenuView {
 
         gui.MenuBar := this.menuBar
     }
-    
+
     UpdateBatchMode(enabled) {
         if (!this.modeMenu)
             return

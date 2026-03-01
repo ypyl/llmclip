@@ -3,12 +3,14 @@ class SendToLLMCommand {
     configManager := ""
     llmService := ""
     contextManager := ""
+    executeToolCallsCommand := ""
 
-    __New(sessionManager, configManager, llmService, contextManager) {
+    __New(sessionManager, configManager, llmService, contextManager, executeToolCallsCommand) {
         this.sessionManager := sessionManager
         this.configManager := configManager
         this.llmService := llmService
         this.contextManager := contextManager
+        this.executeToolCallsCommand := executeToolCallsCommand
     }
 
     Execute(promptText, images := [], selectedContextIndices := [], isRegeneration := false) {
@@ -38,11 +40,11 @@ class SendToLLMCommand {
         this.sessionManager.UpdateSystemPromptContent(systemPrompt)
 
         currentLLM := this.sessionManager.GetCurrentSessionLLMType()
-        powerShellEnabled := this.configManager.IsToolEnabled(currentLLM, "powerShellTool")
-        fileSystemEnabled := this.configManager.IsToolEnabled(currentLLM, "fileSystemTool")
-        webSearchEnabled := this.configManager.IsToolEnabled(currentLLM, "webSearch")
-        webFetchEnabled := this.configManager.IsToolEnabled(currentLLM, "webFetch")
-        markdownNewEnabled := this.configManager.IsToolEnabled(currentLLM, "markdownNew")
+        powerShellEnabled := this.configManager.IsToolEnabled(currentLLM, PowerShellTool.TOOL_NAME)
+        fileSystemEnabled := this.configManager.IsToolEnabled(currentLLM, FileSystemTool.TOOL_NAME)
+        webSearchEnabled := this.configManager.IsToolEnabled(currentLLM, WebSearchTool.TOOL_NAME)
+        webFetchEnabled := this.configManager.IsToolEnabled(currentLLM, WebFetchTool.TOOL_NAME)
+        markdownNewEnabled := this.configManager.IsToolEnabled(currentLLM, MarkdownNewTool.TOOL_NAME)
         answerSize := this.sessionManager.answerSize
 
         try {
@@ -61,6 +63,18 @@ class SendToLLMCommand {
             }
 
             hasUnexecuted := this.sessionManager.HasUnexecutedToolCalls()
+
+            ; Check if auto-approval is enabled for these tool calls
+            if (hasUnexecuted) {
+                lastMsg := messages[messages.Length]
+                if (this.executeToolCallsCommand.ShouldAutoApprove(lastMsg)) {
+                    ; Auto-execute and continue
+                    if (this.executeToolCallsCommand.Execute()) {
+                        return this.Execute("", [], [], true)
+                    }
+                }
+            }
+
             return {
                 action: hasUnexecuted ? "tool_pending" : "idle",
                 hasUnexecutedToolCalls: hasUnexecuted

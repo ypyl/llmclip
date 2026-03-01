@@ -54,7 +54,7 @@ class GoogleProvider extends BaseProvider {
                     currentMsg := filteredMessages[currentIndex]
                     if (currentMsg.Role != "tool")
                         break
-                        
+
                     ; Find FunctionResultContent in the message
                     for part in currentMsg.Contents {
                         if (part is FunctionResultContent) {
@@ -87,7 +87,7 @@ class GoogleProvider extends BaseProvider {
                         break
                     }
                 }
-                
+
                 if (msg.GetText() = "" && hasFunctionCalls) {
                     ; Skip if this is not the last of consecutive assistant messages with tool calls
                     if (i < filteredMessages.Length) {
@@ -118,7 +118,7 @@ class GoogleProvider extends BaseProvider {
                                 break
                             }
                         }
-                        
+
                         if (currentMsg.Role != "assistant" || currentMsg.GetText() != "" || !currentHasFunctionCalls)
                             break
 
@@ -158,7 +158,7 @@ class GoogleProvider extends BaseProvider {
                     if (filteredMessages[i - 1].Role = "tool")
                         continue
                 }
-                
+
                 contents.Push({
                     role: msg.Role,
                     parts: [{
@@ -171,16 +171,16 @@ class GoogleProvider extends BaseProvider {
         body["contents"] := contents
         enabledTools := []
         for t in settings.Get("tools", []) {
-            if (t = "powerShellTool")
+            if (t = PowerShellTool.TOOL_NAME)
                 enabledTools.Push(PowerShellTool.GetGeminiToolDefinition())
-            else if (t = "fileSystemTool")
+            else if (t = FileSystemTool.TOOL_NAME)
                 enabledTools.Push(FileSystemTool.GetGeminiToolDefinition())
-            else if (t = "web_search")
+            else if (t = WebSearchTool.TOOL_NAME )
                 enabledTools.Push(WebSearchTool.GetGeminiToolDefinition())
-            else if (t = "web_fetch") {
+            else if (t = WebFetchTool.TOOL_NAME) {
                 enabledTools.Push(WebFetchTool.GetGeminiToolDefinition())
             }
-            else if (t = "markdown_new")
+            else if (t = MarkdownNewTool.TOOL_NAME)
                 enabledTools.Push(MarkdownNewTool.GetGeminiToolDefinition())
         }
         if (enabledTools.Length > 0)
@@ -204,7 +204,7 @@ class GoogleProvider extends BaseProvider {
             if (candidate.Has("content") && candidate["content"].Has("parts") && candidate["content"]["parts"].Length > 0) {
                 chatMsg := ChatMessage("assistant")
                 parts := candidate["content"]["parts"]
-                
+
                 for part in parts {
                     if (part.Has("functionCall")) {
                         functionCall := part["functionCall"]

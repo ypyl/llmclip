@@ -3,6 +3,7 @@
 class WebSearchTool {
     currentHttpObject := ""
     isCancelled := false
+    static TOOL_NAME := "web_search"
 
     /**
      * Execute a web search query using Ollama API
@@ -85,7 +86,7 @@ class WebSearchTool {
         return {
             type: "function",
             function: {
-                name: "web_search",
+                name: WebSearchTool.TOOL_NAME,
                 description: "Performs a web search for a single query and returns relevant results. Use this to get latest information.",
                 parameters: {
                     type: "object",
@@ -111,7 +112,7 @@ class WebSearchTool {
     static GetGeminiToolDefinition() {
         return {
             functionDeclarations: [{
-                name: "web_search",
+                name: WebSearchTool.TOOL_NAME,
                 description: "Performs a web search for a single query and returns relevant results. Use this to get latest information.",
                 parameters: {
                     type: "object",
@@ -138,7 +139,7 @@ class WebSearchTool {
      * @returns The tool response message
      */
     ExecuteToolCall(toolCall, apiKey) {
-        if (toolCall.Name != "web_search") {
+        if (toolCall.Name != WebSearchTool.TOOL_NAME) {
             return
         }
 

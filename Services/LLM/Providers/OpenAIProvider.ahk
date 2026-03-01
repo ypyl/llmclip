@@ -23,15 +23,15 @@ class OpenAIProvider extends BaseProvider {
         ; Add tools
         enabledTools := []
         for t in settings.Get("tools", []) {
-            if (t = "powerShellTool")
+            if (t = PowerShellTool.TOOL_NAME)
                 enabledTools.Push(PowerShellTool.GetOpenAiToolDefinition())
-            else if (t = "fileSystemTool")
+            else if (t = FileSystemTool.TOOL_NAME)
                 enabledTools.Push(FileSystemTool.GetOpenAiToolDefinition())
-            else if (t = "web_search")
+            else if (t = WebSearchTool.TOOL_NAME)
                 enabledTools.Push(WebSearchTool.GetOpenAiToolDefinition())
-            else if (t = "web_fetch") {
+            else if (t = WebFetchTool.TOOL_NAME) {
                 enabledTools.Push(WebFetchTool.GetOpenAiToolDefinition())
-            } else if (t = "markdown_new") {
+            } else if (t = MarkdownNewTool.TOOL_NAME) {
                 enabledTools.Push(MarkdownNewTool.GetOpenAiToolDefinition())
             }
         }

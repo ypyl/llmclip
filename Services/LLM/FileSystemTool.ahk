@@ -2,6 +2,7 @@
 
 class FileSystemTool {
     isCancelled := false
+    static TOOL_NAME := "file_system"
 
     /**
      * Read content from a file
@@ -95,7 +96,7 @@ class FileSystemTool {
         return {
             type: "function",
             function: {
-                name: "file_system",
+                name: FileSystemTool.TOOL_NAME,
                 description: "Perform file system operations like reading, writing, and listing files.",
                 parameters: {
                     type: "object",
@@ -126,7 +127,7 @@ class FileSystemTool {
     static GetGeminiToolDefinition() {
         return {
             functionDeclarations: [{
-                name: "file_system",
+                name: FileSystemTool.TOOL_NAME,
                 description: "Perform file system operations like reading, writing, and listing files.",
                 parameters: {
                     type: "object",
@@ -157,7 +158,7 @@ class FileSystemTool {
      * @returns The tool response message
      */
     ExecuteToolCall(toolCall) {
-        if (toolCall.Name != "file_system") {
+        if (toolCall.Name != FileSystemTool.TOOL_NAME) {
             return
         }
 

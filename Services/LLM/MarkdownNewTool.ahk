@@ -4,6 +4,7 @@
 class MarkdownNewTool {
     currentPid := 0
     isCancelled := false
+    static TOOL_NAME := "read_url_markdown"
 
     /**
      * Execute a web fetch request using markdown.new API via curl
@@ -65,7 +66,7 @@ class MarkdownNewTool {
             if (FileExist(responseFile)) {
                 response := FileRead(responseFile, "UTF-8")
                 this.CleanupFiles(requestFile, responseFile)
-                
+
                 if (response == "") {
                     return "Error: Empty response received from markdown.new"
                 }
@@ -112,7 +113,7 @@ class MarkdownNewTool {
         return {
             type: "function",
             function: {
-                name: "read_url_markdown",
+                name: MarkdownNewTool.TOOL_NAME,
                 description: "Converts any URL to clean Markdown using Cloudflare's markdown.new service. Use this to read the content of web pages.",
                 parameters: {
                     type: "object",
@@ -134,7 +135,7 @@ class MarkdownNewTool {
     static GetGeminiToolDefinition() {
         return {
             functionDeclarations: [{
-                name: "read_url_markdown",
+                name: MarkdownNewTool.TOOL_NAME,
                 description: "Converts any URL to clean Markdown using Cloudflare's markdown.new service. Use this to read the content of web pages.",
                 parameters: {
                     type: "object",
@@ -156,7 +157,7 @@ class MarkdownNewTool {
      * @returns The tool response message
      */
     ExecuteToolCall(toolCall) {
-        if (toolCall.Name != "read_url_markdown") {
+        if (toolCall.Name != MarkdownNewTool.TOOL_NAME) {
             return
         }
 

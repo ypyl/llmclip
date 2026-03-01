@@ -6,48 +6,48 @@
         "model": "openai/gpt-4o-mini",
         "image": true,
         "tools": [
-          "powerShellTool",
-          "fileSystemTool",
-          "webSearch",
-          "webFetch"
+          "execute_powershell",
+          "file_system",
+          "web_search",
+          "web_fetch"
         ]
       },
       {
         "model": "openai/gpt-4o",
         "tools": [
-          "powerShellTool",
-          "fileSystemTool",
-          "webSearch",
-          "webFetch"
+          "execute_powershell",
+          "file_system",
+          "web_search",
+          "web_fetch"
         ]
       },
       {
         "model": "openai/gpt-4.1",
         "image": true,
         "tools": [
-          "powerShellTool",
-          "fileSystemTool",
-          "webSearch",
-          "webFetch"
+          "execute_powershell",
+          "file_system",
+          "web_search",
+          "web_fetch"
         ]
       },
       {
         "model": "openai/gpt-4.1-nano",
         "tools": [
-          "powerShellTool",
-          "fileSystemTool",
-          "webSearch",
-          "webFetch"
+          "execute_powershell",
+          "file_system",
+          "web_search",
+          "web_fetch"
         ]
       },
       {
         "model": "openai/gpt-4.1-mini",
         "image": true,
         "tools": [
-          "powerShellTool",
-          "fileSystemTool",
-          "webSearch",
-          "webFetch"
+          "execute_powershell",
+          "file_system",
+          "web_search",
+          "web_fetch"
         ]
       }
     ]
@@ -59,30 +59,30 @@
         "model": "llama-3.3-70b-versatile",
         "temperature": 0.7,
         "tools": [
-          "powerShellTool",
-          "fileSystemTool",
-          "webSearch",
-          "webFetch"
+          "execute_powershell",
+          "file_system",
+          "web_search",
+          "web_fetch"
         ]
       },
       {
         "model": "openai/gpt-oss-20b",
         "temperature": 0.7,
         "tools": [
-          "powerShellTool",
-          "fileSystemTool",
-          "webSearch",
-          "webFetch"
+          "execute_powershell",
+          "file_system",
+          "web_search",
+          "web_fetch"
         ]
       },
       {
         "model": "openai/gpt-oss-120b",
         "temperature": 0.7,
         "tools": [
-          "powerShellTool",
-          "fileSystemTool",
-          "webSearch",
-          "webFetch"
+          "execute_powershell",
+          "file_system",
+          "web_search",
+          "web_fetch"
         ]
       },
       {
@@ -94,10 +94,10 @@
         "model": "moonshotai/kimi-k2-instruct",
         "temperature": 0.7,
         "tools": [
-          "powerShellTool",
-          "fileSystemTool",
-          "webSearch",
-          "webFetch"
+          "execute_powershell",
+          "file_system",
+          "web_search",
+          "web_fetch"
         ]
       },
       {
@@ -105,20 +105,20 @@
         "temperature": 0.7,
         "image": true,
         "tools": [
-          "powerShellTool",
-          "fileSystemTool",
-          "webSearch",
-          "webFetch"
+          "execute_powershell",
+          "file_system",
+          "web_search",
+          "web_fetch"
         ]
       },
       {
         "model": "qwen/qwen3-32b",
         "temperature": 0.7,
         "tools": [
-          "powerShellTool",
-          "fileSystemTool",
-          "webSearch",
-          "webFetch"
+          "execute_powershell",
+          "file_system",
+          "web_search",
+          "web_fetch"
         ]
       }
     ]
@@ -138,30 +138,30 @@
         "model": "gemini-2.5-flash",
         "temperature": 0.7,
         "tools": [
-          "powerShellTool",
-          "fileSystemTool",
-          "webSearch",
-          "webFetch"
+          "execute_powershell",
+          "file_system",
+          "web_search",
+          "web_fetch"
         ]
       },
       {
         "model": "gemini-2.5-pro",
         "temperature": 0.7,
         "tools": [
-          "powerShellTool",
-          "fileSystemTool",
-          "webSearch",
-          "webFetch"
+          "execute_powershell",
+          "file_system",
+          "web_search",
+          "web_fetch"
         ]
       },
       {
         "model": "gemini-2.5-flash-lite",
         "temperature": 0.7,
         "tools": [
-          "powerShellTool",
-          "fileSystemTool",
-          "webSearch",
-          "webFetch"
+          "execute_powershell",
+          "file_system",
+          "web_search",
+          "web_fetch"
         ]
       }
     ]
@@ -179,11 +179,11 @@
         "stream": false,
         "temperature": 0.7,
         "tools": [
-          "powerShellTool",
-          "fileSystemTool",
-          "webSearch",
-          "webFetch",
-          "markdownNew"
+          "execute_powershell",
+          "file_system",
+          "web_search",
+          "web_fetch",
+          "read_url_markdown"
         ]
       },
       {
@@ -191,11 +191,11 @@
         "stream": false,
         "temperature": 0.7,
         "tools": [
-          "powerShellTool",
-          "fileSystemTool",
-          "webSearch",
-          "webFetch",
-          "markdownNew"
+          "execute_powershell",
+          "file_system",
+          "web_search",
+          "web_fetch",
+          "read_url_markdown"
         ]
       }
     ]

@@ -3,6 +3,7 @@
 class PowerShellTool {
     currentProcessPid := 0
     isCancelled := false
+    static TOOL_NAME := "execute_powershell"
 
     ; Detect best available PowerShell executable (pwsh is faster than powershell)
     static PsExe := FileExist(EnvGet("ProgramFiles") "\PowerShell\7\pwsh.exe")
@@ -83,7 +84,7 @@ class PowerShellTool {
         return {
             type: "function",
             function: {
-                name: "execute_powershell",
+                name: PowerShellTool.TOOL_NAME,
                 description: "Execute a PowerShell script. Can be used for file operations, command execution, system queries, and more. The script runs with ExecutionPolicy Bypass.",
                 parameters: {
                     type: "object",
@@ -109,7 +110,7 @@ class PowerShellTool {
     static GetGeminiToolDefinition() {
         return {
             functionDeclarations: [{
-                name: "execute_powershell",
+                name: PowerShellTool.TOOL_NAME,
                 description: "Execute a PowerShell script. Can be used for file operations, command execution, system queries, and more. The script runs with ExecutionPolicy Bypass.",
                 parameters: {
                     type: "object",
@@ -135,7 +136,7 @@ class PowerShellTool {
      * @returns The tool response message
      */
     ExecuteToolCall(toolCall) {
-        if (toolCall.Name != "execute_powershell") {
+        if (toolCall.Name != PowerShellTool.TOOL_NAME) {
             return
         }
 

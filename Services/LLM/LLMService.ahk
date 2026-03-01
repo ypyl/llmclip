@@ -20,22 +20,22 @@ class LLMService {
     ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false) {
         enabledTools := []
         if (powerShellEnabled)
-            enabledTools.Push("powerShellTool")
+            enabledTools.Push(PowerShellTool.TOOL_NAME)
 
         if (fileSystemEnabled)
-             enabledTools.Push("fileSystemTool")
+             enabledTools.Push(FileSystemTool.TOOL_NAME)
 
         ; Enable web search if API key is present
         if (webSearchEnabled && this.configManager.ollamaApiKey != "") {
-            enabledTools.Push("web_search")
+            enabledTools.Push(WebSearchTool.TOOL_NAME)
         }
         ; Enable web fetch unconditionally if enabled
         if (webFetchEnabled) {
-            enabledTools.Push("web_fetch")
+            enabledTools.Push(WebFetchTool.TOOL_NAME)
         }
         ; Enable markdown new if enabled
         if (markdownNewEnabled) {
-            enabledTools.Push("read_url_markdown")
+            enabledTools.Push(MarkdownNewTool.TOOL_NAME)
         }
 
         return enabledTools
@@ -56,23 +56,23 @@ class LLMService {
                 startTime := A_TickCount
                 result := ""
 
-                if (tool_call.Name == "execute_powershell") {
+                if (tool_call.Name ==  PowerShellTool.TOOL_NAME) {
                      tool := PowerShellTool()
                      this.currentTool := tool
                      result := tool.ExecuteToolCall(tool_call)
-                } else if (tool_call.Name == "file_system") {
+                } else if (tool_call.Name == FileSystemTool.TOOL_NAME) {
                      tool := FileSystemTool()
                      this.currentTool := tool
                      result := tool.ExecuteToolCall(tool_call)
-                } else if (tool_call.Name == "web_search") {
+                } else if (tool_call.Name == WebSearchTool.TOOL_NAME) {
                      tool := WebSearchTool()
                      this.currentTool := tool
                      result := tool.ExecuteToolCall(tool_call, this.configManager.ollamaApiKey)
-                } else if (tool_call.Name == "web_fetch") {
+                } else if (tool_call.Name == WebFetchTool.TOOL_NAME) {
                      tool := WebFetchTool()
                      this.currentTool := tool
                      result := tool.ExecuteToolCall(tool_call, this.configManager.ollamaApiKey)
-                } else if (tool_call.Name == "read_url_markdown") {
+                } else if (tool_call.Name == MarkdownNewTool.TOOL_NAME) {
                      tool := MarkdownNewTool()
                      this.currentTool := tool
                      result := tool.ExecuteToolCall(tool_call)

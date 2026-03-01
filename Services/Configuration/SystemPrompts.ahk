@@ -45,6 +45,33 @@ class SystemPrompts {
         return Map()
     }
 
+    GetToolAutoApprovalPatterns(name) {
+        if (!this.prompts.Has(name)) {
+            return Map()
+        }
+        
+        prompt := this.prompts[name]
+        patterns := Map()
+        
+        ; Look for tools.{toolName}.{paramName} keys
+        for key, value in prompt {
+            if (SubStr(key, 1, 6) = "tools.") {
+                parts := StrSplit(key, ".")
+                if (parts.Length = 3) {
+                    toolName := parts[2]
+                    paramName := parts[3]
+                    
+                    if (!patterns.Has(toolName)) {
+                        patterns[toolName] := Map()
+                    }
+                    patterns[toolName][paramName] := value
+                }
+            }
+        }
+        
+        return patterns
+    }
+
     GetNames() {
         names := []
         for name in this.prompts {

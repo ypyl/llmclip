@@ -404,4 +404,8 @@ class SessionManager {
         }
         return changed
     }
+
+    GetCurrentProcessingState() => this.GetCurrentSession().processingState
+
+    SetCurrentProcessingState(state) => this.GetCurrentSession().processingState := state
 }

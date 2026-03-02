@@ -1,6 +1,7 @@
 #Include LLM\Types.ahk
 #Include ContextItem.ahk
 #Include History.ahk
+#Include ..\ProcessingState.ahk
 
 class Session {
     histories := []
@@ -8,6 +9,7 @@ class Session {
     context := []
     llmType := 1
     systemPromptIndex := 1
+    processingState := ProcessingState.IDLE
 
     __New(defaultSystemPrompt, defaultLLMType := 1) {
         this.histories := [History([ChatMessage("system", [TextContent(defaultSystemPrompt)])])]
@@ -52,6 +54,7 @@ class Session {
         this.histories := [History([ChatMessage("system", [TextContent(defaultSystemPrompt)])])]
         this.currentHistoryIndex := 1
         this.context := []
+        this.processingState := ProcessingState.IDLE
     }
 
     UpdateSystemPrompt(systemPromptContent) {
@@ -75,7 +78,8 @@ class Session {
             historyIndex: this.currentHistoryIndex,
             context: contextItems,
             llmType: this.llmType,
-            systemPrompt: this.systemPromptIndex
+            systemPrompt: this.systemPromptIndex,
+            processingState: this.processingState
         }
     }
 
@@ -108,6 +112,10 @@ class Session {
 
         newSession.llmType := isMap ? obj["llmType"] : obj.llmType
         newSession.systemPromptIndex := isMap ? obj["systemPrompt"] : obj.systemPrompt
+        
+        hasProcessingState := isMap ? obj.Has("processingState") : obj.HasOwnProp("processingState")
+        if (hasProcessingState)
+            newSession.processingState := isMap ? obj["processingState"] : obj.processingState
 
         return newSession
     }

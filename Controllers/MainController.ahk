@@ -1,4 +1,5 @@
 #Requires AutoHotkey 2.0
+#Include ../ProcessingState.ahk
 
 class MainController {
     view := ""
@@ -43,8 +44,6 @@ class MainController {
     notesController := ""
     settingsController := ""
     recordingController := ""
-
-    processingState := "idle" ; idle, processing, tool_pending, tool_running
 
     messagePresentationService := ""
 
@@ -103,7 +102,7 @@ class MainController {
     }
 
     CompressHistory(*) {
-        this.SetProcessingState("compressing")
+        this.SetProcessingState(ProcessingState.COMPRESSING)
 
         try {
             compressedMsg := this.compressHistoryCommand.Execute()
@@ -117,12 +116,12 @@ class MainController {
         } catch as e {
             this.view.ShowError("Compression failed: " . e.Message)
         } finally {
-            this.SetProcessingState("idle")
+            this.SetProcessingState(ProcessingState.IDLE)
         }
     }
 
     ExtractLearnings(*) {
-        this.SetProcessingState("extracting")
+        this.SetProcessingState(ProcessingState.EXTRACTING)
 
         try {
             extractedNotes := this.extractLearningsCommand.Execute()
@@ -135,7 +134,7 @@ class MainController {
         } catch as e {
             this.view.ShowError("Extraction failed: " . e.Message)
         } finally {
-            this.SetProcessingState("idle")
+            this.SetProcessingState(ProcessingState.IDLE)
         }
     }
 
@@ -185,14 +184,14 @@ class MainController {
 
     AskToLLM(*) {
         ; Check if user clicked to cancel tool execution
-        if (this.processingState == "tool_running") {
+        if (this.sessionManager.GetCurrentProcessingState() == ProcessingState.TOOL_RUNNING) {
             this.llmService.CancelTools()
-            this.SetProcessingState("idle")
+            this.SetProcessingState(ProcessingState.IDLE)
             return
         }
 
         ; 1. Gather UI state
-        currentState := this.processingState
+        currentState := this.sessionManager.GetCurrentProcessingState()
         promptText := this.view.GetPromptValue()
 
         isImageEnabled := this.IsImageInputEnabled[this.CurrentLLMTypeIndex]
@@ -211,48 +210,48 @@ class MainController {
         }
 
         ; 2. Update UI state before execution
-        if (this.view.guiShown && this.processingState == "idle") {
-            this.SetProcessingState("processing")
+        if (this.view.guiShown && this.sessionManager.GetCurrentProcessingState() == ProcessingState.IDLE) {
+            this.SetProcessingState(ProcessingState.PROCESSING)
         }
 
         ; If we're about to execute pending tools, transition to tool_running state
-        if (currentState == "tool_pending") {
-            this.SetProcessingState("tool_running")
+        if (currentState == ProcessingState.TOOL_PENDING) {
+            this.SetProcessingState(ProcessingState.TOOL_RUNNING)
         }
 
         try {
             result := {}
 
             ; 3. Route to appropriate command
-            if (currentState == "processing") {
+            if (currentState == ProcessingState.PROCESSING) {
                 ; Handle Cancellation
                 result := this.cancelRequestCommand.Execute()
-            } else if (currentState == "tool_pending" || currentState == "tool_running") {
+            } else if (currentState == ProcessingState.TOOL_PENDING || currentState == ProcessingState.TOOL_RUNNING) {
                 ; Handle Tool Confirmation
                 if (this.executeToolCallsCommand.Execute()) {
                     result := this.sendToLLMCommand.Execute(promptText, images, selectedIndices, true)
                 } else {
-                    result := { action: "idle" }
+                    result := { action: ProcessingState.IDLE }
                 }
             } else if (this.sessionManager.batchModeEnabled) {
                 ; Handle Batch Mode
                 this.sendBatchToLLMCommand.Execute(
                     promptText,
                     batchItems,
-                    () => (this.processingState != "processing"),
+                    () => (this.sessionManager.GetCurrentProcessingState() != ProcessingState.PROCESSING),
                     (label, messages) => this.historyViewController.UpdateChatHistoryView()
                 )
-                result := { action: "idle" }
+                result := { action: ProcessingState.IDLE }
             } else {
                 ; Normal Send Mode
                 result := this.sendToLLMCommand.Execute(promptText, images, selectedIndices)
             }
 
             ; 4. Handle Result and update UI State
-            if (result.action == "idle") {
-                this.SetProcessingState("idle")
-            } else if (result.action == "tool_pending") {
-                this.SetProcessingState("tool_pending")
+            if (result.action == ProcessingState.IDLE) {
+                this.SetProcessingState(ProcessingState.IDLE)
+            } else if (result.action == ProcessingState.TOOL_PENDING) {
+                this.SetProcessingState(ProcessingState.TOOL_PENDING)
             }
 
             ; 5. UI Cleanup
@@ -264,7 +263,7 @@ class MainController {
                 }
             }
         } catch as e {
-            this.SetProcessingState("idle")
+            this.SetProcessingState(ProcessingState.IDLE)
             if (e.Message != "Request cancelled") {
                 this.view.ShowError("Error: " . e.Message)
             }
@@ -327,24 +326,24 @@ class MainController {
     }
 
     SetProcessingState(state) {
-        this.processingState := state
+        this.sessionManager.SetCurrentProcessingState(state)
 
-        if (state == "idle") {
+        if (state == ProcessingState.IDLE) {
             this.view.SetAskButtonText("Ask LLM")
             this.view.SetAskButtonEnabled(true)
-        } else if (state == "processing") {
+        } else if (state == ProcessingState.PROCESSING) {
             this.view.SetAskButtonText("Cancel")
             this.view.SetAskButtonEnabled(true)
-        } else if (state == "tool_pending") {
+        } else if (state == ProcessingState.TOOL_PENDING) {
             this.view.SetAskButtonText("Confirm Tool Run")
             this.view.SetAskButtonEnabled(true)
-        } else if (state == "tool_running") {
+        } else if (state == ProcessingState.TOOL_RUNNING) {
             this.view.SetAskButtonText("Cancel Tool")
             this.view.SetAskButtonEnabled(true)
-        } else if (state == "compressing") {
+        } else if (state == ProcessingState.COMPRESSING) {
             this.view.SetAskButtonText("Compressing...")
             this.view.SetAskButtonEnabled(false)
-        } else if (state == "extracting") {
+        } else if (state == ProcessingState.EXTRACTING) {
             this.view.SetAskButtonText("Extracting...")
             this.view.SetAskButtonEnabled(false)
         }
@@ -418,11 +417,12 @@ class MainController {
             this.settingsController.UpdateCompressionMenuState()
 
         this.UpdateSessionUI()
+        this.SetProcessingState(this.sessionManager.GetCurrentProcessingState())
     }
 
     UpdateSessionUI() {
         currentModelIndex := this.sessionManager.GetCurrentSessionLLMType()
-        
+
         ; 1. Update Models Menu (delegated to View)
         this.view.UpdateModelMenu(currentModelIndex, this.configManager.llmDisplayNames)
 

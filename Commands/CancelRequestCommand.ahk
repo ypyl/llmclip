@@ -1,3 +1,5 @@
+#Include ..\ProcessingState.ahk
+
 class CancelRequestCommand {
     llmService := ""
     
@@ -7,6 +9,6 @@ class CancelRequestCommand {
     
     Execute() {
         this.llmService.Cancel()
-        return { action: "idle" }
+        return { action: ProcessingState.IDLE }
     }
 }

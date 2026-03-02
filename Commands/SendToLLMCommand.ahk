@@ -1,3 +1,5 @@
+#Include ..\ProcessingState.ahk
+
 class SendToLLMCommand {
     sessionManager := ""
     configManager := ""
@@ -76,12 +78,12 @@ class SendToLLMCommand {
             }
 
             return {
-                action: hasUnexecuted ? "tool_pending" : "idle",
+                action: hasUnexecuted ? ProcessingState.TOOL_PENDING : ProcessingState.IDLE,
                 hasUnexecutedToolCalls: hasUnexecuted
             }
         } catch as e {
             if (e.Message == "Request cancelled") {
-                return { action: "idle" }
+                return { action: ProcessingState.IDLE }
             }
             throw e
         }

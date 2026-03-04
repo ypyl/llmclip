@@ -189,8 +189,14 @@
       {
         "model": "qwen3.5:latest",
         "stream": false,
-        "temperature": 0.7
-
+        "temperature": 0.7,
+        "tools": [
+          "execute_powershell",
+          "file_system",
+          "web_search",
+          "web_fetch",
+          "read_url_markdown"
+        ]
       },
       {
         "model": "granite4:latest",

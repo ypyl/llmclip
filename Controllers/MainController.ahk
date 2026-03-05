@@ -25,6 +25,7 @@ class MainController {
     saveDiagramCommand := ""
     renderMarkdownCommand := ""
     cancelRequestCommand := ""
+    setProcessingStateCommand := ""
     executeToolCallsCommand := ""
     sendToLLMCommand := ""
     sendBatchToLLMCommand := ""
@@ -59,7 +60,7 @@ class MainController {
         this.messagePresentationService := messagePresentationService
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClipboard, switchSession, toggleBatchMode, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart) {
+    SetCommands(saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClipboard, switchSession, toggleBatchMode, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState) {
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
         this.clearContextCommand := clearCtx
@@ -82,6 +83,7 @@ class MainController {
         this.saveConversationOnExitCommand := saveConvOnExit
         this.loadStateOnStartCommand := loadStateOnStart
         this.loadConversationOnStartCommand := loadConvOnStart
+        this.setProcessingStateCommand := setProcessingState
     }
 
     SetSubControllers(ctxView, histView, notes, settings, recording) {
@@ -326,7 +328,7 @@ class MainController {
     }
 
     SetProcessingState(state) {
-        this.sessionManager.SetCurrentProcessingState(state)
+        this.setProcessingStateCommand.Execute(state)
 
         if (state == ProcessingState.IDLE) {
             this.view.SetAskButtonText("Ask LLM")
@@ -452,6 +454,7 @@ class MainController {
 
         ; Update UI
         this.UpdateSessionUI()
+        this.SetProcessingState(ProcessingState.IDLE)
     }
 
 

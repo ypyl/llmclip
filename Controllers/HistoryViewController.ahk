@@ -15,8 +15,9 @@ class HistoryViewController {
     navigateHistoryPreviousCommand := ""
     navigateHistoryNextCommand := ""
     getHistoryInfoCommand := ""
+    setProcessingStateCommand := ""
 
-    __New(historyView, mainView, getHistoryListItemsCommand, getMessagePresentationCommand, deleteMessageCommand, clearHistoryCommand, renderMarkdownCommand, copyToClipboardCommand, regenerateMessageCommand, navigateHistoryPreviousCommand := "", navigateHistoryNextCommand := "", getHistoryInfoCommand := "") {
+    __New(historyView, mainView, getHistoryListItemsCommand, getMessagePresentationCommand, deleteMessageCommand, clearHistoryCommand, renderMarkdownCommand, copyToClipboardCommand, regenerateMessageCommand, navigateHistoryPreviousCommand := "", navigateHistoryNextCommand := "", getHistoryInfoCommand := "", setProcessingStateCommand := "") {
         this.historyView := historyView
         this.mainView := mainView
         this.getHistoryListItemsCommand := getHistoryListItemsCommand
@@ -29,6 +30,7 @@ class HistoryViewController {
         this.navigateHistoryPreviousCommand := navigateHistoryPreviousCommand
         this.navigateHistoryNextCommand := navigateHistoryNextCommand
         this.getHistoryInfoCommand := getHistoryInfoCommand
+        this.setProcessingStateCommand := setProcessingStateCommand
     }
 
     UpdateChatHistoryView(focusedRow := 0) {
@@ -99,6 +101,11 @@ class HistoryViewController {
         this.clearHistoryCommand.Execute()
         this.UpdateChatHistoryView()  ; Update the chat history view
         this.renderMarkdownCommand.Execute("")  ; Clear the response area
+        if (this.setProcessingStateCommand) {
+            this.setProcessingStateCommand.Execute()
+            this.mainView.SetAskButtonText("Ask LLM")
+            this.mainView.SetAskButtonEnabled(true)
+        }
     }
 
     NavigateHistoryPrevious(*) {

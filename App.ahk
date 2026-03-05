@@ -67,6 +67,7 @@
 #Include Commands\SaveConversationOnExitCommand.ahk
 #Include Commands\LoadStateOnStartCommand.ahk
 #Include Commands\LoadConversationOnStartCommand.ahk
+#Include Commands\SetProcessingStateCommand.ahk
 
 class App {
     controller := ""
@@ -155,18 +156,19 @@ class App {
         saveConvOnExit := SaveConversationOnExitCommand(sess, stateSvc)
         loadStateOnStart := LoadStateOnStartCommand(sess, cfg, stateSvc)
         loadConvOnStart := LoadConversationOnStartCommand(sess, cfg, stateSvc)
-
-        this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClip, switchSession, toggleBatchMode, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart
-        )
+        setProcessingState := SetProcessingStateCommand(sess)
 
         ; 3. Initialize View
         this.view := MainView(this.controller)
         this.controller.SetView(this.view)
 
+        this.controller.SetCommands(
+            saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClip, switchSession, toggleBatchMode, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState
+        )
+
         ; 4. Initialize Sub-Controllers
         ctxView := ContextViewController(this.view.contextView, this.view, sess, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems, prepareContext, setContextItemChecked)
-        histView := HistoryViewController(this.view.historyView, this.view, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip, regenerateMessage, navigateHistoryPrevious, navigateHistoryNext, getHistoryInfo)
+        histView := HistoryViewController(this.view.historyView, this.view, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip, regenerateMessage, navigateHistoryPrevious, navigateHistoryNext, getHistoryInfo, setProcessingState)
         notesContr := NotesController(copyToClip)
         
         settingsContr := SettingsController(cfg, sess, selectModel, changeAnswerSize, toggleTool, getToolsState, getCompressionState, changeSystemPrompt, reloadSettings)

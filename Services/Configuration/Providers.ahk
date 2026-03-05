@@ -10,7 +10,15 @@ class Providers {
     Reload() {
         this.providers := Map()
         if (DirExist("providers")) {
+            fileCount := 0
             Loop Files, "providers\*.json" {
+                fileCount++
+            }
+            skipDefault := fileCount > 1
+            Loop Files, "providers\*.json" {
+                if (skipDefault && A_LoopFileName = "providers.json") {
+                    continue
+                }
                 try {
                     parsed := JSON.LoadFile(A_LoopFilePath)
                     for key, value in parsed {

@@ -48,7 +48,7 @@ class Session {
         return false
     }
 
-    GetHistoryInfo() => "History " . this.currentHistoryIndex . "/" . this.histories.Length
+    GetHistoryInfo() => this.currentHistoryIndex . "/" . this.histories.Length
 
     Reset(defaultSystemPrompt) {
         this.histories := [History([ChatMessage("system", [TextContent(defaultSystemPrompt)])])]

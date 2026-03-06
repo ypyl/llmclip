@@ -22,16 +22,14 @@ class HistoryView {
         this.chatMessageButton := gui.Add("Button", "vChatMessageActionButton x45 y375 w60 Hidden", "Copy")
         this.chatMessageButton.OnEvent("Click", ObjBindMethod(historyViewController, "CopySelectedMessage"))
 
-        this.clearHistoryButton := gui.Add("Button", "x110 y375 w60", "Clear")
-        this.clearHistoryButton.OnEvent("Click", ObjBindMethod(historyViewController, "ClearChatHistory"))
-
-        this.historyPrevButton := gui.Add("Button", "x175 y375 w30", "<")
+        this.historyPrevButton := gui.Add("Button", "x110 y375 w30", "<")
         this.historyPrevButton.OnEvent("Click", ObjBindMethod(historyViewController, "NavigateHistoryPrevious"))
 
-        this.historyNextButton := gui.Add("Button", "x210 y375 w30", ">")
+        this.historyNextButton := gui.Add("Button", "x145 y375 w30", ">")
         this.historyNextButton.OnEvent("Click", ObjBindMethod(historyViewController, "NavigateHistoryNext"))
 
-        this.historyInfoText := gui.Add("Text", "x245 y380 w145 Center", "History 1/1")
+        this.clearHistoryButton := gui.Add("Button", "x245 y375 w145", "Clear 1/1")
+        this.clearHistoryButton.OnEvent("Click", ObjBindMethod(historyViewController, "ClearChatHistory"))
     }
 
     DeleteItems() => this.chatHistory.Delete()
@@ -47,7 +45,7 @@ class HistoryView {
     GetNext(row := 0) => this.chatHistory.GetNext(row)
     SetActionButtonVisible(visible) => this.chatMessageButton.Visible := visible
     ScrollToBottom() => this.chatHistory.Modify(this.chatHistory.GetCount(), "Vis")
-    SetHistoryInfo(text) => this.historyInfoText.Value := text
+    SetHistoryInfo(text) => this.clearHistoryButton.Text := "Clear " . text
     
     GetSelectedIndices() {
         selectedIndices := []

@@ -82,7 +82,7 @@ class LLMService {
 
                 if (result) {
                     duration := (A_TickCount - startTime) / 1000
-                    result.duration := duration
+                    result.AdditionalProperties["duration"] := duration
                     results.Push(result)
                 }
             }

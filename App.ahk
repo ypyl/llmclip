@@ -188,5 +188,7 @@ class App {
     Start() {
         this.controller.Start()
         Hotkey("F3", (*) => this.controller.ToggleDisplay())
+        Hotkey("F2", (*) => this.controller.ResetAll())
+        Hotkey("F4", (*) => this.controller.AskToLLM())
     }
 }

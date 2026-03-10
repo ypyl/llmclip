@@ -11,22 +11,25 @@ class SendBatchToLLMCommand {
         this.contextManager := contextManager
     }
 
-    Execute(promptText, batchItems, isCancelledCallback, batchUpdateCallback := "") {
+    Execute(promptText, batchItems, isCancelledCallback, batchUpdateCallback := "", targetSessionIndex := 0) {
+        if (!targetSessionIndex)
+            targetSessionIndex := this.sessionManager.currentSessionIndex
+
         userContent := [TextContent(promptText)]
         userMsg := ChatMessage("user", userContent)
         userMsg.AdditionalProperties["isBatchMode"] := true
 
-        mainMessages := this.sessionManager.GetCurrentSessionMessages()
+        mainMessages := this.sessionManager.GetSessionMessages(targetSessionIndex)
         mainMessages.Push(userMsg)
 
-        currentLLM := this.sessionManager.GetCurrentSessionLLMType()
+        currentLLM := this.sessionManager.GetSessionLLMType(targetSessionIndex)
         powerShellEnabled := this.configManager.IsToolEnabled(currentLLM, PowerShellTool.TOOL_NAME)
         fileSystemEnabled := this.configManager.IsToolEnabled(currentLLM, FileSystemTool.TOOL_NAME)
         webSearchEnabled := this.configManager.IsToolEnabled(currentLLM, WebSearchTool.TOOL_NAME)
         webFetchEnabled := this.configManager.IsToolEnabled(currentLLM, WebFetchTool.TOOL_NAME)
         markdownNewEnabled := this.configManager.IsToolEnabled(currentLLM, MarkdownNewTool.TOOL_NAME)
 
-        baseHistory := this.sessionManager.GetMessagesExcludingBatch()
+        baseHistory := this.sessionManager.GetMessagesExcludingBatchForSession(targetSessionIndex)
 
         for item in batchItems {
             if (isCancelledCallback())
@@ -57,10 +60,11 @@ class SendBatchToLLMCommand {
             }
 
             tempSession := {
-                GetCurrentSessionMessages: (*) => clonedMessages,
-                GetCurrentSessionLLMType: (*) => this.sessionManager.GetCurrentSessionLLMType(),
-                GetMessagesExcludingBatch: (*) => clonedMessages,
-                HasUnexecutedToolCalls: (*) => false
+                currentSessionIndex: 1,
+                GetSessionMessages: (*) => clonedMessages,
+                GetSessionLLMType: (*) => this.sessionManager.GetSessionLLMType(targetSessionIndex),
+                GetMessagesExcludingBatchForSession: (*) => clonedMessages,
+                HasUnexecutedToolCallsForSession: (*) => false
             }
 
             answerSize := this.sessionManager.answerSize

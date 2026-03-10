@@ -15,8 +15,11 @@ class SendToLLMCommand {
         this.executeToolCallsCommand := executeToolCallsCommand
     }
 
-    Execute(promptText, images := [], selectedContextIndices := [], isRegeneration := false) {
-        currentContext := this.sessionManager.GetCurrentSessionContext()
+    Execute(promptText, images := [], selectedContextIndices := [], isRegeneration := false, targetSessionIndex := 0) {
+        if (!targetSessionIndex)
+            targetSessionIndex := this.sessionManager.currentSessionIndex
+
+        currentContext := this.sessionManager.GetSessionContext(targetSessionIndex)
         additionalContext := this.contextManager.BuildPromptContext(currentContext, selectedContextIndices)
 
         if (!isRegeneration) {
@@ -29,19 +32,19 @@ class SendToLLMCommand {
             if (userMessageContent.Length > 0) {
                 userChangeMessage := ChatMessage("user", userMessageContent)
                 userChangeMessage.AdditionalProperties["hasContext"] := additionalContext != ""
-                this.sessionManager.GetCurrentSessionMessages().Push(userChangeMessage)
+                this.sessionManager.GetSessionMessages(targetSessionIndex).Push(userChangeMessage)
             }
         }
 
-        messages := this.sessionManager.GetCurrentSessionMessages()
+        messages := this.sessionManager.GetSessionMessages(targetSessionIndex)
 
         systemPrompt := this.configManager.GetSystemPromptValue(
-            this.sessionManager.GetCurrentSessionLLMType(),
-            this.sessionManager.GetCurrentSessionSystemPrompt()
+            this.sessionManager.GetSessionLLMType(targetSessionIndex),
+            this.sessionManager.GetSessionSystemPrompt(targetSessionIndex)
         )
-        this.sessionManager.UpdateSystemPromptContent(systemPrompt)
+        this.sessionManager.UpdateSystemPromptContentForSession(targetSessionIndex, systemPrompt)
 
-        currentLLM := this.sessionManager.GetCurrentSessionLLMType()
+        currentLLM := this.sessionManager.GetSessionLLMType(targetSessionIndex)
         powerShellEnabled := this.configManager.IsToolEnabled(currentLLM, PowerShellTool.TOOL_NAME)
         fileSystemEnabled := this.configManager.IsToolEnabled(currentLLM, FileSystemTool.TOOL_NAME)
         webSearchEnabled := this.configManager.IsToolEnabled(currentLLM, WebSearchTool.TOOL_NAME)
@@ -57,22 +60,23 @@ class SendToLLMCommand {
                 webSearchEnabled,
                 webFetchEnabled,
                 fileSystemEnabled,
-                markdownNewEnabled
+                markdownNewEnabled,
+                targetSessionIndex
             )
 
             if (newMessages.Length > 0) {
-                this.sessionManager.AddMessages(newMessages)
+                this.sessionManager.AddMessagesToSession(targetSessionIndex, newMessages)
             }
 
-            hasUnexecuted := this.sessionManager.HasUnexecutedToolCalls()
+            hasUnexecuted := this.sessionManager.HasUnexecutedToolCallsForSession(targetSessionIndex)
 
             ; Check if auto-approval is enabled for these tool calls
             if (hasUnexecuted) {
                 lastMsg := messages[messages.Length]
-                if (this.executeToolCallsCommand.ShouldAutoApprove(lastMsg)) {
+                if (this.executeToolCallsCommand.ShouldAutoApprove(lastMsg, targetSessionIndex)) {
                     ; Auto-execute and continue
-                    if (this.executeToolCallsCommand.Execute()) {
-                        return this.Execute("", [], [], true)
+                    if (this.executeToolCallsCommand.Execute(targetSessionIndex)) {
+                        return this.Execute("", [], [], true, targetSessionIndex)
                     }
                 }
             }

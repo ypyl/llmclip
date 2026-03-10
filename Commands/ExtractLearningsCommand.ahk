@@ -9,19 +9,22 @@ class ExtractLearningsCommand {
         this.llmService := llmService
     }
 
-    Execute() {
-        messages := this.sessionManager.GetCurrentSessionMessages()
+    Execute(targetSessionIndex := 0) {
+        if (!targetSessionIndex)
+            targetSessionIndex := this.sessionManager.currentSessionIndex
+
+        messages := this.sessionManager.GetSessionMessages(targetSessionIndex)
 
         if (messages.Length < 2) {
             throw Error("Not enough conversation history to extract notes.")
         }
 
-        conversationText := this.sessionManager.FormatMessagesForCompression()
+        conversationText := this.sessionManager.FormatMessagesForCompressionForSession(targetSessionIndex)
 
         if (conversationText == "") {
             throw Error("No conversation history to extract from.")
         }
 
-        return this.llmService.ExtractLearnings(this.sessionManager)
+        return this.llmService.ExtractLearnings(this.sessionManager, targetSessionIndex)
     }
 }

@@ -41,7 +41,10 @@ class LLMService {
         return enabledTools
     }
 
-    ExecuteToolCalls(sessionManager, msg) {
+    ExecuteToolCalls(sessionManager, msg, sessionIndex := 0) {
+        if (!sessionIndex)
+            sessionIndex := sessionManager.currentSessionIndex
+
         tool_calls := sessionManager.GetToolCalls(msg)
         results := []
 
@@ -51,7 +54,7 @@ class LLMService {
                 break
             }
 
-            if (!sessionManager.IsToolCallExecuted(tool_call.id)) {
+            if (!sessionManager.IsToolCallExecutedInSession(sessionIndex, tool_call.id)) {
                 ; Measure tool execution time
                 startTime := A_TickCount
                 result := ""
@@ -93,13 +96,16 @@ class LLMService {
         return results
     }
 
-    SendToLLM(sessionManager, answerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false) {
+    SendToLLM(sessionManager, answerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false, sessionIndex := 0) {
+        if (!sessionIndex)
+            sessionIndex := sessionManager.currentSessionIndex
+
         ; Use filtered messages to exclude previous batch processing
-        messages := sessionManager.GetMessagesExcludingBatch()
+        messages := sessionManager.GetMessagesExcludingBatchForSession(sessionIndex)
 
         try {
             ; Create LLM client if it doesn't exist yet
-            settings := this.configManager.GetSelectedSettings(sessionManager.GetCurrentSessionLLMType())
+            settings := this.configManager.GetSelectedSettings(sessionManager.GetSessionLLMType(sessionIndex))
 
             ; Update tools property based on checkbox values
             settings["tools"] := this.ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled)
@@ -145,8 +151,11 @@ class LLMService {
         }
     }
 
-    CompressHistory(sessionManager) {
-        messages := sessionManager.GetCurrentSessionMessages()
+    CompressHistory(sessionManager, sessionIndex := 0) {
+        if (!sessionIndex)
+            sessionIndex := sessionManager.currentSessionIndex
+
+        messages := sessionManager.GetSessionMessages(sessionIndex)
 
         ; Check if there are enough messages to compress (at least 3: system + 2 others)
         if (messages.Length < 3) {
@@ -154,14 +163,14 @@ class LLMService {
         }
 
         ; Format the conversation history for compression
-        conversationText := sessionManager.FormatMessagesForCompression()
+        conversationText := sessionManager.FormatMessagesForCompressionForSession(sessionIndex)
 
         if (conversationText == "") {
             throw Error("No conversation history to compress.")
         }
 
         ; Build compression prompt
-        compressionPrompt := this.configManager.GetCompressionPrompt(sessionManager.GetCurrentSessionLLMType())
+        compressionPrompt := this.configManager.GetCompressionPrompt(sessionManager.GetSessionLLMType(sessionIndex))
 
         if (compressionPrompt == "") {
             throw Error("Compression prompt not configured for this provider.")
@@ -177,7 +186,7 @@ class LLMService {
 
         try {
             ; Create LLM client
-            settings := this.configManager.GetSelectedSettings(sessionManager.GetCurrentSessionLLMType())
+            settings := this.configManager.GetSelectedSettings(sessionManager.GetSessionLLMType(sessionIndex))
             settings["tools"] := []  ; No tools for compression
 
             this.llmClientInstance := LLMClient(settings)
@@ -200,8 +209,11 @@ class LLMService {
         }
     }
 
-    ExtractLearnings(sessionManager) {
-        messages := sessionManager.GetCurrentSessionMessages()
+    ExtractLearnings(sessionManager, sessionIndex := 0) {
+        if (!sessionIndex)
+            sessionIndex := sessionManager.currentSessionIndex
+
+        messages := sessionManager.GetSessionMessages(sessionIndex)
 
         ; Check if there are enough messages (at least 2: system + 1 user/assistant)
         if (messages.Length < 2) {
@@ -209,14 +221,14 @@ class LLMService {
         }
 
         ; Format the conversation history
-        conversationText := sessionManager.FormatMessagesForCompression()
+        conversationText := sessionManager.FormatMessagesForCompressionForSession(sessionIndex)
 
         if (conversationText == "") {
              throw Error("No conversation history to extract from.")
         }
 
         ; Get learnings prompt
-        learningsPrompt := this.configManager.GetLearningsPrompt(sessionManager.GetCurrentSessionLLMType())
+        learningsPrompt := this.configManager.GetLearningsPrompt(sessionManager.GetSessionLLMType(sessionIndex))
         learningsPrompt .= "`n`nCONVERSATION:`n" conversationText
 
         ; Create temporary messages for the extraction request
@@ -227,7 +239,7 @@ class LLMService {
 
         try {
             ; Create LLM client
-            settings := this.configManager.GetSelectedSettings(sessionManager.GetCurrentSessionLLMType())
+            settings := this.configManager.GetSelectedSettings(sessionManager.GetSessionLLMType(sessionIndex))
             settings["tools"] := []  ; No tools for extraction
 
             this.llmClientInstance := LLMClient(settings)

@@ -28,7 +28,11 @@ class SessionManager {
 
     GetCurrentSessionMessages() => this.GetCurrentSession().GetCurrentMessages()
 
+    GetSessionMessages(index) => this.sessions[index].GetCurrentMessages()
+
     AddMessages(messages) => this.GetCurrentSession().AddMessages(messages)
+
+    AddMessagesToSession(index, messages) => this.sessions[index].AddMessages(messages)
 
     CreateHistoryBranch(upToIndex) => this.GetCurrentSession().CreateHistoryBranch(upToIndex)
 
@@ -38,19 +42,27 @@ class SessionManager {
 
     GetHistoryInfo() => this.GetCurrentSession().GetHistoryInfo()
 
-    GetCurrentSessionContext() => this.GetCurrentSession().context
+    GetCurrentSessionContext() => this.GetSessionContext(this.currentSessionIndex)
+
+    GetSessionContext(index) => this.sessions[index].context
 
     SetCurrentSessionContext(newContext) => this.GetCurrentSession().context := newContext
 
-    GetCurrentSessionLLMType() => this.GetCurrentSession().llmType
+    GetCurrentSessionLLMType() => this.GetSessionLLMType(this.currentSessionIndex)
+
+    GetSessionLLMType(index) => this.sessions[index].llmType
 
     SetCurrentSessionLLMType(index) => this.GetCurrentSession().llmType := index
 
-    GetCurrentSessionSystemPrompt() => this.GetCurrentSession().systemPromptIndex
+    GetCurrentSessionSystemPrompt() => this.GetSessionSystemPrompt(this.currentSessionIndex)
+
+    GetSessionSystemPrompt(index) => this.sessions[index].systemPromptIndex
 
     SetCurrentSessionSystemPrompt(index) => this.GetCurrentSession().systemPromptIndex := index
 
-    UpdateSystemPromptContent(systemPromptContent) => this.GetCurrentSession().UpdateSystemPrompt(systemPromptContent)
+    UpdateSystemPromptContent(systemPromptContent) => this.UpdateSystemPromptContentForSession(this.currentSessionIndex, systemPromptContent)
+
+    UpdateSystemPromptContentForSession(index, systemPromptContent) => this.sessions[index].UpdateSystemPrompt(systemPromptContent)
 
     SwitchSession(newIndex) {
         if (newIndex > 0 && newIndex <= this.MAX_SESSIONS) {
@@ -70,8 +82,8 @@ class SessionManager {
 
     SetBatchMode(enabled) => this.batchModeEnabled := enabled
 
-    FormatMessagesForCompression() {
-        messages := this.GetCurrentSessionMessages()
+    FormatMessagesForCompressionForSession(index) {
+        messages := this.GetSessionMessages(index)
         formattedText := ""
 
         i := 2
@@ -89,19 +101,27 @@ class SessionManager {
         return formattedText
     }
 
-    ReplaceWithCompressed(compressedMsg) {
-        messages := this.GetCurrentSessionMessages()
+    FormatMessagesForCompression() {
+        return this.FormatMessagesForCompressionForSession(this.currentSessionIndex)
+    }
+
+    ReplaceWithCompressedForSession(index, compressedMsg) {
+        messages := this.GetSessionMessages(index)
         systemMsg := messages[1]
 
-        this.ClearCurrentMessages()
+        this.sessions[index].Reset(this.defaultSystemPrompt)
 
-        current := this.GetCurrentSessionMessages()
+        current := this.GetSessionMessages(index)
         current[1] := systemMsg
         current.Push(compressedMsg)
     }
 
-    GetMessagesExcludingBatch() {
-        allMessages := this.GetCurrentSessionMessages()
+    ReplaceWithCompressed(compressedMsg) {
+        this.ReplaceWithCompressedForSession(this.currentSessionIndex, compressedMsg)
+    }
+
+    GetMessagesExcludingBatchForSession(index) {
+        allMessages := this.GetSessionMessages(index)
         filteredMessages := []
 
         for msg in allMessages {
@@ -112,6 +132,10 @@ class SessionManager {
                 filteredMessages.Push(msg)
         }
         return filteredMessages
+    }
+
+    GetMessagesExcludingBatch() {
+        return this.GetMessagesExcludingBatchForSession(this.currentSessionIndex)
     }
 
     AddContextItems(items) {
@@ -192,13 +216,13 @@ class SessionManager {
         return false
     }
 
-    HasUnexecutedToolCalls() {
-        messages := this.GetCurrentSessionMessages()
+    HasUnexecutedToolCallsForSession(index) {
+        messages := this.GetSessionMessages(index)
         for msg in messages {
             if (this.HasToolCalls(msg)) {
                 toolCalls := this.GetToolCalls(msg)
                 for toolCall in toolCalls {
-                    if (!this.IsToolCallExecuted(toolCall.Id))
+                    if (!this.IsToolCallExecutedInSession(index, toolCall.Id))
                         return true
                 }
             }
@@ -206,8 +230,12 @@ class SessionManager {
         return false
     }
 
-    IsToolCallExecuted(toolCallId) {
-        messages := this.GetCurrentSessionMessages()
+    HasUnexecutedToolCalls() {
+        return this.HasUnexecutedToolCallsForSession(this.currentSessionIndex)
+    }
+
+    IsToolCallExecutedInSession(index, toolCallId) {
+        messages := this.GetSessionMessages(index)
         for m in messages {
             if (m.Role == "tool") {
                 for part in m.Contents {
@@ -217,6 +245,10 @@ class SessionManager {
             }
         }
         return false
+    }
+
+    IsToolCallExecuted(toolCallId) {
+        return this.IsToolCallExecutedInSession(this.currentSessionIndex, toolCallId)
     }
 
     UpdateMessage(index, newContent) {

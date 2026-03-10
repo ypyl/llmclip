@@ -9,17 +9,20 @@ class ExecuteToolCallsCommand {
         this.systemPrompts := systemPrompts
     }
 
-    Execute() {
-        messages := this.sessionManager.GetCurrentSessionMessages()
+    Execute(sessionIndex := 0) {
+        if (!sessionIndex)
+            sessionIndex := this.sessionManager.currentSessionIndex
+
+        messages := this.sessionManager.GetSessionMessages(sessionIndex)
         executedAny := false
 
         i := 1
         while (i <= messages.Length) {
             msg := messages[i]
             if (this.sessionManager.HasToolCalls(msg)) {
-                toolResults := this.llmService.ExecuteToolCalls(this.sessionManager, msg)
+                toolResults := this.llmService.ExecuteToolCalls(this.sessionManager, msg, sessionIndex)
                 if (toolResults.Length > 0) {
-                    this.sessionManager.AddMessages(toolResults)
+                    this.sessionManager.AddMessagesToSession(sessionIndex, toolResults)
                     executedAny := true
                 }
             }
@@ -28,13 +31,16 @@ class ExecuteToolCallsCommand {
         return executedAny
     }
 
-    ShouldAutoApprove(msg) {
+    ShouldAutoApprove(msg, sessionIndex := 0) {
+        if (!sessionIndex)
+            sessionIndex := this.sessionManager.currentSessionIndex
+
         if (!this.sessionManager.HasToolCalls(msg)) {
             return false
         }
 
         ; Get current system prompt patterns
-        promptIndex := this.sessionManager.GetCurrentSessionSystemPrompt()
+        promptIndex := this.sessionManager.GetSessionSystemPrompt(sessionIndex)
         promptNames := this.systemPrompts.GetNames()
         if (promptIndex < 1 || promptIndex > promptNames.Length) {
             return false

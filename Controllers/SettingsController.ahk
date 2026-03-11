@@ -35,6 +35,15 @@ class SettingsController {
     }
 
     SelectModel(ItemName, ItemPos, MyMenu) {
+        ; Get current system prompt name before changing model
+        oldLlmTypeIndex := this.sessionManager.GetCurrentSessionLLMType()
+        oldSystemPromptIndex := this.sessionManager.GetCurrentSessionSystemPrompt()
+        oldSystemPromptNames := this.configManager.GetSystemPromptNames(oldLlmTypeIndex)
+        oldSystemPromptName := ""
+        if (oldSystemPromptIndex > 0 && oldSystemPromptIndex <= oldSystemPromptNames.Length) {
+            oldSystemPromptName := oldSystemPromptNames[oldSystemPromptIndex]
+        }
+
         ; Update session with new model index
         this.selectModelCommand.Execute(ItemPos)
 
@@ -47,8 +56,19 @@ class SettingsController {
         this.promptView.AddSystemPrompts(systemPromptNames)
 
         if (systemPromptNames.Length > 0) {
-            this.promptView.SetSystemPromptValue(1)
+            newIndex := 1
+            if (oldSystemPromptName != "") {
+                for index, name in systemPromptNames {
+                    if (name == oldSystemPromptName) {
+                        newIndex := index
+                        break
+                    }
+                }
+            }
+
+            this.promptView.SetSystemPromptValue(newIndex)
             this.promptView.SetSystemPromptEnabled(true)
+            this.SystemPromptChanged()
         } else {
             this.promptView.SetSystemPromptEnabled(false)
         }

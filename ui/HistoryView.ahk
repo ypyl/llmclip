@@ -55,4 +55,9 @@ class HistoryView {
         }
         return selectedIndices
     }
+
+    SetClearHistoryButtonEnabled(enabled) {
+        if (this.clearHistoryButton)
+            this.clearHistoryButton.Enabled := enabled
+    }
 }

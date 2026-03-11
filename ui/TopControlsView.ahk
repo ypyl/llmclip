@@ -23,4 +23,9 @@ class TopControlsView {
     
     GetValue() => this.sessionCombo.Value
     SetValue(value) => this.sessionCombo.Value := value
+
+    SetResetButtonEnabled(enabled) {
+        if (this.resetButton)
+            this.resetButton.Enabled := enabled
+    }
 }

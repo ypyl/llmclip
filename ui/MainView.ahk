@@ -162,4 +162,7 @@ class MainView {
     ShowError(text, title := "Error") => MsgBox(text, title, "Iconx")
     
     GetResponseCtrHwnd() => this.responseView.GetHwnd()
+
+    SetClearHistoryButtonEnabled(enabled) => this.historyView.SetClearHistoryButtonEnabled(enabled)
+    SetResetAllButtonEnabled(enabled) => this.topControlsView.SetResetButtonEnabled(enabled)
 }

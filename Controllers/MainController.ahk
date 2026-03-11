@@ -349,6 +349,10 @@ class MainController {
             this.view.SetAskButtonText("Extracting...")
             this.view.SetAskButtonEnabled(false)
         }
+
+        inProgress := (state == ProcessingState.PROCESSING || state == ProcessingState.TOOL_RUNNING)
+        this.view.SetClearHistoryButtonEnabled(!inProgress)
+        this.view.SetResetAllButtonEnabled(!inProgress)
     }
 
     ; Event Handlers from UI/Tray

@@ -200,6 +200,19 @@
         ]
       },
       {
+        "model": "qwen3.5:0.8b",
+        "stream": false,
+        "temperature": 0.7,
+        "image": true,
+        "tools": [
+          "execute_powershell",
+          "file_system",
+          "web_search",
+          "web_fetch",
+          "read_url_markdown"
+        ]
+      },
+      {
         "model": "lfm2:latest",
         "stream": false,
         "temperature": 0.7,

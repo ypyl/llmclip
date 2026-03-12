@@ -16,19 +16,19 @@ class HistoryView {
         this.chatHistory.OnEvent("ItemSelect", ObjBindMethod(historyViewController, "ChatHistorySelect"))
         this.chatHistory.OnEvent("DoubleClick", ObjBindMethod(historyViewController, "ChatHistoryDoubleClick"))
 
-        this.deleteMessageButton := gui.Add("Button", "x10 y375 w30", "X")
+        this.deleteMessageButton := gui.Add("Button", "x10 y375 w120", "Delete")
         this.deleteMessageButton.OnEvent("Click", ObjBindMethod(historyViewController, "DeleteSelectedMessage"))
 
-        this.chatMessageButton := gui.Add("Button", "vChatMessageActionButton x45 y375 w60 Hidden", "Copy")
+        this.chatMessageButton := gui.Add("Button", "vChatMessageActionButton x135 y375 w60 Hidden", "Copy")
         this.chatMessageButton.OnEvent("Click", ObjBindMethod(historyViewController, "CopySelectedMessage"))
 
-        this.historyPrevButton := gui.Add("Button", "x110 y375 w30", "<")
+        this.historyPrevButton := gui.Add("Button", "x200 y375 w30", "<")
         this.historyPrevButton.OnEvent("Click", ObjBindMethod(historyViewController, "NavigateHistoryPrevious"))
 
-        this.historyNextButton := gui.Add("Button", "x145 y375 w30", ">")
+        this.historyNextButton := gui.Add("Button", "x235 y375 w30", ">")
         this.historyNextButton.OnEvent("Click", ObjBindMethod(historyViewController, "NavigateHistoryNext"))
 
-        this.clearHistoryButton := gui.Add("Button", "x245 y375 w145", "Clear 1/1")
+        this.clearHistoryButton := gui.Add("Button", "x270 y375 w120", "Clear 1/1")
         this.clearHistoryButton.OnEvent("Click", ObjBindMethod(historyViewController, "ClearChatHistory"))
     }
 

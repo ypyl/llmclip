@@ -15,7 +15,7 @@ class ContextView {
         ; LVN_ITEMCHANGED = -101
         this.contextBox.OnNotify(-101, (ctrl, lParam) => this.OnContextBoxNotify(ctrl, lParam))
 
-        this.deleteButton := gui.Add("Button", "x10 y190 w120", "Delete Selected")
+        this.deleteButton := gui.Add("Button", "x10 y190 w120", "Delete")
         this.deleteButton.OnEvent("Click", ObjBindMethod(contextViewController, "DeleteSelected"))
 
         this.clearSelectionButton := gui.Add("Button", "x140 y190 w120", "Reset Selection")

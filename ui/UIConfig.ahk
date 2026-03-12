@@ -18,10 +18,10 @@ class UIConfig {
     static llmTypeWidth := 90
     static systemPromptX := 10
     static systemPromptY := 570
-    static systemPromptWidth := 100
-    static askLLMX := 195
+    static systemPromptWidth := 120
+    static askLLMX := 270
     static askLLMY := 570
-    static askLLMWidth := 195
+    static askLLMWidth := 120
     static bottomControlsHeight := 40
 
     ; Window settings

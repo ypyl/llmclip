@@ -138,12 +138,9 @@ class ConfigurationService {
                 ; Ignore errors for long strings
             }
 
-            currentTime := FormatTime(, "yyyy-MM-dd HH:mm:ss")
-            value .= "`n`nCurrent Date and Time: " . currentTime
-
             return value
         }
-        return defaultPrompt . "`n`nCurrent Date and Time: " . FormatTime(, "yyyy-MM-dd HH:mm:ss")
+        return defaultPrompt
     }
 
     GetInputTemplate(llmIndex, promptIndex) {
@@ -234,5 +231,36 @@ class ConfigurationService {
 
     Reload() {
         this.LoadAll()
+    }
+
+    SaveRawSystemPromptValue(llmIndex, promptName, newText) {
+        cleanText := newText
+
+        prompts := this.GetVisiblePrompts(llmIndex)
+        for prompt in prompts {
+            if (prompt["name"] == promptName) {
+                value := prompt["value"]
+                
+                ; Check if it's a file
+                pathInSystemPrompts := "prompts\" . value
+                if (SubStr(value, 1, 2) = ".\") {
+                    pathInSystemPrompts := "prompts\" . SubStr(value, 3)
+                }
+
+                if (FileExist(pathInSystemPrompts)) {
+                    FileOpen(pathInSystemPrompts, "w", "UTF-8").Write(cleanText)
+                } else if (FileExist(value)) {
+                    FileOpen(value, "w", "UTF-8").Write(cleanText)
+                } else {
+                    ; It's a literal string in JSON
+                    this.systemPromptsManager.UpdatePromptValue(promptName, cleanText)
+                }
+                
+                ; Reload to ensure everything is consistent
+                this.Reload()
+                return true
+            }
+        }
+        return false
     }
 }

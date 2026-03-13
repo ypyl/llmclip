@@ -129,7 +129,7 @@ class App {
         mdn := MarkdownNewTool()
         replaceLink := ReplaceLinkWithContentCommand(mdn, sess, ctx)
         renderMarkdown := RenderMarkdownCommand(wv)
-        saveEditedMsg := SaveEditedMessageCommand(sess)
+        saveEditedMsg := SaveEditedMessageCommand(sess, cfg)
         renderLastMsg := RenderLastMessageCommand(sess, mps, wv)
         deleteCtxItems := DeleteContextItemsCommand(sess)
         prepareContext := PrepareContextCommand(sess, cfg)

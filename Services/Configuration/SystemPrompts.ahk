@@ -45,6 +45,30 @@ class SystemPrompts {
         return Map()
     }
 
+    UpdatePromptValue(name, newValue) {
+        if (!this.prompts.Has(name)) {
+            return false
+        }
+
+        Loop Files, SystemPrompts.PROMPTS_DIR . "\*.json" {
+            try {
+                parsed := JSON.LoadFile(A_LoopFilePath)
+                if (parsed.Has(name)) {
+                    ; Update the value in the object
+                    parsed[name]["value"] := newValue
+                    
+                    ; Convert back to JSON string and write to file
+                    JSON.DumpFile(parsed, A_LoopFilePath, 2, "UTF-8")
+                    
+                    ; Update the in-memory cache
+                    this.prompts[name]["value"] := newValue
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
     GetToolAutoApprovalPatterns(name) {
         if (!this.prompts.Has(name)) {
             return Map()

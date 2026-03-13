@@ -103,6 +103,14 @@ class LLMService {
         ; Use filtered messages to exclude previous batch processing
         messages := sessionManager.GetMessagesExcludingBatchForSession(sessionIndex)
 
+        ; Append Date and Time to the system message
+        if (messages.Length > 0 && messages[1].Role == "system") {
+            systemMsg := messages[1]
+            originalText := systemMsg.GetText()
+            currentTime := FormatTime(, "yyyy-MM-dd HH:mm:ss")
+            systemMsg.Contents := [TextContent(originalText . "`n`nCurrent Date and Time: " . currentTime)]
+        }
+
         try {
             ; Create LLM client if it doesn't exist yet
             settings := this.configManager.GetSelectedSettings(sessionManager.GetSessionLLMType(sessionIndex))

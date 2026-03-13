@@ -1,11 +1,14 @@
-﻿<!doctype html>
+<!doctype html>
 <html>
   <head>
     <script src="marked.min.js"></script>
     <script src="mermaid.min.js"></script>
+    <script src="overtype@latest.js"></script>
     <style>
       body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
         margin: 0 auto;
         padding: 0px 5px;
       }
@@ -88,10 +91,25 @@
         -webkit-box-orient: vertical;
         overflow: hidden;
       }
+      #editor-container {
+        min-height: 400px;
+        height: max-content;
+        width: 100%;
+      }
+      #editor-container .cm-editor {
+        min-height: 400px; /* Force CodeMirror to take space */
+      }
+      /* Make OverType toolbar sticky */
+      div.overtype-toolbar {
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 100 !important;
+      }
     </style>
   </head>
   <body>
     <div id="content"></div>
+    <div id="editor-container" style="display: none"></div>
 
     <button id="quoteBtn" class="quote-button">Quote</button>
     <script>
@@ -118,14 +136,18 @@
       function toggle(button) {
         const wrapper = button.closest(".code-block-wrapper");
         wrapper.classList.toggle("collapsed");
-        button.textContent = wrapper.classList.contains("collapsed") ? "Expand" : "Collapse";
+        button.textContent = wrapper.classList.contains("collapsed")
+          ? "Expand"
+          : "Collapse";
       }
 
       // Function to toggle thinking block visibility
       function toggleThinking(button) {
         const wrapper = button.closest(".thinking-block-wrapper");
         wrapper.classList.toggle("collapsed");
-        button.textContent = wrapper.classList.contains("collapsed") ? "Expand" : "Collapse";
+        button.textContent = wrapper.classList.contains("collapsed")
+          ? "Expand"
+          : "Collapse";
       }
 
       // Function to copy thinking block to clipboard
@@ -177,6 +199,7 @@
       mermaid.initialize({ startOnLoad: false, suppressErrorRendering: true });
 
       async function renderMarkdown(content) {
+        window.currentMarkdown = content; // Store raw markdown for editing
         const quoteBtn = document.getElementById("quoteBtn");
         if (quoteBtn) {
           quoteBtn.style.display = "none";
@@ -232,6 +255,8 @@
       });
 
       document.addEventListener("mouseup", (e) => {
+        if (typeof isEditing !== "undefined" && isEditing) return;
+
         const selection = window.getSelection();
         const text = selection.toString().trim();
 
@@ -266,6 +291,113 @@
           quoteBtn.style.display = "none";
         }
       });
+
+      // Edit in place functionality
+      const contentDiv = document.getElementById("content");
+      const editorContainer = document.getElementById("editor-container");
+      const editControls = document.getElementById("editControls");
+      let isEditing = false;
+      let overtypeEditor = null;
+
+      contentDiv.addEventListener("dblclick", (e) => {
+        // Don't trigger if clicking inside a code block or button
+        if (e.target.closest("pre") || e.target.closest("button")) {
+          return;
+        }
+
+        if (!isEditing && window.currentMarkdown) {
+          isEditing = true;
+          // Hide quote button just in case
+          quoteBtn.style.display = "none";
+
+          // Switch to edit mode
+          contentDiv.style.display = "none";
+          editorContainer.style.display = "block";
+
+          if (!overtypeEditor) {
+            // First time initialization
+            let editors = new OverType("#editor-container", {
+              value: window.currentMarkdown,
+              theme: "github",
+              showStats: false,
+              toolbar: true,
+              autoResize: true,
+              toolbarButtons: [
+                toolbarButtons.bold,
+                toolbarButtons.italic,
+                toolbarButtons.code,
+                toolbarButtons.separator,
+                toolbarButtons.link,
+                toolbarButtons.separator,
+                toolbarButtons.h1,
+                toolbarButtons.h2,
+                toolbarButtons.h3,
+                toolbarButtons.separator,
+                toolbarButtons.bulletList,
+                toolbarButtons.separator,
+                toolbarButtons.quote,
+                toolbarButtons.separator,
+                {
+                  name: "cancel",
+                  icon: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
+                  title: "Cancel Edit",
+                  action: () => {
+                    cancelEdit();
+                  },
+                },
+                {
+                  name: "save",
+                  icon: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>',
+                  title: "Save Edit",
+                  action: () => {
+                    saveEdit();
+                  },
+                },
+              ],
+            });
+            overtypeEditor = editors[0];
+          } else {
+            // Update existing instance
+            overtypeEditor.setValue(window.currentMarkdown);
+          }
+        }
+      });
+
+      function cancelEdit() {
+        if (!isEditing) return;
+        isEditing = false;
+
+        // Hide editor
+        editorContainer.style.display = "none";
+
+        // Re-show markdown
+        contentDiv.style.display = "block";
+      }
+
+      function saveEdit() {
+        if (!isEditing || !overtypeEditor) return;
+
+        const newText = overtypeEditor.getValue();
+        isEditing = false;
+
+        // Hide editor
+        editorContainer.style.display = "none";
+
+        // Re-show markdown container
+        contentDiv.style.display = "block";
+
+        // Re-render with new markdown immediately for crisp UI
+        renderMarkdown(newText);
+
+        // Send back to AHK host
+        if (
+          window.chrome &&
+          window.chrome.webview &&
+          window.chrome.webview.hostObjects
+        ) {
+          window.chrome.webview.hostObjects.sync.edit.Save(newText);
+        }
+      }
     </script>
   </body>
 </html>

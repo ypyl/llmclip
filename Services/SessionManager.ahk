@@ -261,6 +261,53 @@ class SessionManager {
         return false
     }
 
+    UpdateMessageText(index, newContent) {
+        messages := this.GetCurrentSessionMessages()
+        if (index > 0 && index <= messages.Length) {
+            msg := messages[index]
+            newContents := []
+            hasTextParts := false
+            
+            ; 1. Check if the text starts with a thinking block
+            ; The PresentationService uses 6 or 8 backticks. We'll generically match ```...+thinking
+            thinkingContent := ""
+            mainContent := newContent
+            
+            if (RegExMatch(newContent, "^(``{6,})thinking\n([\s\S]*?)\n\1\n{1,2}([\s\S]*)$", &match)) {
+                thinkingContent := match[2]
+                mainContent := match[3]
+            }
+            
+            ; 2. Update the thinking property
+            if (thinkingContent != "") {
+                msg.AdditionalProperties["thinking"] := thinkingContent
+            } else if (msg.AdditionalProperties.Has("thinking")) {
+                ; If they deleted the thinking block entirely, remove it
+                msg.AdditionalProperties.Delete("thinking")
+            }
+
+            ; 3. Update the text contents safely keeping images/tools intact
+            for part in msg.Contents {
+                if (part is TextContent) {
+                    if (!hasTextParts) {
+                        newContents.Push(TextContent(mainContent))
+                        hasTextParts := true
+                    }
+                } else {
+                    newContents.Push(part)
+                }
+            }
+            
+            if (!hasTextParts) {
+                newContents.InsertAt(1, TextContent(mainContent))
+            }
+            
+            msg.Contents := newContents
+            return true
+        }
+        return false
+    }
+
     GetMessageText(message) => message.GetText()
 
     GetUserMessageTextWithoutContext(message) {

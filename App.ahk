@@ -41,6 +41,7 @@
 #Include Commands\InitializeAppCommand.ahk
 #Include Commands\ProcessClipboardCommand.ahk
 #Include Commands\SaveDiagramCommand.ahk
+#Include Commands\SaveEditedMessageCommand.ahk
 #Include Commands\ReplaceLinkWithContentCommand.ahk
 #Include Commands\RenderMarkdownCommand.ahk
 #Include Commands\RenderLastMessageCommand.ahk
@@ -128,6 +129,7 @@ class App {
         mdn := MarkdownNewTool()
         replaceLink := ReplaceLinkWithContentCommand(mdn, sess, ctx)
         renderMarkdown := RenderMarkdownCommand(wv)
+        saveEditedMsg := SaveEditedMessageCommand(sess)
         renderLastMsg := RenderLastMessageCommand(sess, mps, wv)
         deleteCtxItems := DeleteContextItemsCommand(sess)
         prepareContext := PrepareContextCommand(sess, cfg)
@@ -168,7 +170,7 @@ class App {
 
         ; 4. Initialize Sub-Controllers
         ctxView := ContextViewController(this.view.contextView, this.view, sess, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems, prepareContext, setContextItemChecked)
-        histView := HistoryViewController(this.view.historyView, this.view, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip, regenerateMessage, navigateHistoryPrevious, navigateHistoryNext, getHistoryInfo, setProcessingState)
+        histView := HistoryViewController(this.view.historyView, this.view, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip, regenerateMessage, navigateHistoryPrevious, navigateHistoryNext, getHistoryInfo, setProcessingState, wv, saveEditedMsg)
         notesContr := NotesController(copyToClip)
         
         settingsContr := SettingsController(cfg, sess, selectModel, changeAnswerSize, toggleTool, getToolsState, getCompressionState, changeSystemPrompt, reloadSettings)

@@ -16,8 +16,11 @@ class HistoryViewController {
     navigateHistoryNextCommand := ""
     getHistoryInfoCommand := ""
     setProcessingStateCommand := ""
+    webViewManager := ""
+    saveEditedMessageCommand := ""
+    currentSelectedItem := 0
 
-    __New(historyView, mainView, getHistoryListItemsCommand, getMessagePresentationCommand, deleteMessageCommand, clearHistoryCommand, renderMarkdownCommand, copyToClipboardCommand, regenerateMessageCommand, navigateHistoryPreviousCommand := "", navigateHistoryNextCommand := "", getHistoryInfoCommand := "", setProcessingStateCommand := "") {
+    __New(historyView, mainView, getHistoryListItemsCommand, getMessagePresentationCommand, deleteMessageCommand, clearHistoryCommand, renderMarkdownCommand, copyToClipboardCommand, regenerateMessageCommand, navigateHistoryPreviousCommand := "", navigateHistoryNextCommand := "", getHistoryInfoCommand := "", setProcessingStateCommand := "", webViewManager := "", saveEditedMessageCommand := "") {
         this.historyView := historyView
         this.mainView := mainView
         this.getHistoryListItemsCommand := getHistoryListItemsCommand
@@ -31,6 +34,12 @@ class HistoryViewController {
         this.navigateHistoryNextCommand := navigateHistoryNextCommand
         this.getHistoryInfoCommand := getHistoryInfoCommand
         this.setProcessingStateCommand := setProcessingStateCommand
+        this.webViewManager := webViewManager
+        this.saveEditedMessageCommand := saveEditedMessageCommand
+        
+        if (this.webViewManager) {
+            this.webViewManager.SetSaveEditCallback(ObjBindMethod(this, "OnMessageEdited"))
+        }
     }
 
     UpdateChatHistoryView(focusedRow := 0) {
@@ -65,6 +74,7 @@ class HistoryViewController {
             this.mainView.contextView.Modify(0, "-Select")
 
         if (Item > 0) {
+            this.currentSelectedItem := Item
             presentationText := this.getMessagePresentationCommand.Execute(Item)
 
             this.historyView.SetActionButtonVisible(true)  ; Show the Copy button
@@ -119,6 +129,25 @@ class HistoryViewController {
         if (this.navigateHistoryNextCommand && this.navigateHistoryNextCommand.Execute()) {
             this.UpdateChatHistoryView()
             this.renderMarkdownCommand.Execute("")  ; Clear the response area
+        }
+    }
+
+    OnMessageEdited(newText) {
+        if (this.currentSelectedItem > 0 && this.saveEditedMessageCommand) {
+            ; Save back to the session using the current selection index
+            this.saveEditedMessageCommand.Execute(this.currentSelectedItem, newText)
+            
+            ; Determine row to focus (maintain current selection)
+            rowToSelect := this.currentSelectedItem
+            
+            ; Update the list view and re-select the item
+            this.UpdateChatHistoryView(rowToSelect)
+            
+            ; Since we just updated the text, re-render it into the WebView to make sure its correct 
+            if (rowToSelect > 0) {
+                 presentationText := this.getMessagePresentationCommand.Execute(rowToSelect)
+                 this.renderMarkdownCommand.Execute(presentationText)
+            }
         }
     }
 }

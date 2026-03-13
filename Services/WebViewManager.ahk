@@ -5,8 +5,10 @@ class WebViewManager {
     wvc := ""
     clipboardHost := {}
     inputHost := {}
+    editHost := {}
     errorCallback := ""
     saveDiagramCallback := ""
+    saveEditCallback := ""
     isHtmlLoaded := false
 
     uiFilePath := A_ScriptDir . "\ui.html"
@@ -20,6 +22,9 @@ class WebViewManager {
         }
         this.inputHost := {
             Append: (text) => 0 ; Default placeholder
+        }
+        this.editHost := {
+            Save: (text) => this.OnSaveEdit(text)
         }
     }
 
@@ -35,12 +40,17 @@ class WebViewManager {
         this.saveDiagramCallback := callback
     }
 
+    SetSaveEditCallback(callback) {
+        this.saveEditCallback := callback
+    }
+
     Init(hwnd) {
         this.wvc := WebView2.CreateControllerAsync(hwnd).await2()
         this.wv := this.wvc.CoreWebView2
 
         this.wv.AddHostObjectToScript("clipboard", this.clipboardHost)
         this.wv.AddHostObjectToScript("input", this.inputHost)
+        this.wv.AddHostObjectToScript("edit", this.editHost)
 
         this.navStartingToken := this.wv.add_NavigationStarting((sender, args) => this.OnNavigationStarting(args))
         this.navCompletedToken := this.wv.add_NavigationCompleted((sender, args) => this.OnNavigationCompleted(sender, args))
@@ -128,6 +138,12 @@ class WebViewManager {
     OnSaveDiagram(svgData) {
         if (this.saveDiagramCallback) {
             this.saveDiagramCallback.Call(svgData)
+        }
+    }
+
+    OnSaveEdit(text) {
+        if (this.saveEditCallback) {
+            this.saveEditCallback.Call(text)
         }
     }
 }

@@ -16,6 +16,7 @@ LLMClip monitors your clipboard and aggregates copied text, files, and folders i
     - **Files & Folders**: Reads content of text-based files and lists folder contents.
     - **Images**: Supports clipboard images and image files for multimodal LLMs.
     - **URLs**: Extracts content and metadata from web links.
+        - User is able to double click on copied url to extract markdown using markdown new service.
 - **Selection Control**: Checkboxes allow you to select specific items from your history to send as context.
 
 ### 🤖 LLM Integration
@@ -35,8 +36,10 @@ LLMClip monitors your clipboard and aggregates copied text, files, and folders i
 - **History Management**:
     - **Compression**: "Compress" feature to summarize long conversations and save tokens.
     - **Extract Notes**: "Extract Learnings" to summarize key information from a session.
+    - **In-place Editing**: Double-click on the **markdown view** of any message (not the item in the history list) to edit its content directly.
     - **Branching**: Double-click any previous **user** message to create a new history branch (timeline). This populates the input box with the message text for editing and regeneration.
 - **Session Management**: Switch between multiple independent chat sessions.
+- **Batch Mode**: Enable bulk processing by selecting multiple items in the context list. When enabled, your prompt is executed independently for each checked item, allowing you to process many files or snippets at once.
 
 ## Installation
 
@@ -92,6 +95,7 @@ The key name (e.g., `groq`) should match the provider name defined in your confi
 - **Context List**: Uncheck items you don't want to send to the LLM.
 - **Images**: If an image is in the clipboard or selected context, it will be sent to multimodal models (like Gemini or GPT-4o).
 - **Tools**: Enable tools to allow the LLM to write and execute commands on your system (Use with caution!).
+- **Batch Mode**: Toggle via **Mode -> Batch Mode** in the menu to iterate over all checked context items with a single prompt.
 
 ## Architecture
 

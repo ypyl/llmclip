@@ -1,5 +1,5 @@
 #Include ..\..\Lib\Json.ahk
-#Include TempFileManager.ahk
+#Include ..\..\Utils\TempFileManager.ahk
 
 class MarkdownNewTool {
     currentPid := 0

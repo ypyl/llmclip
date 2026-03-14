@@ -5,7 +5,7 @@
 #Include "Providers\OllamaProvider.ahk"
 #Include "Providers\GoogleProvider.ahk"
 #Include "Providers\GroqAudioProvider.ahk"
-#Include "TempFileManager.ahk"
+#Include "..\..\Utils\TempFileManager.ahk"
 
 class LLMClient {
     ; Private properties

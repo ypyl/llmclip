@@ -1,10 +1,10 @@
 #Requires AutoHotkey 2.0
 #Include Services\Configuration\ConfigurationService.ahk
-#Include Services\Base64Service.ahk
+#Include Utils\Base64Service.ahk
 #Include Services\LLM\LLMService.ahk
 #Include Services\LLM\MarkdownNewTool.ahk
 #Include Services\SessionManager.ahk
-#Include Services\ClipboardParserService.ahk
+#Include Utils\ClipboardParserService.ahk
 #Include Services\WebViewManager.ahk
 #Include Services\ContextManager.ahk
 #Include Services\RecordingService.ahk
@@ -19,7 +19,7 @@
 #Include Controllers\NotesController.ahk
 #Include Controllers\SettingsController.ahk
 #Include Controllers\RecordingController.ahk
-#Include Services\FileService.ahk
+#Include Utils\FileService.ahk
 #Include Commands\SaveConversationCommand.ahk
 #Include Commands\LoadConversationCommand.ahk
 #Include Commands\ClearContextCommand.ahk
@@ -32,7 +32,7 @@
 #Include Commands\ExtractLearningsCommand.ahk
 #Include Commands\ResetAllCommand.ahk
 #Include ui\NotesView.ahk
-#Include Services\ClipboardService.ahk
+#Include Utils\ClipboardService.ahk
 #Include Commands\CopyToClipboardCommand.ahk
 #Include Commands\SelectModelCommand.ahk
 #Include Commands\GetToolsMenuStateCommand.ahk
@@ -63,7 +63,7 @@
 #Include Commands\ReloadSettingsCommand.ahk
 #Include Commands\ChangeAnswerSizeCommand.ahk
 #Include Commands\ToggleBatchModeCommand.ahk
-#Include Services\StateService.ahk
+#Include Utils\StateService.ahk
 #Include Commands\SaveStateOnExitCommand.ahk
 #Include Commands\SaveConversationOnExitCommand.ahk
 #Include Commands\LoadStateOnStartCommand.ahk

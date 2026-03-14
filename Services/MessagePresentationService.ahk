@@ -134,6 +134,33 @@ class MessagePresentationService {
         return hasImage ? text . " [Image]" : text
     }
 
+    /**
+     * Get the list-view item for a synthetic thinking row.
+     * @param message - ChatMessage instance that has thinking content
+     * @returns {Object} {roleEmoji, contentText, duration, tokens}
+     */
+    GetThinkingListViewItem(message) {
+        thinkingContent := message.AdditionalProperties["thinking"]
+        contentText := SubStr(thinkingContent, 1, 70) . (StrLen(thinkingContent) > 70 ? "..." : "")
+        return {
+            roleEmoji: "💭",
+            contentText: contentText,
+            duration: "",
+            tokens: ""
+        }
+    }
+
+    /**
+     * Get presentation text (Markdown) for a synthetic thinking row.
+     * @param message - ChatMessage instance that has thinking content
+     * @returns String Markdown for display in the WebView
+     */
+    GetThinkingPresentationText(message) {
+        thinkingContent := message.AdditionalProperties["thinking"]
+        fence := InStr(thinkingContent, "``````") ? "````````" : "``````"
+        return fence . "thinking`n" . thinkingContent . "`n" . fence
+    }
+
     FormatAudioMessage(audioLink) {
         audioBase64 := FileService.GetFileAsBase64(audioLink)
         return '<audio controls><source src="data:audio/wav;base64,' audioBase64 '" type="audio/wav"></audio>'

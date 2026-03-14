@@ -1,7 +1,7 @@
 #Include LLM\Types.ahk
 #Include ContextItem.ahk
 #Include History.ahk
-#Include ..\ProcessingState.ahk
+#Include ProcessingState.ahk
 
 class Session {
     histories := []

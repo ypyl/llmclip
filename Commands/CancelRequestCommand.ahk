@@ -1,4 +1,4 @@
-#Include ..\ProcessingState.ahk
+#Include ..\Services\ProcessingState.ahk
 
 class CancelRequestCommand {
     llmService := ""

@@ -87,8 +87,6 @@ class App {
         cp := ClipboardParserService()
         wv := WebViewManager()
         rec := RecordingService()
-        wv := WebViewManager()
-        rec := RecordingService()
         llm := LLMService(cfg)
         
         mps := MessagePresentationService()
@@ -151,7 +149,6 @@ class App {
         changeAnswerSize := ChangeAnswerSizeCommand(sess)
         toggleBatchMode := ToggleBatchModeCommand(sess)
 
-        ; State persistence commands
         ; State persistence commands
         saveStateOnExit := SaveStateOnExitCommand(sess)
         saveConvOnExit := SaveConversationOnExitCommand(sess)

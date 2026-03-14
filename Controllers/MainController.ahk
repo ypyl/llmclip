@@ -1,5 +1,5 @@
 #Requires AutoHotkey 2.0
-#Include ../ProcessingState.ahk
+#Include ..\Services\ProcessingState.ahk
 
 class MainController {
     view := ""

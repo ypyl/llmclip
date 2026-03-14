@@ -1,8 +1,8 @@
 class StateService {
-    GetStatePath() => A_ScriptDir "\state.json"
-    GetConversationPath() => A_ScriptDir "\conversation.json"
+    static GetStatePath() => A_ScriptDir "\state.json"
+    static GetConversationPath() => A_ScriptDir "\conversation.json"
 
-    SaveState(stateObj) {
+    static SaveState(stateObj) {
         jsonStr := JSON.Stringify(stateObj)
         path := this.GetStatePath()
         if (FileExist(path))
@@ -10,7 +10,7 @@ class StateService {
         FileAppend(jsonStr, path, "UTF-8")
     }
 
-    LoadState() {
+    static LoadState() {
         path := this.GetStatePath()
         if (!FileExist(path))
             return ""
@@ -22,7 +22,7 @@ class StateService {
         }
     }
 
-    SaveConversation(sessionObj) {
+    static SaveConversation(sessionObj) {
         jsonStr := JSON.Stringify(sessionObj)
         path := this.GetConversationPath()
         if (FileExist(path))
@@ -30,7 +30,7 @@ class StateService {
         FileAppend(jsonStr, path, "UTF-8")
     }
 
-    LoadConversation() {
+    static LoadConversation() {
         path := this.GetConversationPath()
         if (!FileExist(path))
             return ""

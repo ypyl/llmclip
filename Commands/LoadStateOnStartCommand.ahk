@@ -1,16 +1,14 @@
 class LoadStateOnStartCommand {
     sessionManager := ""
     configManager := ""
-    stateService := ""
 
-    __New(sessionManager, configManager, stateService) {
+    __New(sessionManager, configManager) {
         this.sessionManager := sessionManager
         this.configManager := configManager
-        this.stateService := stateService
     }
 
     Execute() {
-        state := this.stateService.LoadState()
+        state := StateService.LoadState()
         if (state == "")
             return false
 

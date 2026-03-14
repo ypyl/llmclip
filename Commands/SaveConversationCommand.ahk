@@ -2,11 +2,9 @@
 
 class SaveConversationCommand {
     sessionManager := ""
-    fileService := ""
 
-    __New(sessionManager, fileService) {
+    __New(sessionManager) {
         this.sessionManager := sessionManager
-        this.fileService := fileService
     }
 
     /**
@@ -22,6 +20,6 @@ class SaveConversationCommand {
         jsonStr := JSON.Stringify(conversationState)
 
         ; Use file service to write to disk
-        this.fileService.WriteText(filePath, jsonStr)
+        FileService.WriteText(filePath, jsonStr)
     }
 }

@@ -87,9 +87,9 @@ class App {
         cp := ClipboardParserService()
         wv := WebViewManager()
         rec := RecordingService()
+        wv := WebViewManager()
+        rec := RecordingService()
         llm := LLMService(cfg)
-        fs := FileService()
-        cls := ClipboardService()
         
         mps := MessagePresentationService()
         cps := ContextPresentationService(ctx)
@@ -102,13 +102,12 @@ class App {
             rec, 
             ctx, 
             cp,
-            fs,
             mps
         )
 
         ; 2. Initialize Commands
-        saveConv := SaveConversationCommand(sess, fs)
-        loadConv := LoadConversationCommand(sess, cfg, fs)
+        saveConv := SaveConversationCommand(sess)
+        loadConv := LoadConversationCommand(sess, cfg)
         clearCtx := ClearContextCommand(sess)
         stopRec := StopRecordingCommand(rec, sess, ctx)
         startRec := StartRecordingCommand(rec)
@@ -118,14 +117,14 @@ class App {
         resetAll := ResetAllCommand(sess)
         deleteMsg := DeleteMessageCommand(sess)
         clearHist := ClearHistoryCommand(sess, cfg)
-        copyToClip := CopyToClipboardCommand(cls)
+        copyToClip := CopyToClipboardCommand()
         selectModel := SelectModelCommand(sess)
         getToolsState := GetToolsMenuStateCommand(cfg, sess)
         getCompressionState := GetCompressionMenuStateCommand(cfg, sess)
         toggleTool := ToggleToolCommand(cfg, sess)
         initializeApp := InitializeAppCommand()
         processClip := ProcessClipboardCommand(rec, cp, sess)
-        saveDiagram := SaveDiagramCommand(fs)
+        saveDiagram := SaveDiagramCommand()
         mdn := MarkdownNewTool()
         replaceLink := ReplaceLinkWithContentCommand(mdn, sess, ctx)
         renderMarkdown := RenderMarkdownCommand(wv)
@@ -153,11 +152,11 @@ class App {
         toggleBatchMode := ToggleBatchModeCommand(sess)
 
         ; State persistence commands
-        stateSvc := StateService()
-        saveStateOnExit := SaveStateOnExitCommand(sess, stateSvc)
-        saveConvOnExit := SaveConversationOnExitCommand(sess, stateSvc)
-        loadStateOnStart := LoadStateOnStartCommand(sess, cfg, stateSvc)
-        loadConvOnStart := LoadConversationOnStartCommand(sess, cfg, stateSvc)
+        ; State persistence commands
+        saveStateOnExit := SaveStateOnExitCommand(sess)
+        saveConvOnExit := SaveConversationOnExitCommand(sess)
+        loadStateOnStart := LoadStateOnStartCommand(sess, cfg)
+        loadConvOnStart := LoadConversationOnStartCommand(sess, cfg)
         setProcessingState := SetProcessingStateCommand(sess)
 
         ; 3. Initialize View

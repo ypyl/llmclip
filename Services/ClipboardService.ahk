@@ -1,11 +1,11 @@
 #Requires AutoHotkey 2.0
 
 class ClipboardService {
-    SetText(text) {
+    static SetText(text) {
         A_Clipboard := text
     }
 
-    GetText() {
+    static GetText() {
         return A_Clipboard
     }
 }

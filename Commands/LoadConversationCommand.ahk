@@ -3,12 +3,10 @@
 class LoadConversationCommand {
     sessionManager := ""
     configManager := ""
-    fileService := ""
 
-    __New(sessionManager, configManager, fileService) {
+    __New(sessionManager, configManager) {
         this.sessionManager := sessionManager
         this.configManager := configManager
-        this.fileService := fileService
     }
 
     /**
@@ -20,7 +18,7 @@ class LoadConversationCommand {
             return
 
         ; Use file service to read from disk
-        fileContent := this.fileService.ReadText(filePath)
+        fileContent := FileService.ReadText(filePath)
         
         ; Parse JSON and import state
         state := JSON.Load(fileContent)

@@ -12,7 +12,6 @@ class MainController {
     recordingService := ""
     contextManager := ""
     clipboardParser := ""
-    fileService := ""
 
     ; Commands
     saveConversationCommand := ""
@@ -48,7 +47,7 @@ class MainController {
 
     messagePresentationService := ""
 
-    __New(configManager, sessionManager, llmService, webViewManager, recordingService, contextManager, clipboardParser, fileService, messagePresentationService) {
+    __New(configManager, sessionManager, llmService, webViewManager, recordingService, contextManager, clipboardParser, messagePresentationService) {
         this.configManager := configManager
         this.sessionManager := sessionManager
         this.llmService := llmService
@@ -56,7 +55,6 @@ class MainController {
         this.recordingService := recordingService
         this.contextManager := contextManager
         this.clipboardParser := clipboardParser
-        this.fileService := fileService
         this.messagePresentationService := messagePresentationService
     }
 
@@ -370,7 +368,7 @@ class MainController {
 
     OnSaveWebViewDiagram(svgData) {
         ; Use service to generate filename
-        defaultFilename := this.fileService.GetTimestampedFilename("mermaid", ".svg")
+        defaultFilename := FileService.GetTimestampedFilename("mermaid", ".svg")
 
         ; Use view to show dialog
         selectedFile := this.view.ShowSaveFileDialog(defaultFilename, "Save Mermaid Diagram", "SVG Files (*.svg)")

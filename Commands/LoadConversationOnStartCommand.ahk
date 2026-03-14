@@ -1,16 +1,14 @@
 class LoadConversationOnStartCommand {
     sessionManager := ""
     configManager := ""
-    stateService := ""
 
-    __New(sessionManager, configManager, stateService) {
+    __New(sessionManager, configManager) {
         this.sessionManager := sessionManager
         this.configManager := configManager
-        this.stateService := stateService
     }
 
     Execute() {
-        state := this.stateService.LoadConversation()
+        state := StateService.LoadConversation()
         if (state == "")
             return false
 

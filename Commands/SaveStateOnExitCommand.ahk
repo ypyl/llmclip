@@ -1,10 +1,8 @@
 class SaveStateOnExitCommand {
     sessionManager := ""
-    stateService := ""
 
-    __New(sessionManager, stateService) {
+    __New(sessionManager) {
         this.sessionManager := sessionManager
-        this.stateService := stateService
     }
 
     Execute() {
@@ -15,6 +13,6 @@ class SaveStateOnExitCommand {
             batchMode: this.sessionManager.batchModeEnabled,
             sessionIndex: this.sessionManager.currentSessionIndex
         }
-        this.stateService.SaveState(stateObj)
+        StateService.SaveState(stateObj)
     }
 }

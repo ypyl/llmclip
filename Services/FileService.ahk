@@ -25,7 +25,7 @@ class FileService {
      * @param content The string content to write
      * @param encoding The encoding to use (default UTF-8)
      */
-    WriteText(filePath, content, encoding := "UTF-8") {
+    static WriteText(filePath, content, encoding := "UTF-8") {
         if (FileExist(filePath)) {
             FileDelete(filePath)
         }
@@ -38,7 +38,7 @@ class FileService {
      * @param encoding The encoding to use (default UTF-8)
      * @returns The string content of the file
      */
-    ReadText(filePath, encoding := "UTF-8") {
+    static ReadText(filePath, encoding := "UTF-8") {
         if (!FileExist(filePath)) {
             throw Error("File not found: " . filePath)
         }
@@ -51,7 +51,7 @@ class FileService {
      * @param extension File extension (including the dot)
      * @returns A string like "prefix_YYYYMMDD_HHMMSS.extension"
      */
-    GetTimestampedFilename(prefix, extension) {
+    static GetTimestampedFilename(prefix, extension) {
         timestamp := FormatTime(, "yyyyMMdd_HHmmss")
         return prefix . "_" . timestamp . extension
     }

@@ -9,6 +9,7 @@ class CancelRequestCommand {
     
     Execute() {
         this.llmService.Cancel()
+        this.llmService.CancelTools()
         return { action: ProcessingState.IDLE }
     }
 }

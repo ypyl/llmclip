@@ -133,7 +133,7 @@ class SettingsController {
         currentModelIndex := this.sessionManager.GetCurrentSessionLLMType()
         if (currentModelIndex > this.configManager.llmTypes.Length) {
             currentModelIndex := 1
-            this.sessionManager.SetCurrentSessionLLMType(1)
+            this.selectModelCommand.Execute(1)
         }
         this.menuView.UpdateModelMenu(currentModelIndex, this.configManager.llmDisplayNames)
 
@@ -146,7 +146,7 @@ class SettingsController {
             this.promptView.SetSystemPromptValue(currentSystemPrompt)
         } catch {
             this.promptView.SetSystemPromptValue(1)
-            this.sessionManager.SetCurrentSessionSystemPrompt(1)
+            this.changeSystemPromptCommand.Execute(1)
         }
 
         this.UpdateToolsMenuState()

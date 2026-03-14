@@ -1,364 +1,88 @@
-# AHK UI Application — Architectural Instructions
+# llmclip Architecture Guidelines
 
-## 1. Core rule
+## 1. Core Principles
 
-**UI, logic, intent, and state domains must never mix.**
-
-* UI state ≠ Application / domain state
-* Controllers own **UI state only**
-* Services own **all non-UI state**
-
-If a file touches GUI controls, it contains **no business logic**.
-If a file contains logic or non-UI state, it **never references GUI**.
+**Domain Integrity**: UI, logic, intent, and state must never mix.
+* **Controllers**: Own UI state. No business logic.
+* **Services**: Own all non-UI state. Single source of truth. No GUI references.
+* **Commands**: Gated mutation of state. UI-agnostic.
 
 ---
 
-## 2. File roles (non-negotiable)
+## 2. File Roles & Responsibilities
 
-### `main.ahk`
+### [main.ahk](file:///c:/Users/ypyl/projects/llmclip/main.ahk)
+* **Role**: Entry point/Bootstrap.
+* **Responsibilities**: Create `App` instance and call `App.Start()`.
+* ⛔ **Forbidden**: GUI code, services, commands, or logic.
 
-* Composition root only
-* Creates `App`
-* Starts application
-* Owns lifetime
-* **No GUI, no logic, no commands**
+### [App.ahk](file:///c:/Users/ypyl/projects/llmclip/App.ahk)
+* **Role**: Composition Root.
+* **Responsibilities**: **The ONLY place** where instances of Services, Commands, Controllers, and Views are created.
+* **Dependency Management**: Manual Constructor Injection only.
+* ⛔ **Forbidden**: Business logic or internal state.
 
----
+### Views (`ui/*.ahk`)
+* **Role**: Declaration of UI structure.
+* **Responsibilities**: Create controls, store references, forward events to controller.
+* ⛔ **Forbidden**: State ownership, decisions, commands, or services.
 
-### `App`
+### Controllers (`controllers/*.ahk`)
+* **Role**: UI Coordination.
+* **Responsibilities**: Coordinate UI flow, read/write control state, invoke commands.
+* **Access**: Can read from services (read-only).
+* ⛔ **Forbidden**: Mutating external state, OS/File calls, or controller-to-controller dependencies.
 
-* Wires controllers
-* Owns windows
-* Manages startup / shutdown
-* No business logic
-* No state (delegates state ownership)
+### Commands (`commands/*.ahk`)
+* **Role**: Single Use-Case / Intent.
+* **Responsibilities**: **The ONLY place** allowed to mutate external state (services).
+* ⛔ **Forbidden**: GUI access or calling other commands.
 
----
+### Services (`services/*.ahk`)
+* **Role**: Domain Logic & State Ownership.
+* **Responsibilities**: Pure logic, OS/WinAPI/persistence access.
+* ⛔ **Forbidden**: UI, controllers, or command references.
 
-### View (`ui/*.ahk`)
-
-* Creates GUI controls
-* Stores control references
-* Forwards events to controller
-* Zero decisions
-* Zero commands
-* Zero services
-* **Zero state (read/write only via controller)**
-
----
-
-### Controller (`controllers/*.ahk`)
-
-* One **root controller** per window
-* Optional **sub-controllers** per responsibility
-* Owns **UI state only**
-
-  * selection
-  * focus
-  * visibility
-  * enabled/disabled
-  * transient input values
-* Reads control state
-* Writes control state
-* Coordinates UI flow
-* Invokes commands
-* **May read external state directly from services**
-* **Must NOT mutate external state directly**
-* **Must NOT depend on other controllers**
-* **No business rules**
-
-> If multiple controllers exist for one window, **they are isolated**.
-> Coordination happens **only via the root controller or services**, never via controller-to-controller calls.
-
-Controllers are **orchestrators**, not models and not collaborators.
+### Utility Services (`utils/*.ahk` or static methods)
+* **Role**: Pure Helpers / Stateless Logic.
+* **Responsibilities**: Formatting, parsing, mathematical operations, or shared pure logic.
+* **Implementation**: Uses static methods only. Does **not** require instantiation in `App.ahk`.
+* ⛔ **Forbidden**: Storing state, GUI access.
 
 ---
 
-### Command (`commands/*.ahk`)
+## 3. Dependency & State Rules
 
-* Represents one use-case
-* Executes synchronously
-* UI-agnostic
-* Small and intention-revealing
-* **The only place allowed to mutate external state**
-* No GUI access
+### State Ownership
+| State Type | Owner | Persistence |
+| :--- | :--- | :--- |
+| **UI State** | Controller | Transient / Disposable |
+| **Domain State** | Service | Durable / Shared |
 
----
+### Allowed Communication
+1. **Controller → View**: Full access to controls.
+2. **Controller → Command**: Invoke `Execute()`.
+3. **Controller → Service**: **Read-only** access.
+4. **Command → Service**: Read/Write access.
+5. **Any → Utility**: Full access to static methods.
 
-### Service / Domain (`services/*.ahk`)
-
-* Owns **all non-UI state**
-
-  * configuration
-  * persisted data
-  * runtime application state
-* Pure logic
-* File system / OS / WinAPI access
-* Exposes **read APIs** for controllers
-* Exposes **mutation APIs** for commands
-* No GUI
-* No controllers
-
-Services are the **single source of truth**.
+### Forbidden (Instant Fail)
+* ⛔ Controller mutates Service directly (use a Command).
+* ⛔ Service or Command touches GUI.
+* ⛔ Circular dependencies or Controller → Controller calls.
+* ⛔ Instantiation outside of `App.ahk` (Utility static methods are exempt).
 
 ---
 
-## 3. State ownership rules
-
-### UI State
-
-* Owned by **Controller**
-* Derived from user input and view events
-* Transient and disposable
-* Never persisted
-* Never shared across controllers
-
----
-
-### External State
-
-* Owned by **Services**
-* Durable / shared
-* Never duplicated in controllers
-
----
-
-## 4. State access rules
-
-Allowed:
-
-* Controller → Service (**read only**)
-* Command → Service (**read/write**)
-
-Forbidden:
-
-* Controller → Service mutation
-* Controller → Controller
-* View → Service
-* Service → UI
-
----
-
-## 5. Event flow (fixed)
-
-```
-GUI Event
- → Controller
-   → (optional) Service.Read()
-   → Command.Execute()
-     → Service.Mutate()
-   → Controller updates UI state
-```
-
----
-
-## 6. Dependency rules
-
-Allowed:
-
-* Controller → View
-* Controller → Command
-* Controller → Service (read-only)
-* Command → Service
-
-Forbidden:
-
-* Controller → Controller
-* View → Command / Service
-* Service → Controller / View
-* Command → GUI
-
----
-
-## 7. UI scaling rules
-
-* One window = one root controller
-* Sub-controllers split by responsibility
-* Sub-controllers never reference each other
-* Root controller coordinates when needed
-* UI is not a state store
-* Controller state is transient
-
-If state must survive → it belongs in a service.
-
----
-
-## 8. Dependency management
-
-Preferred order:
-
-1. Direct construction
-2. Manual constructor injection
-3. Explicit static service registry
-
-Forbidden by default:
-
-* DI containers
-* string-based service lookup
-* hidden globals
-
----
-
-## 9. Error handling
-
-* Global try/catch in `clip.ahk`
-* Domain errors handled in commands
-* Services throw domain-specific errors
-* UI displays errors only
-
----
-
-## 10. What is explicitly forbidden
-
-* Logic in views
-* GUI code in commands
-* Business rules in controllers
-* Controllers mutating services
-* Controllers depending on controllers
-* Services storing UI state
-* God scripts
-* String-based Service Locator
-* MVC dogma
-
----
-
-## 11. Directory layout (fixed)
-
-```
+## 4. Directory Layout
+```text
 /main.ahk
-/ui
-/controllers
-/commands
-/services
+/ui           (Passive structure)
+/controllers  (UI coordination)
+/commands     (Intent & Gatekeepers)
+/services     (Logic & Truth)
 ```
 
-No circular references.
-
 ---
 
-## 12. Sanity checks
-
-If you cannot answer:
-
-> “Which command mutates this state?”
-
-or
-
-> “Why does this controller know about another controller?”
-
-The architecture is already broken.
-
----
-
-**This is not MVC.**
-It is **Controller-isolated, Command-gated, Service-owned state architecture**, designed to prevent AHK scripts from collapsing into entropy.
-
-
----
-
-
-# AHK UI Architecture — Core Lint Rules (Minimal)
-
-## Global (instant fail)
-
-* ⛔ GUI code mixed with logic anywhere
-* ⛔ Command references GUI
-* ⛔ Service references GUI or controller
-* ⛔ Logic in `main.ahk`
-
----
-
-## `main.ahk`
-
-* ✔ Bootstrap only (App creation + Run)
-* ⛔ `Gui`, commands, services, domain logic
-* ⛔ conditionals beyond startup
-
----
-
-## View (`ui/*.ahk`)
-
-* ✔ Create controls, store references, forward events
-* ⛔ commands, services, logic, decisions
-* ⛔ state ownership
-
----
-
-## Controller (`controllers/*.ahk`)
-
-* ✔ Owns **UI state only**
-* ✔ Reads services (read-only)
-* ✔ Triggers commands for all mutations
-* ✔ One window responsibility
-* ⛔ business rules
-* ⛔ persistence / OS calls
-* ⛔ GUI creation
-* ⛔ controller → controller dependency
-
----
-
-## Command (`commands/*.ahk`)
-
-* ✔ One use-case, `Execute()`
-* ✔ Only place allowed to mutate services
-* ⛔ GUI access
-* ⛔ calling other commands
-
----
-
-## Service (`services/*.ahk`)
-
-* ✔ Owns all non-UI state
-* ✔ Logic / OS / persistence
-* ⛔ UI, controllers, commands, events
-
----
-
-## State rules
-
-* UI state → **Controller**
-* App/domain/config state → **Service**
-* ⛔ Controller mutates service directly
-* ⛔ UI as state store
-
----
-
-## Dependency direction (only these allowed)
-
-```
-Controller → View
-Controller → Command
-Controller → Service (read-only)
-Command → Service (read/write)
-```
-
-Anything else → ⛔
-
----
-
-## Forbidden patterns (instant fail)
-
-* God controller / god script
-* String-based service lookup
-* Hidden globals
-* MVC assumptions
-* Commands coordinating flow
-
----
-
-## Final audit (binary)
-
-> Can you name **one command** that explains this feature?
-
-No → **architecture failed**
-
----
-
-**Summary**
-
-* Views = structure
-* Controllers = coordination + UI state
-* Commands = intent + mutation gate
-* Services = truth
-
-Everything else is noise.
+**Summary**: Views = Structure | Controllers = Coordination | Commands = Intent | Services = Truth.

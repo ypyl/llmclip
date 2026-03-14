@@ -187,7 +187,7 @@ class MainController {
     AskToLLM(*) {
         ; Check if user clicked to cancel tool execution
         if (this.sessionManager.GetCurrentProcessingState() == ProcessingState.TOOL_RUNNING) {
-            this.llmService.CancelTools()
+            this.cancelRequestCommand.Execute()
             this.SetProcessingState(ProcessingState.IDLE)
             return
         }

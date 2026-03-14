@@ -199,6 +199,9 @@
       mermaid.initialize({ startOnLoad: false, suppressErrorRendering: true });
 
       async function renderMarkdown(content) {
+        // If we're in edit mode, cancel it before rendering new content
+        cancelEdit();
+
         window.currentMarkdown = content; // Store raw markdown for editing
         const quoteBtn = document.getElementById("quoteBtn");
         if (quoteBtn) {

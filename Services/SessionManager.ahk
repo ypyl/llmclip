@@ -273,7 +273,7 @@ class SessionManager {
             thinkingContent := ""
             mainContent := newContent
             
-            if (RegExMatch(newContent, "^(``{6,})thinking\n([\s\S]*?)\n\1\n{1,2}([\s\S]*)$", &match)) {
+            if (RegExMatch(newContent, "^(``{3,})thinking\n([\s\S]*?)\n\1\n{1,2}([\s\S]*)$", &match)) {
                 thinkingContent := match[2]
                 mainContent := match[3]
             }

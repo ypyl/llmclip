@@ -3,7 +3,7 @@
 
 class ClipboardParserService {
     ; Parse clipboard content and return an array of items (text or paths)
-    Parse() {
+    static Parse() {
         ; First try plain text from A_Clipboard
         txtFromClipboard := Trim(A_Clipboard, '"')
         localTxtFromClipboardArray := [txtFromClipboard]
@@ -84,7 +84,7 @@ class ClipboardParserService {
     }
 
     ; Convert a URI to a Windows path
-    UriToPath(uri) {
+    static UriToPath(uri) {
         ; Remove "file:///" prefix
         path := SubStr(uri, 8)
 

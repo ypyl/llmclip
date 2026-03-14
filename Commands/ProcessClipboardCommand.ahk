@@ -1,12 +1,10 @@
 
 class ProcessClipboardCommand {
     recordingService := ""
-    clipboardParser := ""
     sessionManager := ""
 
-    __New(recordingService, clipboardParser, sessionManager) {
+    __New(recordingService, sessionManager) {
         this.recordingService := recordingService
-        this.clipboardParser := clipboardParser
         this.sessionManager := sessionManager
     }
 
@@ -15,7 +13,7 @@ class ProcessClipboardCommand {
             return false
         }
 
-        localTxtFromClipboardArray := this.clipboardParser.Parse()
+        localTxtFromClipboardArray := ClipboardParserService.Parse()
         return this.sessionManager.AddContextItems(localTxtFromClipboardArray)
     }
 }

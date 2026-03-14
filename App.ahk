@@ -84,7 +84,6 @@ class App {
             cfg.GetSystemPromptValue(cfg.selectedLLMTypeIndex, 1),
             ctx
         )
-        cp := ClipboardParserService()
         wv := WebViewManager()
         rec := RecordingService()
         llm := LLMService(cfg)
@@ -99,7 +98,6 @@ class App {
             wv, 
             rec, 
             ctx, 
-            cp,
             mps
         )
 
@@ -121,7 +119,7 @@ class App {
         getCompressionState := GetCompressionMenuStateCommand(cfg, sess)
         toggleTool := ToggleToolCommand(cfg, sess)
         initializeApp := InitializeAppCommand()
-        processClip := ProcessClipboardCommand(rec, cp, sess)
+        processClip := ProcessClipboardCommand(rec, sess)
         saveDiagram := SaveDiagramCommand()
         mdn := MarkdownNewTool()
         replaceLink := ReplaceLinkWithContentCommand(mdn, sess, ctx)

@@ -11,7 +11,7 @@ class MainController {
     webViewManager := ""
     recordingService := ""
     contextManager := ""
-    clipboardParser := ""
+
 
     ; Commands
     saveConversationCommand := ""
@@ -47,14 +47,13 @@ class MainController {
 
     messagePresentationService := ""
 
-    __New(configManager, sessionManager, llmService, webViewManager, recordingService, contextManager, clipboardParser, messagePresentationService) {
+    __New(configManager, sessionManager, llmService, webViewManager, recordingService, contextManager, messagePresentationService) {
         this.configManager := configManager
         this.sessionManager := sessionManager
         this.llmService := llmService
         this.webViewManager := webViewManager
         this.recordingService := recordingService
         this.contextManager := contextManager
-        this.clipboardParser := clipboardParser
         this.messagePresentationService := messagePresentationService
     }
 

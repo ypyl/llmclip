@@ -1,7 +1,7 @@
 Class Base64Service {
 	/**
-	 * Base64编码
-	 * @param Buf Buffer Object has Ptr, Size Property. May contain any binary contents including NUll bytes.
+	 * Base64 Encoding
+	 * @param Buf Buffer Object has Ptr, Size Property. May contain any binary contents including NULL bytes.
 	 * @param Codec CRYPT_STRING_BASE64 0x00000001
 	 * CRYPT_STRING_NOCRLF 0x40000000
 	 * @returns Base64 String if success, otherwise blank.
@@ -16,12 +16,12 @@ Class Base64Service {
 	}
 
 	/**
-	 * Base64解码
-	 * https://docs.microsoft.com/zh-cn/windows/win32/api/wincrypt/nf-wincrypt-cryptstringtobinarya
+	 * Base64 Decoding
+	 * https://docs.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-cryptstringtobinarya
 	 * @param VarIn Variable containing a null-terminated Base64 encoded string
 	 * @param Codec CRYPT_STRING_BASE64 0x00000001
 	 * @returns buffer if success, otherwise blank.
-	 * VarOut may contain any binary contents including NUll bytes.
+	 * VarOut may contain any binary contents including NULL bytes.
 	 */
 	static Decode(VarIn, Codec := 0x00000001) {
 		if (DllCall("crypt32\CryptStringToBinary", "Str", VarIn, "UInt", 0, "UInt", Codec, "Ptr", 0, "Uint*", &SizeOut := 0, "Ptr", 0, "Ptr", 0) &&

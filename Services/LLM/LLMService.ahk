@@ -12,9 +12,11 @@ class LLMService {
     llmClientInstance := ""
     isCancelledForTools := false
     currentTool := ""  ; Track currently executing tool instance for cancellation
+    tools := Map()
 
-    __New(configManager) {
+    __New(configManager, toolsMap) {
         this.configManager := configManager
+        this.tools := toolsMap
     }
 
     ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false) {
@@ -59,26 +61,15 @@ class LLMService {
                 startTime := A_TickCount
                 result := ""
 
-                if (tool_call.Name ==  PowerShellTool.TOOL_NAME) {
-                     tool := PowerShellTool()
-                     this.currentTool := tool
-                     result := tool.ExecuteToolCall(tool_call)
-                } else if (tool_call.Name == FileSystemTool.TOOL_NAME) {
-                     tool := FileSystemTool()
-                     this.currentTool := tool
-                     result := tool.ExecuteToolCall(tool_call)
-                } else if (tool_call.Name == WebSearchTool.TOOL_NAME) {
-                     tool := WebSearchTool()
-                     this.currentTool := tool
-                     result := tool.ExecuteToolCall(tool_call, this.configManager.ollamaApiKey)
-                } else if (tool_call.Name == WebFetchTool.TOOL_NAME) {
-                     tool := WebFetchTool()
-                     this.currentTool := tool
-                     result := tool.ExecuteToolCall(tool_call, this.configManager.ollamaApiKey)
-                } else if (tool_call.Name == MarkdownNewTool.TOOL_NAME) {
-                     tool := MarkdownNewTool()
-                     this.currentTool := tool
-                     result := tool.ExecuteToolCall(tool_call)
+                if (this.tools.Has(tool_call.Name)) {
+                    tool := this.tools[tool_call.Name]
+                    this.currentTool := tool
+                    
+                    if (tool_call.Name == WebSearchTool.TOOL_NAME || tool_call.Name == WebFetchTool.TOOL_NAME) {
+                        result := tool.ExecuteToolCall(tool_call, this.configManager.ollamaApiKey)
+                    } else {
+                        result := tool.ExecuteToolCall(tool_call)
+                    }
                 }
 
                 this.currentTool := ""  ; Clear current tool reference

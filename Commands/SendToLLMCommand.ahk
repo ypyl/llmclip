@@ -5,14 +5,12 @@ class SendToLLMCommand {
     configManager := ""
     llmService := ""
     contextManager := ""
-    executeToolCallsCommand := ""
 
-    __New(sessionManager, configManager, llmService, contextManager, executeToolCallsCommand) {
+    __New(sessionManager, configManager, llmService, contextManager) {
         this.sessionManager := sessionManager
         this.configManager := configManager
         this.llmService := llmService
         this.contextManager := contextManager
-        this.executeToolCallsCommand := executeToolCallsCommand
     }
 
     Execute(promptText, images := [], selectedContextIndices := [], isRegeneration := false, targetSessionIndex := 0) {
@@ -69,17 +67,6 @@ class SendToLLMCommand {
             }
 
             hasUnexecuted := this.sessionManager.HasUnexecutedToolCallsForSession(targetSessionIndex)
-
-            ; Check if auto-approval is enabled for these tool calls
-            if (hasUnexecuted) {
-                lastMsg := messages[messages.Length]
-                if (this.executeToolCallsCommand.ShouldAutoApprove(lastMsg, targetSessionIndex)) {
-                    ; Auto-execute and continue
-                    if (this.executeToolCallsCommand.Execute(targetSessionIndex)) {
-                        return this.Execute("", [], [], true, targetSessionIndex)
-                    }
-                }
-            }
 
             return {
                 action: hasUnexecuted ? ProcessingState.TOOL_PENDING : ProcessingState.IDLE,

@@ -8,6 +8,10 @@
 #Include Services\WebViewManager.ahk
 #Include Services\ContextManager.ahk
 #Include Services\RecordingService.ahk
+#Include Services\LLM\PowerShellTool.ahk
+#Include Services\LLM\FileSystemTool.ahk
+#Include Services\LLM\WebSearchTool.ahk
+#Include Services\LLM\WebFetchTool.ahk
 #Include Services\MessagePresentationService.ahk
 #Include Services\ContextPresentationService.ahk
 #Include ui\TrayView.ahk
@@ -86,7 +90,23 @@ class App {
         )
         wv := WebViewManager()
         rec := RecordingService()
-        llm := LLMService(cfg)
+
+        ; Initialize Tools
+        pst := PowerShellTool()
+        fst := FileSystemTool()
+        wst := WebSearchTool()
+        wft := WebFetchTool()
+        mnt := MarkdownNewTool()
+
+        toolsMap := Map(
+            PowerShellTool.TOOL_NAME, pst,
+            FileSystemTool.TOOL_NAME, fst,
+            WebSearchTool.TOOL_NAME, wst,
+            WebFetchTool.TOOL_NAME, wft,
+            MarkdownNewTool.TOOL_NAME, mnt
+        )
+
+        llm := LLMService(cfg, toolsMap)
         
         mps := MessagePresentationService()
         cps := ContextPresentationService(ctx)
@@ -121,7 +141,7 @@ class App {
         initializeApp := InitializeAppCommand()
         processClip := ProcessClipboardCommand(rec, sess)
         saveDiagram := SaveDiagramCommand()
-        mdn := MarkdownNewTool()
+        mdn := mnt
         replaceLink := ReplaceLinkWithContentCommand(mdn, sess, ctx)
         renderMarkdown := RenderMarkdownCommand(wv)
         saveEditedMsg := SaveEditedMessageCommand(sess, cfg)
@@ -139,7 +159,7 @@ class App {
         navigateHistoryPrevious := NavigateHistoryCommand(sess, "previous")
         navigateHistoryNext := NavigateHistoryCommand(sess, "next")
         getHistoryInfo := GetHistoryInfoCommand(sess)
-        sendToLLM := SendToLLMCommand(sess, cfg, llm, ctx, executeToolCalls)
+        sendToLLM := SendToLLMCommand(sess, cfg, llm, ctx)
         sendBatchToLLM := SendBatchToLLMCommand(sess, cfg, llm, ctx)
         changeSystemPrompt := ChangeSystemPromptCommand(sess, cfg)
         switchSession := SwitchSessionCommand(sess)

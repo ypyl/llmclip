@@ -228,7 +228,7 @@ class MainController {
             } else if (currentState == ProcessingState.TOOL_PENDING || currentState == ProcessingState.TOOL_RUNNING) {
                 ; Handle Tool Confirmation
                 if (this.executeToolCallsCommand.Execute()) {
-                    result := this.sendToLLMCommand.Execute(promptText, images, selectedIndices, true)
+                    result := this.sendToLLMCommand.Execute("", [], [], true)
                 } else {
                     result := { action: ProcessingState.IDLE }
                 }
@@ -246,14 +246,29 @@ class MainController {
                 result := this.sendToLLMCommand.Execute(promptText, images, selectedIndices)
             }
 
-            ; 4. Handle Result and update UI State
+            ; 4. Handle auto-approval loop if needed
+            while (result.action == ProcessingState.TOOL_PENDING && result.hasUnexecutedToolCalls) {
+                messages := this.sessionManager.GetSessionMessages(this.sessionManager.currentSessionIndex)
+                lastMsg := messages[messages.Length]
+                
+                if (this.executeToolCallsCommand.ShouldAutoApprove(lastMsg)) {
+                    this.SetProcessingState(ProcessingState.TOOL_RUNNING)
+                    if (this.executeToolCallsCommand.Execute()) {
+                        result := this.sendToLLMCommand.Execute("", [], [], true)
+                        continue
+                    }
+                }
+                break
+            }
+
+            ; 5. Handle Result and update UI State
             if (result.action == ProcessingState.IDLE) {
                 this.SetProcessingState(ProcessingState.IDLE)
             } else if (result.action == ProcessingState.TOOL_PENDING) {
                 this.SetProcessingState(ProcessingState.TOOL_PENDING)
             }
 
-            ; 5. UI Cleanup
+            ; 6. UI Cleanup
             if (result.action != "none") {
                 this.view.ClearPrompt()
 

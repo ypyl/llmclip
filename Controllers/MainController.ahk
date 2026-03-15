@@ -45,16 +45,14 @@ class MainController {
     settingsController := ""
     recordingController := ""
 
-    messagePresentationService := ""
 
-    __New(configManager, sessionManager, llmService, webViewManager, recordingService, contextManager, messagePresentationService) {
+    __New(configManager, sessionManager, llmService, webViewManager, recordingService, contextManager) {
         this.configManager := configManager
         this.sessionManager := sessionManager
         this.llmService := llmService
         this.webViewManager := webViewManager
         this.recordingService := recordingService
         this.contextManager := contextManager
-        this.messagePresentationService := messagePresentationService
     }
 
     SetCommands(saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClipboard, switchSession, toggleBatchMode, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState) {
@@ -109,7 +107,7 @@ class MainController {
             if (compressedMsg != "") {
                  ; Update UI
                  this.historyViewController.UpdateChatHistoryView()
-                 this.RenderMarkdown(this.messagePresentationService.GetPresentationText(compressedMsg))
+                 this.RenderMarkdown(MessagePresentationService.GetPresentationText(compressedMsg))
             }
 
         } catch as e {
@@ -126,7 +124,7 @@ class MainController {
             extractedNotes := this.extractLearningsCommand.Execute()
 
             if (extractedNotes != "") {
-                presentationText := this.messagePresentationService.GetPresentationText(extractedNotes)
+                presentationText := MessagePresentationService.GetPresentationText(extractedNotes)
                 this.notesController.ShowNotes(presentationText)
             }
 

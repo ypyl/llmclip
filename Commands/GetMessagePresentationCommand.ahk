@@ -2,11 +2,9 @@
 
 class GetMessagePresentationCommand {
     sessionManager := ""
-    messagePresentationService := ""
 
-    __New(sessionManager, messagePresentationService) {
+    __New(sessionManager) {
         this.sessionManager := sessionManager
-        this.messagePresentationService := messagePresentationService
     }
 
     /**
@@ -25,10 +23,10 @@ class GetMessagePresentationCommand {
         msg := messages[messageIndex]
 
         if (isThinking) {
-            return this.messagePresentationService.GetThinkingPresentationText(msg)
+            return MessagePresentationService.GetThinkingPresentationText(msg)
         } else {
             ; Show the real message — without the thinking block
-            return this.messagePresentationService.GetPresentationText(msg, false)
+            return MessagePresentationService.GetPresentationText(msg, false)
         }
     }
 }

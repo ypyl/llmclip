@@ -1,4 +1,4 @@
-#Include LLM\Types.ahk
+#Include ..\Services\LLM\Types.ahk
 
 class MessagePresentationService {
     /**
@@ -6,14 +6,14 @@ class MessagePresentationService {
      * @param message - ChatMessage instance
      * @returns {Object} {roleEmoji, contentText, duration, tokens}
      */
-    GetListViewItem(message) {
-        roleEmoji := this.GetRoleEmoji(message.Role)
+    static GetListViewItem(message) {
+        roleEmoji := MessagePresentationService.GetRoleEmoji(message.Role)
         
         duration := message.AdditionalProperties.Has("duration") ? message.AdditionalProperties["duration"] : ""
         tokens := message.AdditionalProperties.Has("tokens") ? message.AdditionalProperties["tokens"] : ""
         
         ; Get presentation text from service, excluding thinking content for the list view
-        presentationText := this.GetPresentationText(message, false)
+        presentationText := MessagePresentationService.GetPresentationText(message, false)
         
         ; Get content with truncation for ListView
         contentText := SubStr(presentationText, 1, 70) (StrLen(presentationText) > 70 ? "..." : "")
@@ -37,7 +37,7 @@ class MessagePresentationService {
     /**
      * Get the emoji representation for a message role.
      */
-    GetRoleEmoji(role) {
+    static GetRoleEmoji(role) {
         return role == "system" ? "⚙️" :
                role == "user" ? "👤" :
                role == "assistant" ? "🤖" :
@@ -49,7 +49,7 @@ class MessagePresentationService {
      * @param message - ChatMessage instance
      * @returns String Markdown/HTML for display
      */
-    GetPresentationText(message, includeThinking := true) {
+    static GetPresentationText(message, includeThinking := true) {
         if (message.Role == "user" && message.AdditionalProperties.Has("hasContext") && message.AdditionalProperties["hasContext"]) {
             ; For user message with context, show only the user prompt parts
             userContent := ""
@@ -77,7 +77,7 @@ class MessagePresentationService {
             return hasImage ? userContent . " [Image]" : userContent
         }
 
-        return this.GetMessageAsString(message, includeThinking)
+        return MessagePresentationService.GetMessageAsString(message, includeThinking)
     }
 
     /**
@@ -85,18 +85,18 @@ class MessagePresentationService {
      * @param message - ChatMessage instance
      * @param includeThinking - Whether to include thinking/reasoning blocks
      */
-    GetMessageAsString(message, includeThinking := true) {
+    static GetMessageAsString(message, includeThinking := true) {
         ; Check for audio content
         audioData := message.GetAudio()
         if (audioData != "") {
-            return this.FormatAudioMessage(audioData)
+            return MessagePresentationService.FormatAudioMessage(audioData)
         }
         
         ; Check for tool calls and results
         toolCallTexts := []
         for part in message.Contents {
             if (part is FunctionCallContent) {
-                toolCallTexts.Push(this.FormatToolCallMessage(part))
+                toolCallTexts.Push(MessagePresentationService.FormatToolCallMessage(part))
             }
             if (part is FunctionResultContent) {
                 return part.Result
@@ -139,7 +139,7 @@ class MessagePresentationService {
      * @param message - ChatMessage instance that has thinking content
      * @returns {Object} {roleEmoji, contentText, duration, tokens}
      */
-    GetThinkingListViewItem(message) {
+    static GetThinkingListViewItem(message) {
         thinkingContent := message.AdditionalProperties["thinking"]
         contentText := SubStr(thinkingContent, 1, 70) . (StrLen(thinkingContent) > 70 ? "..." : "")
         return {
@@ -155,18 +155,18 @@ class MessagePresentationService {
      * @param message - ChatMessage instance that has thinking content
      * @returns String Markdown for display in the WebView
      */
-    GetThinkingPresentationText(message) {
+    static GetThinkingPresentationText(message) {
         thinkingContent := message.AdditionalProperties["thinking"]
         fence := InStr(thinkingContent, "``````") ? "````````" : "``````"
         return fence . "thinking`n" . thinkingContent . "`n" . fence
     }
 
-    FormatAudioMessage(audioLink) {
+    static FormatAudioMessage(audioLink) {
         audioBase64 := FileService.GetFileAsBase64(audioLink)
         return '<audio controls><source src="data:audio/wav;base64,' audioBase64 '" type="audio/wav"></audio>'
     }
 
-    FormatToolCallMessage(toolCall) {
+    static FormatToolCallMessage(toolCall) {
         try {
             result := "**" toolCall.Name "**"
             if (toolCall.Arguments.Count > 0) {

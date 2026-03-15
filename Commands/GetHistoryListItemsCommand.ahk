@@ -2,11 +2,9 @@
 
 class GetHistoryListItemsCommand {
     sessionManager := ""
-    messagePresentationService := ""
 
-    __New(sessionManager, messagePresentationService) {
+    __New(sessionManager) {
         this.sessionManager := sessionManager
-        this.messagePresentationService := messagePresentationService
     }
 
     /**
@@ -25,14 +23,14 @@ class GetHistoryListItemsCommand {
 
             if (hasThinking) {
                 ; Insert synthetic thinking row first
-                thinkingItem := this.messagePresentationService.GetThinkingListViewItem(msg)
+                thinkingItem := MessagePresentationService.GetThinkingListViewItem(msg)
                 thinkingItem.messageIndex := i
                 thinkingItem.isThinking := true
                 items.Push(thinkingItem)
             }
 
             ; Insert the actual message row
-            item := this.messagePresentationService.GetListViewItem(msg)
+            item := MessagePresentationService.GetListViewItem(msg)
             item.messageIndex := i
             item.isThinking := false
             items.Push(item)

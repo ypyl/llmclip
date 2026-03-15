@@ -17,7 +17,7 @@
 #Include Services\LLM\Providers\OllamaProvider.ahk
 #Include Services\LLM\Providers\GoogleProvider.ahk
 #Include Services\LLM\Providers\GroqAudioProvider.ahk
-#Include Services\MessagePresentationService.ahk
+#Include Utils\MessagePresentationService.ahk
 #Include Services\ContextPresentationService.ahk
 #Include ui\TrayView.ahk
 #Include ui\UIConfig.ahk
@@ -122,7 +122,6 @@ class App {
 
         llm := LLMService(cfg, toolsMap, llmClient)
         
-        mps := MessagePresentationService()
         cps := ContextPresentationService(ctx)
 
         this.controller := MainController(
@@ -131,8 +130,7 @@ class App {
             llm, 
             wv, 
             rec, 
-            ctx, 
-            mps
+            ctx
         )
 
         ; 2. Initialize Commands
@@ -159,11 +157,11 @@ class App {
         replaceLink := ReplaceLinkWithContentCommand(mdn, sess, ctx)
         renderMarkdown := RenderMarkdownCommand(wv)
         saveEditedMsg := SaveEditedMessageCommand(sess, cfg)
-        renderLastMsg := RenderLastMessageCommand(sess, mps, wv)
+        renderLastMsg := RenderLastMessageCommand(sess, wv)
         deleteCtxItems := DeleteContextItemsCommand(sess)
         prepareContext := PrepareContextCommand(sess, cfg)
-        getHistoryItems := GetHistoryListItemsCommand(sess, mps)
-        getMessagePresentation := GetMessagePresentationCommand(sess, mps)
+        getHistoryItems := GetHistoryListItemsCommand(sess)
+        getMessagePresentation := GetMessagePresentationCommand(sess)
         uncheckContext := UncheckContextCommand(sess)
         setContextItemChecked := SetContextItemCheckedCommand(sess)
 

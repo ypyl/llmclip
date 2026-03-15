@@ -6,12 +6,10 @@
  */
 class RenderLastMessageCommand {
     sessionManager := ""
-    messagePresentationService := ""
     webViewManager := ""
 
-    __New(sessionManager, messagePresentationService, webViewManager) {
+    __New(sessionManager, webViewManager) {
         this.sessionManager := sessionManager
-        this.messagePresentationService := messagePresentationService
         this.webViewManager := webViewManager
     }
 
@@ -19,7 +17,7 @@ class RenderLastMessageCommand {
         messages := this.sessionManager.GetCurrentSessionMessages()
         if (messages.Length > 0) {
             lastMsg := messages[messages.Length]
-            htmlContent := this.messagePresentationService.GetMessageAsString(lastMsg)
+            htmlContent := MessagePresentationService.GetMessageAsString(lastMsg)
             this.webViewManager.RenderMarkdown(htmlContent)
         }
     }

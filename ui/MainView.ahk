@@ -73,16 +73,16 @@ class MainView {
             this.controller,
             this.settingsController,
             this.controller.LLMDisplayNames,
-            this.controller.CurrentLLMTypeIndex
+            this.controller.CurrentLLMTypeIndex,
+            this.controller.SessionNames,
+            this.controller.CurrentSessionIndex
         )
 
         this.topControlsView.Create(
             this.gui,
-            this.controller.SessionNames,
-            this.controller.CurrentSessionIndex,
             this.controller.IsRecording,
-            this.controller,
-            this.recordingController
+            this.recordingController,
+            this.controller
         )
 
         this.contextView.Create(this.gui, this.contextViewController)
@@ -149,8 +149,7 @@ class MainView {
     AddSystemPromptItems(items) => this.promptView.AddSystemPrompts(items)
     SetSystemPromptEnabled(enabled) => this.promptView.SetSystemPromptEnabled(enabled)
     
-    SetSessionSelectValue(value) => this.topControlsView.SetValue(value)
-    GetSessionSelectValue() => this.topControlsView.GetValue()
+    SetSessionSelectValue(value) => this.menuView.UpdateSessionMenu(value, this.controller.SessionNames)
     UpdateRecordButton(isRecording) => this.topControlsView.UpdateRecordButton(isRecording)
     
     UpdateBatchMode(enabled) => this.menuView.UpdateBatchMode(enabled)

@@ -426,15 +426,6 @@ class MainController {
         get => this.configManager.IsImageInputEnabled(llmTypeIndex)
     }
 
-    SessionChanged(*) {
-        this.switchSessionCommand.Execute(this.view.GetSessionSelectValue())
-
-        if (this.settingsController)
-            this.settingsController.UpdateCompressionMenuState()
-
-        this.UpdateSessionUI()
-        this.SetProcessingState(this.sessionManager.GetCurrentProcessingState())
-    }
 
     UpdateSessionUI() {
         currentModelIndex := this.sessionManager.GetCurrentSessionLLMType()

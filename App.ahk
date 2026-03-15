@@ -201,7 +201,7 @@ class App {
         notesContr := NotesController(copyToClip, notesViewInstance)
         notesViewInstance.controller := notesContr
         
-        settingsContr := SettingsController(cfg, sess, selectModel, changeAnswerSize, toggleTool, getToolsState, getCompressionState, changeSystemPrompt, reloadSettings)
+        settingsContr := SettingsController(cfg, sess, selectModel, changeAnswerSize, toggleTool, getToolsState, getCompressionState, changeSystemPrompt, reloadSettings, switchSession)
         recordingContr := RecordingController(rec, startRec, stopRec, toggleRec)
 
         this.controller.SetSubControllers(ctxView, histView, notesContr, settingsContr, recordingContr)

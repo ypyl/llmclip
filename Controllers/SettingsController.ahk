@@ -15,8 +15,9 @@ class SettingsController {
     getCompressionStateCommand := ""
     changeSystemPromptCommand := ""
     reloadSettingsCommand := ""
+    switchSessionCommand := ""
 
-    __New(configManager, sessionManager, selectModelCommand, changeAnswerSizeCommand, toggleToolCommand, getToolsStateCommand, getCompressionStateCommand, changeSystemPromptCommand, reloadSettingsCommand) {
+    __New(configManager, sessionManager, selectModelCommand, changeAnswerSizeCommand, toggleToolCommand, getToolsStateCommand, getCompressionStateCommand, changeSystemPromptCommand, reloadSettingsCommand, switchSessionCommand) {
         this.configManager := configManager
         this.sessionManager := sessionManager
         this.selectModelCommand := selectModelCommand
@@ -26,6 +27,7 @@ class SettingsController {
         this.getCompressionStateCommand := getCompressionStateCommand
         this.changeSystemPromptCommand := changeSystemPromptCommand
         this.reloadSettingsCommand := reloadSettingsCommand
+        this.switchSessionCommand := switchSessionCommand
     }
 
     SetViews(menuView, promptView, mainView) {
@@ -80,6 +82,14 @@ class SettingsController {
     SelectAnswerSize(ItemName, ItemPos, MyMenu) {
         this.menuView.UpdateAnswerSizeMenu(ItemName)
         this.changeAnswerSizeCommand.Execute(ItemName)
+    }
+
+    SelectSession(ItemName, ItemPos, MyMenu) {
+        this.switchSessionCommand.Execute(ItemPos)
+        
+        if (this.mainView && this.mainView.controller) {
+            this.mainView.controller.UpdateSessionUI()
+        }
     }
 
     UpdateCompressionMenuState() {

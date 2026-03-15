@@ -1,11 +1,13 @@
 class MenuView {
     menuBar := ""
+    sessionMenu := ""
     modelMenu := ""
     historyMenu := ""
     toolsMenu := ""
     modeMenu := ""
     answerSizeMenu := ""
     currentModelLabel := ""
+    currentSessionLabel := ""
 
     static ToolMapping := [
         { id: PowerShellTool.TOOL_NAME, label: "PowerShell", stateKey: PowerShellTool.TOOL_NAME },
@@ -15,7 +17,7 @@ class MenuView {
         { id: MarkdownNewTool.TOOL_NAME, label: "Read URL Markdown", stateKey: MarkdownNewTool.TOOL_NAME }
     ]
 
-    Create(gui, rootController, settingsController, llmTypes, currentLLMTypeIndex) {
+    Create(gui, rootController, settingsController, llmTypes, currentLLMTypeIndex, sessionNames, currentSessionIndex) {
         FileMenu := Menu()
         FileMenu.Add("Save Conversation", ObjBindMethod(rootController, "SaveConversation"))
         FileMenu.Add("Load Conversation", ObjBindMethod(rootController, "LoadConversation"))
@@ -34,6 +36,17 @@ class MenuView {
 
         currentModelLabel := llmTypes[currentLLMTypeIndex]
         this.currentModelLabel := currentModelLabel
+
+        this.sessionMenu := Menu()
+        for index, sessionName in sessionNames {
+            this.sessionMenu.Add(sessionName, ObjBindMethod(settingsController, "SelectSession"))
+            if (index = currentSessionIndex) {
+                this.sessionMenu.Check(sessionName)
+            }
+        }
+
+        currentSessionLabel := sessionNames[currentSessionIndex]
+        this.currentSessionLabel := currentSessionLabel
 
         this.answerSizeMenu := Menu()
         this.answerSizeMenu.Add("Small", ObjBindMethod(settingsController, "SelectAnswerSize"))
@@ -55,6 +68,7 @@ class MenuView {
 
         this.menuBar := MenuBar()
         this.menuBar.Add("&File", FileMenu)
+        this.menuBar.Add(this.currentSessionLabel, this.sessionMenu)
         this.menuBar.Add("History", this.historyMenu)
         this.menuBar.Add("Mode", this.modeMenu)
         this.menuBar.Add("Tools", this.toolsMenu)
@@ -146,7 +160,44 @@ class MenuView {
         }
     }
 
+    UpdateSessionMenu(selectedIndex, sessionNames) {
+        if (!this.sessionMenu)
+            return
+
+        currentSessionName := sessionNames[selectedIndex]
+        currentSessionLabel := currentSessionName
+
+        ; Update checkmarks
+        for index, sessionName in sessionNames {
+            if (index = selectedIndex) {
+                this.sessionMenu.Check(sessionName)
+            } else {
+                this.sessionMenu.Uncheck(sessionName)
+            }
+        }
+
+        ; Renaming the menu bar item
+        try {
+            if (this.currentSessionLabel != currentSessionLabel) {
+                this.menuBar.Rename(this.currentSessionLabel, currentSessionLabel)
+                this.currentSessionLabel := currentSessionLabel
+            }
+        }
+    }
+
+    RebuildSessionMenu(sessionNames, selectSessionCallback) {
+        if (!this.sessionMenu)
+            return
+
+        this.sessionMenu.Delete()
+        for index, sessionName in sessionNames {
+            this.sessionMenu.Add(sessionName, selectSessionCallback)
+        }
+    }
+
     CheckModel(name) => this.modelMenu.Check(name)
     UncheckModel(name) => this.modelMenu.Uncheck(name)
+    CheckSession(name) => this.sessionMenu.Check(name)
+    UncheckSession(name) => this.sessionMenu.Uncheck(name)
     RenameMenu(oldName, newName) => this.menuBar.Rename(oldName, newName)
 }

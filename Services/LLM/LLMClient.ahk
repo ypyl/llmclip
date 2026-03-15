@@ -9,20 +9,13 @@
 
 class LLMClient {
     ; Private properties
-    settings := {}
+    providers := Map()
     tempDir := TempFileManager.TempDir
     pid := 0
     isCancelled := false
-    providers := Map()
 
-    __New(settings) {
-        this.settings := settings
-
-        ; Initialize providers
-        this.providers["openai"] := OpenAIProvider()
-        this.providers["ollama"] := OllamaProvider()
-        this.providers["google"] := GoogleProvider()
-        this.providers["audio"] := GroqAudioProvider()
+    __New(providers) {
+        this.providers := providers
     }
 
     Cancel() {
@@ -32,20 +25,19 @@ class LLMClient {
         }
     }
 
-    Call(messages) {
+    Call(messages, settings) {
         try {
             this.isCancelled := false
-            selectedSettings := this.settings
-            curl := selectedSettings["curl"]
-            selectedLLMType := selectedSettings.Has("type") ? selectedSettings["type"] : "groq"
+            curl := settings["curl"]
+            selectedLLMType := settings.Has("type") ? settings["type"] : "groq"
 
-            providerName := selectedSettings.Has("provider_name") ? selectedSettings["provider_name"] : ""
+            providerName := settings.Has("provider_name") ? settings["provider_name"] : ""
 
             ; Get the appropriate provider
-            provider := this.GetProvider(selectedSettings)
+            provider := this.GetProvider(settings)
 
             ; Prepare request body
-            body := provider.GetRequestBody(messages, selectedSettings)
+            body := provider.GetRequestBody(messages, settings)
 
             ; Create temporary files for input/output
             inputFile := this.tempDir "\request.json"
@@ -65,8 +57,8 @@ class LLMClient {
             curlCmd := Format(curl, inputFile, outputFile)
             
             ; Replace API_KEY placeholder if present
-            if (selectedSettings.Has("api_key")) {
-                curlCmd := StrReplace(curlCmd, "{API_KEY}", selectedSettings["api_key"])
+            if (settings.Has("api_key")) {
+                curlCmd := StrReplace(curlCmd, "{API_KEY}", settings["api_key"])
             }
 
             ; Report error if API_KEY is still missing but required by the template
@@ -75,8 +67,8 @@ class LLMClient {
             }
 
             ; Replace MODEL placeholder if present
-            if (selectedSettings.Has("model")) {
-                curlCmd := StrReplace(curlCmd, "{MODEL}", selectedSettings["model"])
+            if (settings.Has("model")) {
+                curlCmd := StrReplace(curlCmd, "{MODEL}", settings["model"])
             }
 
             ; Execute curl

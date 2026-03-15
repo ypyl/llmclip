@@ -14,9 +14,10 @@ class LLMService {
     currentTool := ""  ; Track currently executing tool instance for cancellation
     tools := Map()
 
-    __New(configManager, toolsMap) {
+    __New(configManager, toolsMap, llmClient) {
         this.configManager := configManager
         this.tools := toolsMap
+        this.llmClientInstance := llmClient
     }
 
     ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false) {
@@ -121,11 +122,9 @@ class LLMService {
                 messages.Push(ChatMessage("user", [TextContent(answerSizeMsg)]))
             }
 
-            this.llmClientInstance := LLMClient(settings)
-
-            ; The LLM client now returns fully-formed messages
+            ; Use LLM client with settings
             startTime := A_TickCount
-            newMessages := this.llmClientInstance.Call(messages)
+            newMessages := this.llmClientInstance.Call(messages, settings)
             duration := (A_TickCount - startTime) / 1000
 
             ; Remove the answer size instruction message after receiving the answer
@@ -184,15 +183,13 @@ class LLMService {
         ]
 
         try {
-            ; Create LLM client
+            ; Create LLM client settings
             settings := this.configManager.GetSelectedSettings(sessionManager.GetSessionLLMType(sessionIndex))
             settings["tools"] := []  ; No tools for compression
 
-            this.llmClientInstance := LLMClient(settings)
-
             ; Call LLM with compression prompt
             startTime := A_TickCount
-            newMessages := this.llmClientInstance.Call(tempMessages)
+            newMessages := this.llmClientInstance.Call(tempMessages, settings)
             duration := (A_TickCount - startTime) / 1000
 
             if (newMessages.Length > 0) {
@@ -237,14 +234,12 @@ class LLMService {
         ]
 
         try {
-            ; Create LLM client
+            ; Create LLM client settings
             settings := this.configManager.GetSelectedSettings(sessionManager.GetSessionLLMType(sessionIndex))
             settings["tools"] := []  ; No tools for extraction
 
-            this.llmClientInstance := LLMClient(settings)
-
             ; Call LLM
-            newMessages := this.llmClientInstance.Call(tempMessages)
+            newMessages := this.llmClientInstance.Call(tempMessages, settings)
 
             if (newMessages.Length > 0) {
                 return newMessages[1]

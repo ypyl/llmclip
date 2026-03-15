@@ -12,6 +12,11 @@
 #Include Services\LLM\FileSystemTool.ahk
 #Include Services\LLM\WebSearchTool.ahk
 #Include Services\LLM\WebFetchTool.ahk
+#Include Services\LLM\LLMClient.ahk
+#Include Services\LLM\Providers\OpenAIProvider.ahk
+#Include Services\LLM\Providers\OllamaProvider.ahk
+#Include Services\LLM\Providers\GoogleProvider.ahk
+#Include Services\LLM\Providers\GroqAudioProvider.ahk
 #Include Services\MessagePresentationService.ahk
 #Include Services\ContextPresentationService.ahk
 #Include ui\TrayView.ahk
@@ -106,7 +111,16 @@ class App {
             MarkdownNewTool.TOOL_NAME, mnt
         )
 
-        llm := LLMService(cfg, toolsMap)
+        ; Initialize LLM Client and Providers
+        providers := Map(
+            "openai", OpenAIProvider(),
+            "ollama", OllamaProvider(),
+            "google", GoogleProvider(),
+            "audio", GroqAudioProvider()
+        )
+        llmClient := LLMClient(providers)
+
+        llm := LLMService(cfg, toolsMap, llmClient)
         
         mps := MessagePresentationService()
         cps := ContextPresentationService(ctx)

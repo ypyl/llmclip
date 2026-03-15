@@ -257,5 +257,23 @@
         "temperature": 0.7
       }
     ]
+  },
+  "Nvidia": {
+    "curl": "curl -s -S -X POST \"https://integrate.api.nvidia.com/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -H \"Accept: application/json\" -d \"@{1}\" -o \"{2}\"",
+    "models": [
+      {
+        "model": "qwen/qwen3.5-122b-a10b",
+        "stream": false,
+        "temperature": 0.6,
+        "top_p": 0.95,
+        "tools": [
+          "execute_powershell",
+          "file_system",
+          "web_search",
+          "web_fetch",
+          "read_url_markdown"
+        ]
+      }
+    ]
   }
 }

@@ -112,15 +112,15 @@ class App {
         )
 
         ; Initialize LLM Client and Providers
-        providers := Map(
+        llmProviders := Map(
             "openai", OpenAIProvider(),
             "ollama", OllamaProvider(),
             "google", GoogleProvider(),
             "audio", GroqAudioProvider()
         )
-        llmClient := LLMClient(providers)
+        clientInstance := LLMClient(llmProviders)
 
-        llm := LLMService(cfg, toolsMap, llmClient)
+        llm := LLMService(cfg, toolsMap, clientInstance)
         
         cps := ContextPresentationService(ctx)
 
@@ -197,9 +197,9 @@ class App {
         ; 4. Initialize Sub-Controllers
         ctxView := ContextViewController(this.view.contextView, this.view, sess, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems, prepareContext, setContextItemChecked)
         histView := HistoryViewController(this.view.historyView, this.view, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip, regenerateMessage, navigateHistoryPrevious, navigateHistoryNext, getHistoryInfo, setProcessingState, wv, saveEditedMsg)
-        notesView := NotesView()
-        notesContr := NotesController(copyToClip, notesView)
-        notesView.controller := notesContr
+        notesViewInstance := NotesView()
+        notesContr := NotesController(copyToClip, notesViewInstance)
+        notesViewInstance.controller := notesContr
         
         settingsContr := SettingsController(cfg, sess, selectModel, changeAnswerSize, toggleTool, getToolsState, getCompressionState, changeSystemPrompt, reloadSettings)
         recordingContr := RecordingController(rec, startRec, stopRec, toggleRec)

@@ -20,6 +20,12 @@
 * **Role**: Composition Root.
 * **Responsibilities**: **The ONLY place** where instances of Services, Commands, Controllers, and Views are created.
 * **Dependency Management**: Manual Constructor Injection only.
+* **Wiring Pattern**: If a View requires Controller callbacks, use property assignment after instantiation to avoid constructor circularity:
+  ```ahk
+  view := View()
+  controller := Controller(view)
+  view.controller = controller
+  ```
 * ⛔ **Forbidden**: Business logic or internal state.
 
 ### Views (`ui/*.ahk`)

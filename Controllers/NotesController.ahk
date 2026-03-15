@@ -2,9 +2,9 @@ class NotesController {
     view := ""
     copyToClipboardCommand := ""
 
-    __New(copyToClipboardCommand) {
+    __New(copyToClipboardCommand, view) {
         this.copyToClipboardCommand := copyToClipboardCommand
-        this.view := NotesView(this)
+        this.view := view
     }
 
     ShowNotes(content) {

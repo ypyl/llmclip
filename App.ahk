@@ -197,7 +197,9 @@ class App {
         ; 4. Initialize Sub-Controllers
         ctxView := ContextViewController(this.view.contextView, this.view, sess, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems, prepareContext, setContextItemChecked)
         histView := HistoryViewController(this.view.historyView, this.view, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip, regenerateMessage, navigateHistoryPrevious, navigateHistoryNext, getHistoryInfo, setProcessingState, wv, saveEditedMsg)
-        notesContr := NotesController(copyToClip)
+        notesView := NotesView()
+        notesContr := NotesController(copyToClip, notesView)
+        notesView.controller := notesContr
         
         settingsContr := SettingsController(cfg, sess, selectModel, changeAnswerSize, toggleTool, getToolsState, getCompressionState, changeSystemPrompt, reloadSettings)
         recordingContr := RecordingController(rec, startRec, stopRec, toggleRec)

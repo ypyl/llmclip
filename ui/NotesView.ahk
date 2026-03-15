@@ -1,13 +1,10 @@
 class NotesView {
     gui := ""
-    controller := ""
+    controller := unset
     notesEdit := ""
-    
-    __New(controller) {
-        this.controller := controller
-    }
 
     Show(content) {
+        ; TODO check if controller is set
         this.gui := Gui()
         this.gui.Title := "Extracted Notes"
         this.gui.SetFont("s10", "Segoe UI")

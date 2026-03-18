@@ -1,6 +1,7 @@
 class MenuView {
     menuBar := ""
     sessionMenu := ""
+    sessionCallback := ""
     modelMenu := ""
     historyMenu := ""
     toolsMenu := ""
@@ -38,14 +39,16 @@ class MenuView {
         this.currentModelLabel := currentModelLabel
 
         this.sessionMenu := Menu()
+        this.sessionCallback := ObjBindMethod(settingsController, "SelectSession")
         for index, sessionName in sessionNames {
-            this.sessionMenu.Add(sessionName, ObjBindMethod(settingsController, "SelectSession"))
+            itemLabel := index . ": " . sessionName
+            this.sessionMenu.Add(itemLabel, this.sessionCallback)
             if (index = currentSessionIndex) {
-                this.sessionMenu.Check(sessionName)
+                this.sessionMenu.Check(itemLabel)
             }
         }
 
-        currentSessionLabel := sessionNames[currentSessionIndex]
+        currentSessionLabel := currentSessionIndex . ": " . sessionNames[currentSessionIndex]
         this.currentSessionLabel := currentSessionLabel
 
         this.answerSizeMenu := Menu()
@@ -164,19 +167,26 @@ class MenuView {
         if (!this.sessionMenu)
             return
 
-        currentSessionName := sessionNames[selectedIndex]
-        currentSessionLabel := currentSessionName
+        currentSessionLabel := selectedIndex . ": " . sessionNames[selectedIndex]
+
+        ; Rebuild items with index-prefixed labels to ensure uniqueness
+        this.sessionMenu.Delete()
+        for index, sessionName in sessionNames {
+            itemLabel := index . ": " . sessionName
+            this.sessionMenu.Add(itemLabel, this.sessionCallback)
+        }
 
         ; Update checkmarks
         for index, sessionName in sessionNames {
+            itemLabel := index . ": " . sessionName
             if (index = selectedIndex) {
-                this.sessionMenu.Check(sessionName)
+                this.sessionMenu.Check(itemLabel)
             } else {
-                this.sessionMenu.Uncheck(sessionName)
+                this.sessionMenu.Uncheck(itemLabel)
             }
         }
 
-        ; Renaming the menu bar item
+        ; Rename the menu bar label
         try {
             if (this.currentSessionLabel != currentSessionLabel) {
                 this.menuBar.Rename(this.currentSessionLabel, currentSessionLabel)
@@ -191,7 +201,7 @@ class MenuView {
 
         this.sessionMenu.Delete()
         for index, sessionName in sessionNames {
-            this.sessionMenu.Add(sessionName, selectSessionCallback)
+            this.sessionMenu.Add(index . ": " . sessionName, selectSessionCallback)
         }
     }
 

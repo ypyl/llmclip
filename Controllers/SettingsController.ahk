@@ -131,6 +131,9 @@ class SettingsController {
         ; Refresh the history view so the updated system prompt message is reflected
         if (this.mainView && this.mainView.historyViewController)
             this.mainView.historyViewController.UpdateChatHistoryView()
+
+        if (this.mainView)
+            this.mainView.SetSessionSelectValue(this.sessionManager.currentSessionIndex)
     }
 
     ReloadSettings(*) {

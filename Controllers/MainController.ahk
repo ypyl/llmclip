@@ -406,6 +406,20 @@ class MainController {
         get => this.sessionManager.sessionNames
     }
 
+    SessionLabels {
+        get {
+            labels := []
+            Loop this.sessionManager.MAX_SESSIONS {
+                sess := this.sessionManager.sessions[A_Index]
+                names := this.configManager.GetSystemPromptNames(sess.llmType)
+                promptIndex := sess.systemPromptIndex
+                label := (promptIndex > 0 && promptIndex <= names.Length) ? names[promptIndex] : "Session " . A_Index
+                labels.Push(label)
+            }
+            return labels
+        }
+    }
+
     CurrentSessionIndex {
         get => this.sessionManager.currentSessionIndex
     }

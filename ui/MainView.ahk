@@ -74,7 +74,7 @@ class MainView {
             this.settingsController,
             this.controller.LLMDisplayNames,
             this.controller.CurrentLLMTypeIndex,
-            this.controller.SessionNames,
+            this.controller.SessionLabels,
             this.controller.CurrentSessionIndex
         )
 
@@ -149,7 +149,7 @@ class MainView {
     AddSystemPromptItems(items) => this.promptView.AddSystemPrompts(items)
     SetSystemPromptEnabled(enabled) => this.promptView.SetSystemPromptEnabled(enabled)
     
-    SetSessionSelectValue(value) => this.menuView.UpdateSessionMenu(value, this.controller.SessionNames)
+    SetSessionSelectValue(value) => this.menuView.UpdateSessionMenu(value, this.controller.SessionLabels)
     UpdateRecordButton(isRecording) => this.topControlsView.UpdateRecordButton(isRecording)
     
     UpdateBatchMode(enabled) => this.menuView.UpdateBatchMode(enabled)

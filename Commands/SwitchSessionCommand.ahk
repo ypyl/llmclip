@@ -8,6 +8,8 @@ class SwitchSessionCommand {
     }
 
     Execute(sessionIndex) {
+        currentModelIndex := this.sessionManager.GetCurrentSessionModelIndex()
         this.sessionManager.SwitchSession(sessionIndex)
+        this.sessionManager.SetCurrentSessionModelIndex(currentModelIndex)
     }
 }

@@ -468,10 +468,7 @@ class MainController {
     }
 
     ResetAll(*) {
-        ; Reset current session
         this.resetAllCommand.Execute()
-
-        ; Update UI
         this.UpdateSessionUI()
         this.SetProcessingState(ProcessingState.IDLE)
     }

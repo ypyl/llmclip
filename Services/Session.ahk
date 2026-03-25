@@ -50,24 +50,34 @@ class Session {
 
     GetHistoryInfo() => this.currentHistoryIndex . "/" . this.histories.Length
 
-    ResetSesssion(defaultSystemPrompt) {
-        this.histories := [History([ChatMessage("system", [TextContent(defaultSystemPrompt)])])]
+    GetSystemMessage() {
+        for msg in this.GetCurrentHistory().GetAll()
+            if (msg.Role == "system")
+                return msg
+        return ""
+    }
+
+    ResetSesssion() {
+        systemMsg := this.GetSystemMessage()
+        this.histories := [History(systemMsg ? [systemMsg] : [])]
         this.currentHistoryIndex := 1
         this.context := []
         this.processingState := ProcessingState.IDLE
     }
 
-    ResetHistory(defaultSystemPrompt) {
-        this.histories := [History([ChatMessage("system", [TextContent(defaultSystemPrompt)])])]
+    ResetHistory() {
+        systemMsg := this.GetSystemMessage()
+        this.histories := [History(systemMsg ? [systemMsg] : [])]
         this.currentHistoryIndex := 1
         this.processingState := ProcessingState.IDLE
     }
 
     UpdateSystemPrompt(systemPromptContent) {
-        currentHistory := this.GetCurrentHistory()
-        if (currentHistory.Length() > 0 && currentHistory.Get(1).Role == "system") {
-            currentHistory.Get(1).Contents := [TextContent(systemPromptContent)]
-        }
+        for msg in this.GetCurrentHistory().GetAll()
+            if (msg.Role == "system") {
+                msg.Contents := [TextContent(systemPromptContent)]
+                return
+            }
     }
 
     ToObject() {

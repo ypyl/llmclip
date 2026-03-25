@@ -72,9 +72,9 @@ class SessionManager {
         return false
     }
 
-    ResetCurrentSession() => this.GetCurrentSession().ResetSesssion(this.defaultSystemPrompt)
+    ResetCurrentSession() => this.GetCurrentSession().ResetSesssion()
 
-    ClearCurrentMessages() => this.GetCurrentSession().ResetHistory(this.defaultSystemPrompt)
+    ClearCurrentMessages() => this.GetCurrentSession().ResetHistory()
 
     ClearCurrentContext() => this.GetCurrentSession().context := []
 
@@ -109,7 +109,7 @@ class SessionManager {
         messages := this.GetSessionMessages(index)
         systemMsg := messages[1]
 
-        this.sessions[index].ResetHistory(this.defaultSystemPrompt)
+        this.sessions[index].ResetHistory()
 
         current := this.GetSessionMessages(index)
         current[1] := systemMsg

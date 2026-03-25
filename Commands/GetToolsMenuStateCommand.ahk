@@ -8,7 +8,7 @@ class GetToolsMenuStateCommand {
     }
 
     Execute() {
-        currentLLMIndex := this.sessionManager.GetCurrentSessionLLMType()
+        currentLLMIndex := this.sessionManager.GetCurrentSessionModelIndex()
 
         return {
             execute_powershell: this.configManager.IsToolEnabled(currentLLMIndex, PowerShellTool.TOOL_NAME),

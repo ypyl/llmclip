@@ -26,7 +26,7 @@ class LoadConversationCommand {
 
         ; Update system prompt content to match loaded state
         systemPrompt := this.configManager.GetSystemPromptValue(
-            this.sessionManager.GetCurrentSessionLLMType(),
+            this.sessionManager.GetCurrentSessionModelIndex(),
             this.sessionManager.GetCurrentSessionSystemPrompt()
         )
         this.sessionManager.UpdateSystemPromptContent(systemPrompt)

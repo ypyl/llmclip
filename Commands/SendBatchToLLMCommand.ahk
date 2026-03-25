@@ -22,7 +22,7 @@ class SendBatchToLLMCommand {
         mainMessages := this.sessionManager.GetSessionMessages(targetSessionIndex)
         mainMessages.Push(userMsg)
 
-        currentLLM := this.sessionManager.GetSessionLLMType(targetSessionIndex)
+        currentLLM := this.sessionManager.GetSessionModelIndex(targetSessionIndex)
         powerShellEnabled := this.configManager.IsToolEnabled(currentLLM, PowerShellTool.TOOL_NAME)
         fileSystemEnabled := this.configManager.IsToolEnabled(currentLLM, FileSystemTool.TOOL_NAME)
         webSearchEnabled := this.configManager.IsToolEnabled(currentLLM, WebSearchTool.TOOL_NAME)
@@ -62,7 +62,7 @@ class SendBatchToLLMCommand {
             tempSession := {
                 currentSessionIndex: 1,
                 GetSessionMessages: (*) => clonedMessages,
-                GetSessionLLMType: (*) => this.sessionManager.GetSessionLLMType(targetSessionIndex),
+                GetSessionLLMType: (*) => this.sessionManager.GetSessionModelIndex(targetSessionIndex),
                 GetMessagesExcludingBatchForSession: (*) => clonedMessages,
                 HasUnexecutedToolCallsForSession: (*) => false
             }

@@ -8,7 +8,7 @@ class GetCompressionMenuStateCommand {
     }
     
     Execute() {
-        currentLLMIndex := this.sessionManager.GetCurrentSessionLLMType()
+        currentLLMIndex := this.sessionManager.GetCurrentSessionModelIndex()
         compressionPrompt := this.configManager.GetCompressionPrompt(currentLLMIndex)
         return (compressionPrompt != "")
     }

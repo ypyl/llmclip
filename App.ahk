@@ -89,8 +89,8 @@ class App {
         cfg := ConfigurationService.GetInstance()
         ctx := ContextManager()
         sess := SessionManager(
-            cfg.selectedLLMTypeIndex,
-            cfg.GetSystemPromptValue(cfg.selectedLLMTypeIndex, 1),
+            1,
+            cfg.GetSystemPromptValue(1, 1),
             ctx
         )
         wv := WebViewManager()

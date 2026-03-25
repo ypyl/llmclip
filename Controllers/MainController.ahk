@@ -191,7 +191,7 @@ class MainController {
         currentState := this.sessionManager.GetCurrentProcessingState()
         promptText := this.view.GetPromptValue()
 
-        isImageEnabled := this.IsImageInputEnabled[this.CurrentLLMTypeIndex]
+        isImageEnabled := this.IsImageInputEnabled[this.CurrentModelIndex]
         images := isImageEnabled ? this.sessionManager.GetCheckedImages() : []
 
         selectedIndices := []
@@ -390,16 +390,16 @@ class MainController {
     }
 
     ; Data Properties for UI
-    LLMTypes {
-        get => this.configManager.llmTypes
+    Models {
+        get => this.configManager.models
     }
 
-    LLMDisplayNames {
-        get => this.configManager.llmDisplayNames
+    ModelDisplayNames {
+        get => this.configManager.modelDisplayNames
     }
 
-    CurrentLLMTypeIndex {
-        get => this.sessionManager.GetCurrentSessionLLMType()
+    CurrentModelIndex {
+        get => this.sessionManager.GetCurrentSessionModelIndex()
     }
 
     SessionNames {
@@ -428,24 +428,24 @@ class MainController {
         get => this.recordingService.isRecording
     }
 
-    GetSystemPrompts(llmTypeIndex) {
-        return this.configManager.GetSystemPromptNames(llmTypeIndex)
+    GetSystemPrompts(modelIndex) {
+        return this.configManager.GetSystemPromptNames(modelIndex)
     }
 
     CurrentSystemPromptIndex {
         get => this.sessionManager.GetCurrentSessionSystemPrompt()
     }
 
-    IsImageInputEnabled[llmTypeIndex] {
-        get => this.configManager.IsImageInputEnabled(llmTypeIndex)
+    IsImageInputEnabled[modelIndex] {
+        get => this.configManager.IsImageInputEnabled(modelIndex)
     }
 
 
     UpdateSessionUI() {
-        currentModelIndex := this.sessionManager.GetCurrentSessionLLMType()
+        currentModelIndex := this.sessionManager.GetCurrentSessionModelIndex()
 
         ; 1. Update Models Menu (delegated to View)
-        this.view.UpdateModelMenu(currentModelIndex, this.configManager.llmDisplayNames)
+        this.view.UpdateModelMenu(currentModelIndex, this.configManager.modelDisplayNames)
 
         ; 2. Update Session Select UI
         this.view.SetSessionSelectValue(this.sessionManager.currentSessionIndex)

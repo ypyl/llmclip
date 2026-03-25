@@ -37,12 +37,12 @@ class SendToLLMCommand {
         messages := this.sessionManager.GetSessionMessages(targetSessionIndex)
 
         systemPrompt := this.configManager.GetSystemPromptValue(
-            this.sessionManager.GetSessionLLMType(targetSessionIndex),
+            this.sessionManager.GetSessionModelIndex(targetSessionIndex),
             this.sessionManager.GetSessionSystemPrompt(targetSessionIndex)
         )
         this.sessionManager.UpdateSystemPromptContentForSession(targetSessionIndex, systemPrompt)
 
-        currentLLM := this.sessionManager.GetSessionLLMType(targetSessionIndex)
+        currentLLM := this.sessionManager.GetSessionModelIndex(targetSessionIndex)
         powerShellEnabled := this.configManager.IsToolEnabled(currentLLM, PowerShellTool.TOOL_NAME)
         fileSystemEnabled := this.configManager.IsToolEnabled(currentLLM, FileSystemTool.TOOL_NAME)
         webSearchEnabled := this.configManager.IsToolEnabled(currentLLM, WebSearchTool.TOOL_NAME)

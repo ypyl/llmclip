@@ -11,7 +11,7 @@ class SaveEditedMessageCommand {
 
     Execute(index, newText) {
         if (index == 1) {
-            llmIndex := this.sessionManager.GetCurrentSessionLLMType()
+            llmIndex := this.sessionManager.GetCurrentSessionModelIndex()
             promptIndex := this.sessionManager.GetCurrentSessionSystemPrompt()
             promptNames := this.configManager.GetSystemPromptNames(llmIndex)
             

@@ -16,8 +16,8 @@ class LoadStateOnStartCommand {
 
         ; Restore model index
         modelIndex := isMap ? state["modelIndex"] : state.modelIndex
-        if (modelIndex > 0 && modelIndex <= this.configManager.llmTypes.Length)
-            this.sessionManager.SetCurrentSessionLLMType(modelIndex)
+        if (modelIndex > 0 && modelIndex <= this.configManager.models.Length)
+            this.sessionManager.SetCurrentSessionModelIndex(modelIndex)
 
         ; Restore system prompt index
         systemPromptIndex := isMap ? state["systemPromptIndex"] : state.systemPromptIndex
@@ -25,7 +25,7 @@ class LoadStateOnStartCommand {
 
         ; Update system prompt content
         systemPrompt := this.configManager.GetSystemPromptValue(
-            this.sessionManager.GetCurrentSessionLLMType(),
+            this.sessionManager.GetCurrentSessionModelIndex(),
             this.sessionManager.GetCurrentSessionSystemPrompt()
         )
         this.sessionManager.UpdateSystemPromptContent(systemPrompt)

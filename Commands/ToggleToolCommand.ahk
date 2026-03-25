@@ -8,7 +8,7 @@ class ToggleToolCommand {
     }
     
     Execute(toolName) {
-        currentLLMIndex := this.sessionManager.GetCurrentSessionLLMType()
+        currentLLMIndex := this.sessionManager.GetCurrentSessionModelIndex()
         isEnabled := this.configManager.IsToolEnabled(currentLLMIndex, toolName)
         
         ; Toggle state

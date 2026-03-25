@@ -9,19 +9,19 @@ class SessionManager {
     sessions := []
 
     defaultSystemPrompt := "You are a helpful assistant. Be concise and direct in your responses."
-    defaultLLMType := 1
+    defaultModelIndex := 1
     contextManager := ""
     answerSize := "Default"
     batchModeEnabled := false
 
-    __New(defaultLLMType := 1, defaultSystemPrompt := "", contextManager := "") {
-        this.defaultLLMType := defaultLLMType
+    __New(defaultModelIndex := 1, defaultSystemPrompt := "", contextManager := "") {
+        this.defaultModelIndex := defaultModelIndex
         this.contextManager := contextManager
         if (defaultSystemPrompt)
             this.defaultSystemPrompt := defaultSystemPrompt
 
         Loop this.MAX_SESSIONS
-            this.sessions.Push(Session(this.defaultSystemPrompt, this.defaultLLMType))
+            this.sessions.Push(Session(this.defaultSystemPrompt, this.defaultModelIndex))
     }
 
     GetCurrentSession() => this.sessions[this.currentSessionIndex]
@@ -48,11 +48,11 @@ class SessionManager {
 
     SetCurrentSessionContext(newContext) => this.GetCurrentSession().context := newContext
 
-    GetCurrentSessionLLMType() => this.GetSessionLLMType(this.currentSessionIndex)
+    GetCurrentSessionModelIndex() => this.GetSessionModelIndex(this.currentSessionIndex)
 
-    GetSessionLLMType(index) => this.sessions[index].llmType
+    GetSessionModelIndex(index) => this.sessions[index].llmType
 
-    SetCurrentSessionLLMType(index) => this.GetCurrentSession().llmType := index
+    SetCurrentSessionModelIndex(index) => this.GetCurrentSession().llmType := index
 
     GetCurrentSessionSystemPrompt() => this.GetSessionSystemPrompt(this.currentSessionIndex)
 

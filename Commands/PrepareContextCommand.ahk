@@ -15,7 +15,7 @@ class PrepareContextCommand {
     Execute() {
         context := this.sessionManager.GetCurrentSessionContext()
         predefinedContext := this.configManager.GetContext(
-            this.sessionManager.GetCurrentSessionLLMType(),
+            this.sessionManager.GetCurrentSessionModelIndex(),
             this.sessionManager.GetCurrentSessionSystemPrompt()
         )
         

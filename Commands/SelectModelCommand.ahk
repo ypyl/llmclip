@@ -8,6 +8,6 @@ class SelectModelCommand {
     }
 
     Execute(modelIndex) {
-        this.sessionManager.SetCurrentSessionLLMType(modelIndex)
+        this.sessionManager.SetCurrentSessionModelIndex(modelIndex)
     }
 }

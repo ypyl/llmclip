@@ -7,9 +7,8 @@ class ConfigurationService {
 
     ; Configuration data
     providers := Map()
-    selectedLLMTypeIndex := 1
-    llmTypes := []
-    llmDisplayNames := []
+    models := []
+    modelDisplayNames := []
     ollamaApiKey := ""
 
     ; Sub-managers
@@ -38,13 +37,13 @@ class ConfigurationService {
 
         this.providers := this.providersManager.GetAll()
 
-        ; Initialize LLM types and display names
-        this.llmTypes := []
-        this.llmDisplayNames := []
-        for key, value in this.providers {
-            this.llmTypes.Push(key)
-            providerName := value.Has("provider_name") ? value["provider_name"] : "Unknown"
-            this.llmDisplayNames.Push(providerName . ": " . key)
+        this.models := []
+        this.modelDisplayNames := []
+        for providerName, providerEntry in this.providers {
+            for modelName in providerEntry["models"] {
+                this.models.Push(providerName . "/" . modelName)
+                this.modelDisplayNames.Push(providerName . ": " . modelName)
+            }
         }
     }
 
@@ -70,16 +69,16 @@ class ConfigurationService {
         return ""
     }
 
-    GetSelectedSettings(llmIndex) {
-        if (llmIndex > this.llmTypes.Length || llmIndex < 1)
+    GetSelectedSettings(modelIndex) {
+        if (modelIndex > this.models.Length || modelIndex < 1)
             return Map()
 
-        selectedLLMType := this.llmTypes[llmIndex]
-        settings := this.providersManager.Get(selectedLLMType)
-        settings["type"] := selectedLLMType
+        selectedModel := this.models[modelIndex]
+        parts := StrSplit(selectedModel, "/", , 2)
+        settings := this.providersManager.Get(parts[1], parts[2])
+        settings["type"] := selectedModel
 
-        ; Load API key
-        apiKey := this.GetApiKey(selectedLLMType, settings.Has("provider_name") ? settings["provider_name"] : "")
+        apiKey := this.GetApiKey(selectedModel, parts[1])
         if (apiKey != "") {
             settings["api_key"] := apiKey
         }
@@ -87,12 +86,12 @@ class ConfigurationService {
         return settings
     }
 
-    GetVisiblePrompts(llmIndex) {
-        if (llmIndex > this.llmTypes.Length || llmIndex < 1)
+    GetVisiblePrompts(modelIndex) {
+        if (modelIndex > this.models.Length || modelIndex < 1)
             return []
 
-        selectedLLMType := this.llmTypes[llmIndex]
-        promptNames := this.rolesManager.GetPromptsForProvider(selectedLLMType)
+        selectedModel := this.models[modelIndex]
+        promptNames := this.rolesManager.GetPromptsForProvider(selectedModel)
 
         ; If no prompts returned (roles disabled), use all system prompts
         if (promptNames.Length = 0) {
@@ -117,9 +116,9 @@ class ConfigurationService {
         return visiblePrompts
     }
 
-    GetSystemPromptValue(llmIndex, promptIndex) {
+    GetSystemPromptValue(modelIndex, promptIndex) {
         defaultPrompt := "You are a helpful assistant. Be concise and direct in your responses."
-        prompts := this.GetVisiblePrompts(llmIndex)
+        prompts := this.GetVisiblePrompts(modelIndex)
         if (prompts.Length >= promptIndex) {
             value := prompts[promptIndex]["value"]
             
@@ -143,8 +142,8 @@ class ConfigurationService {
         return defaultPrompt
     }
 
-    GetInputTemplate(llmIndex, promptIndex) {
-        prompts := this.GetVisiblePrompts(llmIndex)
+    GetInputTemplate(modelIndex, promptIndex) {
+        prompts := this.GetVisiblePrompts(modelIndex)
         if (prompts.Length >= promptIndex) {
             if (inputTemplate := prompts[promptIndex].Get("input_template", "")) {
                 return inputTemplate
@@ -153,8 +152,8 @@ class ConfigurationService {
         return ""
     }
 
-    GetContext(llmIndex, promptIndex) {
-        prompts := this.GetVisiblePrompts(llmIndex)
+    GetContext(modelIndex, promptIndex) {
+        prompts := this.GetVisiblePrompts(modelIndex)
         if (prompts.Length >= promptIndex) {
             if (context := prompts[promptIndex].Get("context", [])) {
                 return context
@@ -163,8 +162,8 @@ class ConfigurationService {
         return []
     }
 
-    IsToolEnabled(llmIndex, toolName) {
-        settings := this.GetSelectedSettings(llmIndex)
+    IsToolEnabled(modelIndex, toolName) {
+        settings := this.GetSelectedSettings(modelIndex)
         tools := settings.Get("tools", [])
         if (tools is Array) {
             for t in tools {
@@ -176,8 +175,8 @@ class ConfigurationService {
         return false
     }
 
-    SetToolEnabled(llmIndex, toolName, enabled) {
-        settings := this.GetSelectedSettings(llmIndex)
+    SetToolEnabled(modelIndex, toolName, enabled) {
+        settings := this.GetSelectedSettings(modelIndex)
         if (!settings.Has("tools")) {
             settings["tools"] := []
         }
@@ -205,24 +204,24 @@ class ConfigurationService {
         }
     }
 
-    IsImageInputEnabled(llmIndex) {
-        settings := this.GetSelectedSettings(llmIndex)
+    IsImageInputEnabled(modelIndex) {
+        settings := this.GetSelectedSettings(modelIndex)
         return settings.Get("image", false)
     }
 
-    GetCompressionPrompt(llmIndex) {
+    GetCompressionPrompt(modelIndex) {
         return "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
     }
 
-    GetLearningsPrompt(llmIndex) {
-        settings := this.GetSelectedSettings(llmIndex)
+    GetLearningsPrompt(modelIndex) {
+        settings := this.GetSelectedSettings(modelIndex)
         defaultPrompt := "Extract valuable learnings and facts from the following conversation.`nReturn a bulleted list of notes.`nFocus on technical details, solutions, and key decisions."
         return settings.Get("learnings_prompt", defaultPrompt)
     }
 
-    GetSystemPromptNames(llmIndex) {
+    GetSystemPromptNames(modelIndex) {
         names := []
-        prompts := this.GetVisiblePrompts(llmIndex)
+        prompts := this.GetVisiblePrompts(modelIndex)
         for prompt in prompts {
             names.Push(prompt["name"])
         }
@@ -233,10 +232,10 @@ class ConfigurationService {
         this.LoadAll()
     }
 
-    SaveRawSystemPromptValue(llmIndex, promptName, newText) {
+    SaveRawSystemPromptValue(modelIndex, promptName, newText) {
         cleanText := newText
 
-        prompts := this.GetVisiblePrompts(llmIndex)
+        prompts := this.GetVisiblePrompts(modelIndex)
         for prompt in prompts {
             if (prompt["name"] == promptName) {
                 value := prompt["value"]

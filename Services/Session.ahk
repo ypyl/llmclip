@@ -11,9 +11,9 @@ class Session {
     systemPromptIndex := 1
     processingState := ProcessingState.IDLE
 
-    __New(defaultSystemPrompt, defaultLLMType := 1) {
+    __New(defaultSystemPrompt, defaultModelIndex := 1) {
         this.histories := [History([ChatMessage("system", [TextContent(defaultSystemPrompt)])])]
-        this.llmType := defaultLLMType
+        this.llmType := defaultModelIndex
     }
 
     GetCurrentHistory() => this.histories[this.currentHistoryIndex]

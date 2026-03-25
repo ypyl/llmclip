@@ -72,8 +72,8 @@ class MainView {
             this.gui,
             this.controller,
             this.settingsController,
-            this.controller.LLMDisplayNames,
-            this.controller.CurrentLLMTypeIndex,
+            this.controller.ModelDisplayNames,
+            this.controller.CurrentModelIndex,
             this.controller.SessionLabels,
             this.controller.CurrentSessionIndex
         )
@@ -91,7 +91,7 @@ class MainView {
         this.promptView.Create(
             this.gui, 
             this, 
-            this.controller.GetSystemPrompts(this.controller.CurrentLLMTypeIndex),
+            this.controller.GetSystemPrompts(this.controller.CurrentModelIndex),
             this.controller.CurrentSystemPromptIndex,
             this.settingsController,
             this.controller

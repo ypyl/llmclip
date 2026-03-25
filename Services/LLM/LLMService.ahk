@@ -105,9 +105,7 @@ class LLMService {
 
         try {
             ; Create LLM client if it doesn't exist yet
-            settings := this.configManager.GetSelectedSettings(sessionManager.GetSessionLLMType(sessionIndex))
-
-            ; Update tools property based on checkbox values
+            settings := this.configManager.GetSelectedSettings(sessionManager.GetSessionModelIndex(sessionIndex))
             settings["tools"] := this.ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled)
 
             ; Add a user message to instruct the model on answer length based on menu selection
@@ -168,7 +166,7 @@ class LLMService {
         }
 
         ; Build compression prompt
-        compressionPrompt := this.configManager.GetCompressionPrompt(sessionManager.GetSessionLLMType(sessionIndex))
+        compressionPrompt := this.configManager.GetCompressionPrompt(sessionManager.GetSessionModelIndex(sessionIndex))
 
         if (compressionPrompt == "") {
             throw Error("Compression prompt not configured for this provider.")
@@ -184,7 +182,7 @@ class LLMService {
 
         try {
             ; Create LLM client settings
-            settings := this.configManager.GetSelectedSettings(sessionManager.GetSessionLLMType(sessionIndex))
+            settings := this.configManager.GetSelectedSettings(sessionManager.GetSessionModelIndex(sessionIndex))
             settings["tools"] := []  ; No tools for compression
 
             ; Call LLM with compression prompt
@@ -224,7 +222,7 @@ class LLMService {
         }
 
         ; Get learnings prompt
-        learningsPrompt := this.configManager.GetLearningsPrompt(sessionManager.GetSessionLLMType(sessionIndex))
+        learningsPrompt := this.configManager.GetLearningsPrompt(sessionManager.GetSessionModelIndex(sessionIndex))
         learningsPrompt .= "`n`nCONVERSATION:`n" conversationText
 
         ; Create temporary messages for the extraction request
@@ -235,7 +233,7 @@ class LLMService {
 
         try {
             ; Create LLM client settings
-            settings := this.configManager.GetSelectedSettings(sessionManager.GetSessionLLMType(sessionIndex))
+            settings := this.configManager.GetSelectedSettings(sessionManager.GetSessionModelIndex(sessionIndex))
             settings["tools"] := []  ; No tools for extraction
 
             ; Call LLM

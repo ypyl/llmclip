@@ -14,7 +14,7 @@ class ClearHistoryCommand {
 
         ; Update the system prompt content after clearing
         systemPrompt := this.configManager.GetSystemPromptValue(
-            this.sessionManager.GetCurrentSessionLLMType(),
+            this.sessionManager.GetCurrentSessionModelIndex(),
             this.sessionManager.GetCurrentSessionSystemPrompt()
         )
         this.sessionManager.UpdateSystemPromptContent(systemPrompt)

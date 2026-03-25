@@ -38,9 +38,9 @@ class SettingsController {
 
     SelectModel(ItemName, ItemPos, MyMenu) {
         ; Get current system prompt name before changing model
-        oldLlmTypeIndex := this.sessionManager.GetCurrentSessionLLMType()
+        oldModelIndex := this.sessionManager.GetCurrentSessionModelIndex()
         oldSystemPromptIndex := this.sessionManager.GetCurrentSessionSystemPrompt()
-        oldSystemPromptNames := this.configManager.GetSystemPromptNames(oldLlmTypeIndex)
+        oldSystemPromptNames := this.configManager.GetSystemPromptNames(oldModelIndex)
         oldSystemPromptName := ""
         if (oldSystemPromptIndex > 0 && oldSystemPromptIndex <= oldSystemPromptNames.Length) {
             oldSystemPromptName := oldSystemPromptNames[oldSystemPromptIndex]
@@ -50,11 +50,11 @@ class SettingsController {
         this.selectModelCommand.Execute(ItemPos)
 
         ; Update UI
-        this.menuView.UpdateModelMenu(ItemPos, this.configManager.llmDisplayNames)
+        this.menuView.UpdateModelMenu(ItemPos, this.configManager.modelDisplayNames)
 
         ; Update system prompts for the new model
         this.promptView.ClearSystemPrompt()
-        systemPromptNames := this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType())
+        systemPromptNames := this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionModelIndex())
         this.promptView.AddSystemPrompts(systemPromptNames)
 
         if (systemPromptNames.Length > 0) {
@@ -118,7 +118,7 @@ class SettingsController {
         this.changeSystemPromptCommand.Execute(systemPromptIndex)
 
         inputTemplate := this.configManager.GetInputTemplate(
-            this.sessionManager.GetCurrentSessionLLMType(),
+            this.sessionManager.GetCurrentSessionModelIndex(),
             systemPromptIndex
         )
         if (inputTemplate) {
@@ -140,20 +140,20 @@ class SettingsController {
         this.reloadSettingsCommand.Execute()
 
         ; Refresh models menu
-        this.menuView.RebuildModelMenu(this.configManager.llmDisplayNames, ObjBindMethod(this, "SelectModel"))
+        this.menuView.RebuildModelMenu(this.configManager.modelDisplayNames, ObjBindMethod(this, "SelectModel"))
 
         ; Update current selection
-        currentModelIndex := this.sessionManager.GetCurrentSessionLLMType()
-        if (currentModelIndex > this.configManager.llmTypes.Length) {
+        currentModelIndex := this.sessionManager.GetCurrentSessionModelIndex()
+        if (currentModelIndex > this.configManager.models.Length) {
             currentModelIndex := 1
             this.selectModelCommand.Execute(1)
         }
-        this.menuView.UpdateModelMenu(currentModelIndex, this.configManager.llmDisplayNames)
+        this.menuView.UpdateModelMenu(currentModelIndex, this.configManager.modelDisplayNames)
 
         ; Update system prompts
         currentSystemPrompt := this.promptView.GetSystemPromptValue()
         this.promptView.ClearSystemPrompt()
-        this.promptView.AddSystemPrompts(this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionLLMType()))
+        this.promptView.AddSystemPrompts(this.configManager.GetSystemPromptNames(this.sessionManager.GetCurrentSessionModelIndex()))
 
         try {
             this.promptView.SetSystemPromptValue(currentSystemPrompt)

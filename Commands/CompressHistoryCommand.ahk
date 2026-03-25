@@ -25,7 +25,7 @@ class CompressHistoryCommand {
             throw Error("No conversation history to compress.")
         }
 
-        compressionPrompt := this.configManager.GetCompressionPrompt(this.sessionManager.GetSessionLLMType(targetSessionIndex))
+        compressionPrompt := this.configManager.GetCompressionPrompt(this.sessionManager.GetSessionModelIndex(targetSessionIndex))
 
         if (compressionPrompt == "") {
             throw Error("Compression prompt not configured for this provider.")

@@ -13,7 +13,7 @@ class ChangeSystemPromptCommand {
         this.sessionManager.SetCurrentSessionSystemPrompt(systemPromptIndex)
         
         systemPromptContent := this.configManager.GetSystemPromptValue(
-            this.sessionManager.GetCurrentSessionLLMType(),
+            this.sessionManager.GetCurrentSessionModelIndex(),
             systemPromptIndex
         )
         

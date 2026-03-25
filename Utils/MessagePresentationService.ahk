@@ -8,16 +8,16 @@ class MessagePresentationService {
      */
     static GetListViewItem(message) {
         roleEmoji := MessagePresentationService.GetRoleEmoji(message.Role)
-        
+
         duration := message.AdditionalProperties.Has("duration") ? message.AdditionalProperties["duration"] : ""
         tokens := message.AdditionalProperties.Has("tokens") ? message.AdditionalProperties["tokens"] : ""
-        
+
         ; Get presentation text from service, excluding thinking content for the list view
         presentationText := MessagePresentationService.GetPresentationText(message, false)
-        
+
         ; Get content with truncation for ListView
         contentText := SubStr(presentationText, 1, 70) (StrLen(presentationText) > 70 ? "..." : "")
-        
+
         ; Check for batch indicators and modify the displayed content
         if (message.AdditionalProperties.Has("isBatchMode") && message.AdditionalProperties["isBatchMode"]) {
             contentText := "🔄 [Batch] " . contentText
@@ -60,7 +60,7 @@ class MessagePresentationService {
                     userContent .= part.Text
                 }
             }
-            
+
             ; Check if has images
             hasImage := false
             for part in message.Contents {
@@ -69,11 +69,11 @@ class MessagePresentationService {
                     break
                 }
             }
-            
+
             if (userContent == "" && !hasImage) {
                 userContent := "(empty message)"
             }
-            
+
             return hasImage ? userContent . " [Image]" : userContent
         }
 
@@ -91,7 +91,7 @@ class MessagePresentationService {
         if (audioData != "") {
             return MessagePresentationService.FormatAudioMessage(audioData)
         }
-        
+
         ; Check for tool calls and results
         toolCallTexts := []
         for part in message.Contents {
@@ -102,7 +102,7 @@ class MessagePresentationService {
                 return part.Result
             }
         }
-        
+
         if (toolCallTexts.Length > 0) {
             finalText := ""
             for text in toolCallTexts {
@@ -112,7 +112,7 @@ class MessagePresentationService {
             }
             return finalText
         }
-        
+
         ; Get text content and check for thinking
         text := message.GetText()
         if (includeThinking && message.AdditionalProperties.Has("thinking") && message.AdditionalProperties["thinking"] != "") {
@@ -121,7 +121,7 @@ class MessagePresentationService {
             fence := InStr(thinkingContent, "``````") ? "````````" : "``````"
             text := fence . "thinking`n" . thinkingContent . "`n" . fence . "`n`n" . text
         }
-        
+
         ; Check if has images
         hasImage := false
         for part in message.Contents {
@@ -130,8 +130,28 @@ class MessagePresentationService {
                 break
             }
         }
-        
+
         return hasImage ? text . " [Image]" : text
+    }
+
+    /**
+     * Get the list-view item for a synthetic context row.
+     * @param message - ChatMessage instance that has context
+     * @returns {Object} {roleEmoji, contentText, duration, tokens}
+     */
+    static GetContextListViewItem(message) {
+        contextCount := 0
+        for part in message.Contents {
+            if (A_Index == 1)
+                continue
+            contextCount++
+        }
+        return {
+            roleEmoji: "📎",
+            contentText: contextCount . " context item" . (contextCount != 1 ? "s" : "") . " attached",
+            duration: "",
+            tokens: ""
+        }
     }
 
     /**
@@ -148,6 +168,16 @@ class MessagePresentationService {
             duration: "",
             tokens: ""
         }
+    }
+
+    /**
+     * Get presentation text (Markdown) for a synthetic context row.
+     * @param message - ChatMessage instance that has context
+     * @returns String Markdown for display in the WebView
+     */
+    static GetContextPresentationText(message) {
+        contextText := message.Contents[1].Text
+        return "**📎 Attached context:**`n`n`n" . contextText . "`n"
     }
 
     /**

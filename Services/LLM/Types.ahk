@@ -326,7 +326,7 @@ class ChatMessage {
         }
 
         ; Store additional properties (duration, tokens, thinking, etc.)
-        for key in ["duration", "tokens", "thinking"] {
+        for key in ["duration", "tokens", "thinking", "hasContext"] {
             if (obj.HasOwnProp(key)) {
                 msg.AdditionalProperties[key] := obj.%key%
             }

@@ -26,7 +26,7 @@ class Session {
         newHistory := this.GetCurrentHistory().Branch(upToIndex)
         if (!newHistory)
             return false
-        
+
         this.histories.Push(newHistory)
         this.currentHistoryIndex := this.histories.Length
         return true
@@ -50,10 +50,16 @@ class Session {
 
     GetHistoryInfo() => this.currentHistoryIndex . "/" . this.histories.Length
 
-    Reset(defaultSystemPrompt) {
+    ResetSesssion(defaultSystemPrompt) {
         this.histories := [History([ChatMessage("system", [TextContent(defaultSystemPrompt)])])]
         this.currentHistoryIndex := 1
         this.context := []
+        this.processingState := ProcessingState.IDLE
+    }
+
+    ResetHistory(defaultSystemPrompt) {
+        this.histories := [History([ChatMessage("system", [TextContent(defaultSystemPrompt)])])]
+        this.currentHistoryIndex := 1
         this.processingState := ProcessingState.IDLE
     }
 
@@ -85,15 +91,15 @@ class Session {
 
     static FromObject(obj, convertMapFunc) {
         isMap := Type(obj) = "Map"
-        
+
         hasHistories := isMap ? obj.Has("histories") : obj.HasOwnProp("histories")
         hasMessages := isMap ? obj.Has("messages") : obj.HasOwnProp("messages")
-        
+
         if (!hasHistories && !hasMessages)
             throw Error("Invalid session data")
 
         newSession := Session("", 1)
-        
+
         if (hasHistories) {
             histories := isMap ? obj["histories"] : obj.histories
             newSession.histories := []
@@ -112,7 +118,7 @@ class Session {
 
         newSession.llmType := isMap ? obj["llmType"] : obj.llmType
         newSession.systemPromptIndex := isMap ? obj["systemPrompt"] : obj.systemPrompt
-        
+
         hasProcessingState := isMap ? obj.Has("processingState") : obj.HasOwnProp("processingState")
         if (hasProcessingState)
             newSession.processingState := isMap ? obj["processingState"] : obj.processingState

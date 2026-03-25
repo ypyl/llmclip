@@ -121,15 +121,15 @@ class App {
         clientInstance := LLMClient(llmProviders)
 
         llm := LLMService(cfg, toolsMap, clientInstance)
-        
+
         cps := ContextPresentationService(ctx)
 
         this.controller := MainController(
-            cfg, 
-            sess, 
-            llm, 
-            wv, 
-            rec, 
+            cfg,
+            sess,
+            llm,
+            wv,
+            rec,
             ctx
         )
 
@@ -200,13 +200,13 @@ class App {
         notesViewInstance := NotesView()
         notesContr := NotesController(copyToClip, notesViewInstance)
         notesViewInstance.controller := notesContr
-        
+
         settingsContr := SettingsController(cfg, sess, selectModel, changeAnswerSize, toggleTool, getToolsState, getCompressionState, changeSystemPrompt, reloadSettings, switchSession)
         recordingContr := RecordingController(rec, startRec, stopRec, toggleRec)
 
         this.controller.SetSubControllers(ctxView, histView, notesContr, settingsContr, recordingContr)
         this.view.SetSubControllers(ctxView, histView, settingsContr, recordingContr)
-        
+
         settingsContr.SetViews(this.view.menuView, this.view.promptView, this.view)
         recordingContr.SetViews(this.view.topControlsView, this.view)
 
@@ -218,8 +218,8 @@ class App {
     Start() {
         this.controller.Start()
         OnExit((*) => this.controller.SaveStateAndConversation())
-        Hotkey("F3", (*) => this.controller.ToggleDisplay())
-        Hotkey("F2", (*) => this.controller.ResetAll())
-        Hotkey("F4", (*) => this.controller.AskToLLM())
+        Hotkey("F6", (*) => this.controller.ToggleDisplay())
+        Hotkey("F5", (*) => this.controller.ResetAll())
+        Hotkey("F7", (*) => this.controller.AskToLLM())
     }
 }

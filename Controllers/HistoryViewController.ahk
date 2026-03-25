@@ -92,7 +92,7 @@ class HistoryViewController {
             ; Store the resolved message index for use by save/copy
             this.currentSelectedItem := itemData.messageIndex
             
-            presentationText := this.getMessagePresentationCommand.Execute(itemData.messageIndex, itemData.isThinking)
+            presentationText := this.getMessagePresentationCommand.Execute(itemData.messageIndex, itemData.isThinking, true, itemData.isContext)
 
             this.historyView.SetActionButtonVisible(true)  ; Show the Copy button
             this.renderMarkdownCommand.Execute(presentationText)  ; Render the selected message in the WebView
@@ -102,8 +102,8 @@ class HistoryViewController {
     ChatHistoryDoubleClick(GuiCtrl, Item) {
         if (Item > 0 && this.regenerateMessageCommand) {
             itemData := this.GetItemAt(Item)
-            if (!itemData || itemData.isThinking)
-                return  ; thinking rows cannot be regenerated
+            if (!itemData || itemData.isThinking || itemData.isContext)
+                return  ; thinking/context rows cannot be regenerated
             
             messageText := this.regenerateMessageCommand.Execute(itemData.messageIndex)
             if (messageText != "") {
@@ -118,7 +118,7 @@ class HistoryViewController {
         if (listRow) {
             itemData := this.GetItemAt(listRow)
             if (itemData) {
-                messageText := this.getMessagePresentationCommand.Execute(itemData.messageIndex, itemData.isThinking, false)
+                messageText := this.getMessagePresentationCommand.Execute(itemData.messageIndex, itemData.isThinking, false, itemData.isContext)
                 this.copyToClipboardCommand.Execute(messageText)
             }
         }
@@ -209,7 +209,7 @@ class HistoryViewController {
 
             if (listRowToFocus > 0) {
                 this.historyView.Modify(listRowToFocus, "Select")
-                presentationText := this.getMessagePresentationCommand.Execute(savedMsgIndex, isThinking)
+                presentationText := this.getMessagePresentationCommand.Execute(savedMsgIndex, isThinking, true, false)
                 this.renderMarkdownCommand.Execute(presentationText)
             }
         }

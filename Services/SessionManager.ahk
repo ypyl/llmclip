@@ -72,9 +72,9 @@ class SessionManager {
         return false
     }
 
-    ResetCurrentSession() => this.GetCurrentSession().Reset(this.defaultSystemPrompt)
+    ResetCurrentSession() => this.GetCurrentSession().ResetSesssion(this.defaultSystemPrompt)
 
-    ClearCurrentMessages() => this.GetCurrentSession().Reset(this.defaultSystemPrompt)
+    ClearCurrentMessages() => this.GetCurrentSession().ResetHistory(this.defaultSystemPrompt)
 
     ClearCurrentContext() => this.GetCurrentSession().context := []
 
@@ -109,7 +109,7 @@ class SessionManager {
         messages := this.GetSessionMessages(index)
         systemMsg := messages[1]
 
-        this.sessions[index].Reset(this.defaultSystemPrompt)
+        this.sessions[index].ResetHistory(this.defaultSystemPrompt)
 
         current := this.GetSessionMessages(index)
         current[1] := systemMsg
@@ -267,17 +267,17 @@ class SessionManager {
             msg := messages[index]
             newContents := []
             hasTextParts := false
-            
+
             ; 1. Check if the text starts with a thinking block
             ; The PresentationService uses 6 or 8 backticks. We'll generically match ```...+thinking
             thinkingContent := ""
             mainContent := newContent
-            
+
             if (RegExMatch(newContent, "^(``{3,})thinking\n([\s\S]*?)\n\1\n{1,2}([\s\S]*)$", &match)) {
                 thinkingContent := match[2]
                 mainContent := match[3]
             }
-            
+
             ; 2. Update the thinking property
             if (thinkingContent != "") {
                 msg.AdditionalProperties["thinking"] := thinkingContent
@@ -297,11 +297,11 @@ class SessionManager {
                     newContents.Push(part)
                 }
             }
-            
+
             if (!hasTextParts) {
                 newContents.InsertAt(1, TextContent(mainContent))
             }
-            
+
             msg.Contents := newContents
             return true
         }

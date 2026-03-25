@@ -111,7 +111,7 @@ class ContextManager {
             return ""
 
         contextText := ""
-        
+
         ; Build general context from checked items (that are not selected and not images/PDFs)
         for index, item in context {
             isSelected := false
@@ -145,7 +145,7 @@ class ContextManager {
                     }
                 }
             }
-            
+
             if (selectedContextText != "") {
                 messageContent .= "`n`n<SELECTED_CONTEXT>`n" selectedContextText "`n<SELECTED_CONTEXT>"
             }

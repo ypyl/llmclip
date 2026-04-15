@@ -103,6 +103,27 @@ class ContextViewController {
         this.setContextItemCheckedCommand.Execute(Item, Checked)
     }
 
+    SelectAllToggle(*) {
+        context := this.sessionManager.GetCurrentSessionContext()
+        if (context.Length == 0)
+            return
+        
+        allChecked := true
+        for item in context {
+            if (!item.Checked) {
+                allChecked := false
+                break
+            }
+        }
+        
+        newCheckedState := !allChecked
+        for i, item in context {
+            this.setContextItemCheckedCommand.Execute(i, newCheckedState)
+        }
+        
+        this.UpdateContextView()
+    }
+
     DeleteSelected(*) {
         selectedIndices := []
 

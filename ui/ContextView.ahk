@@ -1,6 +1,5 @@
 class ContextView {
     contextBox := ""
-    selectAllCheckbox := ""
     deleteButton := ""
     clearSelectionButton := ""
     clearAllButton := ""
@@ -8,9 +7,6 @@ class ContextView {
 
     Create(gui, contextViewController) {
         this.controller := contextViewController
-
-        this.selectAllCheckbox := gui.Add("Button", "vSelectAllCheckbox x10 y10 w100", "Toggle")
-        this.selectAllCheckbox.OnEvent("Click", ObjBindMethod(contextViewController, "SelectAllToggle"))
 
         this.contextBox := gui.Add("ListView", "vContextBox x10 y40 w380 h150 Checked -Hdr", ["Item"])
         this.contextBox.OnEvent("ItemSelect", ObjBindMethod(contextViewController, "ContextBoxSelect"))

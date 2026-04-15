@@ -82,7 +82,8 @@ class MainView {
             this.gui,
             this.controller.IsRecording,
             this.recordingController,
-            this.controller
+            this.controller,
+            this.contextViewController
         )
 
         this.contextView.Create(this.gui, this.contextViewController)

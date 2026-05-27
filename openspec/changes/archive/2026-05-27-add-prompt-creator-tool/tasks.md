@@ -27,6 +27,6 @@
 
 ## 5. Integration test
 
-- [ ] 5.1 Run `main.ahk`, enable the `create_prompt` tool in settings, start a chat, and ask the LLM: "Create a system prompt called 'Test Prompt' that acts as a git helper." Verify `prompts/test-prompt.md` and `prompts/test-prompt.json` are created, the prompt appears in the prompts menu, and the LLM confirms the creation in its response
-- [ ] 5.2 Test duplicate detection: ask the LLM to create "Test Prompt" again and verify the tool returns an error
-- [ ] 5.3 Test auto-approval: configure `tools.create_prompt.name: ".*"` in a prompt JSON, use that prompt, and verify the tool executes without the approval dialog
+- [x] 5.1 Run `main.ahk`, enable the `create_prompt` tool in settings, start a chat, and ask the LLM: "Create a system prompt called 'Test Prompt' that acts as a git helper." Verify `prompts/test-prompt.md` and `prompts/test-prompt.json` are created, the prompt appears in the prompts menu, and the LLM confirms the creation in its response
+- [x] 5.2 Test duplicate detection: ask the LLM to create "Test Prompt" again and verify the tool returns an error
+- [x] 5.3 Test auto-approval: configure `tools.create_prompt.name: ".*"` in a prompt JSON, use that prompt, and verify the tool executes without the approval dialog

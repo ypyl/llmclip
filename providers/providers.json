@@ -5,50 +5,25 @@
       {
         "model": "openai/gpt-4o-mini",
         "image": true,
-        "tools": [
-          "execute_powershell",
-          "file_system",
-          "web_search",
-          "web_fetch"
-        ]
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch"]
       },
       {
         "model": "openai/gpt-4o",
-        "tools": [
-          "execute_powershell",
-          "file_system",
-          "web_search",
-          "web_fetch"
-        ]
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch"]
       },
       {
         "model": "openai/gpt-4.1",
         "image": true,
-        "tools": [
-          "execute_powershell",
-          "file_system",
-          "web_search",
-          "web_fetch"
-        ]
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch"]
       },
       {
         "model": "openai/gpt-4.1-nano",
-        "tools": [
-          "execute_powershell",
-          "file_system",
-          "web_search",
-          "web_fetch"
-        ]
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch"]
       },
       {
         "model": "openai/gpt-4.1-mini",
         "image": true,
-        "tools": [
-          "execute_powershell",
-          "file_system",
-          "web_search",
-          "web_fetch"
-        ]
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch"]
       }
     ]
   },
@@ -58,32 +33,17 @@
       {
         "model": "llama-3.3-70b-versatile",
         "temperature": 0.7,
-        "tools": [
-          "execute_powershell",
-          "file_system",
-          "web_search",
-          "web_fetch"
-        ]
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch"]
       },
       {
         "model": "openai/gpt-oss-20b",
         "temperature": 0.7,
-        "tools": [
-          "execute_powershell",
-          "file_system",
-          "web_search",
-          "web_fetch"
-        ]
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch"]
       },
       {
         "model": "openai/gpt-oss-120b",
         "temperature": 0.7,
-        "tools": [
-          "execute_powershell",
-          "file_system",
-          "web_search",
-          "web_fetch"
-        ]
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch"]
       },
       {
         "model": "groq/compound",
@@ -93,33 +53,18 @@
       {
         "model": "moonshotai/kimi-k2-instruct",
         "temperature": 0.7,
-        "tools": [
-          "execute_powershell",
-          "file_system",
-          "web_search",
-          "web_fetch"
-        ]
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch"]
       },
       {
         "model": "meta-llama/llama-4-scout-17b-16e-instruct",
         "temperature": 0.7,
         "image": true,
-        "tools": [
-          "execute_powershell",
-          "file_system",
-          "web_search",
-          "web_fetch"
-        ]
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch"]
       },
       {
         "model": "qwen/qwen3-32b",
         "temperature": 0.7,
-        "tools": [
-          "execute_powershell",
-          "file_system",
-          "web_search",
-          "web_fetch"
-        ]
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch"]
       }
     ]
   },
@@ -137,32 +82,17 @@
       {
         "model": "gemini-2.5-flash",
         "temperature": 0.7,
-        "tools": [
-          "execute_powershell",
-          "file_system",
-          "web_search",
-          "web_fetch"
-        ]
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch"]
       },
       {
         "model": "gemini-2.5-pro",
         "temperature": 0.7,
-        "tools": [
-          "execute_powershell",
-          "file_system",
-          "web_search",
-          "web_fetch"
-        ]
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch"]
       },
       {
         "model": "gemini-2.5-flash-lite",
         "temperature": 0.7,
-        "tools": [
-          "execute_powershell",
-          "file_system",
-          "web_search",
-          "web_fetch"
-        ]
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch"]
       }
     ]
   },
@@ -178,51 +108,27 @@
         "model": "lfm2.5-thinking:latest",
         "stream": false,
         "temperature": 0.7,
-        "tools": [
-          "execute_powershell",
-          "file_system",
-          "web_search",
-          "web_fetch",
-          "read_url_markdown"
-        ]
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch", "read_url_markdown"]
       },
       {
         "model": "qwen3.5:latest",
         "stream": false,
         "temperature": 0.7,
         "image": true,
-        "tools": [
-          "execute_powershell",
-          "file_system",
-          "web_search",
-          "web_fetch",
-          "read_url_markdown"
-        ]
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch", "read_url_markdown"]
       },
       {
         "model": "qwen3.5:0.8b",
         "stream": false,
         "temperature": 0.7,
         "image": true,
-        "tools": [
-          "execute_powershell",
-          "file_system",
-          "web_search",
-          "web_fetch",
-          "read_url_markdown"
-        ]
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch", "read_url_markdown"]
       },
       {
         "model": "lfm2:latest",
         "stream": false,
         "temperature": 0.7,
-        "tools": [
-          "execute_powershell",
-          "file_system",
-          "web_search",
-          "web_fetch",
-          "read_url_markdown"
-        ]
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch", "read_url_markdown"]
       }
     ]
   },
@@ -266,13 +172,30 @@
         "stream": false,
         "temperature": 0.6,
         "top_p": 0.95,
-        "tools": [
-          "execute_powershell",
-          "file_system",
-          "web_search",
-          "web_fetch",
-          "read_url_markdown"
-        ]
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch", "read_url_markdown"]
+      }
+    ]
+  },
+  "OpenCodeGo": {
+    "curl": "curl -s -S -X POST \"https://opencode.ai/zen/go/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
+    "models": [
+      {
+        "model": "deepseek-v4-flash",
+        "temperature": 0.7,
+        "image": false,
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch"]
+      },
+      {
+        "model": "deepseek-v4-pro",
+        "temperature": 0.7,
+        "image": false,
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch"]
+      },
+      {
+        "model": "qwen3.6-plus",
+        "temperature": 0.7,
+        "image": true,
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch"]
       }
     ]
   }

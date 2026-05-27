@@ -1,0 +1,67 @@
+schema: spec-driven
+
+context: |
+  ## Tech Stack
+  - **Language**: AutoHotkey v2 (NOT v1). Fat-arrow functions, class syntax, `=>` lambdas. No `%` command syntax.
+  - **GUI**: WebView2 (Microsoft Edge WebView2). UI is rendered via `ui.html` + embedded JS libraries (marked, mermaid).
+  - **LLM Integration**: curl subprocess — cURL must be installed and on PATH.
+  - **Runtime Config**: JSON files in `providers/` and `prompts/` directories, merged at runtime. `keys.ini` for API keys (gitignored).
+  - **Build**: No build step for development. Run `main.ahk` directly. CI compiles `main.ahk` → `llmclip.exe` via `ahk2exe-action@v1.2.0`.
+  - **Test**: No test suite, no linter, no formatter.
+
+  ## Architecture (Strict Layered)
+  - **`main.ahk`**: Bootstrap — creates App and calls `App.Start()`.
+  - **`App.ahk`**: Composition root. The ONLY place where Services, Commands, Controllers, and Views are instantiated. Manual constructor injection.
+  - **Views** (`ui/`): UI structure only. Zero logic or state. Creates controls, stores references, forwards events to controller.
+  - **Controllers** (`controllers/`): UI coordination only. Can READ services (never mutate). Controller-to-controller calls forbidden.
+  - **Commands** (`commands/`): The ONLY layer allowed to mutate service state. No GUI access. Cannot call other commands. One class per use-case, each with `Execute()` method.
+  - **Services** (`services/`): Domain state owners. Pure logic, OS/persistence. No UI/controller/command references. `ConfigurationService` is a singleton via `GetInstance()`.
+  - **Utils** (`utils/`): Static helper methods only. No state, no instantiation in App.ahk.
+
+  ## Dependency & Include System
+  - AHK uses `#Include` for dependencies. All includes listed at top of `App.ahk` — this IS the dependency registry.
+  - When adding a new class file, you MUST add its `#Include` in `App.ahk`.
+  - Include paths in sub-files are relative to that file (e.g., `#Include ..\Services\Foo.ahk`).
+  - `Lib/` is vendored from [thqby/ahk2_lib](https://github.com/thqby/ahk2_lib) — NEVER modify.
+
+  ## Circular Dependency Resolution
+  - If View needs Controller and Controller needs View: use property assignment after construction (see `App.ahk` pattern).
+
+  ## Forbidden Patterns (Instant Bugs)
+  - Controller mutating Service directly → use a Command
+  - Service or Command touching GUI
+  - Controller → Controller calls
+  - Instantiation (`new`) outside `App.ahk` (utility static methods exempt)
+  - AutoHotkey v1 syntax
+
+  ## Key Services
+  - `ConfigurationService` (singleton), `SessionManager`, `ContextManager`, `LLMService`, `RecordingService`, `WebViewManager`
+  - LLM sub-services in `services/LLM/`: providers (OpenAI-compatible, Google, Ollama, Groq), tool implementations
+  - Configuration sub-services in `services/Configuration/`: `Providers`, `SystemPrompts`, `Roles`
+
+rules:
+  proposal:
+    - Identify which architectural layers are touched (View, Controller, Command, Service, Utils)
+    - Confirm no layer boundary violations exist in the proposed approach
+    - Include a verification/rollback plan
+    - Keep proposals concise — focus on what and why
+
+  specs:
+    - Specify the target layer and file path for each new artifact
+    - Reference existing patterns (e.g., Command with `Execute()`, singleton via `GetInstance()`, View property-assignment wiring)
+    - Use Given/When/Then format for behavior specifications
+    - List new `#Include` entries required in `App.ahk`
+
+  design:
+    - List all new `#Include` additions needed in `App.ahk` with exact paths
+    - Verify no circular dependencies in the dependency graph
+    - Follow the composition root pattern: all instantiation in `App.ahk`
+    - If adding to `services/LLM/` or `services/Configuration/`, follow existing provider/config patterns
+    - Never modify files in `Lib/`
+
+  tasks:
+    - Break tasks into chunks of max 2 hours each
+    - Include `#Include` additions in `App.ahk` as explicit, early tasks
+    - Each task should be independently testable by running `main.ahk`
+    - Group tasks by architectural layer (Services first, then Commands, then Controllers, then Views)
+    - Add a final integration task to verify end-to-end with `main.ahk`

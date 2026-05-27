@@ -55,7 +55,7 @@ class LLMClient {
 
             ; Prepare curl command
             curlCmd := Format(curl, inputFile, outputFile)
-            
+
             ; Replace API_KEY placeholder if present
             if (settings.Has("api_key")) {
                 curlCmd := StrReplace(curlCmd, "{API_KEY}", settings["api_key"])
@@ -131,16 +131,16 @@ class LLMClient {
 
     GetProvider(settings) {
         providerName := settings.Has("provider_name") ? settings["provider_name"] : ""
-        
+
         if (providerName = "GroqAudio" || providerName = "Groq Audio" || providerName = "Audio")
             return this.providers["audio"]
-        else if (providerName = "Groq" || providerName = "GitHub" || providerName = "OpenRouter" || providerName = "OpenAI" || providerName = "Azure" || providerName = "Nvidia")
+        else if (providerName = "Groq" || providerName = "GitHub" || providerName = "OpenCodeGo" || providerName = "OpenRouter" || providerName = "OpenAI" || providerName = "Azure" || providerName = "Nvidia")
             return this.providers["openai"]
         else if (InStr(providerName, "Ollama") = 1)
             return this.providers["ollama"]
         else if (providerName = "Google")
             return this.providers["google"]
-            
+
         throw Error("Unknown provider type: " providerName " (" settings.Get("type", "") ")")
     }
 }

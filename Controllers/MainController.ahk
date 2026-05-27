@@ -470,6 +470,11 @@ class MainController {
     ResetAll(*) {
         this.resetAllCommand.Execute()
         this.UpdateSessionUI()
+        modelIndex := this.sessionManager.GetCurrentSessionModelIndex()
+        promptIndex := this.sessionManager.GetCurrentSessionSystemPrompt()
+        if (inputTemplate := this.configManager.GetInputTemplate(modelIndex, promptIndex)) {
+            this.view.SetPromptValue(inputTemplate)
+        }
         this.SetProcessingState(ProcessingState.IDLE)
     }
 

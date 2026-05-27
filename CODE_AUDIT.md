@@ -1,0 +1,313 @@
+# Code Audit — Bugs, Issues & Refactoring Opportunities
+
+> Generated from deep codebase exploration — May 2026
+> Covers all `.ahk` files across Commands, Controllers, Services, Utils, and UI
+
+---
+
+## 🔴 Critical Bugs (Will Crash or Produce Wrong Results)
+
+### B1. `SendBatchToLLMCommand` — Missing method on `tempSession` ✅ **FIXED**
+
+> **Fix**: `openspec/changes/fix-batch-mode-stub-crash` — eliminated the stub entirely. `LLMService.SendToLLM()` now accepts `(messages, modelIndex, ...)` directly rather than requiring a `SessionManager`-shaped object.
+
+**File**: `Commands\SendBatchToLLMCommand.ahk` (line ~53)  
+**Impact**: ~~Batch mode is completely broken — crashes when sending batch items to LLM.~~
+
+The stub object `tempSession` exposes `GetSessionLLMType`, but `LLMService.SendToLLM` calls `GetSessionModelIndex`. Method name mismatch:
+
+```ahk
+; SendBatchToLLMCommand builds:
+tempSession := {
+    GetSessionLLMType: (*) => ...    ; ← wrong name
+    ...
+}
+
+; LLMService.SendToLLM calls:
+settings := this.configManager.GetSelectedSettings(
+    sessionManager.GetSessionModelIndex(sessionIndex)  ; ← needs THIS
+)
+```
+
+**Fix**: Rename `GetSessionLLMType` → `GetSessionModelIndex` in the stub object, or add both methods.
+
+---
+
+### B2. `ClipboardParserService.Parse()` — Variable shadowing breaks path splitting
+
+**File**: `Utils\ClipboardParserService.ahk` (lines ~13-18)  
+**Impact**: When clipboard contains multiple lines (e.g., file paths from Explorer), only the raw unsplit text is returned. Path splitting silently fails.
+
+In AHK v2, `:=` inside an `if` block creates a **new block-scoped local**, shadowing the outer variable:
+
+```ahk
+localTxtFromClipboardArray := [txtFromClipboard]     ; outer scope
+
+if (InStr(txtFromClipboard, "`r`n") || ...) {
+    localTxtFromClipboardArray := StrSplit(...)       ; ⚠️ new local, outer unchanged
+    if (localTxtFromClipboardArray.Length = 1) {
+        localTxtFromClipboardArray := StrSplit(...)   ; ⚠️ yet another local
+    }
+}
+; At this point, outer localTxtFromClipboardArray is still [txtFromClipboard]
+```
+
+**Fix**: Declare once at the top and use `:=` only for the initial declaration. Subsequent assignments should use `=` or restructure without nested blocks.
+
+---
+
+### B3. `MainController.AskToLLM` — Auto-approval loop variable scoping
+
+**File**: `Controllers\MainController.ahk` (lines ~265-282)  
+**Impact**: Auto-approved tool calls may loop infinitely because the loop condition reads a stale `result`.
+
+```ahk
+result := this.sendToLLMCommand.Execute(...)  ; outer
+
+while (result.action == ... && result.hasUnexecutedToolCalls) {
+    ...
+    result := this.sendToLLMCommand.Execute(...)  ; ⚠️ block-scoped new local?
+    continue
+}
+```
+
+The `result :=` inside the `while` body may create a block-scoped variable, leaving the loop condition reading the original `result` forever.
+
+**Fix**: Declare `result` outside the loop and avoid re-declaring it inside blocks. Or restructure as a `Loop` with explicit break conditions.
+
+---
+
+## 🟠 Semantic Issues (Works But Wrong)
+
+### S1. `CompressHistoryCommand` — Dead prompt-building code
+
+**File**: `Commands\CompressHistoryCommand.ahk` (lines ~30-42)  
+**Impact**: Wasted computation; potential for config drift if prompt-building logic diverges.
+
+The command builds a `compressionPrompt` string (fetches from config, appends conversation text), but then calls `this.llmService.CompressHistory()` which **re-fetches from config and rebuilds** the prompt from scratch. The locally-built prompt is never used.
+
+**Fix**: Either remove the local prompt-building (let the service handle it), or pass the pre-built prompt to the service.
+
+---
+
+### S2. `ExtractLearningsCommand` — Same duplicate validation as S1
+
+**File**: `Commands\ExtractLearningsCommand.ahk` (lines ~14-22)  
+**Impact**: Same pattern as S1 — duplicate validation. Both the command and the service check `messages.Length < 2` and build conversation text independently. If one changes, they diverge.
+
+**Fix**: Make the command a thin pass-through; move all validation into the service.
+
+---
+
+### S3. `SaveStateOnExitCommand` — Saves `batchMode` globally but it's session-scoped
+
+**File**: `Commands\SaveStateOnExitCommand.ahk`  
+**Impact**: Batch mode state is written as a top-level flag but conceptually belongs to the current session. When reloading, batch mode is restored globally regardless of which session the user switches to.
+
+**Fix**: Either make batchMode truly per-session (move into Session objects), or document that it's a global app preference.
+
+---
+
+### S4. `ConfigurationService.SetToolEnabled` — Ephemeral writes
+
+**File**: `Services\Configuration\ConfigurationService.ahk` (line ~130)  
+**Impact**: Toggling tools in the UI appears to work but changes are lost on the next read because `GetSelectedSettings()` rebuilds the settings object from providers on every call.
+
+```ahk
+SetToolEnabled(modelIndex, toolName, enabled) {
+    settings := this.GetSelectedSettings(modelIndex)  ; fresh object from providers
+    settings["tools"] := newTools                     ; mutates temporary copy
+    ; never persisted — changes evaporate
+}
+```
+
+**Fix**: Store tool enablement state in a separate persistent structure (e.g., `state.json` or a dedicated config file) and merge it with provider defaults at read time.
+
+---
+
+### S5. `DeleteMessageCommand` — Relies on caller-sorted indices
+
+**File**: `Commands\DeleteMessageCommand.ahk`  
+**Impact**: If called with non-descending indices, array shifts during deletion produce wrong results. Currently works because `HistoryViewController._SortDescending()` pre-sorts, but the command itself has no guard.
+
+**Fix**: Sort indices descending inside the command, or at minimum add an assertion/comment documenting the pre-condition.
+
+---
+
+## 🟡 Architecture & Design Issues
+
+### A1. `MainView` is a God Object Proxy
+
+**File**: `ui\MainView.ahk`  
+**Impact**: Maintenance burden, coupling, and unnecessary indirection.
+
+```
+MainView
+├── modelMenu          → delegates to MenuView
+├── contextBox         → delegates to ContextView  
+├── AddContextBoxItem() → delegates
+├── DeleteChatHistoryItems() → delegates
+├── SetAskButtonText() → delegates to PromptView
+├── ...20+ proxy methods...
+```
+
+Every sub-view operation tunnels through `MainView`. Controllers should hold direct references to the specific sub-views they coordinate.
+
+**Refactoring**: Pass sub-view references directly to controllers/sub-controllers instead of forcing everything through `MainView`.
+
+---
+
+### A2. Duplicated validation between Commands and Services
+
+**Pattern**: `CompressHistoryCommand` and `LLMService.CompressHistory` both validate message count, format conversation text, and build prompts. Same for `ExtractLearningsCommand` / `LLMService.ExtractLearnings`.
+
+```
+┌─────────────────────┐     ┌──────────────────────┐
+│ Command             │     │ Service              │
+│ Check msg.Length ✓  │     │ Check msg.Length ✓   │ ← duplicate
+│ Format messages  ✓  │     │ Format messages  ✓   │ ← duplicate  
+│ Build prompt     ✓  │     │ Build prompt     ✓   │ ← duplicate
+│ ──call service──────┼────▶│ Call LLM             │
+└─────────────────────┘     └──────────────────────┘
+```
+
+**Fix**: Commands should be thin pass-throughs. Move all validation and prompt construction into the service.
+
+---
+
+### A3. `Roles` class — Dead code behind a feature flag
+
+**File**: `Services\Configuration\Roles.ahk`  
+**Impact**: Dead code, confusion for new contributors.
+
+```ahk
+class Roles {
+    ROLES_DISABLED := true       ; permanently disabled
+    GetPromptsForProvider(...) {
+        if (!this.ROLES_DISABLED) {
+            ; unreachable code
+        }
+        return []                 ; always empty → caller falls back to all prompts
+    }
+}
+```
+
+**Fix**: Remove the `Roles` class entirely, or remove the flag and always return all prompts. The `roles.json` file parsing can stay for future re-enablement.
+
+---
+
+### A4. Magic strings scattered across codebase
+
+| Hardcoded String | Locations |
+|-----------------|-----------|
+| `"prompts"` | `SystemPrompts`, `PromptCreatorTool`, `ConfigurationService` |
+| `"state.json"` | `StateService` (centralized ✓) |
+| `"conversation.json"` | `StateService` (centralized ✓) |
+| `"providers"` | `Providers`, app-level |
+| `"keys.ini"` | `ConfigurationService` |
+| `MAX_SESSIONS := 5` | `SessionManager`, `MainController.SessionLabels` |
+| `"temp"` | `TempFileManager` (centralized ✓) |
+
+**Fix**: Consolidate directory paths into a `Paths` or `AppConfig` constant class.
+
+---
+
+### A5. `InitializeAppCommand` is trivially thin
+
+**File**: `Commands\InitializeAppCommand.ahk` (8 lines)  
+**Impact**: Adds a file and App.ahk wiring for a single `TempFileManager.CleanUp()` call.
+
+**Fix**: Inline into `MainController.Start()`, removing the command file.
+
+---
+
+## 🟢 Minor Code Quality
+
+### M1. Duplicate comment in `OllamaProvider.ParseResponse`
+
+**File**: `Services\LLM\Providers\OllamaProvider.ahk` (line ~88)  
+`"; Handle format with direct message object (Ollama often returns this)"` appears twice on consecutive lines.
+
+---
+
+### M2. `WebViewManager.EscapeForJs` — Fragile HTML escaping
+
+**File**: `Services\WebViewManager.ahk`  
+Skips escaping `<` and `>` only when content starts with `<audio`. This is an inconsistent heuristic:
+```ahk
+if (InStr(escapedMd, "<audio") != 1) {
+    escapedMd := StrReplace(escapedMd, "<", "&lt;")
+    escapedMd := StrReplace(escapedMd, ">", "&gt;")
+}
+```
+
+**Fix**: Either always escape (let the renderer handle it), or use a proper sanitization approach.
+
+---
+
+### M3. No consistent error protocol
+
+Some commands throw exceptions, some return `false`, some return `""`. No standard pattern exists:
+
+| Pattern | Example |
+|---------|---------|
+| Throws | `CompressHistoryCommand.Run()` throws on short history |
+| Returns false | `ProcessClipboardCommand.Execute()` returns false if not recording |
+| Returns "" | `RegenerateMessageCommand.Execute()` returns "" on invalid index |
+| Returns object | `SendToLLMCommand.Execute()` returns `{action: ...}` |
+
+**Fix**: Adopt a `{success, error?, data?}` result pattern, or consistently throw with try/catch at controller level.
+
+---
+
+### M4. `ProcessClipboardCommand` — No error boundary
+
+**File**: `Commands\ProcessClipboardCommand.ahk`  
+If `ClipboardParserService.Parse()` throws (e.g., clipboard access denied), the clipboard change handler in `MainController.ClipChanged` silently breaks and clipboard monitoring stops working.
+
+**Fix**: Wrap in try/catch.
+
+---
+
+### M5. `MainController.Start()` — Missing error handling for state loading
+
+**File**: `Controllers\MainController.ahk` (line ~85)  
+```ahk
+try {
+    this.loadStateOnStartCommand.Execute()
+    this.loadConversationOnStartCommand.Execute()
+}
+```
+The `try` block has no `catch` — if either command throws, the error is silently swallowed.
+
+---
+
+### M6. `RecordingController.OnToggleRecording` — Duplicate logic
+
+**File**: `Controllers\RecordingController.ahk`  
+The controller checks `recordingService.isRecording` and decides which command to call, but `ToggleRecordingCommand` already contains that logic. The controller re-implements the toggle decision.
+
+---
+
+## 📊 Summary
+
+| Severity | Count | Items |
+|----------|-------|-------|
+| 🔴 Critical Bug | 3 | B1, B2, B3 |
+| 🟠 Semantic Issue | 5 | S1–S5 |
+| 🟡 Architecture | 5 | A1–A5 |
+| 🟢 Minor | 6 | M1–M6 |
+| **Total** | **19** | |
+
+---
+
+## Recommended Priority Order
+
+1. **B1** — Batch mode crash (affects all batch users)
+2. **B2** — Clipboard path splitting broken (core feature)
+3. **B3** — Auto-approval infinite loop (edge case but critical)
+4. **S3** — State save/load correctness
+5. **S4** — Tool toggle persistence
+6. **S1/S2/A2** — Duplicate validation cleanup
+7. **A1** — MainView proxy refactoring (nice to have)
+8. Everything else

@@ -92,13 +92,7 @@ class LLMService {
         return results
     }
 
-    SendToLLM(sessionManager, answerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false, createPromptEnabled := false, sessionIndex := 0) {
-        if (!sessionIndex)
-            sessionIndex := sessionManager.currentSessionIndex
-
-        ; Use filtered messages to exclude previous batch processing
-        messages := sessionManager.GetMessagesExcludingBatchForSession(sessionIndex)
-
+    SendToLLM(messages, modelIndex, answerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false, createPromptEnabled := false) {
         ; Append Date and Time to the system message
         if (messages.Length > 0 && messages[1].Role == "system") {
             systemMsg := messages[1]
@@ -109,7 +103,7 @@ class LLMService {
 
         try {
             ; Create LLM client if it doesn't exist yet
-            settings := this.configManager.GetSelectedSettings(sessionManager.GetSessionModelIndex(sessionIndex))
+            settings := this.configManager.GetSelectedSettings(modelIndex)
             settings["tools"] := this.ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled, createPromptEnabled)
 
             ; Add a user message to instruct the model on answer length based on menu selection

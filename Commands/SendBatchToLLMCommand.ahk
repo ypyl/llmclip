@@ -60,16 +60,8 @@ class SendBatchToLLMCommand {
                 firstUserMsg.AdditionalProperties["hasContext"] := true
             }
 
-            tempSession := {
-                currentSessionIndex: 1,
-                GetSessionMessages: (*) => clonedMessages,
-                GetSessionLLMType: (*) => this.sessionManager.GetSessionModelIndex(targetSessionIndex),
-                GetMessagesExcludingBatchForSession: (*) => clonedMessages,
-                HasUnexecutedToolCallsForSession: (*) => false
-            }
-
             answerSize := this.sessionManager.answerSize
-            newMessages := this.llmService.SendToLLM(tempSession, answerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled, createPromptEnabled)
+            newMessages := this.llmService.SendToLLM(clonedMessages, currentLLM, answerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled, createPromptEnabled)
 
             for respMsg in newMessages {
                 respMsg.AdditionalProperties["isBatchResponse"] := true

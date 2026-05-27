@@ -34,7 +34,7 @@ class SendToLLMCommand {
             }
         }
 
-        messages := this.sessionManager.GetSessionMessages(targetSessionIndex)
+        messagesExBatch := this.sessionManager.GetMessagesExcludingBatchForSession(targetSessionIndex)
 
         systemPrompt := this.configManager.GetSystemPromptValue(
             this.sessionManager.GetSessionModelIndex(targetSessionIndex),
@@ -42,26 +42,26 @@ class SendToLLMCommand {
         )
         this.sessionManager.UpdateSystemPromptContentForSession(targetSessionIndex, systemPrompt)
 
-        currentLLM := this.sessionManager.GetSessionModelIndex(targetSessionIndex)
-        powerShellEnabled := this.configManager.IsToolEnabled(currentLLM, PowerShellTool.TOOL_NAME)
-        fileSystemEnabled := this.configManager.IsToolEnabled(currentLLM, FileSystemTool.TOOL_NAME)
-        webSearchEnabled := this.configManager.IsToolEnabled(currentLLM, WebSearchTool.TOOL_NAME)
-        webFetchEnabled := this.configManager.IsToolEnabled(currentLLM, WebFetchTool.TOOL_NAME)
-        markdownNewEnabled := this.configManager.IsToolEnabled(currentLLM, MarkdownNewTool.TOOL_NAME)
-        createPromptEnabled := this.configManager.IsToolEnabled(currentLLM, PromptCreatorTool.TOOL_NAME)
+        modelIndex := this.sessionManager.GetSessionModelIndex(targetSessionIndex)
+        powerShellEnabled := this.configManager.IsToolEnabled(modelIndex, PowerShellTool.TOOL_NAME)
+        fileSystemEnabled := this.configManager.IsToolEnabled(modelIndex, FileSystemTool.TOOL_NAME)
+        webSearchEnabled := this.configManager.IsToolEnabled(modelIndex, WebSearchTool.TOOL_NAME)
+        webFetchEnabled := this.configManager.IsToolEnabled(modelIndex, WebFetchTool.TOOL_NAME)
+        markdownNewEnabled := this.configManager.IsToolEnabled(modelIndex, MarkdownNewTool.TOOL_NAME)
+        createPromptEnabled := this.configManager.IsToolEnabled(modelIndex, PromptCreatorTool.TOOL_NAME)
         answerSize := this.sessionManager.answerSize
 
         try {
             newMessages := this.llmService.SendToLLM(
-                this.sessionManager,
+                messagesExBatch,
+                modelIndex,
                 answerSize,
                 powerShellEnabled,
                 webSearchEnabled,
                 webFetchEnabled,
                 fileSystemEnabled,
                 markdownNewEnabled,
-                createPromptEnabled,
-                targetSessionIndex
+                createPromptEnabled
             )
 
             if (newMessages.Length > 0) {

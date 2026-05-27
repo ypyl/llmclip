@@ -170,6 +170,18 @@ class ChatMessage {
     }
 
     /**
+     * Check if this message contains any tool calls.
+     * @returns true if any Content part is a FunctionCallContent
+     */
+    HasToolCalls() {
+        for part in this.Contents {
+            if (part is FunctionCallContent)
+                return true
+        }
+        return false
+    }
+
+    /**
      * Convert ChatMessage to plain object for API calls or serialization
      * @returns Plain object representation
      */
@@ -230,6 +242,11 @@ class ChatMessage {
                     obj.content := part.Result
                 }
             }
+        }
+
+        ; Include reasoning_content for tool-call continuations (required by DeepSeek)
+        if (this.Role == "assistant" && this.HasToolCalls() && this.AdditionalProperties.Has("thinking") && this.AdditionalProperties["thinking"] != "") {
+            obj.reasoning_content := this.AdditionalProperties["thinking"]
         }
 
         ; Copy additional properties

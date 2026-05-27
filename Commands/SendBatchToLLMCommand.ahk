@@ -28,6 +28,7 @@ class SendBatchToLLMCommand {
         webSearchEnabled := this.configManager.IsToolEnabled(currentLLM, WebSearchTool.TOOL_NAME)
         webFetchEnabled := this.configManager.IsToolEnabled(currentLLM, WebFetchTool.TOOL_NAME)
         markdownNewEnabled := this.configManager.IsToolEnabled(currentLLM, MarkdownNewTool.TOOL_NAME)
+        createPromptEnabled := this.configManager.IsToolEnabled(currentLLM, PromptCreatorTool.TOOL_NAME)
 
         baseHistory := this.sessionManager.GetMessagesExcludingBatchForSession(targetSessionIndex)
 
@@ -68,7 +69,7 @@ class SendBatchToLLMCommand {
             }
 
             answerSize := this.sessionManager.answerSize
-            newMessages := this.llmService.SendToLLM(tempSession, answerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled)
+            newMessages := this.llmService.SendToLLM(tempSession, answerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled, createPromptEnabled)
 
             for respMsg in newMessages {
                 respMsg.AdditionalProperties["isBatchResponse"] := true

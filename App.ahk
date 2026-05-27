@@ -3,6 +3,7 @@
 #Include Utils\Base64Service.ahk
 #Include Services\LLM\LLMService.ahk
 #Include Services\LLM\MarkdownNewTool.ahk
+#Include Services\LLM\PromptCreatorTool.ahk
 #Include Services\SessionManager.ahk
 #Include Utils\ClipboardParserService.ahk
 #Include Services\WebViewManager.ahk
@@ -102,13 +103,15 @@ class App {
         wst := WebSearchTool()
         wft := WebFetchTool()
         mnt := MarkdownNewTool()
+        pct := PromptCreatorTool()
 
         toolsMap := Map(
             PowerShellTool.TOOL_NAME, pst,
             FileSystemTool.TOOL_NAME, fst,
             WebSearchTool.TOOL_NAME, wst,
             WebFetchTool.TOOL_NAME, wft,
-            MarkdownNewTool.TOOL_NAME, mnt
+            MarkdownNewTool.TOOL_NAME, mnt,
+            PromptCreatorTool.TOOL_NAME, pct
         )
 
         ; Initialize LLM Client and Providers

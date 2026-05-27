@@ -48,6 +48,7 @@ class SendToLLMCommand {
         webSearchEnabled := this.configManager.IsToolEnabled(currentLLM, WebSearchTool.TOOL_NAME)
         webFetchEnabled := this.configManager.IsToolEnabled(currentLLM, WebFetchTool.TOOL_NAME)
         markdownNewEnabled := this.configManager.IsToolEnabled(currentLLM, MarkdownNewTool.TOOL_NAME)
+        createPromptEnabled := this.configManager.IsToolEnabled(currentLLM, PromptCreatorTool.TOOL_NAME)
         answerSize := this.sessionManager.answerSize
 
         try {
@@ -59,6 +60,7 @@ class SendToLLMCommand {
                 webFetchEnabled,
                 fileSystemEnabled,
                 markdownNewEnabled,
+                createPromptEnabled,
                 targetSessionIndex
             )
 

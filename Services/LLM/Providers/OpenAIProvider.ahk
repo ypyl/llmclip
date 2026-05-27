@@ -54,6 +54,9 @@ class OpenAIProvider extends BaseProvider {
                 if (message.Has("reasoning")) {
                     chatMsg.AdditionalProperties["thinking"] := message["reasoning"]
                 }
+                if (message.Has("reasoning_content")) {
+                    chatMsg.AdditionalProperties["thinking"] := message["reasoning_content"]
+                }
 
                 ; Check for tool calls
                 if (message.Has("tool_calls") && message["tool_calls"].Length > 0) {

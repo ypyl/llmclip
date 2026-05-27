@@ -20,7 +20,7 @@ class LLMService {
         this.llmClientInstance := llmClient
     }
 
-    ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false) {
+    ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false, createPromptEnabled := false) {
         enabledTools := []
         if (powerShellEnabled)
             enabledTools.Push(PowerShellTool.TOOL_NAME)
@@ -39,6 +39,10 @@ class LLMService {
         ; Enable markdown new if enabled
         if (markdownNewEnabled) {
             enabledTools.Push(MarkdownNewTool.TOOL_NAME)
+        }
+        ; Enable prompt creation if enabled
+        if (createPromptEnabled) {
+            enabledTools.Push(PromptCreatorTool.TOOL_NAME)
         }
 
         return enabledTools
@@ -88,7 +92,7 @@ class LLMService {
         return results
     }
 
-    SendToLLM(sessionManager, answerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false, sessionIndex := 0) {
+    SendToLLM(sessionManager, answerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false, createPromptEnabled := false, sessionIndex := 0) {
         if (!sessionIndex)
             sessionIndex := sessionManager.currentSessionIndex
 
@@ -106,7 +110,7 @@ class LLMService {
         try {
             ; Create LLM client if it doesn't exist yet
             settings := this.configManager.GetSelectedSettings(sessionManager.GetSessionModelIndex(sessionIndex))
-            settings["tools"] := this.ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled)
+            settings["tools"] := this.ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled, createPromptEnabled)
 
             ; Add a user message to instruct the model on answer length based on menu selection
             answerSizeMsg := ""

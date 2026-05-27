@@ -15,7 +15,8 @@ class MenuView {
         { id: FileSystemTool.TOOL_NAME, label: "File System", stateKey: FileSystemTool.TOOL_NAME },
         { id: WebSearchTool.TOOL_NAME, label: "Web Search",  stateKey: WebSearchTool.TOOL_NAME },
         { id: WebFetchTool.TOOL_NAME, label: "Web Fetch",   stateKey: WebFetchTool.TOOL_NAME },
-        { id: MarkdownNewTool.TOOL_NAME, label: "Read URL Markdown", stateKey: MarkdownNewTool.TOOL_NAME }
+        { id: MarkdownNewTool.TOOL_NAME, label: "Read URL Markdown", stateKey: MarkdownNewTool.TOOL_NAME },
+        { id: PromptCreatorTool.TOOL_NAME, label: "Create Prompt", stateKey: PromptCreatorTool.TOOL_NAME }
     ]
 
     Create(gui, rootController, settingsController, llmTypes, currentLLMTypeIndex, sessionNames, currentSessionIndex) {

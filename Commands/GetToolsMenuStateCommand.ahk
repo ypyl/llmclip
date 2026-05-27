@@ -15,7 +15,8 @@ class GetToolsMenuStateCommand {
             file_system: this.configManager.IsToolEnabled(currentLLMIndex, FileSystemTool.TOOL_NAME),
             web_search: this.configManager.IsToolEnabled(currentLLMIndex, WebSearchTool.TOOL_NAME),
             web_fetch: this.configManager.IsToolEnabled(currentLLMIndex, WebFetchTool.TOOL_NAME),
-            read_url_markdown: this.configManager.IsToolEnabled(currentLLMIndex, MarkdownNewTool.TOOL_NAME)
+            read_url_markdown: this.configManager.IsToolEnabled(currentLLMIndex, MarkdownNewTool.TOOL_NAME),
+            create_prompt: this.configManager.IsToolEnabled(currentLLMIndex, PromptCreatorTool.TOOL_NAME)
         }
     }
 }

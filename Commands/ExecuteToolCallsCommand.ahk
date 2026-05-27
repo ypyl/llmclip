@@ -79,6 +79,8 @@ class ExecuteToolCallsCommand {
             patternKey := WebFetchTool.TOOL_NAME
         } else if (toolName = MarkdownNewTool.TOOL_NAME) {
             patternKey := MarkdownNewTool.TOOL_NAME
+        } else if (toolName = PromptCreatorTool.TOOL_NAME) {
+            patternKey := PromptCreatorTool.TOOL_NAME
         } else {
             return false
         }

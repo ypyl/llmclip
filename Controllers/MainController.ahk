@@ -284,6 +284,9 @@ class MainController {
             this.historyViewController.UpdateChatHistoryView()
             this.renderLastMessageCommand.Execute()
 
+            ; Refresh prompt dropdown (new prompts may have been created by tools)
+            this.RefreshSystemPromptDropdown()
+
             if (this.uncheckContextCommand.Execute()) {
                 this.contextViewController.UpdateContextView()
             }
@@ -465,6 +468,23 @@ class MainController {
 
         ; 7. Clear response area
         this.RenderMarkdown("")
+    }
+
+    RefreshSystemPromptDropdown() {
+        currentModelIndex := this.sessionManager.GetCurrentSessionModelIndex()
+        currentSelection := this.view.GetSystemPromptValue()
+
+        promptNames := this.configManager.GetSystemPromptNames(currentModelIndex)
+        this.view.ClearSystemPrompt()
+        this.view.AddSystemPromptItems(promptNames)
+
+        ; Restore previous selection if it still exists, otherwise keep current index
+        try {
+            this.view.SetSystemPromptValue(currentSelection)
+        } catch {
+            ; Selection index out of range — fall back to current session index
+            this.view.SetSystemPromptValue(this.sessionManager.GetCurrentSessionSystemPrompt())
+        }
     }
 
     ResetAll(*) {

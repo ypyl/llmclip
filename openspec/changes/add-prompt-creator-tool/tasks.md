@@ -22,6 +22,8 @@
 - [x] 4.2 Pass `createPromptEnabled` through from `SendToLLM` to `ConfigureToolSettings`
 - [x] 4.3 Trace the `SendToLLM` call site(s) in controllers/commands and ensure the new parameter is passed (likely defaulting to `false` if not explicitly available from UI state)
 - [x] 4.4 Add `PromptCreatorTool` entry to `MenuView.ToolMapping` static array so the tool appears in the Tools menu
+- [x] 4.5 Add `#Include` and tool schema mapping for `PromptCreatorTool` in `OpenAIProvider.ahk`, `OllamaProvider.ahk`, and `GoogleProvider.ahk` (the hardcoded if-else chains that resolve TOOL_NAME strings → tool definitions)
+- [x] 4.6 Add prompt dropdown auto-refresh after LLM interactions in `MainController.AskToLLM()` so newly created prompts appear in the dropdown without manual reload
 
 ## 5. Integration test
 

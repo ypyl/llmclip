@@ -4,6 +4,7 @@
 #Include "..\WebSearchTool.ahk"
 #Include "..\WebFetchTool.ahk"
 #Include "..\MarkdownNewTool.ahk"
+#Include "..\PromptCreatorTool.ahk"
 
 class OllamaProvider extends BaseProvider {
     GetRequestBody(messages, settings) {
@@ -87,6 +88,8 @@ class OllamaProvider extends BaseProvider {
                 enabledTools.Push(WebFetchTool.GetOpenAiToolDefinition())
             } else if (t = MarkdownNewTool.TOOL_NAME) {
                 enabledTools.Push(MarkdownNewTool.GetOpenAiToolDefinition())
+            } else if (t = PromptCreatorTool.TOOL_NAME) {
+                enabledTools.Push(PromptCreatorTool.GetOpenAiToolDefinition())
             }
         }
         if (enabledTools.Length > 0)

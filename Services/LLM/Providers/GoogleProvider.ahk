@@ -4,6 +4,7 @@
 #Include "..\WebSearchTool.ahk"
 #Include "..\WebFetchTool.ahk"
 #Include "..\MarkdownNewTool.ahk"
+#Include "..\PromptCreatorTool.ahk"
 
 class GoogleProvider extends BaseProvider {
 
@@ -182,6 +183,8 @@ class GoogleProvider extends BaseProvider {
             }
             else if (t = MarkdownNewTool.TOOL_NAME)
                 enabledTools.Push(MarkdownNewTool.GetGeminiToolDefinition())
+            else if (t = PromptCreatorTool.TOOL_NAME)
+                enabledTools.Push(PromptCreatorTool.GetGeminiToolDefinition())
         }
         if (enabledTools.Length > 0)
             body["tools"] := enabledTools

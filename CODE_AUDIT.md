@@ -101,12 +101,10 @@ The command built a `compressionPrompt` string but never used it — the service
 
 ---
 
-### S3. `SaveStateOnExitCommand` — Saves `batchMode` globally but it's session-scoped
+### ~~S3. `SaveStateOnExitCommand` — Saves `batchMode` globally but it's session-scoped~~ ✅ BY DESIGN
 
 **File**: `Commands\SaveStateOnExitCommand.ahk`  
-**Impact**: Batch mode state is written as a top-level flag but conceptually belongs to the current session. When reloading, batch mode is restored globally regardless of which session the user switches to.
-
-**Fix**: Either make batchMode truly per-session (move into Session objects), or document that it's a global app preference.
+**Impact**: ~~Batch mode state is written as a top-level flag but conceptually belongs to the current session.~~ **This is not a bug.** `batchModeEnabled` lives on `SessionManager` (not `Session`) — it is a global app preference, consistently with `answerSize`. Both are saved/loaded identically. Switching sessions does not change batch mode state, confirming it's intentionally global.
 
 ---
 
@@ -298,7 +296,7 @@ The controller checks `recordingService.isRecording` and decides which command t
 | Severity | Count | Items |
 |----------|-------|-------|
 | 🔴 Critical Bug | 1 | B1 (fixed) |
-| 🟠 Semantic Issue | 5 | S1 (fixed), S2 (fixed), S3, S4 (fixed), S5 |
+| 🟠 Semantic Issue | 5 | S1 (fixed), S2 (fixed), S3 (by design), S4 (fixed), S5 |
 | 🟡 Architecture | 5 | A1–A5 |
 | 🟢 Minor | 6 | M1–M6 |
 | ❌ False Positive | 2 | B2, B3 (corrected — see inline) |

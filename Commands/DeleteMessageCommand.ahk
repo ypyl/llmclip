@@ -15,6 +15,9 @@ class DeleteMessageCommand {
         if (selectedIndices.Length == 0)
             return
 
+        ; Sort descending so removals don't shift indices of remaining deletions
+        selectedIndices := this._SortDescending(selectedIndices)
+
         messages := this.sessionManager.GetCurrentSessionMessages()
         
         ; Remove messages in reverse order to maintain correct indices
@@ -23,5 +26,20 @@ class DeleteMessageCommand {
                 messages.RemoveAt(index)
             }
         }
+    }
+
+    _SortDescending(arr) {
+        sorted := arr.Clone()
+        n := sorted.Length
+        Loop n - 1 {
+            i := A_Index + 1
+            while (i > 1 && sorted[i] > sorted[i - 1]) {
+                tmp := sorted[i]
+                sorted[i] := sorted[i - 1]
+                sorted[i - 1] := tmp
+                i--
+            }
+        }
+        return sorted
     }
 }

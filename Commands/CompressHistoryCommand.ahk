@@ -14,25 +14,11 @@ class CompressHistoryCommand {
             targetSessionIndex := this.sessionManager.currentSessionIndex
 
         messages := this.sessionManager.GetSessionMessages(targetSessionIndex)
-
-        if (messages.Length < 3) {
-            throw Error("Not enough messages to compress. Need at least 2 messages besides the system message.")
-        }
-
         conversationText := this.sessionManager.FormatMessagesForCompressionForSession(targetSessionIndex)
-
-        if (conversationText == "") {
-            throw Error("No conversation history to compress.")
-        }
-
-        compressionPrompt := this.configManager.GetCompressionPrompt(this.sessionManager.GetSessionModelIndex(targetSessionIndex))
-
-        if (compressionPrompt == "") {
-            throw Error("Compression prompt not configured for this provider.")
-        }
+        modelIndex := this.sessionManager.GetSessionModelIndex(targetSessionIndex)
 
         ; Call service to get compressed summary
-        compressedMsg := this.llmService.CompressHistory(this.sessionManager, targetSessionIndex)
+        compressedMsg := this.llmService.CompressHistory(messages, conversationText, modelIndex)
         
         ; Mutate state: replace history with compressed version
         if (compressedMsg != "") {

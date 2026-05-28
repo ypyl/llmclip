@@ -14,17 +14,9 @@ class ExtractLearningsCommand {
             targetSessionIndex := this.sessionManager.currentSessionIndex
 
         messages := this.sessionManager.GetSessionMessages(targetSessionIndex)
-
-        if (messages.Length < 2) {
-            throw Error("Not enough conversation history to extract notes.")
-        }
-
         conversationText := this.sessionManager.FormatMessagesForCompressionForSession(targetSessionIndex)
+        modelIndex := this.sessionManager.GetSessionModelIndex(targetSessionIndex)
 
-        if (conversationText == "") {
-            throw Error("No conversation history to extract from.")
-        }
-
-        return this.llmService.ExtractLearnings(this.sessionManager, targetSessionIndex)
+        return this.llmService.ExtractLearnings(messages, conversationText, modelIndex)
     }
 }

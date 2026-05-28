@@ -33,47 +33,45 @@ settings := this.configManager.GetSelectedSettings(
 
 ---
 
-### B2. `ClipboardParserService.Parse()` — Variable shadowing breaks path splitting
+### ~~B2. `ClipboardParserService.Parse()` — Variable shadowing~~ ❌ FALSE POSITIVE
 
-**File**: `Utils\ClipboardParserService.ahk` (lines ~13-18)  
-**Impact**: When clipboard contains multiple lines (e.g., file paths from Explorer), only the raw unsplit text is returned. Path splitting silently fails.
+**File**: `Utils\ClipboardParserService.ahk`  
+**Impact**: ~~Path splitting silently fails due to block-scoped variable shadowing.~~ **This is not a bug.** AHK v2 has function-level scoping, not block-level scoping. `if`/`for`/`while` bodies do NOT create new variable scopes. Every `:=` after the initial declaration is a reassignment to the same function-scoped variable. The code works correctly.
 
-In AHK v2, `:=` inside an `if` block creates a **new block-scoped local**, shadowing the outer variable:
+However, the function has other issues:
+
+#### MsgBox in a Utils class (architectural violation)
 
 ```ahk
-localTxtFromClipboardArray := [txtFromClipboard]     ; outer scope
-
-if (InStr(txtFromClipboard, "`r`n") || ...) {
-    localTxtFromClipboardArray := StrSplit(...)       ; ⚠️ new local, outer unchanged
-    if (localTxtFromClipboardArray.Length = 1) {
-        localTxtFromClipboardArray := StrSplit(...)   ; ⚠️ yet another local
-    }
+} catch as e {
+    MsgBox "Error processing clipboard: " e.Message   ; ← GUI from Utils!
 }
-; At this point, outer localTxtFromClipboardArray is still [txtFromClipboard]
 ```
 
-**Fix**: Declare once at the top and use `:=` only for the initial declaration. Subsequent assignments should use `=` or restructure without nested blocks.
+Utils are forbidden from GUI access. The catch block pops a dialog without context.
+
+**Fix**: Throw the exception or return a distinguishable error. Let the caller (controller/command) decide how to surface it.
+
+#### Silent data loss on partial failure
+
+If `ClipboardAll()` fails mid-way inside the VS Code block, `localTxtFromClipboardArray` may be partially populated. The function continues, hits the image fallback, and may return `[]` — silently discarding clipboard content with no error propagation.
+
+**Fix**: Bubble errors up rather than swallowing them. Return a sentinel or throw so the caller can react.
+
+#### Internal quotes not handled when splitting paths
+
+```ahk
+txtFromClipboard := Trim(A_Clipboard, '"')
+```
+
+If Explorer copies paths with spaces (e.g., `"C:\File A.txt"`), individual paths retain their quotes after Trim, causing `FileExist()` to fail. Low-priority edge case.
 
 ---
 
-### B3. `MainController.AskToLLM` — Auto-approval loop variable scoping
+### ~~B3. `MainController.AskToLLM` — Auto-approval loop variable scoping~~ ❌ FALSE POSITIVE
 
 **File**: `Controllers\MainController.ahk` (lines ~265-282)  
-**Impact**: Auto-approved tool calls may loop infinitely because the loop condition reads a stale `result`.
-
-```ahk
-result := this.sendToLLMCommand.Execute(...)  ; outer
-
-while (result.action == ... && result.hasUnexecutedToolCalls) {
-    ...
-    result := this.sendToLLMCommand.Execute(...)  ; ⚠️ block-scoped new local?
-    continue
-}
-```
-
-The `result :=` inside the `while` body may create a block-scoped variable, leaving the loop condition reading the original `result` forever.
-
-**Fix**: Declare `result` outside the loop and avoid re-declaring it inside blocks. Or restructure as a `Loop` with explicit break conditions.
+**Impact**: ~~Auto-approved tool calls may loop infinitely because the loop condition reads a stale `result`.~~ **This is not a bug.** AHK v2 has function-level scoping — `while` bodies do NOT create new variable scopes. The `result :=` inside the loop body is a reassignment of the same function-scoped variable. The `while` condition re-evaluates `result.action` on each iteration. The auto-approval loop works correctly.
 
 ---
 
@@ -293,11 +291,12 @@ The controller checks `recordingService.isRecording` and decides which command t
 
 | Severity | Count | Items |
 |----------|-------|-------|
-| 🔴 Critical Bug | 3 | B1, B2, B3 |
+| 🔴 Critical Bug | 1 | B1 (fixed) |
 | 🟠 Semantic Issue | 5 | S1–S5 |
 | 🟡 Architecture | 5 | A1–A5 |
 | 🟢 Minor | 6 | M1–M6 |
-| **Total** | **19** | |
+| ❌ False Positive | 2 | B2, B3 (corrected — see inline) |
+| **Total (real)** | **17** | |
 
 ---
 

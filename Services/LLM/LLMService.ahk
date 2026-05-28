@@ -145,26 +145,19 @@ class LLMService {
         }
     }
 
-    CompressHistory(sessionManager, sessionIndex := 0) {
-        if (!sessionIndex)
-            sessionIndex := sessionManager.currentSessionIndex
-
-        messages := sessionManager.GetSessionMessages(sessionIndex)
-
+    CompressHistory(messages, conversationText, modelIndex) {
         ; Check if there are enough messages to compress (at least 3: system + 2 others)
         if (messages.Length < 3) {
             throw Error("Not enough messages to compress. Need at least 2 messages besides the system message.")
         }
 
-        ; Format the conversation history for compression
-        conversationText := sessionManager.FormatMessagesForCompressionForSession(sessionIndex)
-
+        ; Validate conversation text
         if (conversationText == "") {
             throw Error("No conversation history to compress.")
         }
 
         ; Build compression prompt
-        compressionPrompt := this.configManager.GetCompressionPrompt(sessionManager.GetSessionModelIndex(sessionIndex))
+        compressionPrompt := this.configManager.GetCompressionPrompt(modelIndex)
 
         if (compressionPrompt == "") {
             throw Error("Compression prompt not configured for this provider.")
@@ -180,7 +173,7 @@ class LLMService {
 
         try {
             ; Create LLM client settings
-            settings := this.configManager.GetSelectedSettings(sessionManager.GetSessionModelIndex(sessionIndex))
+            settings := this.configManager.GetSelectedSettings(modelIndex)
             settings["tools"] := []  ; No tools for compression
 
             ; Call LLM with compression prompt
@@ -201,26 +194,19 @@ class LLMService {
         }
     }
 
-    ExtractLearnings(sessionManager, sessionIndex := 0) {
-        if (!sessionIndex)
-            sessionIndex := sessionManager.currentSessionIndex
-
-        messages := sessionManager.GetSessionMessages(sessionIndex)
-
+    ExtractLearnings(messages, conversationText, modelIndex) {
         ; Check if there are enough messages (at least 2: system + 1 user/assistant)
         if (messages.Length < 2) {
              throw Error("Not enough conversation history to extract notes.")
         }
 
-        ; Format the conversation history
-        conversationText := sessionManager.FormatMessagesForCompressionForSession(sessionIndex)
-
+        ; Validate conversation text
         if (conversationText == "") {
              throw Error("No conversation history to extract from.")
         }
 
         ; Get learnings prompt
-        learningsPrompt := this.configManager.GetLearningsPrompt(sessionManager.GetSessionModelIndex(sessionIndex))
+        learningsPrompt := this.configManager.GetLearningsPrompt(modelIndex)
         learningsPrompt .= "`n`nCONVERSATION:`n" conversationText
 
         ; Create temporary messages for the extraction request
@@ -231,7 +217,7 @@ class LLMService {
 
         try {
             ; Create LLM client settings
-            settings := this.configManager.GetSelectedSettings(sessionManager.GetSessionModelIndex(sessionIndex))
+            settings := this.configManager.GetSelectedSettings(modelIndex)
             settings["tools"] := []  ; No tools for extraction
 
             ; Call LLM

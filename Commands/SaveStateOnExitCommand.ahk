@@ -1,8 +1,10 @@
 class SaveStateOnExitCommand {
     sessionManager := ""
+    configManager := ""
 
-    __New(sessionManager) {
+    __New(sessionManager, configManager) {
         this.sessionManager := sessionManager
+        this.configManager := configManager
     }
 
     Execute() {
@@ -11,7 +13,8 @@ class SaveStateOnExitCommand {
             systemPromptIndex: this.sessionManager.GetCurrentSessionSystemPrompt(),
             answerSize: this.sessionManager.answerSize,
             batchMode: this.sessionManager.batchModeEnabled,
-            sessionIndex: this.sessionManager.currentSessionIndex
+            sessionIndex: this.sessionManager.currentSessionIndex,
+            toolOverrides: this.configManager.toolOverrides
         }
         StateService.SaveState(stateObj)
     }

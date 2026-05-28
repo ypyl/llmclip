@@ -77,23 +77,27 @@ If Explorer copies paths with spaces (e.g., `"C:\File A.txt"`), individual paths
 
 ## 🟠 Semantic Issues (Works But Wrong)
 
-### S1. `CompressHistoryCommand` — Dead prompt-building code
+### S1. `CompressHistoryCommand` — Dead prompt-building code ✅ **FIXED**
+
+> **Fix**: `openspec/changes/archive/2026-05-27-decouple-compression-from-session` — eliminated duplicate validation and prompt-building. `LLMService.CompressHistory()` now accepts `(messages, conversationText, modelIndex)` directly; the command extracts data and passes it, service owns all validation and prompt logic.
 
 **File**: `Commands\CompressHistoryCommand.ahk` (lines ~30-42)  
-**Impact**: Wasted computation; potential for config drift if prompt-building logic diverges.
+**Impact**: ~~Wasted computation; potential for config drift if prompt-building logic diverges.~~
 
-The command builds a `compressionPrompt` string (fetches from config, appends conversation text), but then calls `this.llmService.CompressHistory()` which **re-fetches from config and rebuilds** the prompt from scratch. The locally-built prompt is never used.
+The command built a `compressionPrompt` string but never used it — the service rebuilt it from scratch.
 
-**Fix**: Either remove the local prompt-building (let the service handle it), or pass the pre-built prompt to the service.
+**Fix**: Service now accepts pre-extracted data. Command extracts messages, conversationText, modelIndex and passes them directly. No duplication.
 
 ---
 
-### S2. `ExtractLearningsCommand` — Same duplicate validation as S1
+### S2. `ExtractLearningsCommand` — Same duplicate validation as S1 ✅ **FIXED**
+
+> **Fix**: Same change as S1. `LLMService.ExtractLearnings()` now accepts `(messages, conversationText, modelIndex)` directly. Command extracts data and passes it.
 
 **File**: `Commands\ExtractLearningsCommand.ahk` (lines ~14-22)  
-**Impact**: Same pattern as S1 — duplicate validation. Both the command and the service check `messages.Length < 2` and build conversation text independently. If one changes, they diverge.
+**Impact**: ~~Same pattern as S1 — duplicate validation. Both the command and the service check `messages.Length < 2` and build conversation text independently.~~
 
-**Fix**: Make the command a thin pass-through; move all validation into the service.
+**Fix**: Command now extracts messages, conversationText, modelIndex and passes them to the service. Service owns all validation. No duplication.
 
 ---
 
@@ -106,10 +110,12 @@ The command builds a `compressionPrompt` string (fetches from config, appends co
 
 ---
 
-### S4. `ConfigurationService.SetToolEnabled` — Ephemeral writes
+### S4. `ConfigurationService.SetToolEnabled` — Ephemeral writes ✅ **FIXED**
+
+> **Fix**: `openspec/changes/persist-tool-preferences` — user tool preferences are now stored in a per-model `toolOverrides` Map, persisted to `state.json`, and survive `Reload()` and app restarts. `IsToolEnabled()` reads overrides before falling back to provider defaults. `SetToolEnabled()` writes to overrides instead of mutating the providers cache.
 
 **File**: `Services\Configuration\ConfigurationService.ahk` (line ~130)  
-**Impact**: Toggling tools in the UI appears to work but changes are lost on the next read because `GetSelectedSettings()` rebuilds the settings object from providers on every call.
+**Impact**: ~~Toggling tools in the UI appears to work but changes are lost on the next read because `GetSelectedSettings()` rebuilds the settings object from providers on every call.~~
 
 ```ahk
 SetToolEnabled(modelIndex, toolName, enabled) {
@@ -292,7 +298,7 @@ The controller checks `recordingService.isRecording` and decides which command t
 | Severity | Count | Items |
 |----------|-------|-------|
 | 🔴 Critical Bug | 1 | B1 (fixed) |
-| 🟠 Semantic Issue | 5 | S1–S5 |
+| 🟠 Semantic Issue | 5 | S1 (fixed), S2 (fixed), S3, S4 (fixed), S5 |
 | 🟡 Architecture | 5 | A1–A5 |
 | 🟢 Minor | 6 | M1–M6 |
 | ❌ False Positive | 2 | B2, B3 (corrected — see inline) |

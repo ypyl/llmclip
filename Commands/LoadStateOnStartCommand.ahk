@@ -51,6 +51,25 @@ class LoadStateOnStartCommand {
             this.sessionManager.SwitchSession(sessionIndex)
         }
 
+        ; Restore tool overrides
+        hasToolOverrides := isMap ? state.Has("toolOverrides") : state.HasOwnProp("toolOverrides")
+        if (hasToolOverrides) {
+            overrides := isMap ? state["toolOverrides"] : state.toolOverrides
+            if (Type(overrides) = "Map") {
+                this.configManager.toolOverrides := overrides
+            } else {
+                ; Convert plain object to Map (from JSON deserialization)
+                converted := Map()
+                for modelKey, toolMap in overrides {
+                    inner := Map()
+                    for toolName, enabled in toolMap
+                        inner[toolName] := enabled
+                    converted[modelKey] := inner
+                }
+                this.configManager.toolOverrides := converted
+            }
+        }
+
         return true
     }
 }

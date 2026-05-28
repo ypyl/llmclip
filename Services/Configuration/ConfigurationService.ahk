@@ -10,6 +10,7 @@ class ConfigurationService {
     models := []
     modelDisplayNames := []
     ollamaApiKey := ""
+    toolOverrides := Map()  ; modelKey -> Map(toolName -> bool)
 
     ; Sub-managers
     systemPromptsManager := unset
@@ -163,6 +164,14 @@ class ConfigurationService {
     }
 
     IsToolEnabled(modelIndex, toolName) {
+        ; Check user override first
+        if (modelIndex > 0 && modelIndex <= this.models.Length) {
+            modelKey := this.models[modelIndex]
+            if (this.toolOverrides.Has(modelKey) && this.toolOverrides[modelKey].Has(toolName))
+                return this.toolOverrides[modelKey][toolName]
+        }
+
+        ; Fall back to provider default
         settings := this.GetSelectedSettings(modelIndex)
         tools := settings.Get("tools", [])
         if (tools is Array) {
@@ -176,32 +185,13 @@ class ConfigurationService {
     }
 
     SetToolEnabled(modelIndex, toolName, enabled) {
-        settings := this.GetSelectedSettings(modelIndex)
-        if (!settings.Has("tools")) {
-            settings["tools"] := []
-        }
-        currentTools := settings["tools"]
+        if (modelIndex < 1 || modelIndex > this.models.Length)
+            return
 
-        if (enabled) {
-            hasTool := false
-            for t in currentTools {
-                if (t = toolName) {
-                    hasTool := true
-                    break
-                }
-            }
-            if (!hasTool) {
-                currentTools.Push(toolName)
-            }
-        } else {
-            newTools := []
-            for t in currentTools {
-                if (t != toolName) {
-                    newTools.Push(t)
-                }
-            }
-            settings["tools"] := newTools
-        }
+        modelKey := this.models[modelIndex]
+        if (!this.toolOverrides.Has(modelKey))
+            this.toolOverrides[modelKey] := Map()
+        this.toolOverrides[modelKey][toolName] := enabled
     }
 
     IsImageInputEnabled(modelIndex) {
@@ -230,6 +220,7 @@ class ConfigurationService {
 
     Reload() {
         this.LoadAll()
+        ; toolOverrides is intentionally NOT cleared — user preferences survive reloads
     }
 
     SaveRawSystemPromptValue(modelIndex, promptName, newText) {

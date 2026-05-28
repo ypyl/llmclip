@@ -183,7 +183,7 @@ class App {
         toggleBatchMode := ToggleBatchModeCommand(sess)
 
         ; State persistence commands
-        saveStateOnExit := SaveStateOnExitCommand(sess)
+        saveStateOnExit := SaveStateOnExitCommand(sess, cfg)
         saveConvOnExit := SaveConversationOnExitCommand(sess)
         loadStateOnStart := LoadStateOnStartCommand(sess, cfg)
         loadConvOnStart := LoadConversationOnStartCommand(sess, cfg)

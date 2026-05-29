@@ -3,6 +3,15 @@
 
 class MainController {
     view := ""
+    mainView := ""
+
+    ; Sub-view references
+    promptView := ""
+    contextView := ""
+    historyView := ""
+    menuView := ""
+    topControlsView := ""
+    responseView := ""
 
     ; Dependencies
     configManager := ""
@@ -94,8 +103,15 @@ class MainController {
             this.recordingController.SetTrayView(trayView)
     }
 
-    SetView(view) {
-        this.view := view
+    SetView(mainView, promptView, contextView, historyView, menuView, topControlsView, responseView) {
+        this.mainView := mainView
+        this.view := mainView  ; backward compat during migration
+        this.promptView := promptView
+        this.contextView := contextView
+        this.historyView := historyView
+        this.menuView := menuView
+        this.topControlsView := topControlsView
+        this.responseView := responseView
     }
 
     CompressHistory(*) {
@@ -111,7 +127,7 @@ class MainController {
             }
 
         } catch as e {
-            this.view.ShowError("Compression failed: " . e.Message)
+            MsgBox("Compression failed: " . e.Message, "Error", "Iconx")
         } finally {
             this.SetProcessingState(ProcessingState.IDLE)
         }
@@ -129,7 +145,7 @@ class MainController {
             }
 
         } catch as e {
-            this.view.ShowError("Extraction failed: " . e.Message)
+            MsgBox("Extraction failed: " . e.Message, "Error", "Iconx")
         } finally {
             this.SetProcessingState(ProcessingState.IDLE)
         }
@@ -153,8 +169,8 @@ class MainController {
     ToggleDisplay() {
         if (!this.recordingService.isRecording) {
             this.recordingController.OnStartRecording()
-        } else if (!this.view.guiShown) {
-            this.view.Show()
+        } else if (!this.mainView.guiShown) {
+            this.mainView.Show()
         } else {
             this.recordingController.OnStopRecording()
         }
@@ -165,12 +181,12 @@ class MainController {
     }
 
     Show(*) {
-        this.view.Show()
+        this.mainView.Show()
     }
 
     OnViewReady() {
         ; Initialize WebView after window is shown
-        this.webViewManager.Init(this.view.GetResponseCtrHwnd())
+        this.webViewManager.Init(this.responseView.GetHwnd())
         this.webViewManager.SetInputCallback(ObjBindMethod(this, "AppendToPrompt"))
         this.webViewManager.SetErrorCallback(ObjBindMethod(this, "OnWebViewError"))
         this.webViewManager.SetSaveDiagramCallback(ObjBindMethod(this, "OnSaveWebViewDiagram"))
@@ -189,25 +205,25 @@ class MainController {
 
         ; 1. Gather UI state
         currentState := this.sessionManager.GetCurrentProcessingState()
-        promptText := this.view.GetPromptValue()
+        promptText := this.promptView.GetValue()
 
         isImageEnabled := this.IsImageInputEnabled[this.CurrentModelIndex]
         images := isImageEnabled ? this.sessionManager.GetCheckedImages() : []
 
         selectedIndices := []
-        if (selectedIndex := this.view.GetContextBoxValue()) {
+        if (selectedIndex := this.contextView.GetValue()) {
             selectedIndices.Push(selectedIndex)
         }
 
         batchItems := this.sessionManager.batchModeEnabled ? this.sessionManager.GetCheckedContextItems() : []
 
         if (this.sessionManager.batchModeEnabled && batchItems.Length == 0) {
-            this.view.ShowMessage("Please check at least one item in the context list for batch mode.", "No Items Selected")
+            MsgBox("Please check at least one item in the context list for batch mode.", "No Items Selected", "Iconi")
             return
         }
 
         ; 2. Update UI state before execution
-        if (this.view.guiShown && this.sessionManager.GetCurrentProcessingState() == ProcessingState.IDLE) {
+        if (this.mainView.guiShown && this.sessionManager.GetCurrentProcessingState() == ProcessingState.IDLE) {
             this.SetProcessingState(ProcessingState.PROCESSING)
         }
 
@@ -268,7 +284,7 @@ class MainController {
 
             ; 6. UI Cleanup
             if (result.action != "none") {
-                this.view.ClearPrompt()
+                this.promptView.Clear()
 
                 if (this.recordingService.isRecording) {
                     this.recordingController.OnStopRecording()
@@ -277,7 +293,7 @@ class MainController {
         } catch as e {
             this.SetProcessingState(ProcessingState.IDLE)
             if (e.Message != "Request cancelled") {
-                this.view.ShowError("Error: " . e.Message)
+                MsgBox("Error: " . e.Message, "Error", "Iconx")
             }
         } finally {
             ; 6. Refresh UI components
@@ -305,7 +321,7 @@ class MainController {
     ClipChanged(DataType) {
         if (this.processClipboardCommand.Execute()) {
             ; Update Context in GUI if shown
-            if (this.view.guiShown) {
+            if (this.mainView.guiShown) {
                 this.contextViewController.UpdateContextView()
             }
         }
@@ -314,10 +330,10 @@ class MainController {
     OnPromptInput() {
         if (GetKeyState("Enter") && !GetKeyState("Shift")) {
             ; Get the current text
-            text := this.view.GetPromptValue()
+            text := this.promptView.GetValue()
             if (SubStr(text, -1) == "`n") {
                 ; Remove the trailing newline
-                this.view.SetPromptValue(SubStr(text, 1, -1))
+                this.promptView.SetValue(SubStr(text, 1, -1))
                 ; Send the prompt
                 this.AskToLLM()
             }
@@ -325,11 +341,11 @@ class MainController {
     }
 
     AppendToPrompt(text) {
-        currentText := this.view.GetPromptValue()
+        currentText := this.promptView.GetValue()
         if (currentText != "") {
             currentText .= "`n"
         }
-        this.view.SetPromptValue(currentText . "> " . text . "`n")
+        this.promptView.SetValue(currentText . "> " . text . "`n")
     }
 
     ToggleBatchMode(*) {
@@ -337,35 +353,35 @@ class MainController {
         isEnabled := this.toggleBatchModeCommand.Execute()
 
         ; Update menu checkmark
-        this.view.UpdateBatchMode(isEnabled)
+        this.menuView.UpdateBatchMode(isEnabled)
     }
 
     SetProcessingState(state) {
         this.setProcessingStateCommand.Execute(state)
 
         if (state == ProcessingState.IDLE) {
-            this.view.SetAskButtonText("Ask LLM")
-            this.view.SetAskButtonEnabled(true)
+            this.promptView.SetAskButtonText("Ask LLM")
+            this.promptView.SetAskButtonEnabled(true)
         } else if (state == ProcessingState.PROCESSING) {
-            this.view.SetAskButtonText("Cancel")
-            this.view.SetAskButtonEnabled(true)
+            this.promptView.SetAskButtonText("Cancel")
+            this.promptView.SetAskButtonEnabled(true)
         } else if (state == ProcessingState.TOOL_PENDING) {
-            this.view.SetAskButtonText("Confirm Tool Run")
-            this.view.SetAskButtonEnabled(true)
+            this.promptView.SetAskButtonText("Confirm Tool Run")
+            this.promptView.SetAskButtonEnabled(true)
         } else if (state == ProcessingState.TOOL_RUNNING) {
-            this.view.SetAskButtonText("Cancel Tool")
-            this.view.SetAskButtonEnabled(true)
+            this.promptView.SetAskButtonText("Cancel Tool")
+            this.promptView.SetAskButtonEnabled(true)
         } else if (state == ProcessingState.COMPRESSING) {
-            this.view.SetAskButtonText("Compressing...")
-            this.view.SetAskButtonEnabled(false)
+            this.promptView.SetAskButtonText("Compressing...")
+            this.promptView.SetAskButtonEnabled(false)
         } else if (state == ProcessingState.EXTRACTING) {
-            this.view.SetAskButtonText("Extracting...")
-            this.view.SetAskButtonEnabled(false)
+            this.promptView.SetAskButtonText("Extracting...")
+            this.promptView.SetAskButtonEnabled(false)
         }
 
         inProgress := (state == ProcessingState.PROCESSING || state == ProcessingState.TOOL_RUNNING)
-        this.view.SetClearHistoryButtonEnabled(!inProgress)
-        this.view.SetResetAllButtonEnabled(!inProgress)
+        this.historyView.SetClearHistoryButtonEnabled(!inProgress)
+        this.topControlsView.SetResetButtonEnabled(!inProgress)
     }
 
     ; Event Handlers from UI/Tray
@@ -378,7 +394,7 @@ class MainController {
     }
 
     OnWebViewError(message) {
-        this.view.ShowError(message)
+        MsgBox(message, "Error", "Iconx")
     }
 
     OnSaveWebViewDiagram(svgData) {
@@ -386,7 +402,7 @@ class MainController {
         defaultFilename := FileService.GetTimestampedFilename("mermaid", ".svg")
 
         ; Use view to show dialog
-        selectedFile := this.view.ShowSaveFileDialog(defaultFilename, "Save Mermaid Diagram", "SVG Files (*.svg)")
+        selectedFile := FileSelect("S16", defaultFilename, "Save Mermaid Diagram", "SVG Files (*.svg)")
 
         ; Execute command to save
         this.saveDiagramCommand.Execute(selectedFile, svgData)
@@ -448,15 +464,15 @@ class MainController {
         currentModelIndex := this.sessionManager.GetCurrentSessionModelIndex()
 
         ; 1. Update Models Menu (delegated to View)
-        this.view.UpdateModelMenu(currentModelIndex, this.configManager.modelDisplayNames)
+        this.menuView.UpdateModelMenu(currentModelIndex, this.configManager.modelDisplayNames)
 
         ; 2. Update Session Select UI
-        this.view.SetSessionSelectValue(this.sessionManager.currentSessionIndex)
+        this.menuView.UpdateSessionMenu(this.sessionManager.currentSessionIndex, this.SessionLabels)
 
         ; 4. Update System Prompt UI
-        this.view.ClearSystemPrompt()
-        this.view.AddSystemPromptItems(this.configManager.GetSystemPromptNames(currentModelIndex))
-        this.view.SetSystemPromptValue(this.sessionManager.GetCurrentSessionSystemPrompt())
+        this.promptView.ClearSystemPrompt()
+        this.promptView.AddSystemPrompts(this.configManager.GetSystemPromptNames(currentModelIndex))
+        this.promptView.SetSystemPromptValue(this.sessionManager.GetCurrentSessionSystemPrompt())
 
         ; 5. Update Tools Menu
         if (this.settingsController)
@@ -472,18 +488,18 @@ class MainController {
 
     RefreshSystemPromptDropdown() {
         currentModelIndex := this.sessionManager.GetCurrentSessionModelIndex()
-        currentSelection := this.view.GetSystemPromptValue()
+        currentSelection := this.promptView.GetSystemPromptValue()
 
         promptNames := this.configManager.GetSystemPromptNames(currentModelIndex)
-        this.view.ClearSystemPrompt()
-        this.view.AddSystemPromptItems(promptNames)
+        this.promptView.ClearSystemPrompt()
+        this.promptView.AddSystemPrompts(promptNames)
 
         ; Restore previous selection if it still exists, otherwise keep current index
         try {
-            this.view.SetSystemPromptValue(currentSelection)
+            this.promptView.SetSystemPromptValue(currentSelection)
         } catch {
             ; Selection index out of range — fall back to current session index
-            this.view.SetSystemPromptValue(this.sessionManager.GetCurrentSessionSystemPrompt())
+            this.promptView.SetSystemPromptValue(this.sessionManager.GetCurrentSessionSystemPrompt())
         }
     }
 
@@ -493,31 +509,31 @@ class MainController {
         modelIndex := this.sessionManager.GetCurrentSessionModelIndex()
         promptIndex := this.sessionManager.GetCurrentSessionSystemPrompt()
         if (inputTemplate := this.configManager.GetInputTemplate(modelIndex, promptIndex)) {
-            this.view.SetPromptValue(inputTemplate)
+            this.promptView.SetValue(inputTemplate)
         }
         this.SetProcessingState(ProcessingState.IDLE)
     }
 
 
     SaveConversation(*) {
-        selectedFile := this.view.ShowSaveFileDialog("conversation.json", "Save Conversation", "JSON Files (*.json)")
+        selectedFile := FileSelect("S16", "conversation.json", "Save Conversation", "JSON Files (*.json)")
         if (selectedFile) {
             try {
                 this.saveConversationCommand.Execute(selectedFile)
             } catch as e {
-                this.view.ShowError("Failed to save conversation: " . e.Message)
+                MsgBox("Failed to save conversation: " . e.Message, "Error", "Iconx")
             }
         }
     }
 
     LoadConversation(*) {
-        selectedFile := this.view.ShowOpenFileDialog("Load Conversation", "JSON Files (*.json)")
+        selectedFile := FileSelect("3", , "Load Conversation", "JSON Files (*.json)")
         if (selectedFile) {
             try {
                 this.loadConversationCommand.Execute(selectedFile)
                 this.UpdateSessionUI()
             } catch as e {
-                this.view.ShowError("Failed to load conversation: " . e.Message)
+                MsgBox("Failed to load conversation: " . e.Message, "Error", "Iconx")
             }
         }
     }

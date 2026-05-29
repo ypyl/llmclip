@@ -1,6 +1,5 @@
 #Include SystemPrompts.ahk
 #Include Providers.ahk
-#Include Roles.ahk
 
 class ConfigurationService {
     static instance := ""
@@ -15,7 +14,6 @@ class ConfigurationService {
     ; Sub-managers
     systemPromptsManager := unset
     providersManager := unset
-    rolesManager := unset
 
     static GetInstance() {
         if (!ConfigurationService.instance)
@@ -26,7 +24,6 @@ class ConfigurationService {
     __New() {
         this.systemPromptsManager := SystemPrompts()
         this.providersManager := Providers()
-        this.rolesManager := Roles()
         this.LoadAll()
     }
 
@@ -34,7 +31,6 @@ class ConfigurationService {
         this.LoadAppSettings()
         this.systemPromptsManager.Reload()
         this.providersManager.Reload()
-        this.rolesManager.Reload()
 
         this.providers := this.providersManager.GetAll()
 
@@ -92,12 +88,8 @@ class ConfigurationService {
             return []
 
         selectedModel := this.models[modelIndex]
-        promptNames := this.rolesManager.GetPromptsForProvider(selectedModel)
-
-        ; If no prompts returned (roles disabled), use all system prompts
-        if (promptNames.Length = 0) {
-            promptNames := this.systemPromptsManager.GetNames()
-        }
+        ; All prompts are visible to all providers (role-based filtering is disabled)
+        promptNames := this.systemPromptsManager.GetNames()
 
         visiblePrompts := []
         for name in promptNames {

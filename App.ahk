@@ -191,7 +191,7 @@ class App {
 
         ; 3. Initialize View
         this.view := MainView(this.controller)
-        this.controller.SetView(this.view)
+        this.controller.SetView(this.view, this.view.promptView, this.view.contextView, this.view.historyView, this.view.menuView, this.view.topControlsView, this.view.responseView)
 
         this.controller.SetCommands(
             saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClip, switchSession, toggleBatchMode, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState

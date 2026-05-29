@@ -24,12 +24,6 @@ class MainView {
     settingsController := ""
     recordingController := ""
 
-    ; Property proxies for backward compatibility
-    modelMenu => this.menuView.modelMenu
-    menuBar => this.menuView.menuBar
-    toolsMenu => this.menuView.toolsMenu
-    historyMenu => this.menuView.historyMenu
-
     __New(controller) {
         this.controller := controller
         this.menuView := MenuView()
@@ -91,7 +85,7 @@ class MainView {
         
         this.promptView.Create(
             this.gui, 
-            this, 
+            this,
             this.controller.GetSystemPrompts(this.controller.CurrentModelIndex),
             this.controller.CurrentSystemPromptIndex,
             this.settingsController,
@@ -117,52 +111,4 @@ class MainView {
         this.controller.OnPromptInput()
     }
 
-    ; Proxies for controllers that still expect MainView methods
-    DeleteChatHistoryItems() => this.historyView.DeleteItems()
-    AddChatHistoryItem(role, text, duration, tokens) => this.historyView.AddItem(role, text, duration, tokens)
-    SelectHistoryItem(index) => this.historyView.Modify(index, "Select")
-    DeselectHistoryItem(index) => this.historyView.Modify(index, "-Select")
-    SetChatMessageActionButtonVisible(visible) => this.historyView.SetActionButtonVisible(visible)
-    GetChatHistoryCount() => this.historyView.GetCount()
-    ScrollChatHistoryToBottom() => this.historyView.ScrollToBottom()
-    GetChatHistoryFocus() => this.historyView.GetNext()
-    GetSelectedHistoryIndex() => this.historyView.GetNext()
-    GetChatHistorySelectedIndices() => this.historyView.GetSelectedIndices()
-    ModifyChatHistory(row, options, text?) => this.historyView.Modify(row, options, text?)
-    
-    DeleteContextBoxItems() => this.contextView.DeleteItems()
-    AddContextBoxItem(label, options) => this.contextView.AddItem(label, options)
-    RemoveContextBoxCheckbox(row) => this.contextView.RemoveCheckbox(row)
-    ModifyContextBoxCol(col, width) => this.contextView.ModifyCol(col, width)
-    ModifyContextBox(row, options) => this.contextView.Modify(row, options)
-    GetContextBoxNext(row) => this.contextView.GetNext(row)
-    GetContextBoxValue() => this.contextView.GetValue()
-    GetContextBoxHwnd() => this.contextView.contextBox.Hwnd
-    
-    GetPromptValue() => this.promptView.GetValue()
-    SetPromptValue(text) => this.promptView.SetValue(text)
-    ClearPrompt() => this.promptView.Clear()
-    SetAskButtonText(text) => this.promptView.SetAskButtonText(text)
-    SetAskButtonEnabled(enabled) => this.promptView.SetAskButtonEnabled(enabled)
-    SetSystemPromptValue(value) => this.promptView.SetSystemPromptValue(value)
-    GetSystemPromptValue() => this.promptView.GetSystemPromptValue()
-    ClearSystemPrompt() => this.promptView.ClearSystemPrompt()
-    AddSystemPromptItems(items) => this.promptView.AddSystemPrompts(items)
-    SetSystemPromptEnabled(enabled) => this.promptView.SetSystemPromptEnabled(enabled)
-    
-    SetSessionSelectValue(value) => this.menuView.UpdateSessionMenu(value, this.controller.SessionLabels)
-    UpdateRecordButton(isRecording) => this.topControlsView.UpdateRecordButton(isRecording)
-    
-    UpdateBatchMode(enabled) => this.menuView.UpdateBatchMode(enabled)
-    UpdateModelMenu(selectedIndex, modelNames) => this.menuView.UpdateModelMenu(selectedIndex, modelNames)
-    
-    ShowSaveFileDialog(defaultFilename, title, filter) => FileSelect("S16", defaultFilename, title, filter)
-    ShowOpenFileDialog(title, filter) => FileSelect("3", , title, filter)
-    ShowMessage(text, title := "Information", options := "Iconi") => MsgBox(text, title, options)
-    ShowError(text, title := "Error") => MsgBox(text, title, "Iconx")
-    
-    GetResponseCtrHwnd() => this.responseView.GetHwnd()
-
-    SetClearHistoryButtonEnabled(enabled) => this.historyView.SetClearHistoryButtonEnabled(enabled)
-    SetResetAllButtonEnabled(enabled) => this.topControlsView.SetResetButtonEnabled(enabled)
 }

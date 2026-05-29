@@ -138,10 +138,12 @@ SetToolEnabled(modelIndex, toolName, enabled) {
 
 ## 🟡 Architecture & Design Issues
 
-### A1. `MainView` is a God Object Proxy
+### A1. `MainView` is a God Object Proxy ✅ **FIXED**
+
+> **Fix**: `openspec/changes/archive/2026-05-28-eliminate-mainview-proxy` — ~30 proxy methods removed. `MainController` now accesses sub-views directly (`this.promptView.GetValue()` instead of `this.view.GetPromptValue()`), consistent with how sub-controllers already worked.
 
 **File**: `ui\MainView.ahk`  
-**Impact**: Maintenance burden, coupling, and unnecessary indirection.
+**Impact**: ~~Maintenance burden, coupling, and unnecessary indirection.~~
 
 ```
 MainView
@@ -159,9 +161,11 @@ Every sub-view operation tunnels through `MainView`. Controllers should hold dir
 
 ---
 
-### A2. Duplicated validation between Commands and Services
+### A2. Duplicated validation between Commands and Services ✅ **FIXED**
 
-**Pattern**: `CompressHistoryCommand` and `LLMService.CompressHistory` both validate message count, format conversation text, and build prompts. Same for `ExtractLearningsCommand` / `LLMService.ExtractLearnings`.
+> **Fix**: `openspec/changes/archive/2026-05-27-decouple-compression-from-session` — `CompressHistoryCommand` and `ExtractLearningsCommand` now extract data and pass it to the service, which owns all validation and prompt construction. Same pattern as `fix-batch-mode-stub-crash` for `SendToLLM`.
+
+**Pattern**: ~~`CompressHistoryCommand` and `LLMService.CompressHistory` both validate message count, format conversation text, and build prompts. Same for `ExtractLearningsCommand` / `LLMService.ExtractLearnings`.~~
 
 ```
 ┌─────────────────────┐     ┌──────────────────────┐
@@ -177,10 +181,12 @@ Every sub-view operation tunnels through `MainView`. Controllers should hold dir
 
 ---
 
-### A3. `Roles` class — Dead code behind a feature flag
+### A3. `Roles` class — Dead code behind a feature flag ✅ **FIXED**
 
-**File**: `Services\Configuration\Roles.ahk`  
-**Impact**: Dead code, confusion for new contributors.
+> **Fix**: `openspec/changes/archive/2026-05-28-remove-roles-dead-code` — `Roles.ahk` deleted, all references removed from `ConfigurationService`. `GetVisiblePrompts()` now calls `systemPromptsManager.GetNames()` directly.
+
+**File**: ~~`Services\Configuration\Roles.ahk`~~ (deleted)  
+**Impact**: ~~Dead code, confusion for new contributors.~~
 
 ```ahk
 class Roles {
@@ -198,19 +204,9 @@ class Roles {
 
 ---
 
-### A4. Magic strings scattered across codebase
+### A4. Magic strings scattered across codebase ✅ **RESOLVED**
 
-| Hardcoded String | Locations |
-|-----------------|-----------|
-| `"prompts"` | `SystemPrompts`, `PromptCreatorTool`, `ConfigurationService` |
-| `"state.json"` | `StateService` (centralized ✓) |
-| `"conversation.json"` | `StateService` (centralized ✓) |
-| `"providers"` | `Providers`, app-level |
-| `"keys.ini"` | `ConfigurationService` |
-| `MAX_SESSIONS := 5` | `SessionManager`, `MainController.SessionLabels` |
-| `"temp"` | `TempFileManager` (centralized ✓) |
-
-**Fix**: Consolidate directory paths into a `Paths` or `AppConfig` constant class.
+**Impact**: ~~Consolidate directory paths.~~ Most strings were already centralized (`StateService`, `TempFileManager`, `SystemPrompts.PROMPTS_DIR`). The only remaining outlier was `PromptCreatorTool` using the literal `"prompts"` instead of `SystemPrompts.PROMPTS_DIR` — fixed.
 
 ---
 
@@ -297,7 +293,7 @@ The controller checks `recordingService.isRecording` and decides which command t
 |----------|-------|-------|
 | 🔴 Critical Bug | 1 | B1 (fixed) |
 | 🟠 Semantic Issue | 5 | S1 (fixed), S2 (fixed), S3 (by design), S4 (fixed), S5 |
-| 🟡 Architecture | 5 | A1–A5 |
+| 🟡 Architecture | 5 | A1 (fixed), A2 (fixed), A3 (fixed), A4 (resolved), A5 |
 | 🟢 Minor | 6 | M1–M6 |
 | ❌ False Positive | 2 | B2, B3 (corrected — see inline) |
 | **Total (real)** | **17** | |

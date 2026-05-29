@@ -132,7 +132,7 @@ class PromptCreatorTool {
             }
 
             ; Check for existing files
-            promptsDir := "prompts"
+            promptsDir := SystemPrompts.PROMPTS_DIR
             jsonPath := promptsDir . "\" . sanitizedName . ".json"
             mdPath := promptsDir . "\" . sanitizedName . ".md"
 

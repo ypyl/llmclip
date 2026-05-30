@@ -103,7 +103,6 @@ class OllamaProvider extends BaseProvider {
         results := []
 
         ; Handle format with direct message object (Ollama often returns this)
-        ; Handle format with direct message object (Ollama often returns this)
         if (obj.Has("message")) {
             msgObj := obj["message"]
             chatMsg := ChatMessage("assistant", [])

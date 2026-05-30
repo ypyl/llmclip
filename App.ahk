@@ -48,7 +48,7 @@
 #Include Commands\GetToolsMenuStateCommand.ahk
 #Include Commands\GetCompressionMenuStateCommand.ahk
 #Include Commands\ToggleToolCommand.ahk
-#Include Commands\InitializeAppCommand.ahk
+#Include Commands\ToggleToolCommand.ahk
 #Include Commands\ProcessClipboardCommand.ahk
 #Include Commands\SaveDiagramCommand.ahk
 #Include Commands\SaveEditedMessageCommand.ahk
@@ -153,7 +153,6 @@ class App {
         getToolsState := GetToolsMenuStateCommand(cfg, sess)
         getCompressionState := GetCompressionMenuStateCommand(cfg, sess)
         toggleTool := ToggleToolCommand(cfg, sess)
-        initializeApp := InitializeAppCommand()
         processClip := ProcessClipboardCommand(rec, sess)
         saveDiagram := SaveDiagramCommand()
         mdn := mnt
@@ -194,7 +193,7 @@ class App {
         this.controller.SetView(this.view, this.view.promptView, this.view.contextView, this.view.historyView, this.view.menuView, this.view.topControlsView, this.view.responseView)
 
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClip, switchSession, toggleBatchMode, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState
+            saveConv, loadConv, clearCtx, compress, extract, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClip, switchSession, toggleBatchMode, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState
         )
 
         ; 4. Initialize Sub-Controllers

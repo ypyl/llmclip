@@ -1,5 +1,6 @@
 #Requires AutoHotkey 2.0
 #Include ..\Services\ProcessingState.ahk
+#Include ..\Utils\TempFileManager.ahk
 
 class MainController {
     view := ""
@@ -29,7 +30,6 @@ class MainController {
     compressHistoryCommand := ""
     extractLearningsCommand := ""
     resetAllCommand := ""
-    initializeAppCommand := ""
     saveDiagramCommand := ""
     renderMarkdownCommand := ""
     cancelRequestCommand := ""
@@ -64,14 +64,13 @@ class MainController {
         this.contextManager := contextManager
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, compress, extract, resetAll, initializeApp, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClipboard, switchSession, toggleBatchMode, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState) {
+    SetCommands(saveConv, loadConv, clearCtx, compress, extract, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClipboard, switchSession, toggleBatchMode, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState) {
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
         this.clearContextCommand := clearCtx
         this.compressHistoryCommand := compress
         this.extractLearningsCommand := extract
         this.resetAllCommand := resetAll
-        this.initializeAppCommand := initializeApp
         this.saveDiagramCommand := saveDiagram
         this.renderMarkdownCommand := renderMarkdown
         this.cancelRequestCommand := cancelRequest
@@ -156,9 +155,11 @@ class MainController {
         try {
             this.loadStateOnStartCommand.Execute()
             this.loadConversationOnStartCommand.Execute()
+        } catch {
+            ; State load failure is non-fatal — continue with defaults
         }
 
-        this.initializeAppCommand.Execute()
+        TempFileManager.CleanUp()
         this.Show()
         this.UpdateSessionUI()
         if (this.recordingController)

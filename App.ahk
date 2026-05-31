@@ -174,7 +174,7 @@ class App {
         navigateHistoryNext := NavigateHistoryCommand(sess, "next")
         getHistoryInfo := GetHistoryInfoCommand(sess)
         sendToLLM := SendToLLMCommand(sess, cfg, llm, ctx)
-        sendBatchToLLM := SendBatchToLLMCommand(sess, cfg, llm, ctx)
+        sendBatchToLLM := SendBatchToLLMCommand(sess, cfg, llm, ctx, cps)
         changeSystemPrompt := ChangeSystemPromptCommand(sess, cfg)
         switchSession := SwitchSessionCommand(sess)
         reloadSettings := ReloadSettingsCommand(cfg)

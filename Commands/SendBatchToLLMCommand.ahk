@@ -3,12 +3,14 @@ class SendBatchToLLMCommand {
     configManager := ""
     llmService := ""
     contextManager := ""
+    cps := ""
 
-    __New(sessionManager, configManager, llmService, contextManager) {
+    __New(sessionManager, configManager, llmService, contextManager, cps) {
         this.sessionManager := sessionManager
         this.configManager := configManager
         this.llmService := llmService
         this.contextManager := contextManager
+        this.cps := cps
     }
 
     Execute(promptText, batchItems, isCancelledCallback, batchUpdateCallback := "", targetSessionIndex := 0) {
@@ -44,7 +46,7 @@ class SendBatchToLLMCommand {
             activePromptClone := userMsg.Clone()
             clonedMessages.Push(activePromptClone)
 
-            itemLabel := this.contextManager.GetLabelFromContextItem(item)
+            itemLabel := this.cps.GetLabelFromContextItem(item)
             itemText := this.contextManager.GetTextFromContextItem(item)
 
             firstUserMsg := ""

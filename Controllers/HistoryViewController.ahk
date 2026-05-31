@@ -168,8 +168,8 @@ class HistoryViewController {
         this.renderMarkdownCommand.Execute("")  ; Clear the response area
         if (this.setProcessingStateCommand) {
             this.setProcessingStateCommand.Execute()
-            this.mainView.SetAskButtonText("Ask LLM")
-            this.mainView.SetAskButtonEnabled(true)
+            this.mainView.promptView.SetAskButtonText("Ask LLM")
+            this.mainView.promptView.SetAskButtonEnabled(true)
         }
     }
 

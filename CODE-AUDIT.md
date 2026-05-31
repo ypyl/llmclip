@@ -1,6 +1,6 @@
 # Code Audit — llmclip
 
-**Date:** 2026-05-30  
+**Date:** 2026-05-30 (updated 2026-05-31)  
 **Scope:** Architecture compliance review against [ARCHITECTURE.md](ARCHITECTURE.md)  
 **Method:** Full codebase read of all layers (Views, Controllers, Commands, Services, Utils)
 
@@ -8,58 +8,41 @@
 
 ## Executive Summary
 
-The codebase is **well-aligned** with its architecture spec. The layered design holds up under scrutiny. Most findings are minor alignment issues or documentation gaps. **One runtime bug** was discovered.
+The codebase is **well-aligned** with its architecture spec. The layered design holds up under scrutiny. Most findings are minor alignment issues or documentation gaps. ~~One runtime bug~~ was discovered and **fixed** (commit `38b8f6a`).
 
 | Severity | Count |
 |----------|-------|
-| 🔴 Bug | 1 |
-| 🟡 Violation / Risk | 4 |
+| 🔴 Bug | ~~1~~ 0 (fixed) |
+| 🟡 Violation / Risk | ~~4~~ 3 (1 fixed) |
 | 🟢 Minor / Documentation | 4 |
 
 ---
 
-## 🔴 Issue 1: Runtime Bug — `SendBatchToLLMCommand` calls nonexistent method
+## ✅ Issue 1: ~~Runtime Bug~~ **FIXED** — `SendBatchToLLMCommand` calls nonexistent method
 
 **File:** `commands/SendBatchToLLMCommand.ahk` (line ~50)  
-**Severity:** Bug — will crash at runtime
+**Severity:** Bug — ~~will crash at runtime~~ **Fixed in commit `38b8f6a`**
+
+**The problem was:** the command called `this.contextManager.GetLabelFromContextItem(item)` but `ContextManager` has no such method — it exists only on `ContextPresentationService`.
+
+**Fix applied** (Option A): `App.ahk` now injects `cps` (ContextPresentationService) as a 5th argument, and the command calls `this.cps.GetLabelFromContextItem(item)`.
 
 ```ahk
-itemLabel := this.contextManager.GetLabelFromContextItem(item)
-```
-
-`ContextManager` has **no** `GetLabelFromContextItem()` method. That method exists only on `ContextPresentationService`. The command injects a `ContextManager` instance (see `App.ahk`):
-
-```ahk
-sendBatchToLLM := SendBatchToLLMCommand(sess, cfg, llm, ctx)
-;                                           ctx = ContextManager  ^^^
-```
-
-**Impact:** Any batch-mode send will crash with a method-not-found error.
-
-**Fix:** Either inject `ContextPresentationService` into the command, or add the method to `ContextManager`, or inline a simple label:
-
-```ahk
-; Option A: inject cps
+; App.ahk — wiring (current)
 sendBatchToLLM := SendBatchToLLMCommand(sess, cfg, llm, ctx, cps)
 
-; Option B: inline
-SplitPath item, &name
-itemLabel := FileExist(item) ? name : SubStr(item, 1, 50)
+; SendBatchToLLMCommand.ahk — usage (current)
+itemLabel := this.cps.GetLabelFromContextItem(item)
 ```
 
 ---
 
-## 🟡 Issue 2: Duplicate `#Include` in App.ahk
+## ✅ Issue 2: ~~Duplicate `#Include` in App.ahk~~ **FIXED**
 
-**File:** `App.ahk`, lines 54–55  
-**Severity:** Low — harmless but indicates copy-paste slip
+**File:** `App.ahk`, lines 50–51 (formerly 54–55)
+**Severity:** Low — harmless copy-paste slip
 
-```ahk
-#Include Commands\ToggleToolCommand.ahk
-#Include Commands\ToggleToolCommand.ahk   ; ← duplicate
-```
-
-AHK's `#Include` guards against double-inclusion, so this doesn't cause errors. Clean it up for hygiene.
+Duplicate `#Include Commands\ToggleToolCommand.ahk` deleted. AHK guards against double-inclusion anyway, so no runtime impact — purely hygiene.
 
 ---
 
@@ -202,7 +185,7 @@ Called correctly by `SessionManager.ResetCurrentSession()`. The typo is consiste
 │          │    Otherwise clean: coordinate UI, invoke commands,  │
 │          │    read services, never mutate                        │
 ├──────────┼──────────────────────────────────────────────────────┤
-│ Command  │ ⚠️ 1 bug (nonexistent method)                        │
+│ Command  │ ✅ 1 bug fixed (SendBatchToLLM → cps injection)      │
 │          │    ⚠️ 1 undocumented tool usage (ReplaceLink)         │
 │          │    Otherwise clean: gate mutations, no GUI access     │
 ├──────────┼──────────────────────────────────────────────────────┤
@@ -229,8 +212,8 @@ Called correctly by `SessionManager.ResetCurrentSession()`. The typo is consiste
 
 ## Recommendations (Priority Order)
 
-1. **Fix bug #1** (SendBatchToLLMCommand) — create a change proposal, this is a runtime crash
-2. **Fix duplicate include #2** — trivial one-line deletion
+1. ~~Fix bug #1~~ — **DONE** (commit `38b8f6a`)
+2. ~~Fix duplicate include #2~~ — **DONE**
 3. **Fix MsgBox in utils #5** — minor refactor, return error instead
 4. **Address controller→controller call #3** — either refactor to callback or document as exception
 5. **Document tool-as-service #4** — add to ARCHITECTURE.md §5

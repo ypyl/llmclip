@@ -48,7 +48,6 @@
 #Include Commands\GetToolsMenuStateCommand.ahk
 #Include Commands\GetCompressionMenuStateCommand.ahk
 #Include Commands\ToggleToolCommand.ahk
-#Include Commands\ToggleToolCommand.ahk
 #Include Commands\ProcessClipboardCommand.ahk
 #Include Commands\SaveDiagramCommand.ahk
 #Include Commands\SaveEditedMessageCommand.ahk

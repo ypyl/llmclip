@@ -3,10 +3,13 @@
 class SettingsController {
     menuView := ""
     promptView := ""
-    mainView := ""
     configManager := ""
     sessionManager := ""
     
+    ; Callbacks (set by App.ahk after construction — see ARCHITECTURE.md §2 wiring pattern)
+    onSessionChanged := ""
+    onSystemPromptChanged := ""
+
     ; Commands
     selectModelCommand := ""
     changeAnswerSizeCommand := ""
@@ -30,10 +33,17 @@ class SettingsController {
         this.switchSessionCommand := switchSessionCommand
     }
 
-    SetViews(menuView, promptView, mainView) {
+    SetViews(menuView, promptView) {
         this.menuView := menuView
         this.promptView := promptView
-        this.mainView := mainView
+    }
+
+    SetOnSessionChanged(callback) {
+        this.onSessionChanged := callback
+    }
+
+    SetOnSystemPromptChanged(callback) {
+        this.onSystemPromptChanged := callback
     }
 
     SelectModel(ItemName, ItemPos, MyMenu) {
@@ -87,9 +97,8 @@ class SettingsController {
     SelectSession(ItemName, ItemPos, MyMenu) {
         this.switchSessionCommand.Execute(ItemPos)
         
-        if (this.mainView && this.mainView.controller) {
-            this.mainView.controller.UpdateSessionUI()
-        }
+        if (this.onSessionChanged)
+            this.onSessionChanged()
     }
 
     UpdateCompressionMenuState() {
@@ -125,15 +134,8 @@ class SettingsController {
             this.promptView.SetValue(inputTemplate)
         }
         
-        if (this.mainView && this.mainView.contextViewController)
-            this.mainView.contextViewController.UpdateContextView()
-
-        ; Refresh the history view so the updated system prompt message is reflected
-        if (this.mainView && this.mainView.historyViewController)
-            this.mainView.historyViewController.UpdateChatHistoryView()
-
-        if (this.mainView)
-            this.mainView.SetSessionSelectValue(this.sessionManager.currentSessionIndex)
+        if (this.onSystemPromptChanged)
+            this.onSystemPromptChanged()
     }
 
     ReloadSettings(*) {

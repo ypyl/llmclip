@@ -107,7 +107,7 @@ class HistoryViewController {
             
             messageText := this.regenerateMessageCommand.Execute(itemData.messageIndex)
             if (messageText != "") {
-                this.mainView.SetPromptValue(messageText)
+                this.mainView.promptView.SetValue(messageText)
                 this.UpdateChatHistoryView()
             }
         }

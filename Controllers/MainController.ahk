@@ -479,12 +479,24 @@ class MainController {
         if (this.settingsController)
             this.settingsController.UpdateToolsMenuState()
 
+        ; 5b. Sync batch mode checkbox with loaded state
+        this.menuView.UpdateBatchMode(this.sessionManager.batchModeEnabled)
+
         ; 6. Refresh sub-views
         this.contextViewController.UpdateContextView()
         this.historyViewController.UpdateChatHistoryView()
 
         ; 7. Clear response area
         this.RenderMarkdown("")
+    }
+
+    ; Lightweight counterpart to UpdateSessionUI() — refreshes only sub-views affected
+    ; by a system prompt change. Does NOT clear the response area.
+    ; Must stay in sync with any new sub-view refresh calls added to UpdateSessionUI().
+    RefreshOnSystemPromptChanged() {
+        this.contextViewController.UpdateContextView()
+        this.historyViewController.UpdateChatHistoryView()
+        this.menuView.UpdateSessionMenu(this.sessionManager.currentSessionIndex, this.SessionLabels)
     }
 
     RefreshSystemPromptDropdown() {

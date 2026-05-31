@@ -13,7 +13,7 @@ The codebase is **well-aligned** with its architecture spec. The layered design 
 | Severity | Count |
 |----------|-------|
 | 🔴 Bug | ~~1~~ 0 (fixed) |
-| 🟡 Violation / Risk | ~~4~~ 3 (1 fixed) |
+| 🟡 Violation / Risk | ~~4~~ 2 (2 fixed) |
 | 🟢 Minor / Documentation | 4 |
 
 ---
@@ -46,33 +46,16 @@ Duplicate `#Include Commands\ToggleToolCommand.ahk` deleted. AHK guards against 
 
 ---
 
-## 🟡 Issue 3: Controller-to-Controller call via View back-reference
+## ✅ Issue 3: ~~Controller-to-Controller call via View back-reference~~ **FIXED**
 
-**File:** `controllers/SettingsController.ahk`, line 91  
-**Severity:** Medium — violates "Controller-to-controller calls are forbidden"
+**File:** `controllers/SettingsController.ahk`
+**Severity:** Medium — violated "Controller-to-controller calls are forbidden"
 
-```ahk
-SelectSession(ItemName, ItemPos, MyMenu) {
-    this.switchSessionCommand.Execute(ItemPos)
-    
-    if (this.mainView && this.mainView.controller) {
-        this.mainView.controller.UpdateSessionUI()  ; ← calls MainController
-    }
-}
-```
+**The problem was:** `SettingsController` reached through `MainView.controller` to call `MainController.UpdateSessionUI()` (and through `MainView.contextViewController`/`historyViewController` for sub-view refreshes). This used `MainView` as an unauthorized service locator.
 
-`SettingsController` reaches through `MainView.controller` to call `MainController.UpdateSessionUI()`. This is a sub-controller calling a parent controller method.
+**Fix applied:** Two opaque callbacks (`onSessionChanged` → full refresh, `onSystemPromptChanged` → partial refresh) wired via `ObjBindMethod` in `App.ahk` using the architecture's sanctioned property-assignment-after-construction pattern. `SettingsController` no longer holds or uses a `mainView` reference. ARCHITECTURE.md §2 clarified to explicitly cover sub-controller → parent notifications.
 
-**Why it works today:** The architecture already wires `mainView.controller` as a back-reference (`controller.SetView(view)` pattern). So this path exists by design.
-
-**Why it's risky:**
-- Creates a hidden dependency: `SettingsController` implicitly depends on `MainController`'s entire API surface
-- If `MainController` is refactored, this call may break silently
-- The architecture forbids controller-to-controller calls — even sub→parent
-
-**Options:**
-1. **Callback/event pattern:** `MainController` sets a callback on `SettingsController` during wiring (e.g., `settingsContr.SetOnSessionChanged(ObjBindMethod(mainController, "UpdateSessionUI"))`)
-2. **Document as exception:** Add to ARCHITECTURE.md §5 alongside `WebViewManager`. Accept the pragmatic shortcut.
+**Change:** `fix-controller-cross-calls`
 
 ---
 
@@ -181,9 +164,9 @@ Called correctly by `SessionManager.ResetCurrentSession()`. The typo is consiste
 │ View     │ ✅ PASS — Pure structure, no logic, no state          │
 │          │    All views only create controls and forward events  │
 ├──────────┼──────────────────────────────────────────────────────┤
-│ Ctrlr    │ ⚠️ 1 gray-area call (SettingsController→MainCtrlr)  │
-│          │    Otherwise clean: coordinate UI, invoke commands,  │
-│          │    read services, never mutate                        │
+│ Ctrlr    │ ✅ PASS — 1 gray-area call fixed via callback        │
+│          │    pattern. Controllers coordinate UI, invoke        │
+│          │    commands, read services, never mutate             │
 ├──────────┼──────────────────────────────────────────────────────┤
 │ Command  │ ✅ 1 bug fixed (SendBatchToLLM → cps injection)      │
 │          │    ⚠️ 1 undocumented tool usage (ReplaceLink)         │
@@ -205,7 +188,7 @@ Called correctly by `SessionManager.ResetCurrentSession()`. The typo is consiste
 | No controller mutates service directly | ✅ All mutations go through commands |
 | No service/command touches GUI | ⚠️ Via WebViewManager only (documented) |
 | No circular dependencies | ✅ None found |
-| No controller→controller calls | ⚠️ One gray-area sub→parent call |
+| No controller→controller calls | ✅ Fixed — sub-controllers use opaque callbacks |
 | All `#Include` in `App.ahk` | ✅ Complete (one duplicate) |
 
 ---
@@ -215,7 +198,7 @@ Called correctly by `SessionManager.ResetCurrentSession()`. The typo is consiste
 1. ~~Fix bug #1~~ — **DONE** (commit `38b8f6a`)
 2. ~~Fix duplicate include #2~~ — **DONE**
 3. **Fix MsgBox in utils #5** — minor refactor, return error instead
-4. **Address controller→controller call #3** — either refactor to callback or document as exception
+4. ~~Address controller→controller call #3~~ — **DONE** (`fix-controller-cross-calls`)
 5. **Document tool-as-service #4** — add to ARCHITECTURE.md §5
 6. **Align docs #6** — move `MessagePresentationService` description to Utils section
 7. **Extract shared sort #8** — DRY refactor

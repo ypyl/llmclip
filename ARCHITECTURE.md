@@ -29,6 +29,7 @@
   controller.SetView(view)
   ```
   The Controller is created first with its service dependencies, the View receives the controller reference, then the View is back-wired into the Controller.
+  The same pattern applies when a sub-controller needs to notify its parent controller — set a callback on the sub-controller after construction rather than reaching through the View's back-references.
 * ⛔ **Forbidden**: Business logic or internal state.
 
 ### Views (`ui/*.ahk`)

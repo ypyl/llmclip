@@ -208,7 +208,9 @@ class App {
         this.controller.SetSubControllers(ctxView, histView, notesContr, settingsContr, recordingContr)
         this.view.SetSubControllers(ctxView, histView, settingsContr, recordingContr)
 
-        settingsContr.SetViews(this.view.menuView, this.view.promptView, this.view)
+        settingsContr.SetViews(this.view.menuView, this.view.promptView)
+        settingsContr.SetOnSessionChanged((*) => this.controller.UpdateSessionUI())
+        settingsContr.SetOnSystemPromptChanged((*) => this.controller.RefreshOnSystemPromptChanged())
         recordingContr.SetViews(this.view.topControlsView, this.view)
 
         ; 5. Initialize Tray

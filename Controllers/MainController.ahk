@@ -27,7 +27,6 @@ class MainController {
     saveConversationCommand := ""
     loadConversationCommand := ""
     clearContextCommand := ""
-    compressHistoryCommand := ""
     resetAllCommand := ""
     saveDiagramCommand := ""
     renderMarkdownCommand := ""
@@ -62,11 +61,10 @@ class MainController {
         this.contextManager := contextManager
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, compress, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClipboard, switchSession, toggleBatchMode, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState) {
+    SetCommands(saveConv, loadConv, clearCtx, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClipboard, switchSession, toggleBatchMode, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState) {
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
         this.clearContextCommand := clearCtx
-        this.compressHistoryCommand := compress
         this.resetAllCommand := resetAll
         this.saveDiagramCommand := saveDiagram
         this.renderMarkdownCommand := renderMarkdown
@@ -107,25 +105,6 @@ class MainController {
         this.menuView := menuView
         this.topControlsView := topControlsView
         this.responseView := responseView
-    }
-
-    CompressHistory(*) {
-        this.SetProcessingState(ProcessingState.COMPRESSING)
-
-        try {
-            compressedMsg := this.compressHistoryCommand.Execute()
-
-            if (compressedMsg != "") {
-                 ; Update UI
-                 this.historyViewController.UpdateChatHistoryView()
-                 this.RenderMarkdown(MessagePresentationService.GetPresentationText(compressedMsg))
-            }
-
-        } catch as e {
-            MsgBox("Compression failed: " . e.Message, "Error", "Iconx")
-        } finally {
-            this.SetProcessingState(ProcessingState.IDLE)
-        }
     }
 
     Start() {
@@ -350,9 +329,6 @@ class MainController {
         } else if (state == ProcessingState.TOOL_RUNNING) {
             this.promptView.SetAskButtonText("Cancel Tool")
             this.promptView.SetAskButtonEnabled(true)
-        } else if (state == ProcessingState.COMPRESSING) {
-            this.promptView.SetAskButtonText("Compressing...")
-            this.promptView.SetAskButtonEnabled(false)
         }
 
         inProgress := (state == ProcessingState.PROCESSING || state == ProcessingState.TOOL_RUNNING)

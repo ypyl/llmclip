@@ -37,13 +37,11 @@
 #Include Commands\ToggleRecordingCommand.ahk
 #Include Commands\DeleteMessageCommand.ahk
 #Include Commands\ClearHistoryCommand.ahk
-#Include Commands\CompressHistoryCommand.ahk
 #Include Commands\ResetAllCommand.ahk
 #Include Utils\ClipboardService.ahk
 #Include Commands\CopyToClipboardCommand.ahk
 #Include Commands\SelectModelCommand.ahk
 #Include Commands\GetToolsMenuStateCommand.ahk
-#Include Commands\GetCompressionMenuStateCommand.ahk
 #Include Commands\ToggleToolCommand.ahk
 #Include Commands\ProcessClipboardCommand.ahk
 #Include Commands\SaveDiagramCommand.ahk
@@ -139,14 +137,12 @@ class App {
         stopRec := StopRecordingCommand(rec, sess, ctx)
         startRec := StartRecordingCommand(rec)
         toggleRec := ToggleRecordingCommand(rec, sess, ctx)
-        compress := CompressHistoryCommand(sess, cfg, llm)
         resetAll := ResetAllCommand(sess)
         deleteMsg := DeleteMessageCommand(sess)
         clearHist := ClearHistoryCommand(sess, cfg)
         copyToClip := CopyToClipboardCommand()
         selectModel := SelectModelCommand(sess)
         getToolsState := GetToolsMenuStateCommand(cfg, sess)
-        getCompressionState := GetCompressionMenuStateCommand(cfg, sess)
         toggleTool := ToggleToolCommand(cfg, sess)
         processClip := ProcessClipboardCommand(rec, sess)
         saveDiagram := SaveDiagramCommand()
@@ -188,14 +184,14 @@ class App {
         this.controller.SetView(this.view, this.view.promptView, this.view.contextView, this.view.historyView, this.view.menuView, this.view.topControlsView, this.view.responseView)
 
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, compress, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClip, switchSession, toggleBatchMode, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState
+            saveConv, loadConv, clearCtx, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClip, switchSession, toggleBatchMode, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState
         )
 
         ; 4. Initialize Sub-Controllers
         ctxView := ContextViewController(this.view.contextView, this.view, sess, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems, prepareContext, setContextItemChecked)
         histView := HistoryViewController(this.view.historyView, this.view, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip, regenerateMessage, navigateHistoryPrevious, navigateHistoryNext, getHistoryInfo, setProcessingState, wv, saveEditedMsg)
 
-        settingsContr := SettingsController(cfg, sess, selectModel, changeAnswerSize, toggleTool, getToolsState, getCompressionState, changeSystemPrompt, reloadSettings, switchSession)
+        settingsContr := SettingsController(cfg, sess, selectModel, changeAnswerSize, toggleTool, getToolsState, changeSystemPrompt, reloadSettings, switchSession)
         recordingContr := RecordingController(rec, startRec, stopRec, toggleRec)
 
         this.controller.SetSubControllers(ctxView, histView, settingsContr, recordingContr)

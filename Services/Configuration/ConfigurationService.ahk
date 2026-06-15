@@ -191,10 +191,6 @@ class ConfigurationService {
         return settings.Get("image", false)
     }
 
-    GetCompressionPrompt(modelIndex) {
-        return "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
-    }
-
     GetSystemPromptNames(modelIndex) {
         names := []
         prompts := this.GetVisiblePrompts(modelIndex)

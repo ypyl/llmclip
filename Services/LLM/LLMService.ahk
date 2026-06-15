@@ -145,55 +145,6 @@ class LLMService {
         }
     }
 
-    CompressHistory(messages, conversationText, modelIndex) {
-        ; Check if there are enough messages to compress (at least 3: system + 2 others)
-        if (messages.Length < 3) {
-            throw Error("Not enough messages to compress. Need at least 2 messages besides the system message.")
-        }
-
-        ; Validate conversation text
-        if (conversationText == "") {
-            throw Error("No conversation history to compress.")
-        }
-
-        ; Build compression prompt
-        compressionPrompt := this.configManager.GetCompressionPrompt(modelIndex)
-
-        if (compressionPrompt == "") {
-            throw Error("Compression prompt not configured for this provider.")
-        }
-
-        compressionPrompt .= "`n`nCONVERSATION:`n" conversationText
-
-        ; Create a temporary message array with just system message and compression request
-        tempMessages := [
-            messages[1],  ; Keep system message
-            ChatMessage("user", [TextContent(compressionPrompt)])
-        ]
-
-        try {
-            ; Create LLM client settings
-            settings := this.configManager.GetSelectedSettings(modelIndex)
-            settings["tools"] := []  ; No tools for compression
-
-            ; Call LLM with compression prompt
-            startTime := A_TickCount
-            newMessages := this.llmClientInstance.Call(tempMessages, settings)
-            duration := (A_TickCount - startTime) / 1000
-
-            if (newMessages.Length > 0) {
-                compressedMsg := newMessages[1]
-                compressedMsg.AdditionalProperties["duration"] := duration
-
-                return compressedMsg
-            }
-            return ""
-
-        } catch as e {
-            throw e
-        }
-    }
-
     Cancel() {
         if (this.llmClientInstance) {
             this.llmClientInstance.Cancel()

@@ -15,19 +15,17 @@ class SettingsController {
     changeAnswerSizeCommand := ""
     toggleToolCommand := ""
     getToolsStateCommand := ""
-    getCompressionStateCommand := ""
     changeSystemPromptCommand := ""
     reloadSettingsCommand := ""
     switchSessionCommand := ""
 
-    __New(configManager, sessionManager, selectModelCommand, changeAnswerSizeCommand, toggleToolCommand, getToolsStateCommand, getCompressionStateCommand, changeSystemPromptCommand, reloadSettingsCommand, switchSessionCommand) {
+    __New(configManager, sessionManager, selectModelCommand, changeAnswerSizeCommand, toggleToolCommand, getToolsStateCommand, changeSystemPromptCommand, reloadSettingsCommand, switchSessionCommand) {
         this.configManager := configManager
         this.sessionManager := sessionManager
         this.selectModelCommand := selectModelCommand
         this.changeAnswerSizeCommand := changeAnswerSizeCommand
         this.toggleToolCommand := toggleToolCommand
         this.getToolsStateCommand := getToolsStateCommand
-        this.getCompressionStateCommand := getCompressionStateCommand
         this.changeSystemPromptCommand := changeSystemPromptCommand
         this.reloadSettingsCommand := reloadSettingsCommand
         this.switchSessionCommand := switchSessionCommand
@@ -86,7 +84,6 @@ class SettingsController {
         }
 
         this.UpdateToolsMenuState()
-        this.UpdateCompressionMenuState()
     }
 
     SelectAnswerSize(ItemName, ItemPos, MyMenu) {
@@ -99,14 +96,6 @@ class SettingsController {
         
         if (this.onSessionChanged)
             this.onSessionChanged()
-    }
-
-    UpdateCompressionMenuState() {
-        if (!this.menuView)
-            return
-
-        isEnabled := this.getCompressionStateCommand.Execute()
-        this.menuView.UpdateCompressionState(isEnabled)
     }
 
     UpdateToolsMenuState() {
@@ -165,6 +154,5 @@ class SettingsController {
         }
 
         this.UpdateToolsMenuState()
-        this.UpdateCompressionMenuState()
     }
 }

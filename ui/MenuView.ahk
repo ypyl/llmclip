@@ -3,7 +3,6 @@ class MenuView {
     sessionMenu := ""
     sessionCallback := ""
     modelMenu := ""
-    historyMenu := ""
     toolsMenu := ""
     modeMenu := ""
     answerSizeMenu := ""
@@ -58,9 +57,6 @@ class MenuView {
         this.answerSizeMenu.Add("Long", ObjBindMethod(settingsController, "SelectAnswerSize"))
         this.answerSizeMenu.Check("Default")
 
-        this.historyMenu := Menu()
-        this.historyMenu.Add("Compress", ObjBindMethod(rootController, "CompressHistory"))
-
         this.modeMenu := Menu()
         this.modeMenu.Add("Batch Mode", ObjBindMethod(rootController, "ToggleBatchMode"))
 
@@ -72,7 +68,6 @@ class MenuView {
         this.menuBar := MenuBar()
         this.menuBar.Add("&File", FileMenu)
         this.menuBar.Add(this.currentSessionLabel, this.sessionMenu)
-        this.menuBar.Add("History", this.historyMenu)
         this.menuBar.Add("Mode", this.modeMenu)
         this.menuBar.Add("Tools", this.toolsMenu)
         this.menuBar.Add("Answer Size", this.answerSizeMenu)
@@ -139,17 +134,6 @@ class MenuView {
             } else {
                 this.toolsMenu.Uncheck(toolInfo.label)
             }
-        }
-    }
-
-    UpdateCompressionState(isEnabled) {
-        if (!this.historyMenu)
-            return
-
-        if (isEnabled) {
-            this.historyMenu.Enable("Compress")
-        } else {
-            this.historyMenu.Disable("Compress")
         }
     }
 

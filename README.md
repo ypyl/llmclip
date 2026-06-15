@@ -37,7 +37,6 @@ LLMClip monitors your clipboard and aggregates copied text, files, folders, imag
     - **Mermaid Diagrams**: Supports rendering of Mermaid diagrams for visual workflows and charts.
     - **Save as SVG**: Save generated diagrams directly from the chat interface.
 - **History Management**:
-    - **Compression**: Summarize long conversations and save tokens via **History → Compress**.
     - **In-place Editing**: Double-click the **markdown view** of any message to edit its content directly (preserves images and tool calls).
     - **Branching**: Double-click any previous **user** message to create a new history branch (timeline). Navigate with **↑/↓** buttons in the chat header.
 - **Session Management**: Switch between up to **5 independent chat sessions**, each with its own model, system prompt, chat history, and context items. Session labels show the active system prompt name.

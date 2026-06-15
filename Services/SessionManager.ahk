@@ -82,44 +82,6 @@ class SessionManager {
 
     SetBatchMode(enabled) => this.batchModeEnabled := enabled
 
-    FormatMessagesForCompressionForSession(index) {
-        messages := this.GetSessionMessages(index)
-        formattedText := ""
-
-        i := 2
-        loop messages.Length - 1 {
-            msg := messages[i]
-            roleLabel := msg.Role == "user" ? "User" :
-                msg.Role == "assistant" ? "Assistant" :
-                msg.Role == "tool" ? "Tool" : msg.Role
-
-            messageText := msg.GetText()
-            formattedText .= roleLabel ": " messageText "`n`n"
-            i++
-        }
-
-        return formattedText
-    }
-
-    FormatMessagesForCompression() {
-        return this.FormatMessagesForCompressionForSession(this.currentSessionIndex)
-    }
-
-    ReplaceWithCompressedForSession(index, compressedMsg) {
-        messages := this.GetSessionMessages(index)
-        systemMsg := messages[1]
-
-        this.sessions[index].ResetHistory()
-
-        current := this.GetSessionMessages(index)
-        current[1] := systemMsg
-        current.Push(compressedMsg)
-    }
-
-    ReplaceWithCompressed(compressedMsg) {
-        this.ReplaceWithCompressedForSession(this.currentSessionIndex, compressedMsg)
-    }
-
     GetMessagesExcludingBatchForSession(index) {
         allMessages := this.GetSessionMessages(index)
         filteredMessages := []

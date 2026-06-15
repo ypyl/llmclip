@@ -95,7 +95,6 @@ class MainView {
         this.responseView.Create(this.gui)
 
         ; Initial menu states
-        this.settingsController.UpdateCompressionMenuState()
         this.settingsController.UpdateToolsMenuState()
     }
 

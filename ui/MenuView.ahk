@@ -60,7 +60,6 @@ class MenuView {
 
         this.historyMenu := Menu()
         this.historyMenu.Add("Compress", ObjBindMethod(rootController, "CompressHistory"))
-        this.historyMenu.Add("Extract Notes", ObjBindMethod(rootController, "ExtractLearnings"))
 
         this.modeMenu := Menu()
         this.modeMenu.Add("Batch Mode", ObjBindMethod(rootController, "ToggleBatchMode"))

@@ -195,12 +195,6 @@ class ConfigurationService {
         return "Summarize the following conversation, keeping only the most meaningful information and key context. Be concise but preserve all important details. Return only the summary without any preamble."
     }
 
-    GetLearningsPrompt(modelIndex) {
-        settings := this.GetSelectedSettings(modelIndex)
-        defaultPrompt := "Extract valuable learnings and facts from the following conversation.`nReturn a bulleted list of notes.`nFocus on technical details, solutions, and key decisions."
-        return settings.Get("learnings_prompt", defaultPrompt)
-    }
-
     GetSystemPromptNames(modelIndex) {
         names := []
         prompts := this.GetVisiblePrompts(modelIndex)

@@ -28,7 +28,6 @@ class MainController {
     loadConversationCommand := ""
     clearContextCommand := ""
     compressHistoryCommand := ""
-    extractLearningsCommand := ""
     resetAllCommand := ""
     saveDiagramCommand := ""
     renderMarkdownCommand := ""
@@ -50,7 +49,6 @@ class MainController {
     ; Sub-Controllers
     contextViewController := ""
     historyViewController := ""
-    notesController := ""
     settingsController := ""
     recordingController := ""
 
@@ -64,12 +62,11 @@ class MainController {
         this.contextManager := contextManager
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, compress, extract, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClipboard, switchSession, toggleBatchMode, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState) {
+    SetCommands(saveConv, loadConv, clearCtx, compress, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClipboard, switchSession, toggleBatchMode, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState) {
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
         this.clearContextCommand := clearCtx
         this.compressHistoryCommand := compress
-        this.extractLearningsCommand := extract
         this.resetAllCommand := resetAll
         this.saveDiagramCommand := saveDiagram
         this.renderMarkdownCommand := renderMarkdown
@@ -89,10 +86,9 @@ class MainController {
         this.setProcessingStateCommand := setProcessingState
     }
 
-    SetSubControllers(ctxView, histView, notes, settings, recording) {
+    SetSubControllers(ctxView, histView, settings, recording) {
         this.contextViewController := ctxView
         this.historyViewController := histView
-        this.notesController := notes
         this.settingsController := settings
         this.recordingController := recording
     }
@@ -127,24 +123,6 @@ class MainController {
 
         } catch as e {
             MsgBox("Compression failed: " . e.Message, "Error", "Iconx")
-        } finally {
-            this.SetProcessingState(ProcessingState.IDLE)
-        }
-    }
-
-    ExtractLearnings(*) {
-        this.SetProcessingState(ProcessingState.EXTRACTING)
-
-        try {
-            extractedNotes := this.extractLearningsCommand.Execute()
-
-            if (extractedNotes != "") {
-                presentationText := MessagePresentationService.GetPresentationText(extractedNotes)
-                this.notesController.ShowNotes(presentationText)
-            }
-
-        } catch as e {
-            MsgBox("Extraction failed: " . e.Message, "Error", "Iconx")
         } finally {
             this.SetProcessingState(ProcessingState.IDLE)
         }
@@ -374,9 +352,6 @@ class MainController {
             this.promptView.SetAskButtonEnabled(true)
         } else if (state == ProcessingState.COMPRESSING) {
             this.promptView.SetAskButtonText("Compressing...")
-            this.promptView.SetAskButtonEnabled(false)
-        } else if (state == ProcessingState.EXTRACTING) {
-            this.promptView.SetAskButtonText("Extracting...")
             this.promptView.SetAskButtonEnabled(false)
         }
 

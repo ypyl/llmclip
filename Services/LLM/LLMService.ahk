@@ -194,45 +194,6 @@ class LLMService {
         }
     }
 
-    ExtractLearnings(messages, conversationText, modelIndex) {
-        ; Check if there are enough messages (at least 2: system + 1 user/assistant)
-        if (messages.Length < 2) {
-             throw Error("Not enough conversation history to extract notes.")
-        }
-
-        ; Validate conversation text
-        if (conversationText == "") {
-             throw Error("No conversation history to extract from.")
-        }
-
-        ; Get learnings prompt
-        learningsPrompt := this.configManager.GetLearningsPrompt(modelIndex)
-        learningsPrompt .= "`n`nCONVERSATION:`n" conversationText
-
-        ; Create temporary messages for the extraction request
-        tempMessages := [
-            messages[1],  ; Keep system message
-            ChatMessage("user", [TextContent(learningsPrompt)])
-        ]
-
-        try {
-            ; Create LLM client settings
-            settings := this.configManager.GetSelectedSettings(modelIndex)
-            settings["tools"] := []  ; No tools for extraction
-
-            ; Call LLM
-            newMessages := this.llmClientInstance.Call(tempMessages, settings)
-
-            if (newMessages.Length > 0) {
-                return newMessages[1]
-            }
-            return ""
-
-        } catch as e {
-            throw e
-        }
-    }
-
     Cancel() {
         if (this.llmClientInstance) {
             this.llmClientInstance.Cancel()

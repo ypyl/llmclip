@@ -26,7 +26,6 @@
 #Include Controllers\MainController.ahk
 #Include Controllers\ContextViewController.ahk
 #Include Controllers\HistoryViewController.ahk
-#Include Controllers\NotesController.ahk
 #Include Controllers\SettingsController.ahk
 #Include Controllers\RecordingController.ahk
 #Include Utils\FileService.ahk
@@ -39,9 +38,7 @@
 #Include Commands\DeleteMessageCommand.ahk
 #Include Commands\ClearHistoryCommand.ahk
 #Include Commands\CompressHistoryCommand.ahk
-#Include Commands\ExtractLearningsCommand.ahk
 #Include Commands\ResetAllCommand.ahk
-#Include ui\NotesView.ahk
 #Include Utils\ClipboardService.ahk
 #Include Commands\CopyToClipboardCommand.ahk
 #Include Commands\SelectModelCommand.ahk
@@ -143,7 +140,6 @@ class App {
         startRec := StartRecordingCommand(rec)
         toggleRec := ToggleRecordingCommand(rec, sess, ctx)
         compress := CompressHistoryCommand(sess, cfg, llm)
-        extract := ExtractLearningsCommand(sess, cfg, llm)
         resetAll := ResetAllCommand(sess)
         deleteMsg := DeleteMessageCommand(sess)
         clearHist := ClearHistoryCommand(sess, cfg)
@@ -192,20 +188,17 @@ class App {
         this.controller.SetView(this.view, this.view.promptView, this.view.contextView, this.view.historyView, this.view.menuView, this.view.topControlsView, this.view.responseView)
 
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, compress, extract, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClip, switchSession, toggleBatchMode, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState
+            saveConv, loadConv, clearCtx, compress, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClip, switchSession, toggleBatchMode, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState
         )
 
         ; 4. Initialize Sub-Controllers
         ctxView := ContextViewController(this.view.contextView, this.view, sess, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems, prepareContext, setContextItemChecked)
         histView := HistoryViewController(this.view.historyView, this.view, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip, regenerateMessage, navigateHistoryPrevious, navigateHistoryNext, getHistoryInfo, setProcessingState, wv, saveEditedMsg)
-        notesViewInstance := NotesView()
-        notesContr := NotesController(copyToClip, notesViewInstance)
-        notesViewInstance.controller := notesContr
 
         settingsContr := SettingsController(cfg, sess, selectModel, changeAnswerSize, toggleTool, getToolsState, getCompressionState, changeSystemPrompt, reloadSettings, switchSession)
         recordingContr := RecordingController(rec, startRec, stopRec, toggleRec)
 
-        this.controller.SetSubControllers(ctxView, histView, notesContr, settingsContr, recordingContr)
+        this.controller.SetSubControllers(ctxView, histView, settingsContr, recordingContr)
         this.view.SetSubControllers(ctxView, histView, settingsContr, recordingContr)
 
         settingsContr.SetViews(this.view.menuView, this.view.promptView)

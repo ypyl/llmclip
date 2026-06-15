@@ -12,18 +12,16 @@ class SettingsController {
 
     ; Commands
     selectModelCommand := ""
-    changeAnswerSizeCommand := ""
     toggleToolCommand := ""
     getToolsStateCommand := ""
     changeSystemPromptCommand := ""
     reloadSettingsCommand := ""
     switchSessionCommand := ""
 
-    __New(configManager, sessionManager, selectModelCommand, changeAnswerSizeCommand, toggleToolCommand, getToolsStateCommand, changeSystemPromptCommand, reloadSettingsCommand, switchSessionCommand) {
+    __New(configManager, sessionManager, selectModelCommand, toggleToolCommand, getToolsStateCommand, changeSystemPromptCommand, reloadSettingsCommand, switchSessionCommand) {
         this.configManager := configManager
         this.sessionManager := sessionManager
         this.selectModelCommand := selectModelCommand
-        this.changeAnswerSizeCommand := changeAnswerSizeCommand
         this.toggleToolCommand := toggleToolCommand
         this.getToolsStateCommand := getToolsStateCommand
         this.changeSystemPromptCommand := changeSystemPromptCommand
@@ -84,11 +82,6 @@ class SettingsController {
         }
 
         this.UpdateToolsMenuState()
-    }
-
-    SelectAnswerSize(ItemName, ItemPos, MyMenu) {
-        this.menuView.UpdateAnswerSizeMenu(ItemName)
-        this.changeAnswerSizeCommand.Execute(ItemName)
     }
 
     SelectSession(ItemName, ItemPos, MyMenu) {

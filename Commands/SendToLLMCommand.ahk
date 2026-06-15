@@ -49,13 +49,11 @@ class SendToLLMCommand {
         webFetchEnabled := this.configManager.IsToolEnabled(modelIndex, WebFetchTool.TOOL_NAME)
         markdownNewEnabled := this.configManager.IsToolEnabled(modelIndex, MarkdownNewTool.TOOL_NAME)
         createPromptEnabled := this.configManager.IsToolEnabled(modelIndex, PromptCreatorTool.TOOL_NAME)
-        answerSize := this.sessionManager.answerSize
 
         try {
             newMessages := this.llmService.SendToLLM(
                 messages,
                 modelIndex,
-                answerSize,
                 powerShellEnabled,
                 webSearchEnabled,
                 webFetchEnabled,

@@ -30,13 +30,6 @@ class LoadStateOnStartCommand {
         )
         this.sessionManager.UpdateSystemPromptContent(systemPrompt)
 
-        ; Restore answer size
-        hasAnswerSize := isMap ? state.Has("answerSize") : state.HasOwnProp("answerSize")
-        if (hasAnswerSize) {
-            answerSize := isMap ? state["answerSize"] : state.answerSize
-            this.sessionManager.SetAnswerSize(answerSize)
-        }
-
         ; Restore session index
         hasSessionIndex := isMap ? state.Has("sessionIndex") : state.HasOwnProp("sessionIndex")
         if (hasSessionIndex) {

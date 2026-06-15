@@ -4,7 +4,6 @@ class MenuView {
     sessionCallback := ""
     modelMenu := ""
     toolsMenu := ""
-    answerSizeMenu := ""
     currentModelLabel := ""
     currentSessionLabel := ""
 
@@ -50,13 +49,6 @@ class MenuView {
         currentSessionLabel := currentSessionIndex . ": " . sessionNames[currentSessionIndex]
         this.currentSessionLabel := currentSessionLabel
 
-        this.answerSizeMenu := Menu()
-        this.answerSizeMenu.Add("Small", ObjBindMethod(settingsController, "SelectAnswerSize"))
-        this.answerSizeMenu.Add("Default", ObjBindMethod(settingsController, "SelectAnswerSize"))
-        this.answerSizeMenu.Add("Long", ObjBindMethod(settingsController, "SelectAnswerSize"))
-        this.answerSizeMenu.Check("Default")
-
-
         this.toolsMenu := Menu()
         for toolInfo in MenuView.ToolMapping {
             this.toolsMenu.Add(toolInfo.label, ObjBindMethod(settingsController, "ToggleTool", toolInfo.id))
@@ -66,7 +58,6 @@ class MenuView {
         this.menuBar.Add("&File", FileMenu)
         this.menuBar.Add(this.currentSessionLabel, this.sessionMenu)
         this.menuBar.Add("Tools", this.toolsMenu)
-        this.menuBar.Add("Answer Size", this.answerSizeMenu)
         this.menuBar.Add(currentModelLabel, this.modelMenu)
 
         gui.MenuBar := this.menuBar
@@ -93,19 +84,6 @@ class MenuView {
             if (this.currentModelLabel != currentModelLabel) {
                 this.menuBar.Rename(this.currentModelLabel, currentModelLabel)
                 this.currentModelLabel := currentModelLabel
-            }
-        }
-    }
-
-    UpdateAnswerSizeMenu(selectedSize) {
-        if (!this.answerSizeMenu)
-            return
-
-        for _, size in ["Small", "Default", "Long"] {
-            if (size = selectedSize) {
-                this.answerSizeMenu.Check(size)
-            } else {
-                this.answerSizeMenu.Uncheck(size)
             }
         }
     }

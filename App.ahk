@@ -64,7 +64,6 @@
 #Include Commands\ChangeSystemPromptCommand.ahk
 #Include Commands\SwitchSessionCommand.ahk
 #Include Commands\ReloadSettingsCommand.ahk
-#Include Commands\ChangeAnswerSizeCommand.ahk
 #Include Utils\StateService.ahk
 #Include Commands\SaveStateOnExitCommand.ahk
 #Include Commands\SaveConversationOnExitCommand.ahk
@@ -166,7 +165,6 @@ class App {
         changeSystemPrompt := ChangeSystemPromptCommand(sess, cfg)
         switchSession := SwitchSessionCommand(sess)
         reloadSettings := ReloadSettingsCommand(cfg)
-        changeAnswerSize := ChangeAnswerSizeCommand(sess)
 
         ; State persistence commands
         saveStateOnExit := SaveStateOnExitCommand(sess, cfg)
@@ -187,7 +185,7 @@ class App {
         ctxView := ContextViewController(this.view.contextView, this.view, sess, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems, prepareContext, setContextItemChecked)
         histView := HistoryViewController(this.view.historyView, this.view, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip, regenerateMessage, navigateHistoryPrevious, navigateHistoryNext, getHistoryInfo, setProcessingState, wv, saveEditedMsg)
 
-        settingsContr := SettingsController(cfg, sess, selectModel, changeAnswerSize, toggleTool, getToolsState, changeSystemPrompt, reloadSettings, switchSession)
+        settingsContr := SettingsController(cfg, sess, selectModel, toggleTool, getToolsState, changeSystemPrompt, reloadSettings, switchSession)
         recordingContr := RecordingController(rec, startRec, stopRec, toggleRec)
 
         this.controller.SetSubControllers(ctxView, histView, settingsContr, recordingContr)

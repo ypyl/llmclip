@@ -22,7 +22,6 @@ LLMClip monitors your clipboard and aggregates copied text, files, folders, imag
 - **9 Built-in Providers**: Pre-configured support for **GitHub Models**, **Groq**, **Groq Audio** (TTS), **Google (Gemini)**, **Ollama Local**, **Ollama Cloud**, **OpenRouter**, **Nvidia**, and **OpenCodeGo**.
 - **Customizable**: Flexible configuration via `providers/` and `prompts/` directories — all `*.json` files in each are merged at runtime. Define curl templates, models, tool flags, system prompts with templates, and auto-approval rules.
 - **Per-Model System Prompts**: Multiple system prompt roles are selectable from a dropdown for every model. All prompts are available to all providers. System prompts can include input templates with `{placeholders}`.
-- **Answer Size Control**: Choose Small (concise), Default, or Long (detailed) responses per session via the menu.
 - **Tools**: Allow models to execute terminal commands, read/write files, search the web, fetch pages, create prompts, and more. Available tools:
     - `execute_powershell`: Run PowerShell scripts for system operations.
     - `file_system`: Perform local file read, write, and list operations.

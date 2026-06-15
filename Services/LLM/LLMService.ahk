@@ -92,7 +92,7 @@ class LLMService {
         return results
     }
 
-    SendToLLM(messages, modelIndex, answerSize, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false, createPromptEnabled := false) {
+    SendToLLM(messages, modelIndex, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false, createPromptEnabled := false) {
         ; Append Date and Time to the system message
         if (messages.Length > 0 && messages[1].Role == "system") {
             systemMsg := messages[1]
@@ -106,27 +106,10 @@ class LLMService {
             settings := this.configManager.GetSelectedSettings(modelIndex)
             settings["tools"] := this.ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled, createPromptEnabled)
 
-            ; Add a user message to instruct the model on answer length based on menu selection
-            answerSizeMsg := ""
-            if (answerSize = "Small") {
-                answerSizeMsg := "Please answer as concisely as possible (short answer)."
-            } else if (answerSize = "Long") {
-                answerSizeMsg := "Please provide a long, detailed answer."
-            }
-            ; If currentAnswerSize = "Default", no message is added (default behavior)
-            if (answerSizeMsg != "") {
-                messages.Push(ChatMessage("user", [TextContent(answerSizeMsg)]))
-            }
-
             ; Use LLM client with settings
             startTime := A_TickCount
             newMessages := this.llmClientInstance.Call(messages, settings)
             duration := (A_TickCount - startTime) / 1000
-
-            ; Remove the answer size instruction message after receiving the answer
-            if (answerSizeMsg != "") {
-                messages.RemoveAt(messages.Length)
-            }
 
             ; Attach metadata to new messages
             for newMessage in newMessages {

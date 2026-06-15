@@ -11,7 +11,6 @@ class SessionManager {
     defaultSystemPrompt := "You are a helpful assistant. Be concise and direct in your responses."
     defaultModelIndex := 1
     contextManager := ""
-    answerSize := "Default"
 
     __New(defaultModelIndex := 1, defaultSystemPrompt := "", contextManager := "") {
         this.defaultModelIndex := defaultModelIndex
@@ -76,8 +75,6 @@ class SessionManager {
     ClearCurrentMessages() => this.GetCurrentSession().ResetHistory()
 
     ClearCurrentContext() => this.GetCurrentSession().context := []
-
-    SetAnswerSize(size) => this.answerSize := size
 
 
 

@@ -40,7 +40,6 @@ LLMClip monitors your clipboard and aggregates copied text, files, folders, imag
     - **In-place Editing**: Double-click the **markdown view** of any message to edit its content directly (preserves images and tool calls).
     - **Branching**: Double-click any previous **user** message to create a new history branch (timeline). Navigate with **↑/↓** buttons in the chat header.
 - **Session Management**: Switch between up to **5 independent chat sessions**, each with its own model, system prompt, chat history, and context items. Session labels show the active system prompt name.
-- **Batch Mode**: Toggle via **Mode → Batch Mode** to iterate your prompt over every checked context item independently. Useful for bulk-processing files or snippets with the same instruction.
 - **Persistence**:
     - **Manual**: Save/Load conversations as JSON via **File → Save/Load Conversation**.
     - **Automatic**: App state and the last conversation are auto-saved on exit and auto-restored on startup.
@@ -110,7 +109,6 @@ Section names must match provider names defined in `providers/providers.json`. O
 - **Context List**: Check items to include them as general context; use **Ctrl+Click** to select specific items for focused attention in the prompt.
 - **Images**: If an image is in the clipboard or selected context, it will be sent to multimodal models (Gemini, GPT-4o, Qwen-VL, etc.).
 - **Tools**: Enable tools per-session via the **Tools** menu. When an LLM requests a tool, the Ask button changes to **Confirm Tool Run** — review and approve or cancel. Configure auto-approval rules in system prompts for trusted operations.
-- **Batch Mode**: Toggle via **Mode → Batch Mode**. Your prompt runs independently for each checked item. Disable when done.
 - **System Prompts**: Select from the dropdown above the input box. Changing the prompt updates the current session immediately and may insert an input template.
 - **Sessions**: Switch sessions via the session menu (shows prompt names as labels). Each session is fully independent.
 

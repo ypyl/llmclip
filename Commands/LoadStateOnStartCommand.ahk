@@ -37,13 +37,6 @@ class LoadStateOnStartCommand {
             this.sessionManager.SetAnswerSize(answerSize)
         }
 
-        ; Restore batch mode
-        hasBatchMode := isMap ? state.Has("batchMode") : state.HasOwnProp("batchMode")
-        if (hasBatchMode) {
-            batchMode := isMap ? state["batchMode"] : state.batchMode
-            this.sessionManager.SetBatchMode(batchMode)
-        }
-
         ; Restore session index
         hasSessionIndex := isMap ? state.Has("sessionIndex") : state.HasOwnProp("sessionIndex")
         if (hasSessionIndex) {

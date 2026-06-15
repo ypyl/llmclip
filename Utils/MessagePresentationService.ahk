@@ -18,14 +18,6 @@ class MessagePresentationService {
         ; Get content with truncation for ListView
         contentText := SubStr(presentationText, 1, 70) (StrLen(presentationText) > 70 ? "..." : "")
 
-        ; Check for batch indicators and modify the displayed content
-        if (message.AdditionalProperties.Has("isBatchMode") && message.AdditionalProperties["isBatchMode"]) {
-            contentText := "🔄 [Batch] " . contentText
-        } else if (message.AdditionalProperties.Has("isBatchResponse") && message.AdditionalProperties["isBatchResponse"]) {
-            itemLabel := message.AdditionalProperties.Has("batchContextItem") ? message.AdditionalProperties["batchContextItem"] : "Item"
-            contentText := "✅ [" . itemLabel . "] " . contentText
-        }
-
         return {
             roleEmoji: roleEmoji,
             contentText: contentText,

@@ -34,7 +34,7 @@ class SendToLLMCommand {
             }
         }
 
-        messagesExBatch := this.sessionManager.GetMessagesExcludingBatchForSession(targetSessionIndex)
+        messages := this.sessionManager.GetSessionMessages(targetSessionIndex)
 
         systemPrompt := this.configManager.GetSystemPromptValue(
             this.sessionManager.GetSessionModelIndex(targetSessionIndex),
@@ -53,7 +53,7 @@ class SendToLLMCommand {
 
         try {
             newMessages := this.llmService.SendToLLM(
-                messagesExBatch,
+                messages,
                 modelIndex,
                 answerSize,
                 powerShellEnabled,

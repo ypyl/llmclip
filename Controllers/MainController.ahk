@@ -34,12 +34,10 @@ class MainController {
     setProcessingStateCommand := ""
     executeToolCallsCommand := ""
     sendToLLMCommand := ""
-    sendBatchToLLMCommand := ""
     renderLastMessageCommand := ""
     processClipboardCommand := ""
     uncheckContextCommand := ""
     switchSessionCommand := ""
-    toggleBatchModeCommand := ""
     saveStateOnExitCommand := ""
     saveConversationOnExitCommand := ""
     loadStateOnStartCommand := ""
@@ -61,7 +59,7 @@ class MainController {
         this.contextManager := contextManager
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClipboard, switchSession, toggleBatchMode, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState) {
+    SetCommands(saveConv, loadConv, clearCtx, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, renderLastMsg, uncheckContext, processClipboard, switchSession, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState) {
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
         this.clearContextCommand := clearCtx
@@ -71,12 +69,10 @@ class MainController {
         this.cancelRequestCommand := cancelRequest
         this.executeToolCallsCommand := executeToolCalls
         this.sendToLLMCommand := sendToLLM
-        this.sendBatchToLLMCommand := sendBatchToLLM
         this.renderLastMessageCommand := renderLastMsg
         this.uncheckContextCommand := uncheckContext
         this.processClipboardCommand := processClipboard
         this.switchSessionCommand := switchSession
-        this.toggleBatchModeCommand := toggleBatchMode
         this.saveStateOnExitCommand := saveStateOnExit
         this.saveConversationOnExitCommand := saveConvOnExit
         this.loadStateOnStartCommand := loadStateOnStart
@@ -173,13 +169,6 @@ class MainController {
             selectedIndices.Push(selectedIndex)
         }
 
-        batchItems := this.sessionManager.batchModeEnabled ? this.sessionManager.GetCheckedContextItems() : []
-
-        if (this.sessionManager.batchModeEnabled && batchItems.Length == 0) {
-            MsgBox("Please check at least one item in the context list for batch mode.", "No Items Selected", "Iconi")
-            return
-        }
-
         ; 2. Update UI state before execution
         if (this.mainView.guiShown && this.sessionManager.GetCurrentProcessingState() == ProcessingState.IDLE) {
             this.SetProcessingState(ProcessingState.PROCESSING)
@@ -204,15 +193,6 @@ class MainController {
                 } else {
                     result := { action: ProcessingState.IDLE }
                 }
-            } else if (this.sessionManager.batchModeEnabled) {
-                ; Handle Batch Mode
-                this.sendBatchToLLMCommand.Execute(
-                    promptText,
-                    batchItems,
-                    () => (this.sessionManager.GetCurrentProcessingState() != ProcessingState.PROCESSING),
-                    (label, messages) => this.historyViewController.UpdateChatHistoryView()
-                )
-                result := { action: ProcessingState.IDLE }
             } else {
                 ; Normal Send Mode
                 result := this.sendToLLMCommand.Execute(promptText, images, selectedIndices)
@@ -304,14 +284,6 @@ class MainController {
             currentText .= "`n"
         }
         this.promptView.SetValue(currentText . "> " . text . "`n")
-    }
-
-    ToggleBatchMode(*) {
-        ; Toggle batch mode state via command
-        isEnabled := this.toggleBatchModeCommand.Execute()
-
-        ; Update menu checkmark
-        this.menuView.UpdateBatchMode(isEnabled)
     }
 
     SetProcessingState(state) {
@@ -429,9 +401,6 @@ class MainController {
         ; 5. Update Tools Menu
         if (this.settingsController)
             this.settingsController.UpdateToolsMenuState()
-
-        ; 5b. Sync batch mode checkbox with loaded state
-        this.menuView.UpdateBatchMode(this.sessionManager.batchModeEnabled)
 
         ; 6. Refresh sub-views
         this.contextViewController.UpdateContextView()

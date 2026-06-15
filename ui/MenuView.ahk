@@ -4,7 +4,6 @@ class MenuView {
     sessionCallback := ""
     modelMenu := ""
     toolsMenu := ""
-    modeMenu := ""
     answerSizeMenu := ""
     currentModelLabel := ""
     currentSessionLabel := ""
@@ -57,8 +56,6 @@ class MenuView {
         this.answerSizeMenu.Add("Long", ObjBindMethod(settingsController, "SelectAnswerSize"))
         this.answerSizeMenu.Check("Default")
 
-        this.modeMenu := Menu()
-        this.modeMenu.Add("Batch Mode", ObjBindMethod(rootController, "ToggleBatchMode"))
 
         this.toolsMenu := Menu()
         for toolInfo in MenuView.ToolMapping {
@@ -68,22 +65,11 @@ class MenuView {
         this.menuBar := MenuBar()
         this.menuBar.Add("&File", FileMenu)
         this.menuBar.Add(this.currentSessionLabel, this.sessionMenu)
-        this.menuBar.Add("Mode", this.modeMenu)
         this.menuBar.Add("Tools", this.toolsMenu)
         this.menuBar.Add("Answer Size", this.answerSizeMenu)
         this.menuBar.Add(currentModelLabel, this.modelMenu)
 
         gui.MenuBar := this.menuBar
-    }
-
-    UpdateBatchMode(enabled) {
-        if (!this.modeMenu)
-            return
-        if (enabled) {
-            this.modeMenu.Check("Batch Mode")
-        } else {
-            this.modeMenu.Uncheck("Batch Mode")
-        }
     }
 
     UpdateModelMenu(selectedIndex, modelNames) {

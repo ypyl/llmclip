@@ -60,13 +60,11 @@
 #Include Commands\NavigateHistoryCommand.ahk
 #Include Commands\GetHistoryInfoCommand.ahk
 #Include Commands\SendToLLMCommand.ahk
-#Include Commands\SendBatchToLLMCommand.ahk
 #Include Commands\SetContextItemCheckedCommand.ahk
 #Include Commands\ChangeSystemPromptCommand.ahk
 #Include Commands\SwitchSessionCommand.ahk
 #Include Commands\ReloadSettingsCommand.ahk
 #Include Commands\ChangeAnswerSizeCommand.ahk
-#Include Commands\ToggleBatchModeCommand.ahk
 #Include Utils\StateService.ahk
 #Include Commands\SaveStateOnExitCommand.ahk
 #Include Commands\SaveConversationOnExitCommand.ahk
@@ -165,12 +163,10 @@ class App {
         navigateHistoryNext := NavigateHistoryCommand(sess, "next")
         getHistoryInfo := GetHistoryInfoCommand(sess)
         sendToLLM := SendToLLMCommand(sess, cfg, llm, ctx)
-        sendBatchToLLM := SendBatchToLLMCommand(sess, cfg, llm, ctx, cps)
         changeSystemPrompt := ChangeSystemPromptCommand(sess, cfg)
         switchSession := SwitchSessionCommand(sess)
         reloadSettings := ReloadSettingsCommand(cfg)
         changeAnswerSize := ChangeAnswerSizeCommand(sess)
-        toggleBatchMode := ToggleBatchModeCommand(sess)
 
         ; State persistence commands
         saveStateOnExit := SaveStateOnExitCommand(sess, cfg)
@@ -184,7 +180,7 @@ class App {
         this.controller.SetView(this.view, this.view.promptView, this.view.contextView, this.view.historyView, this.view.menuView, this.view.topControlsView, this.view.responseView)
 
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, sendBatchToLLM, renderLastMsg, uncheckContext, processClip, switchSession, toggleBatchMode, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState
+            saveConv, loadConv, clearCtx, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, renderLastMsg, uncheckContext, processClip, switchSession, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState
         )
 
         ; 4. Initialize Sub-Controllers

@@ -12,7 +12,6 @@ class SessionManager {
     defaultModelIndex := 1
     contextManager := ""
     answerSize := "Default"
-    batchModeEnabled := false
 
     __New(defaultModelIndex := 1, defaultSystemPrompt := "", contextManager := "") {
         this.defaultModelIndex := defaultModelIndex
@@ -80,25 +79,7 @@ class SessionManager {
 
     SetAnswerSize(size) => this.answerSize := size
 
-    SetBatchMode(enabled) => this.batchModeEnabled := enabled
 
-    GetMessagesExcludingBatchForSession(index) {
-        allMessages := this.GetSessionMessages(index)
-        filteredMessages := []
-
-        for msg in allMessages {
-            isBatch := (msg.AdditionalProperties.Has("isBatchMode") && msg.AdditionalProperties["isBatchMode"])
-                    || (msg.AdditionalProperties.Has("isBatchResponse") && msg.AdditionalProperties["isBatchResponse"])
-
-            if (!isBatch)
-                filteredMessages.Push(msg)
-        }
-        return filteredMessages
-    }
-
-    GetMessagesExcludingBatch() {
-        return this.GetMessagesExcludingBatchForSession(this.currentSessionIndex)
-    }
 
     AddContextItems(items) {
         addedAny := false
@@ -414,15 +395,7 @@ class SessionManager {
         return images
     }
 
-    GetCheckedContextItems() {
-        checkedItems := []
-        context := this.GetCurrentSessionContext()
-        for index, item in context {
-            if (item.Checked)
-                checkedItems.Push(item.Value)
-        }
-        return checkedItems
-    }
+
 
     HasAnyCheckedItem() {
         context := this.GetCurrentSessionContext()

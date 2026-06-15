@@ -251,7 +251,7 @@ class ChatMessage {
 
         ; Copy additional properties
         ; Internal properties that should not be sent to API unless requested
-        internalProps := ["hasContext", "thinking", "duration", "tokens", "isBatchMode", "isBatchResponse", "batchContextItem"] 
+        internalProps := ["hasContext", "thinking", "duration", "tokens"] 
         
         for key, value in this.AdditionalProperties {
             isInternal := false

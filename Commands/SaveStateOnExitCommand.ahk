@@ -12,7 +12,6 @@ class SaveStateOnExitCommand {
             modelIndex: this.sessionManager.GetCurrentSessionModelIndex(),
             systemPromptIndex: this.sessionManager.GetCurrentSessionSystemPrompt(),
             answerSize: this.sessionManager.answerSize,
-            batchMode: this.sessionManager.batchModeEnabled,
             sessionIndex: this.sessionManager.currentSessionIndex,
             toolOverrides: this.configManager.toolOverrides
         }

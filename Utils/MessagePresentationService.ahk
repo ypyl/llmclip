@@ -44,29 +44,28 @@ class MessagePresentationService {
     static GetPresentationText(message, includeThinking := true) {
         if (message.Role == "user" && message.AdditionalProperties.Has("hasContext") && message.AdditionalProperties["hasContext"]) {
             ; For user message with context, show only the user prompt parts
+            hasTextContext := message.AdditionalProperties.Has("hasTextContext") && message.AdditionalProperties["hasTextContext"]
+
             userContent := ""
             for i, part in message.Contents {
-                if (i > 1 && part is TextContent) {
+                ; Skip Contents[1] only if it is context text (hasTextContext is true)
+                if (hasTextContext && i == 1)
+                    continue
+                ; Skip all ImageContent parts (they belong to the context row)
+                if (part is ImageContent)
+                    continue
+                if (part is TextContent) {
                     if (userContent != "")
                         userContent .= "`n"
                     userContent .= part.Text
                 }
             }
 
-            ; Check if has images
-            hasImage := false
-            for part in message.Contents {
-                if (part is ImageContent) {
-                    hasImage := true
-                    break
-                }
-            }
-
-            if (userContent == "" && !hasImage) {
+            if (userContent == "") {
                 userContent := "(empty message)"
             }
 
-            return hasImage ? userContent . " [Image]" : userContent
+            return userContent
         }
 
         return MessagePresentationService.GetMessageAsString(message, includeThinking)
@@ -114,16 +113,7 @@ class MessagePresentationService {
             text := fence . "thinking`n" . thinkingContent . "`n" . fence . "`n`n" . text
         }
 
-        ; Check if has images
-        hasImage := false
-        for part in message.Contents {
-            if (part is ImageContent) {
-                hasImage := true
-                break
-            }
-        }
-
-        return hasImage ? text . " [Image]" : text
+        return text
     }
 
     /**
@@ -132,15 +122,34 @@ class MessagePresentationService {
      * @returns {Object} {roleEmoji, contentText, duration, tokens}
      */
     static GetContextListViewItem(message) {
-        contextCount := 0
+        textCount := 0
+        imageCount := 0
         for part in message.Contents {
             if (A_Index == 1)
                 continue
-            contextCount++
+            if (part is ImageContent)
+                imageCount++
+            else if (part is TextContent)
+                textCount++
         }
+
+        ; Build label: distinguish text-only, image-only, and mixed
+        labelParts := []
+        if (textCount > 0)
+            labelParts.Push(textCount . " item" . (textCount != 1 ? "s" : ""))
+        if (imageCount > 0)
+            labelParts.Push("🖼️ " . imageCount . " image" . (imageCount != 1 ? "s" : ""))
+
+        label := ""
+        for i, part in labelParts {
+            if (i > 1)
+                label .= ", "
+            label .= part
+        }
+
         return {
             roleEmoji: "📎",
-            contentText: contextCount . " context item" . (contextCount != 1 ? "s" : "") . " attached",
+            contentText: label . " attached",
             duration: "",
             tokens: ""
         }
@@ -168,8 +177,42 @@ class MessagePresentationService {
      * @returns String Markdown for display in the WebView
      */
     static GetContextPresentationText(message) {
-        contextText := message.Contents[1].Text
-        return "**📎 Attached context:**`n`n`n" . contextText . "`n"
+        hasTextContext := message.AdditionalProperties.Has("hasTextContext") && message.AdditionalProperties["hasTextContext"]
+
+        result := "**📎 Attached context:**`n`n`n"
+
+        ; 1. Render text context (Contents[1] when hasTextContext is true)
+        if (hasTextContext && message.Contents.Length >= 1 && message.Contents[1] is TextContent) {
+            result .= message.Contents[1].Text . "`n"
+        }
+
+        ; 2. Render images from all ImageContent parts
+        hasImages := false
+        for part in message.Contents {
+            if (!(part is ImageContent))
+                continue
+
+            if (!hasImages && hasTextContext) {
+                ; Add blank line between text context and images
+                result .= "`n"
+            }
+            hasImages := true
+
+            if (part.Data != "") {
+                ; Handle data: URIs (from clipboard) vs raw base64 (from files)
+                if (InStr(part.Data, "data:") == 1) {
+                    ; Already a full data URI — use directly
+                    result .= "![Image](" . part.Data . ")`n"
+                } else {
+                    mime := part.MimeType != "" ? part.MimeType : "image/png"
+                    result .= "![Image](data:" . mime . ";base64," . part.Data . ")`n"
+                }
+            } else if (part.Url != "") {
+                result .= "![Image](" . part.Url . ")`n"
+            }
+        }
+
+        return result
     }
 
     /**

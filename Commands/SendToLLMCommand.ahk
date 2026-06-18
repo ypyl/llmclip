@@ -29,7 +29,8 @@ class SendToLLMCommand {
 
             if (userMessageContent.Length > 0) {
                 userChangeMessage := ChatMessage("user", userMessageContent)
-                userChangeMessage.AdditionalProperties["hasContext"] := additionalContext != ""
+                userChangeMessage.AdditionalProperties["hasContext"] := additionalContext != "" || images.Length > 0
+                userChangeMessage.AdditionalProperties["hasTextContext"] := additionalContext != ""
                 this.sessionManager.GetSessionMessages(targetSessionIndex).Push(userChangeMessage)
             }
         }

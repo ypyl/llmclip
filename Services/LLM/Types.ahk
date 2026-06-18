@@ -251,7 +251,7 @@ class ChatMessage {
 
         ; Copy additional properties
         ; Internal properties that should not be sent to API unless requested
-        internalProps := ["hasContext", "thinking", "duration", "tokens"] 
+        internalProps := ["hasContext", "hasTextContext", "thinking", "duration", "tokens"] 
         
         for key, value in this.AdditionalProperties {
             isInternal := false
@@ -343,7 +343,7 @@ class ChatMessage {
         }
 
         ; Store additional properties (duration, tokens, thinking, etc.)
-        for key in ["duration", "tokens", "thinking", "hasContext"] {
+        for key in ["duration", "tokens", "thinking", "hasContext", "hasTextContext"] {
             if (obj.HasOwnProp(key)) {
                 msg.AdditionalProperties[key] := obj.%key%
             }

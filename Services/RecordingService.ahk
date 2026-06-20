@@ -9,26 +9,17 @@ class RecordingService {
         return false
     }
 
-    StopRecording(sessionManager := "", contextManager := "") {
+    StopRecording() {
         if (this.isRecording) {
             this.isRecording := false
-
-            if (sessionManager && contextManager) {
-                recordedText := ""
-                context := sessionManager.GetCurrentSessionContext()
-                for item in context {
-                    recordedText .= contextManager.GetTextFromContextItem(item.Value)
-                }
-                A_Clipboard := recordedText
-            }
             return true
         }
         return false
     }
 
-    ToggleRecording(sessionManager, contextManager) {
+    ToggleRecording() {
         if (this.isRecording) {
-            return this.StopRecording(sessionManager, contextManager)
+            return this.StopRecording()
         } else {
             return this.StartRecording()
         }

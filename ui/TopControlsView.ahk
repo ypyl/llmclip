@@ -3,13 +3,13 @@ class TopControlsView {
     resetButton := ""
     selectAllCheckbox := ""
 
-    Create(gui, isRecording, recordingController, rootController, contextViewController) {
+    Create(gui, isRecording, mainController, rootController, contextViewController) {
         this.selectAllCheckbox := gui.Add("Button", "x10 y10 w120", "Select All")
         this.selectAllCheckbox.OnEvent("Click", ObjBindMethod(contextViewController, "SelectAllToggle"))
 
         recordButtonTitle := isRecording ? "Stop" : "Record"
         this.recordButton := gui.Add("Button", "x140 y10 w120 vRecordButton", recordButtonTitle)
-        this.recordButton.OnEvent("Click", ObjBindMethod(recordingController, "ToggleRecording"))
+        this.recordButton.OnEvent("Click", ObjBindMethod(mainController, "OnToggleRecording"))
 
         this.resetButton := gui.Add("Button", "x270 y10 w120", "Reset All")
         this.resetButton.OnEvent("Click", ObjBindMethod(rootController, "ResetAll"))

@@ -22,7 +22,6 @@ class MainView {
     contextViewController := ""
     historyViewController := ""
     settingsController := ""
-    recordingController := ""
 
     __New(controller) {
         this.controller := controller
@@ -34,11 +33,10 @@ class MainView {
         this.responseView := ResponseView()
     }
 
-    SetSubControllers(contextViewController, historyViewController, settingsController, recordingController) {
+    SetSubControllers(contextViewController, historyViewController, settingsController) {
         this.contextViewController := contextViewController
         this.historyViewController := historyViewController
         this.settingsController := settingsController
-        this.recordingController := recordingController
     }
 
     Show() {
@@ -75,7 +73,7 @@ class MainView {
         this.topControlsView.Create(
             this.gui,
             this.controller.IsRecording,
-            this.recordingController,
+            this.controller,
             this.controller,
             this.contextViewController
         )

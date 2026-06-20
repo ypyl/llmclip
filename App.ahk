@@ -27,7 +27,6 @@
 #Include Controllers\ContextViewController.ahk
 #Include Controllers\HistoryViewController.ahk
 #Include Controllers\SettingsController.ahk
-#Include Controllers\RecordingController.ahk
 #Include Utils\FileService.ahk
 #Include Commands\SaveConversationCommand.ahk
 #Include Commands\LoadConversationCommand.ahk
@@ -131,9 +130,9 @@ class App {
         saveConv := SaveConversationCommand(sess)
         loadConv := LoadConversationCommand(sess, cfg)
         clearCtx := ClearContextCommand(sess)
-        stopRec := StopRecordingCommand(rec, sess, ctx)
+        stopRec := StopRecordingCommand(rec)
         startRec := StartRecordingCommand(rec)
-        toggleRec := ToggleRecordingCommand(rec, sess, ctx)
+        toggleRec := ToggleRecordingCommand(rec)
         resetAll := ResetAllCommand(sess)
         deleteMsg := DeleteMessageCommand(sess)
         clearHist := ClearHistoryCommand(sess, cfg)
@@ -178,7 +177,7 @@ class App {
         this.controller.SetView(this.view, this.view.promptView, this.view.contextView, this.view.historyView, this.view.menuView, this.view.topControlsView, this.view.responseView)
 
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, renderLastMsg, uncheckContext, processClip, switchSession, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState
+            saveConv, loadConv, clearCtx, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, renderLastMsg, uncheckContext, processClip, switchSession, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState, startRec, stopRec, toggleRec
         )
 
         ; 4. Initialize Sub-Controllers
@@ -186,15 +185,13 @@ class App {
         histView := HistoryViewController(this.view.historyView, this.view, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip, regenerateMessage, navigateHistoryPrevious, navigateHistoryNext, getHistoryInfo, setProcessingState, wv, saveEditedMsg)
 
         settingsContr := SettingsController(cfg, sess, selectModel, toggleTool, getToolsState, changeSystemPrompt, reloadSettings, switchSession)
-        recordingContr := RecordingController(rec, startRec, stopRec, toggleRec)
 
-        this.controller.SetSubControllers(ctxView, histView, settingsContr, recordingContr)
-        this.view.SetSubControllers(ctxView, histView, settingsContr, recordingContr)
+        this.controller.SetSubControllers(ctxView, histView, settingsContr)
+        this.view.SetSubControllers(ctxView, histView, settingsContr)
 
         settingsContr.SetViews(this.view.menuView, this.view.promptView)
         settingsContr.SetOnSessionChanged((*) => this.controller.UpdateSessionUI())
         settingsContr.SetOnSystemPromptChanged((*) => this.controller.RefreshOnSystemPromptChanged())
-        recordingContr.SetViews(this.view.topControlsView, this.view)
 
         ; 5. Initialize Tray
         this.trayView := TrayView(this.controller)

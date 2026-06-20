@@ -47,7 +47,12 @@ class MainController {
     contextViewController := ""
     historyViewController := ""
     settingsController := ""
-    recordingController := ""
+
+    ; Recording (merged from RecordingController)
+    trayView := ""
+    startRecordingCommand := ""
+    stopRecordingCommand := ""
+    toggleRecordingCommand := ""
 
 
     __New(configManager, sessionManager, llmService, webViewManager, recordingService, contextManager) {
@@ -59,7 +64,7 @@ class MainController {
         this.contextManager := contextManager
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, renderLastMsg, uncheckContext, processClipboard, switchSession, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState) {
+    SetCommands(saveConv, loadConv, clearCtx, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, renderLastMsg, uncheckContext, processClipboard, switchSession, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState, startRec, stopRec, toggleRec) {
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
         this.clearContextCommand := clearCtx
@@ -78,18 +83,19 @@ class MainController {
         this.loadStateOnStartCommand := loadStateOnStart
         this.loadConversationOnStartCommand := loadConvOnStart
         this.setProcessingStateCommand := setProcessingState
+        this.startRecordingCommand := startRec
+        this.stopRecordingCommand := stopRec
+        this.toggleRecordingCommand := toggleRec
     }
 
-    SetSubControllers(ctxView, histView, settings, recording) {
+    SetSubControllers(ctxView, histView, settings) {
         this.contextViewController := ctxView
         this.historyViewController := histView
         this.settingsController := settings
-        this.recordingController := recording
     }
 
     SetTrayView(trayView) {
-        if (this.recordingController)
-            this.recordingController.SetTrayView(trayView)
+        this.trayView := trayView
     }
 
     SetView(mainView, promptView, contextView, historyView, menuView, topControlsView, responseView) {
@@ -115,18 +121,17 @@ class MainController {
         TempFileManager.CleanUp()
         this.Show()
         this.UpdateSessionUI()
-        if (this.recordingController)
-            this.recordingController.UpdateUiBasesOnRecordingStatus()
+        this.UpdateRecordingUI()
         OnClipboardChange ObjBindMethod(this, "ClipChanged")
     }
 
     ToggleDisplay() {
         if (!this.recordingService.isRecording) {
-            this.recordingController.OnStartRecording()
+            this.OnStartRecording()
         } else if (!this.mainView.guiShown) {
             this.mainView.Show()
         } else {
-            this.recordingController.OnStopRecording()
+            this.OnStopRecording()
         }
     }
 
@@ -225,7 +230,7 @@ class MainController {
                 this.promptView.Clear()
 
                 if (this.recordingService.isRecording) {
-                    this.recordingController.OnStopRecording()
+                    this.OnStopRecording()
                 }
             }
         } catch as e {
@@ -311,6 +316,47 @@ class MainController {
     ; Event Handlers from UI/Tray
     OnDisplayLLM() => this.Show()
     OnExit() => this.ExitApplication()
+
+    ; ── Recording methods (merged from RecordingController) ──
+
+    OnStartRecording() {
+        this.startRecordingCommand.Execute()
+        this.UpdateRecordingUI()
+    }
+
+    OnStopRecording() {
+        this.stopRecordingCommand.Execute()
+        this.CopyRecordedContextToClipboard()
+        this.UpdateRecordingUI()
+    }
+
+    OnToggleRecording() {
+        if (!this.recordingService.isRecording) {
+            this.OnStartRecording()
+        } else if (this.mainView && !this.mainView.guiShown) {
+            this.mainView.Show()
+        } else {
+            this.OnStopRecording()
+        }
+    }
+
+    CopyRecordedContextToClipboard() {
+        recordedText := ""
+        context := this.sessionManager.GetCurrentSessionContext()
+        for item in context {
+            recordedText .= this.contextManager.GetTextFromContextItem(item.Value)
+        }
+        A_Clipboard := recordedText
+    }
+
+    UpdateRecordingUI() {
+        if (this.mainView && this.mainView.guiShown) {
+            this.topControlsView.UpdateRecordButton(this.recordingService.isRecording)
+        }
+        if (this.trayView) {
+            this.trayView.UpdateStatus(this.recordingService.isRecording)
+        }
+    }
 
     ClearAllContext(*) {
         this.clearContextCommand.Execute()

@@ -2,16 +2,12 @@
 
 class StopRecordingCommand {
     recordingService := ""
-    sessionManager := ""
-    contextManager := ""
 
-    __New(recordingService, sessionManager, contextManager) {
+    __New(recordingService) {
         this.recordingService := recordingService
-        this.sessionManager := sessionManager
-        this.contextManager := contextManager
     }
 
     Execute() {
-        return this.recordingService.StopRecording(this.sessionManager, this.contextManager)
+        return this.recordingService.StopRecording()
     }
 }

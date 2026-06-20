@@ -38,10 +38,6 @@ class HistoryViewController {
         this.setProcessingStateCommand := setProcessingStateCommand
         this.webViewManager := webViewManager
         this.saveEditedMessageCommand := saveEditedMessageCommand
-
-        if (this.webViewManager) {
-            this.webViewManager.SetSaveEditCallback(ObjBindMethod(this, "OnMessageEdited"))
-        }
     }
 
     /**

@@ -15,7 +15,7 @@ Generated: 2026-06-18 | Reviewer: automated analysis against `ARCHITECTURE.md`
 
 ---
 
-## 1. 🔴 BUG — TrayView calls non-existent methods on MainController
+## 1. ~~🔴 BUG — TrayView calls non-existent methods on MainController~~ ✅ DONE (2026-06-20)
 
 **File**: `ui/TrayView.ahk:12-13`
 
@@ -30,7 +30,7 @@ A_TrayMenu.Add("Stop Recording", (*) => this.controller.OnStopRecording())
 
 ---
 
-## 2. 🔴 VIOLATION — Controller → Controller direct calls
+## 2. ~~🔴 VIOLATION — Controller → Controller direct calls~~ ✅ DONE (2026-06-20)
 
 **File**: `controllers/MainController.ahk`
 
@@ -54,7 +54,7 @@ this.recordingController.OnStopRecording()
 
 ---
 
-## 3. 🟠 VIOLATION — Controller mutates service during construction
+## 3. ~~🟠 VIOLATION — Controller mutates service during construction~~ ✅ DONE (2026-06-20)
 
 **File**: `controllers/HistoryViewController.ahk:45-47`
 
@@ -77,7 +77,7 @@ wv.SetSaveEditCallback(ObjBindMethod(histView, "OnMessageEdited"))
 
 ---
 
-## 4. 🟡 SMELL — RecordingService is tightly coupled to SessionManager/ContextManager
+## 4. ~~🟡 SMELL — RecordingService is tightly coupled to SessionManager/ContextManager~~ ✅ DONE (2026-06-20)
 
 **File**: `services/RecordingService.ahk`
 
@@ -181,7 +181,7 @@ A standalone GUI script for browsing `shell32.dll` icons — unrelated to the LL
 
 ---
 
-## 11. 🟡 SMELL — Direct service reads with control flow in MainController.ToggleDisplay
+## 11. ~~🟡 SMELL — Direct service reads with control flow in MainController.ToggleDisplay~~ ✅ DONE (2026-06-20)
 
 **File**: `controllers/MainController.ahk:91`
 
@@ -205,23 +205,20 @@ Combines a direct service read (`recordingService.isRecording`), controller-to-c
 
 | # | Severity | Area | Issue |
 |---|----------|------|-------|
-| 1 | 🔴 BUG | TrayView→MainController | Methods `OnStartRecording`/`OnStopRecording` don't exist on MainController — runtime crash |
-| 2 | 🔴 VIOLATION | MainController | Controller→Controller calls to RecordingController |
-| 3 | 🟠 VIOLATION | HistoryViewController | Mutates service (`SetSaveEditCallback`) during construction |
-| 4 | 🟡 SMELL | RecordingService | Tightly coupled to SessionManager/ContextManager; clipboard side-effect |
+| 1 | ~~🔴 BUG~~ ✅ | TrayView→MainController | Methods `OnStartRecording`/`OnStopRecording` don't exist on MainController — runtime crash |
+| 2 | ~~🔴 VIOLATION~~ ✅ | MainController | Controller→Controller calls to RecordingController |
+| 3 | ~~🟠 VIOLATION~~ ✅ | HistoryViewController | Mutates service (`SetSaveEditCallback`) during construction |
+| 4 | ~~🟡 SMELL~~ ✅ | RecordingService | Tightly coupled to SessionManager/ContextManager; clipboard side-effect |
 | 5 | 🟡 SMELL | ReplaceLinkWithContent | Uses LLM tool outside tool-call path |
 | 6 | 🟡 SMELL | MenuView | Has domain knowledge of tool names from service layer |
 | 7 | 🔵 STYLE | DeleteMessageCommand, HistoryViewController | Duplicate `_SortDescending` method |
 | 8 | 🔵 STYLE | Utils/ | "Service" suffix on static-only utility classes |
 | 9 | 🔵 STYLE | AGENTS.md | References non-existent `Roles.ahk` |
 | 10 | 🔵 STYLE | Root | Dev-only `check.ahk` in project root |
-| 11 | 🟡 SMELL | MainController | ToggleDisplay mixes concerns (service read + controller call + view manipulation) |
+| 11 | ~~🟡 SMELL~~ ✅ | MainController | ToggleDisplay mixes concerns (service read + controller call + view manipulation) |
 
-### Recommended Fix Order
+### Recommended Fix Order (updated 2026-06-20)
 
-1. **#1** — Fix the runtime bug first (tray menu crash)
-2. **#2** — Eliminate controller-to-controller calls (prepare for #1's proper fix)
-3. **#3** — Move service wiring out of HistoryViewController constructor
-4. **#4** — Refactor RecordingService to be pure toggle-only
-5. **#5** — Extract web content fetching from MarkdownNewTool
-6. **#7**, **#8**, **#9**, **#10** — Style cleanup (low priority)
+1. **#5** — Extract web content fetching from MarkdownNewTool
+2. **#6** — Decouple MenuView from tool constants
+3. **#7**, **#8**, **#9**, **#10** — Style cleanup (low priority)

@@ -183,6 +183,7 @@ class App {
         ; 4. Initialize Sub-Controllers
         ctxView := ContextViewController(this.view.contextView, this.view, sess, ctx, wv, cps, clearCtx, replaceLink, renderMarkdown, deleteCtxItems, prepareContext, setContextItemChecked)
         histView := HistoryViewController(this.view.historyView, this.view, getHistoryItems, getMessagePresentation, deleteMsg, clearHist, renderMarkdown, copyToClip, regenerateMessage, navigateHistoryPrevious, navigateHistoryNext, getHistoryInfo, setProcessingState, wv, saveEditedMsg)
+        wv.SetSaveEditCallback(ObjBindMethod(histView, "OnMessageEdited"))
 
         settingsContr := SettingsController(cfg, sess, selectModel, toggleTool, getToolsState, changeSystemPrompt, reloadSettings, switchSession)
 

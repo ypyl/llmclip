@@ -8,7 +8,7 @@ class LoadConversationOnStartCommand {
     }
 
     Execute() {
-        state := StateService.LoadConversation()
+        state := StateHelper.LoadConversation()
         if (state == "")
             return false
 

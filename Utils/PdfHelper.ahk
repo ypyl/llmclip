@@ -1,7 +1,7 @@
 #Requires AutoHotkey 2.0
 #Include TempFileManager.ahk
 
-class PdfService {
+class PdfHelper {
     static PdfToolsDir := "pdf"
 
     static ExtractText(toolPath, pdfPath) {

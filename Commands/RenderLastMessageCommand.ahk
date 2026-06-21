@@ -2,7 +2,7 @@
 
 /**
  * Command to render the last message from the current session.
- * Encapsulates logic for formatting (MessagePresentationService) and rendering (WebViewManager).
+ * Encapsulates logic for formatting (MessagePresentationHelper) and rendering (WebViewManager).
  */
 class RenderLastMessageCommand {
     sessionManager := ""
@@ -17,7 +17,7 @@ class RenderLastMessageCommand {
         messages := this.sessionManager.GetCurrentSessionMessages()
         if (messages.Length > 0) {
             lastMsg := messages[messages.Length]
-            htmlContent := MessagePresentationService.GetMessageAsString(lastMsg)
+            htmlContent := MessagePresentationHelper.GetMessageAsString(lastMsg)
             this.webViewManager.RenderMarkdown(htmlContent)
         }
     }

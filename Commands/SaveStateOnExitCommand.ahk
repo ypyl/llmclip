@@ -14,6 +14,6 @@ class SaveStateOnExitCommand {
             sessionIndex: this.sessionManager.currentSessionIndex,
             toolOverrides: this.configManager.toolOverrides
         }
-        StateService.SaveState(stateObj)
+        StateHelper.SaveState(stateObj)
     }
 }

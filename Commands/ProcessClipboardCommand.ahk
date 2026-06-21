@@ -14,7 +14,7 @@ class ProcessClipboardCommand {
         }
 
         try {
-            localTxtFromClipboardArray := ClipboardParserService.Parse()
+            localTxtFromClipboardArray := ClipboardParserHelper.Parse()
             return this.sessionManager.AddContextItems(localTxtFromClipboardArray)
         } catch {
             return false

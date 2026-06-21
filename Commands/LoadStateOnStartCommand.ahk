@@ -8,7 +8,7 @@ class LoadStateOnStartCommand {
     }
 
     Execute() {
-        state := StateService.LoadState()
+        state := StateHelper.LoadState()
         if (state == "")
             return false
 

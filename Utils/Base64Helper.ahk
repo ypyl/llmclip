@@ -1,4 +1,4 @@
-Class Base64Service {
+Class Base64Helper {
 	/**
 	 * Base64 Encoding
 	 * @param Buf Buffer Object has Ptr, Size Property. May contain any binary contents including NULL bytes.

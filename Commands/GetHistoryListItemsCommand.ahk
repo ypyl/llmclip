@@ -25,7 +25,7 @@ class GetHistoryListItemsCommand {
 
             if (hasThinking) {
                 ; Insert synthetic thinking row first
-                thinkingItem := MessagePresentationService.GetThinkingListViewItem(msg)
+                thinkingItem := MessagePresentationHelper.GetThinkingListViewItem(msg)
                 thinkingItem.messageIndex := i
                 thinkingItem.isThinking := true
                 thinkingItem.isContext := false
@@ -34,7 +34,7 @@ class GetHistoryListItemsCommand {
 
             if (hasContext) {
                 ; Insert synthetic context row before user message
-                ctxItem := MessagePresentationService.GetContextListViewItem(msg)
+                ctxItem := MessagePresentationHelper.GetContextListViewItem(msg)
                 ctxItem.messageIndex := i
                 ctxItem.isThinking := false
                 ctxItem.isContext := true
@@ -42,7 +42,7 @@ class GetHistoryListItemsCommand {
             }
 
             ; Insert the actual message row
-            item := MessagePresentationService.GetListViewItem(msg)
+            item := MessagePresentationHelper.GetListViewItem(msg)
             item.messageIndex := i
             item.isThinking := false
             item.isContext := false

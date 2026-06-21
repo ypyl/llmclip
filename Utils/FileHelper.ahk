@@ -1,5 +1,5 @@
-#Include Base64Service.ahk
-class FileService {
+#Include Base64Helper.ahk
+class FileHelper {
     static GetFileAsBase64(filePath) {
         try {
             if (FileExist(filePath)) {
@@ -10,7 +10,7 @@ class FileService {
                     fileObj.RawRead(fileBuffer, fileSize)
                     fileObj.Close()
 
-                    return Base64Service.Encode(fileBuffer)
+                    return Base64Helper.Encode(fileBuffer)
                 }
             }
             return ""

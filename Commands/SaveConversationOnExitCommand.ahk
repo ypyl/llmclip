@@ -7,6 +7,6 @@ class SaveConversationOnExitCommand {
 
     Execute() {
         conversationState := this.sessionManager.ExportSessionState()
-        StateService.SaveConversation(conversationState)
+        StateHelper.SaveConversation(conversationState)
     }
 }

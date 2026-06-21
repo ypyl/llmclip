@@ -332,7 +332,7 @@ class SessionManager {
                 } else if (InStr(imageValue, "http") == 1) {
                     contentParts.Push(ImageContent(imageValue))
                 } else {
-                    base64Image := FileService.GetFileAsBase64(imageValue)
+                    base64Image := FileHelper.GetFileAsBase64(imageValue)
                     if (base64Image != "") {
                         extension := SubStr(imageValue, InStr(imageValue, ".", , -1) + 1)
                         mimeType := "image/" . extension

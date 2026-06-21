@@ -17,7 +17,7 @@ class SaveDiagramCommand {
         }
 
         try {
-            FileService.WriteText(filePath, svgData, "UTF-8")
+            FileHelper.WriteText(filePath, svgData, "UTF-8")
         } catch Error as err {
             throw Error("Failed to save diagram: " . err.Message)
         }

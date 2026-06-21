@@ -125,7 +125,7 @@ Some classes legitimately cross architectural boundaries. These are deliberate e
 |:---|:---|:---|
 | **`WebViewManager`** | Service ↔ GUI | Must hold a WebView2 HWND and controller reference. Encapsulates all WebView2 interop in one place rather than leaking it into controllers. |
 | **`ContextPresentationService`** | Service → View formatting | Formats domain data (context items) into UI-ready labels. Stateless — could be a Utils class, but imports domain types. |
-| **`MessagePresentationService`** | Service → View formatting | Formats ChatMessage objects into markdown strings for the WebView. Stateless utility with domain type knowledge. |
+| **`MessagePresentationHelper`** | Utils → View formatting | Static helper that formats ChatMessage objects into markdown strings for the WebView. Pure utility, stateless. |
 | **`ConfigurationService`** | Breaks DI (singleton) | Accessed via `GetInstance()` so tools created outside the normal DI chain can trigger config reloads after creating prompts. |
 
 When adding new code that crosses boundaries, document it here.

@@ -9,7 +9,7 @@ class ContextManager {
             itemText := "Folder:`n" this.ProcessFolder(item)
         } else if (FileExist(item)) {
             if (this.IsImage(item)) {
-                base64Image := FileService.GetFileAsBase64(item)
+                base64Image := FileHelper.GetFileAsBase64(item)
                 if (base64Image != "") {
                     SplitPath item, , , &ext
                     itemText := "![Image](data:image/" . ext . ";base64," . base64Image . ")"

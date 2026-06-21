@@ -20,6 +20,6 @@ class SaveConversationCommand {
         jsonStr := JSON.Stringify(conversationState)
 
         ; Use file service to write to disk
-        FileService.WriteText(filePath, jsonStr)
+        FileHelper.WriteText(filePath, jsonStr)
     }
 }

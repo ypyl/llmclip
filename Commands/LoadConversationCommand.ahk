@@ -18,7 +18,7 @@ class LoadConversationCommand {
             return
 
         ; Use file service to read from disk
-        fileContent := FileService.ReadText(filePath)
+        fileContent := FileHelper.ReadText(filePath)
         
         ; Parse JSON and import state
         state := JSON.Load(fileContent)

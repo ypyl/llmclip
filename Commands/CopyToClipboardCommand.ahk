@@ -2,6 +2,6 @@
 
 class CopyToClipboardCommand {
     Execute(text) {
-        ClipboardService.SetText(text)
+        ClipboardHelper.SetText(text)
     }
 }

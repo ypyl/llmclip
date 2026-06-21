@@ -1,7 +1,7 @@
 #Include ..\Lib\CGDip.ahk
-#Include Base64Service.ahk
+#Include Base64Helper.ahk
 
-class ClipboardImageService {
+class ClipboardImageHelper {
     static TryGetPngFromClipboard() {
         pToken := CGdip.Startup()
         if !pToken
@@ -37,7 +37,7 @@ class ClipboardImageService {
         CGdip.Shutdown()
 
         ; Convert to Base64
-        b64 := Base64Service.Encode(buf)
+        b64 := Base64Helper.Encode(buf)
         if !b64
             return false
 

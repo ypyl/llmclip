@@ -1,19 +1,19 @@
 #Include ..\Services\LLM\Types.ahk
 
-class MessagePresentationService {
+class MessagePresentationHelper {
     /**
      * Get data for a ListView item representing this message.
      * @param message - ChatMessage instance
      * @returns {Object} {roleEmoji, contentText, duration, tokens}
      */
     static GetListViewItem(message) {
-        roleEmoji := MessagePresentationService.GetRoleEmoji(message.Role)
+        roleEmoji := MessagePresentationHelper.GetRoleEmoji(message.Role)
 
         duration := message.AdditionalProperties.Has("duration") ? message.AdditionalProperties["duration"] : ""
         tokens := message.AdditionalProperties.Has("tokens") ? message.AdditionalProperties["tokens"] : ""
 
         ; Get presentation text from service, excluding thinking content for the list view
-        presentationText := MessagePresentationService.GetPresentationText(message, false)
+        presentationText := MessagePresentationHelper.GetPresentationText(message, false)
 
         ; Get content with truncation for ListView
         contentText := SubStr(presentationText, 1, 70) (StrLen(presentationText) > 70 ? "..." : "")
@@ -68,7 +68,7 @@ class MessagePresentationService {
             return userContent
         }
 
-        return MessagePresentationService.GetMessageAsString(message, includeThinking)
+        return MessagePresentationHelper.GetMessageAsString(message, includeThinking)
     }
 
     /**
@@ -80,14 +80,14 @@ class MessagePresentationService {
         ; Check for audio content
         audioData := message.GetAudio()
         if (audioData != "") {
-            return MessagePresentationService.FormatAudioMessage(audioData)
+            return MessagePresentationHelper.FormatAudioMessage(audioData)
         }
 
         ; Check for tool calls and results
         toolCallTexts := []
         for part in message.Contents {
             if (part is FunctionCallContent) {
-                toolCallTexts.Push(MessagePresentationService.FormatToolCallMessage(part))
+                toolCallTexts.Push(MessagePresentationHelper.FormatToolCallMessage(part))
             }
             if (part is FunctionResultContent) {
                 return part.Result
@@ -227,7 +227,7 @@ class MessagePresentationService {
     }
 
     static FormatAudioMessage(audioLink) {
-        audioBase64 := FileService.GetFileAsBase64(audioLink)
+        audioBase64 := FileHelper.GetFileAsBase64(audioLink)
         return '<audio controls><source src="data:audio/wav;base64,' audioBase64 '" type="audio/wav"></audio>'
     }
 

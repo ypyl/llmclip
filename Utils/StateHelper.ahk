@@ -1,4 +1,4 @@
-class StateService {
+class StateHelper {
     static GetStatePath() => A_ScriptDir "\state.json"
     static GetConversationPath() => A_ScriptDir "\conversation.json"
 

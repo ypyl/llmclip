@@ -24,12 +24,12 @@ class GetMessagePresentationCommand {
         msg := messages[messageIndex]
 
         if (isThinking) {
-            return MessagePresentationService.GetThinkingPresentationText(msg)
+            return MessagePresentationHelper.GetThinkingPresentationText(msg)
         } else if (isContext) {
-            return MessagePresentationService.GetContextPresentationText(msg)
+            return MessagePresentationHelper.GetContextPresentationText(msg)
         } else {
             ; Show the real message — without the thinking block
-            return MessagePresentationService.GetPresentationText(msg, false)
+            return MessagePresentationHelper.GetPresentationText(msg, false)
         }
     }
 }

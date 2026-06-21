@@ -1,12 +1,12 @@
 #Requires AutoHotkey 2.0
 #Include Services\Configuration\ConfigurationService.ahk
-#Include Utils\Base64Service.ahk
+#Include Utils\Base64Helper.ahk
 #Include Utils\ArrayHelper.ahk
 #Include Services\LLM\LLMService.ahk
 #Include Services\LLM\MarkdownNewTool.ahk
 #Include Services\LLM\PromptCreatorTool.ahk
 #Include Services\SessionManager.ahk
-#Include Utils\ClipboardParserService.ahk
+#Include Utils\ClipboardParserHelper.ahk
 #Include Utils\WebContentFetcher.ahk
 #Include Services\WebViewManager.ahk
 #Include Services\ContextManager.ahk
@@ -20,7 +20,7 @@
 #Include Services\LLM\Providers\OllamaProvider.ahk
 #Include Services\LLM\Providers\GoogleProvider.ahk
 #Include Services\LLM\Providers\GroqAudioProvider.ahk
-#Include Utils\MessagePresentationService.ahk
+#Include Utils\MessagePresentationHelper.ahk
 #Include Services\ContextPresentationService.ahk
 #Include ui\TrayView.ahk
 #Include ui\UIConfig.ahk
@@ -29,7 +29,7 @@
 #Include Controllers\ContextViewController.ahk
 #Include Controllers\HistoryViewController.ahk
 #Include Controllers\SettingsController.ahk
-#Include Utils\FileService.ahk
+#Include Utils\FileHelper.ahk
 #Include Commands\SaveConversationCommand.ahk
 #Include Commands\LoadConversationCommand.ahk
 #Include Commands\ClearContextCommand.ahk
@@ -39,7 +39,7 @@
 #Include Commands\DeleteMessageCommand.ahk
 #Include Commands\ClearHistoryCommand.ahk
 #Include Commands\ResetAllCommand.ahk
-#Include Utils\ClipboardService.ahk
+#Include Utils\ClipboardHelper.ahk
 #Include Commands\CopyToClipboardCommand.ahk
 #Include Commands\SelectModelCommand.ahk
 #Include Commands\GetToolsMenuStateCommand.ahk
@@ -65,7 +65,7 @@
 #Include Commands\ChangeSystemPromptCommand.ahk
 #Include Commands\SwitchSessionCommand.ahk
 #Include Commands\ReloadSettingsCommand.ahk
-#Include Utils\StateService.ahk
+#Include Utils\StateHelper.ahk
 #Include Commands\SaveStateOnExitCommand.ahk
 #Include Commands\SaveConversationOnExitCommand.ahk
 #Include Commands\LoadStateOnStartCommand.ahk

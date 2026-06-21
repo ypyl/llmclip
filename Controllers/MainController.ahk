@@ -371,7 +371,7 @@ class MainController {
 
     OnSaveWebViewDiagram(svgData) {
         ; Use service to generate filename
-        defaultFilename := FileService.GetTimestampedFilename("mermaid", ".svg")
+        defaultFilename := FileHelper.GetTimestampedFilename("mermaid", ".svg")
 
         ; Use view to show dialog
         selectedFile := FileSelect("S16", defaultFilename, "Save Mermaid Diagram", "SVG Files (*.svg)")

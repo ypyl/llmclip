@@ -59,12 +59,12 @@ When serializing a `ChatMessage` to a request object via `ToObject()`, if the me
 
 ### Requirement: Display and editing of thinking content preserved
 
-The existing display path (via `MessagePresentationService`) and editing path (via `SessionManager.UpdateMessageText()`) SHALL continue to work with thinking content regardless of whether it originated from `reasoning` or `reasoning_content` parsing.
+The existing display path (via `MessagePresentationHelper`) and editing path (via `SessionManager.UpdateMessageText()`) SHALL continue to work with thinking content regardless of whether it originated from `reasoning` or `reasoning_content` parsing.
 
 #### Scenario: Thinking content displayed in WebView
 
 - **WHEN** a `ChatMessage` has `AdditionalProperties["thinking"]` set (from any source)
-- **THEN** `MessagePresentationService.GetPresentationText(msg, true)` SHALL wrap the thinking content in a ````thinking` fenced block before the message text
+- **THEN** `MessagePresentationHelper.GetPresentationText(msg, true)` SHALL wrap the thinking content in a ````thinking` fenced block before the message text
 
 #### Scenario: User edits a message with thinking block
 

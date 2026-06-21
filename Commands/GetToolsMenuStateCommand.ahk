@@ -1,22 +1,24 @@
 class GetToolsMenuStateCommand {
     configManager := ""
     sessionManager := ""
+    toolDefinitions := ""
 
-    __New(configManager, sessionManager) {
+    __New(configManager, sessionManager, toolDefinitions) {
         this.configManager := configManager
         this.sessionManager := sessionManager
+        this.toolDefinitions := toolDefinitions
     }
 
     Execute() {
         currentLLMIndex := this.sessionManager.GetCurrentSessionModelIndex()
 
-        return {
-            execute_powershell: this.configManager.IsToolEnabled(currentLLMIndex, PowerShellTool.TOOL_NAME),
-            file_system: this.configManager.IsToolEnabled(currentLLMIndex, FileSystemTool.TOOL_NAME),
-            web_search: this.configManager.IsToolEnabled(currentLLMIndex, WebSearchTool.TOOL_NAME),
-            web_fetch: this.configManager.IsToolEnabled(currentLLMIndex, WebFetchTool.TOOL_NAME),
-            read_url_markdown: this.configManager.IsToolEnabled(currentLLMIndex, MarkdownNewTool.TOOL_NAME),
-            create_prompt: this.configManager.IsToolEnabled(currentLLMIndex, PromptCreatorTool.TOOL_NAME)
+        result := []
+        for def in this.toolDefinitions {
+            result.Push({
+                label: def.label,
+                checked: this.configManager.IsToolEnabled(currentLLMIndex, def.id)
+            })
         }
+        return result
     }
 }

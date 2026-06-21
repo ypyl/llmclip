@@ -136,26 +136,10 @@ class HistoryViewController {
             resolvedIndices.Push(idx)
         
         ; Sort descending so removals don't shift indices
-        resolvedIndices := this._SortDescending(resolvedIndices)
+        resolvedIndices := ArrayHelper.SortDescending(resolvedIndices)
         this.deleteMessageCommand.Execute(resolvedIndices)
         this.UpdateChatHistoryView()
         this.renderMarkdownCommand.Execute("")  ; Clear the response area
-    }
-
-    _SortDescending(arr) {
-        ; Simple insertion sort descending
-        sorted := arr.Clone()
-        n := sorted.Length
-        Loop n - 1 {
-            i := A_Index + 1
-            while (i > 1 && sorted[i] > sorted[i - 1]) {
-                tmp := sorted[i]
-                sorted[i] := sorted[i - 1]
-                sorted[i - 1] := tmp
-                i--
-            }
-        }
-        return sorted
     }
 
     ClearChatHistory(*) {

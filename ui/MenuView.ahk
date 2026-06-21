@@ -7,16 +7,7 @@ class MenuView {
     currentModelLabel := ""
     currentSessionLabel := ""
 
-    static ToolMapping := [
-        { id: PowerShellTool.TOOL_NAME, label: "PowerShell", stateKey: PowerShellTool.TOOL_NAME },
-        { id: FileSystemTool.TOOL_NAME, label: "File System", stateKey: FileSystemTool.TOOL_NAME },
-        { id: WebSearchTool.TOOL_NAME, label: "Web Search",  stateKey: WebSearchTool.TOOL_NAME },
-        { id: WebFetchTool.TOOL_NAME, label: "Web Fetch",   stateKey: WebFetchTool.TOOL_NAME },
-        { id: MarkdownNewTool.TOOL_NAME, label: "Read URL Markdown", stateKey: MarkdownNewTool.TOOL_NAME },
-        { id: PromptCreatorTool.TOOL_NAME, label: "Create Prompt", stateKey: PromptCreatorTool.TOOL_NAME }
-    ]
-
-    Create(gui, rootController, settingsController, llmTypes, currentLLMTypeIndex, sessionNames, currentSessionIndex) {
+    Create(gui, rootController, settingsController, llmTypes, currentLLMTypeIndex, sessionNames, currentSessionIndex, toolDefs) {
         FileMenu := Menu()
         FileMenu.Add("Save Conversation", ObjBindMethod(rootController, "SaveConversation"))
         FileMenu.Add("Load Conversation", ObjBindMethod(rootController, "LoadConversation"))
@@ -50,8 +41,8 @@ class MenuView {
         this.currentSessionLabel := currentSessionLabel
 
         this.toolsMenu := Menu()
-        for toolInfo in MenuView.ToolMapping {
-            this.toolsMenu.Add(toolInfo.label, ObjBindMethod(settingsController, "ToggleTool", toolInfo.id))
+        for def in toolDefs {
+            this.toolsMenu.Add(def.label, ObjBindMethod(settingsController, "ToggleTool", def.id))
         }
 
         this.menuBar := MenuBar()
@@ -92,11 +83,11 @@ class MenuView {
         if (!this.toolsMenu)
             return
 
-        for toolInfo in MenuView.ToolMapping {
-            if (toolStates.HasProp(toolInfo.stateKey) && toolStates.%toolInfo.stateKey%) {
-                this.toolsMenu.Check(toolInfo.label)
+        for item in toolStates {
+            if (item.checked) {
+                this.toolsMenu.Check(item.label)
             } else {
-                this.toolsMenu.Uncheck(toolInfo.label)
+                this.toolsMenu.Uncheck(item.label)
             }
         }
     }

@@ -108,7 +108,7 @@ Three concerns:
 
 ---
 
-## 5. 🟡 SMELL — MarkdownNewTool used outside LLM tool-call context
+## 5. ~~🟡 SMELL — MarkdownNewTool used outside LLM tool-call context~~ ✅ DONE (2026-06-20)
 
 **File**: `commands/ReplaceLinkWithContentCommand.ahk:22`
 
@@ -125,7 +125,7 @@ markdownContent := this.markdownNewTool.Execute(contextItem)
 
 ---
 
-## 6. 🟡 SMELL — MenuView has domain knowledge of tool names
+## 6. ~~🟡 SMELL — MenuView has domain knowledge of tool names~~ ✅ DONE (2026-06-21)
 
 **File**: `ui/MenuView.ahk:13-19`
 
@@ -143,7 +143,7 @@ static ToolMapping := [
 
 ---
 
-## 7. 🔵 STYLE — Duplicate `_SortDescending` method
+## 7. ~~🔵 STYLE — Duplicate `_SortDescending` method~~ ✅ DONE (2026-06-20)
 
 **Files**:
 - `commands/DeleteMessageCommand.ahk:20-33`
@@ -163,7 +163,7 @@ All reside in `Utils/` and have only static methods, but are named `*Service`. I
 
 ---
 
-## 9. 🔵 STYLE — Doc references non-existent file
+## 9. ~~🔵 STYLE — Doc references non-existent file~~ ✅ DONE (2026-06-20)
 
 **File**: `AGENTS.md:11`
 
@@ -209,16 +209,14 @@ Combines a direct service read (`recordingService.isRecording`), controller-to-c
 | 2 | ~~🔴 VIOLATION~~ ✅ | MainController | Controller→Controller calls to RecordingController |
 | 3 | ~~🟠 VIOLATION~~ ✅ | HistoryViewController | Mutates service (`SetSaveEditCallback`) during construction |
 | 4 | ~~🟡 SMELL~~ ✅ | RecordingService | Tightly coupled to SessionManager/ContextManager; clipboard side-effect |
-| 5 | 🟡 SMELL | ReplaceLinkWithContent | Uses LLM tool outside tool-call path |
-| 6 | 🟡 SMELL | MenuView | Has domain knowledge of tool names from service layer |
-| 7 | 🔵 STYLE | DeleteMessageCommand, HistoryViewController | Duplicate `_SortDescending` method |
+| 5 | ~~🟡 SMELL~~ ✅ | ReplaceLinkWithContent | Uses LLM tool outside tool-call path |
+| 6 | ~~🟡 SMELL~~ ✅ | MenuView | Has domain knowledge of tool names from service layer |
+| 7 | ~~🔵 STYLE~~ ✅ | DeleteMessageCommand, HistoryViewController | Duplicate `_SortDescending` method |
 | 8 | 🔵 STYLE | Utils/ | "Service" suffix on static-only utility classes |
-| 9 | 🔵 STYLE | AGENTS.md | References non-existent `Roles.ahk` |
+| 9 | ~~🔵 STYLE~~ ✅ | AGENTS.md | References non-existent `Roles.ahk` |
 | 10 | 🔵 STYLE | Root | Dev-only `check.ahk` in project root |
 | 11 | ~~🟡 SMELL~~ ✅ | MainController | ToggleDisplay mixes concerns (service read + controller call + view manipulation) |
 
 ### Recommended Fix Order (updated 2026-06-20)
 
-1. **#5** — Extract web content fetching from MarkdownNewTool
-2. **#6** — Decouple MenuView from tool constants
-3. **#7**, **#8**, **#9**, **#10** — Style cleanup (low priority)
+1. **#8**, **#10** — Style cleanup (low priority)

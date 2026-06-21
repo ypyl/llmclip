@@ -36,7 +36,7 @@ Include paths in sub-files are relative to that file (e.g., `#Include ..\Service
 | `controllers/` | 6 controllers mapping UI events to commands |
 | `services/` | State owners: `ConfigurationService` (singleton via `GetInstance()`), `SessionManager`, `ContextManager`, `LLMService`, `RecordingService`, `WebViewManager` |
 | `services/LLM/` | LLM client, providers (OpenAI-compatible, Google, Ollama, Groq), and tool implementations |
-| `services/Configuration/` | `ConfigurationService`, `Providers`, `SystemPrompts`, `Roles` |
+| `services/Configuration/` | `ConfigurationService`, `Providers`, `SystemPrompts` |
 | `ui/` | WebView2-based GUI; `UIConfig` holds layout constants |
 | `utils/` | Pure static helpers (Clipboard, File, Base64, etc.) |
 | `Lib/` | **Vendored** dependencies from [thqby/ahk2_lib](https://github.com/thqby/ahk2_lib) — do not modify |

@@ -3,6 +3,7 @@
 class FileSystemTool {
     isCancelled := false
     static TOOL_NAME := "file_system"
+    static TOOL_LABEL := "File System"
 
     /**
      * Read content from a file

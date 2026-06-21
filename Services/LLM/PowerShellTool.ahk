@@ -4,6 +4,7 @@ class PowerShellTool {
     currentProcessPid := 0
     isCancelled := false
     static TOOL_NAME := "execute_powershell"
+    static TOOL_LABEL := "PowerShell"
 
     ; Detect best available PowerShell executable (pwsh is faster than powershell)
     static PsExe := FileExist(EnvGet("ProgramFiles") "\PowerShell\7\pwsh.exe")

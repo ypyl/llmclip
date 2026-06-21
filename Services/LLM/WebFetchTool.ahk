@@ -4,6 +4,7 @@ class WebFetchTool {
     currentHttpObject := ""
     isCancelled := false
     static TOOL_NAME := "web_fetch"
+    static TOOL_LABEL := "Web Fetch"
 
     /**
      * Execute a web fetch request using Ollama API

@@ -21,6 +21,7 @@ class MainController {
     webViewManager := ""
     recordingService := ""
     contextManager := ""
+    _toolDefs := ""
 
 
     ; Commands
@@ -55,13 +56,14 @@ class MainController {
     toggleRecordingCommand := ""
 
 
-    __New(configManager, sessionManager, llmService, webViewManager, recordingService, contextManager) {
+    __New(configManager, sessionManager, llmService, webViewManager, recordingService, contextManager, toolDefs) {
         this.configManager := configManager
         this.sessionManager := sessionManager
         this.llmService := llmService
         this.webViewManager := webViewManager
         this.recordingService := recordingService
         this.contextManager := contextManager
+        this._toolDefs := toolDefs
     }
 
     SetCommands(saveConv, loadConv, clearCtx, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, renderLastMsg, uncheckContext, processClipboard, switchSession, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState, startRec, stopRec, toggleRec) {
@@ -330,7 +332,7 @@ class MainController {
         this.UpdateRecordingUI()
     }
 
-    OnToggleRecording() {
+    OnToggleRecording(*) {
         if (!this.recordingService.isRecording) {
             this.OnStartRecording()
         } else if (this.mainView && !this.mainView.guiShown) {
@@ -385,6 +387,10 @@ class MainController {
 
     ModelDisplayNames {
         get => this.configManager.modelDisplayNames
+    }
+
+    ToolDefinitions {
+        get => this._toolDefs
     }
 
     CurrentModelIndex {

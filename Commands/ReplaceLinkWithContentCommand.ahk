@@ -1,19 +1,18 @@
 #Include ..\Lib\Json.ahk
+#Include ..\Utils\WebContentFetcher.ahk
 
 class ReplaceLinkWithContentCommand {
-    markdownNewTool := ""
     sessionManager := ""
     contextManager := ""
 
-    __New(markdownNewTool, sessionManager, contextManager) {
-        this.markdownNewTool := markdownNewTool
+    __New(sessionManager, contextManager) {
         this.sessionManager := sessionManager
         this.contextManager := contextManager
     }
 
     Execute(itemIndex, contextItem) {
-        ; Extract article content using MarkdownNewTool
-        markdownContent := this.markdownNewTool.Execute(contextItem)
+        ; Fetch web content using WebContentFetcher
+        markdownContent := WebContentFetcher.FetchMarkdown(contextItem)
         title := ""
         
         ; Check if the content is JSON
@@ -35,7 +34,6 @@ class ReplaceLinkWithContentCommand {
         }
 
         ; Update the session context
-        ; MarkdownNewTool returns raw markdown or JSON which we've parsed, so we just wrap it in the URL header
         formattedContent := "URL: " . contextItem . (title ? "`nTitle: " . title : "") . "`n`n" . markdownContent
 
         return this.sessionManager.UpdateContextItem(itemIndex, formattedContent)

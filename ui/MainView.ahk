@@ -67,7 +67,8 @@ class MainView {
             this.controller.ModelDisplayNames,
             this.controller.CurrentModelIndex,
             this.controller.SessionLabels,
-            this.controller.CurrentSessionIndex
+            this.controller.CurrentSessionIndex,
+            this.controller.ToolDefinitions
         )
 
         this.topControlsView.Create(

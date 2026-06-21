@@ -1,11 +1,13 @@
 #Requires AutoHotkey 2.0
 #Include Services\Configuration\ConfigurationService.ahk
 #Include Utils\Base64Service.ahk
+#Include Utils\ArrayHelper.ahk
 #Include Services\LLM\LLMService.ahk
 #Include Services\LLM\MarkdownNewTool.ahk
 #Include Services\LLM\PromptCreatorTool.ahk
 #Include Services\SessionManager.ahk
 #Include Utils\ClipboardParserService.ahk
+#Include Utils\WebContentFetcher.ahk
 #Include Services\WebViewManager.ahk
 #Include Services\ContextManager.ahk
 #Include Services\RecordingService.ahk
@@ -104,6 +106,16 @@ class App {
             PromptCreatorTool.TOOL_NAME, pct
         )
 
+        ; Derive tool definitions from toolsMap (single source of truth for tool roster)
+        toolDefs := [
+            { id: PowerShellTool.TOOL_NAME, label: PowerShellTool.TOOL_LABEL },
+            { id: FileSystemTool.TOOL_NAME, label: FileSystemTool.TOOL_LABEL },
+            { id: WebSearchTool.TOOL_NAME, label: WebSearchTool.TOOL_LABEL },
+            { id: WebFetchTool.TOOL_NAME, label: WebFetchTool.TOOL_LABEL },
+            { id: MarkdownNewTool.TOOL_NAME, label: MarkdownNewTool.TOOL_LABEL },
+            { id: PromptCreatorTool.TOOL_NAME, label: PromptCreatorTool.TOOL_LABEL }
+        ]
+
         ; Initialize LLM Client and Providers
         llmProviders := Map(
             "openai", OpenAIProvider(),
@@ -123,7 +135,8 @@ class App {
             llm,
             wv,
             rec,
-            ctx
+            ctx,
+            toolDefs
         )
 
         ; 2. Initialize Commands
@@ -138,12 +151,11 @@ class App {
         clearHist := ClearHistoryCommand(sess, cfg)
         copyToClip := CopyToClipboardCommand()
         selectModel := SelectModelCommand(sess)
-        getToolsState := GetToolsMenuStateCommand(cfg, sess)
+        getToolsState := GetToolsMenuStateCommand(cfg, sess, toolDefs)
         toggleTool := ToggleToolCommand(cfg, sess)
         processClip := ProcessClipboardCommand(rec, sess)
         saveDiagram := SaveDiagramCommand()
-        mdn := mnt
-        replaceLink := ReplaceLinkWithContentCommand(mdn, sess, ctx)
+        replaceLink := ReplaceLinkWithContentCommand(sess, ctx)
         renderMarkdown := RenderMarkdownCommand(wv)
         saveEditedMsg := SaveEditedMessageCommand(sess, cfg)
         renderLastMsg := RenderLastMessageCommand(sess, wv)

@@ -4,6 +4,7 @@
 
 class PromptCreatorTool {
     static TOOL_NAME := "create_prompt"
+    static TOOL_LABEL := "Create Prompt"
 
     /**
      * Sanitize a display name to a safe kebab-case filename.

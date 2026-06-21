@@ -4,6 +4,7 @@ class WebSearchTool {
     currentHttpObject := ""
     isCancelled := false
     static TOOL_NAME := "web_search"
+    static TOOL_LABEL := "Web Search"
 
     /**
      * Execute a web search query using Ollama API

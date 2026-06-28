@@ -39,7 +39,6 @@
 #Include Commands\DeleteMessageCommand.ahk
 #Include Commands\ClearHistoryCommand.ahk
 #Include Commands\ResetAllCommand.ahk
-#Include Utils\ClipboardHelper.ahk
 #Include Commands\CopyToClipboardCommand.ahk
 #Include Commands\SelectModelCommand.ahk
 #Include Commands\GetToolsMenuStateCommand.ahk

@@ -22,19 +22,6 @@ class BaseProvider {
     }
 
     /**
-     * Add token usage information to the result
-     * @param obj - The full response object
-     * @param result - The result object to add tokens to
-     * @returns The modified result object
-     */
-    AddTokensToResult(obj, result) {
-        if (obj.Has("usage") && obj["usage"].Has("total_tokens")) {
-            result.tokens := obj["usage"]["total_tokens"]
-        }
-        return result
-    }
-
-    /**
      * Filter out audio messages and their corresponding user prompts
      * @param messages - The list of messages to filter (ChatMessage instances)
      * @returns The filtered list of messages

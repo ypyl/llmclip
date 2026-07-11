@@ -120,17 +120,9 @@ class LLMClient {
     }
 
     GetProvider(settings) {
-        providerName := settings.Has("provider_name") ? settings["provider_name"] : ""
-
-        if (providerName = "GroqAudio" || providerName = "Groq Audio" || providerName = "Audio")
-            return this.providers["audio"]
-        else if (providerName = "Groq" || providerName = "GitHub" || providerName = "OpenCodeGo" || providerName = "OpenRouter" || providerName = "OpenAI" || providerName = "Azure" || providerName = "Nvidia")
-            return this.providers["openai"]
-        else if (InStr(providerName, "Ollama") = 1)
-            return this.providers["ollama"]
-        else if (providerName = "Google")
-            return this.providers["google"]
-
-        throw Error("Unknown provider type: " providerName " (" settings.Get("type", "") ")")
+        t := settings.Get("provider_type", "openai")
+        if this.providers.Has(t)
+            return this.providers[t]
+        throw Error("Unknown provider type: " t)
     }
 }

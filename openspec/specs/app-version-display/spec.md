@@ -11,13 +11,13 @@ The application version SHALL be defined in `version.txt` at the repository root
 - **WHEN** `version.txt` is absent
 - **THEN** the app SHALL display "dev" as the version string
 
-### Requirement: Version displayed in top-right corner
-The application SHALL display its version string as a small text label in the top-right corner of the main window, visible at all times.
+### Requirement: Version displayed in title bar
+The application SHALL display its version string in the window title bar, prefixed with "LLMClip v".
 
 #### Scenario: Version visible at launch
 - **WHEN** the main window opens
-- **THEN** the version text SHALL be visible at the top-right corner
+- **THEN** the title bar SHALL show "LLMClip v" followed by the version from `version.txt`
 
-#### Scenario: Version repositions on resize
-- **WHEN** the window is resized
-- **THEN** the version label SHALL move to maintain its top-right position
+#### Scenario: Title bar persists across sessions
+- **WHEN** the application is running
+- **THEN** the version SHALL remain visible in the title bar regardless of window size or WebView content

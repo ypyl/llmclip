@@ -19,7 +19,7 @@ class PowerShellTool {
      */
     ExecuteScript(script, workingDirectory := A_ScriptDir) {
         ; Unique temp file names
-        tempDir := TempFileManager.TempDir
+        tempDir := A_ScriptDir "\temp"
         tmpScript := tempDir "\ahk_ps_" A_TickCount ".ps1"
         tmpOut    := tempDir "\ahk_ps_" A_TickCount "_out.txt"
 

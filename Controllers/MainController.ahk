@@ -1,6 +1,5 @@
 #Requires AutoHotkey 2.0
 #Include ..\Services\ProcessingState.ahk
-#Include ..\Utils\TempFileManager.ahk
 
 class MainController {
     view := ""
@@ -120,7 +119,13 @@ class MainController {
             ; State load failure is non-fatal — continue with defaults
         }
 
-        TempFileManager.CleanUp()
+        ; Clean up temp directory on start
+        tempDir := A_ScriptDir "\temp"
+        if DirExist(tempDir) {
+            try DirDelete(tempDir, true)
+        }
+        if !DirExist(tempDir)
+            DirCreate(tempDir)
         this.Show()
         this.UpdateSessionUI()
         this.UpdateRecordingUI()

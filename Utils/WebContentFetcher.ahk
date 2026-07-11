@@ -1,7 +1,7 @@
 #Include ..\Lib\Json.ahk
-#Include TempFileManager.ahk
 
 class WebContentFetcher {
+    static tempDir := A_ScriptDir "\temp"
     /**
      * Fetch web content as markdown using markdown.new API via curl.
      * Pure HTTP — no cancellation support. Callers handle their own cancellation.
@@ -17,8 +17,8 @@ class WebContentFetcher {
             body["method"] := "auto"
 
             ; Create temporary files for request and response
-            requestFile := TempFileManager.GetPath(Format("{1}_{2}", A_TickCount, "request.json"))
-            responseFile := TempFileManager.GetPath(Format("{1}_{2}", A_TickCount, "response.json"))
+            requestFile := WebContentFetcher.tempDir "\" Format("{1}_{2}", A_TickCount, "request.json")
+            responseFile := WebContentFetcher.tempDir "\" Format("{1}_{2}", A_TickCount, "response.json")
 
             ; Write request body to temp file
             if FileExist(requestFile)

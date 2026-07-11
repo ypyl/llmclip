@@ -5,12 +5,11 @@
 #Include "Providers\OllamaProvider.ahk"
 #Include "Providers\GoogleProvider.ahk"
 #Include "Providers\GroqAudioProvider.ahk"
-#Include "..\..\Utils\TempFileManager.ahk"
 
 class LLMClient {
     ; Private properties
     providers := Map()
-    tempDir := TempFileManager.TempDir
+    tempDir := A_ScriptDir "\temp"
     pid := 0
     isCancelled := false
 

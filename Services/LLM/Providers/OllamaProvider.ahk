@@ -1,10 +1,4 @@
 #Include "BaseProvider.ahk"
-#Include "..\PowerShellTool.ahk"
-#Include "..\FileSystemTool.ahk"
-#Include "..\WebSearchTool.ahk"
-#Include "..\WebFetchTool.ahk"
-#Include "..\MarkdownNewTool.ahk"
-#Include "..\PromptCreatorTool.ahk"
 
 class OllamaProvider extends BaseProvider {
     GetRequestBody(messages, settings) {
@@ -75,25 +69,9 @@ class OllamaProvider extends BaseProvider {
 
         body["messages"] := ollamaMessages
 
-        ; Add tools
-        enabledTools := []
-        for t in settings.Get("tools", []) {
-            if (t = PowerShellTool.TOOL_NAME)
-                enabledTools.Push(PowerShellTool.GetOpenAiToolDefinition())
-            else if (t = FileSystemTool.TOOL_NAME)
-                enabledTools.Push(FileSystemTool.GetOpenAiToolDefinition())
-            else if (t = WebSearchTool.TOOL_NAME)
-                enabledTools.Push(WebSearchTool.GetOpenAiToolDefinition())
-            else if (t = WebFetchTool.TOOL_NAME) {
-                enabledTools.Push(WebFetchTool.GetOpenAiToolDefinition())
-            } else if (t = MarkdownNewTool.TOOL_NAME) {
-                enabledTools.Push(MarkdownNewTool.GetOpenAiToolDefinition())
-            } else if (t = PromptCreatorTool.TOOL_NAME) {
-                enabledTools.Push(PromptCreatorTool.GetOpenAiToolDefinition())
-            }
-        }
-        if (enabledTools.Length > 0)
-            body["tools"] := enabledTools
+        ; Tools pre-resolved by LLMService
+        if (settings.Has("tools") && settings["tools"].Length > 0)
+            body["tools"] := settings["tools"]
 
         return body
     }

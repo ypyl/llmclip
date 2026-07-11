@@ -28,7 +28,7 @@ class PromptCreatorTool {
     /**
      * Get the OpenAI tool definition for this tool
      */
-    static GetOpenAiToolDefinition() {
+    GetOpenAiToolDefinition() {
         return {
             type: "function",
             function: {

@@ -106,6 +106,14 @@ class LLMService {
             settings := this.configManager.GetSelectedSettings(modelIndex)
             settings["tools"] := this.ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled, createPromptEnabled)
 
+            ; Expand tool names to definition objects using toolsMap
+            resolvedTools := []
+            for t in settings["tools"] {
+                if this.tools.Has(t)
+                    resolvedTools.Push(this.tools[t].GetOpenAiToolDefinition())
+            }
+            settings["tools"] := resolvedTools
+
             ; Use LLM client with settings
             startTime := A_TickCount
             newMessages := this.llmClientInstance.Call(messages, settings)

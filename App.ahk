@@ -184,7 +184,12 @@ class App {
         setProcessingState := SetProcessingStateCommand(sess)
 
         ; 3. Initialize View
-        this.view := MainView(this.controller)
+        ; Read app version
+        version := "dev"
+        try version := FileRead("version.txt", "UTF-8")
+        version := Trim(version)
+
+        this.view := MainView(this.controller, version)
         this.controller.SetView(this.view, this.view.promptView, this.view.contextView, this.view.historyView, this.view.menuView, this.view.topControlsView, this.view.responseView)
 
         this.controller.SetCommands(

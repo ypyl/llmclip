@@ -23,8 +23,12 @@ class MainView {
     historyViewController := ""
     settingsController := ""
 
-    __New(controller) {
+    ; Version
+    version := ""
+
+    __New(controller, version := "dev") {
         this.controller := controller
+        this.version := version
         this.menuView := MenuView()
         this.topControlsView := TopControlsView()
         this.contextView := ContextView()
@@ -53,8 +57,8 @@ class MainView {
 
     BuildUI() {
         this.gui := Gui()
-        this.gui.Title := "LLM Assistant"
-        this.gui.SetFont("s9", "Segoe UI")
+        this.gui.Title := "LLMClip v" this.version
+        this.gui.SetFont("s8", "Segoe UI")
         this.gui.Opt("+Resize +MinSize800x610")
 
         this.gui.OnEvent("Size", (gui, minMax, width, height) => this.OnResize(gui, minMax, width, height))

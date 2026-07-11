@@ -24,23 +24,6 @@ class GroqAudioProvider extends BaseProvider {
         return body
     }
 
-    ParseResponse(response) {
-        ; This provider returns audio file path, which is handled differently in LLMClient.
-        ; However, if we need to parse a JSON error response or similar, we can do it here.
-        ; For now, LLMClient handles the audio file output directly.
-        ; If this method is called, it might be an error response or we need to return a dummy result.
-
-        ; In LLMClient, if it's audio, it returns early.
-        ; But if we want to unify, we might want to return something here.
-        ; For now, let's assume LLMClient handles the file creation and this is only called for text responses (errors).
-
-        try {
-            obj := JSON.Load(response)
-            if (obj.Has("error")) {
-                throw Error(obj["error"]["message"])
-            }
-        }
-
-        return []
-    }
+    ; ParseResponse intentionally omitted — audio is handled by LLMClient directly.
+    ; Falls through to BaseProvider.ParseResponse which throws "Not implemented".
 }

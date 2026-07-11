@@ -53,9 +53,16 @@ Include paths in sub-files are relative to that file (e.g., `#Include ..\Service
 - LLM calls use **curl** subprocess — cURL must be installed and on PATH.
 - Tool auto-approval is configured in system prompt JSONs via `tools.{ToolName}.{parameterName}` regex patterns (see `TOOL_AUTO_APPROVAL.md`).
 
-## Release
+## Versioning & Release
 
+- **`version.txt`** at repo root is the single source of truth for the app version (displayed in title bar).
+- Before tagging a release, bump the version in `version.txt` and commit it.
 - CI (`.github/workflows/release.yml`): triggered on semver tag push (`v*.*.*`). Compiles `main.ahk` → `llmclip.exe` with `icon.ico`.
+- Release workflow:
+  1. Bump version in `version.txt`
+  2. Commit: `git commit -m "Bump version to X.Y.Z for release"`
+  3. Tag: `git tag vX.Y.Z`
+  4. Push: `git push && git push origin vX.Y.Z`
 - Release zip bundles: `llmclip.exe`, `mermaid.min.js`, `providers/providers.json`, `ui.html`, `marked.min.js`, `readability.min.js`, `WebView2Loader.dll`.
 - Uses `benmusson/ahk2exe-action@v1.2.0` for compilation.
 

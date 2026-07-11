@@ -1,5 +1,6 @@
 {
   "GitHub": {
+    "provider_type": "openai",
     "curl": "curl -s -S -X POST \"https://models.github.ai/inference/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
     "models": [
       {
@@ -28,6 +29,7 @@
     ]
   },
   "Groq": {
+    "provider_type": "openai",
     "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
     "models": [
       {
@@ -69,6 +71,7 @@
     ]
   },
   "GroqAudio": {
+    "provider_type": "audio",
     "curl": "curl -s -S -X POST \"https://api.groq.com/openai/v1/audio/speech\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
     "models": [
       {
@@ -77,6 +80,7 @@
     ]
   },
   "Google": {
+    "provider_type": "google",
     "curl": "curl -s -S -X POST \"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent?key={API_KEY}\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
     "models": [
       {
@@ -97,6 +101,7 @@
     ]
   },
   "OllamaLocal": {
+    "provider_type": "ollama",
     "curl": "curl -s -S -X POST \"http://localhost:11434/api/chat\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
     "models": [
       {
@@ -133,6 +138,7 @@
     ]
   },
   "OllamaCloud": {
+    "provider_type": "ollama",
     "curl": "curl -s -S -X POST \"https://ollama.com/api/chat\" -H \"Authorization: Bearer {API_KEY}\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
     "models": [
       {
@@ -143,6 +149,7 @@
     ]
   },
   "OpenRouter": {
+    "provider_type": "openai",
     "curl": "curl -s -S -X POST \"https://openrouter.ai/api/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
     "models": [
       {
@@ -165,6 +172,7 @@
     ]
   },
   "Nvidia": {
+    "provider_type": "openai",
     "curl": "curl -s -S -X POST \"https://integrate.api.nvidia.com/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -H \"Accept: application/json\" -d \"@{1}\" -o \"{2}\"",
     "models": [
       {
@@ -177,6 +185,7 @@
     ]
   },
   "OpenCodeGo": {
+    "provider_type": "openai",
     "curl": "curl -s -S -X POST \"https://opencode.ai/zen/go/v1/chat/completions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer {API_KEY}\" -d \"@{1}\" -o \"{2}\"",
     "models": [
       {

@@ -116,15 +116,6 @@ class LLMClient {
             errorMsg := ChatMessage("assistant", [TextContent(e.Message)])
             return [errorMsg]
         } finally {
-            ; Cleanup temp files but don't delete audio files
-            try {
-                ; FileDelete(inputFile)
-
-                ; Only delete JSON response files, not audio files
-                ; if (!InStr(selectedLLMType, "gr-audio") = 1) {
-                ;    FileDelete(outputFile)
-                ; }
-            }
             this.pid := 0
         }
     }

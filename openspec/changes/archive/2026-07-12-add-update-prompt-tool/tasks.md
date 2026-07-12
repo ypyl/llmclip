@@ -39,9 +39,9 @@
 
 ## 8. Integration & verification
 
-- [ ] 8.1 Run `main.ahk`, enable `Update Prompt` tool for the active model
-- [ ] 8.2 Send a chat message: "update the current prompt to end every response with 'Stay curious.'" — verify LLM calls `update_prompt` with the current prompt name, approval dialog appears, prompt text updates, new text takes effect on next message
-- [ ] 8.3 Test rename: "rename the current prompt to 'Curious Assistant'" — verify new file pair created, old cleaned up, prompt appears under new name in menu
-- [ ] 8.4 Test inline migration: select an inline prompt (e.g., "Code Helper"), ask LLM to update its text — verify it gets extracted to standalone file pair
-- [ ] 8.5 Test partial update: update only `hidden` or `input_template` without changing text — verify only that field changes
-- [ ] 8.6 Test error cases: update non-existent prompt → error; update with empty name → error; update with no fields → error; update to name whose filename collides → error
+- [x] 8.1 Run `main.ahk`, enable `Update Prompt` tool for the active model
+- [x] 8.2 Send a chat message: "update the current prompt to end every response with 'Stay curious.'" — verify LLM calls `update_prompt` with the current prompt name, approval dialog appears, prompt text updates, new text takes effect on next message
+- [x] 8.3 Test rename: "rename the current prompt to 'Curious Assistant'" — verify new file pair created, old cleaned up, prompt appears under new name in menu
+- [x] 8.4 Test inline migration: select an inline prompt (e.g., "Code Helper"), ask LLM to update its text — verify it gets extracted to standalone file pair
+- [x] 8.5 Test partial update: update only `hidden` or `input_template` without changing text — verify only that field changes
+- [x] 8.6 Test error cases: update non-existent prompt → error; update with empty name → error; update with no fields → error; update to name whose filename collides → error

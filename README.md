@@ -28,8 +28,9 @@ LLMClip monitors your clipboard and aggregates copied text, files, folders, imag
     - `web_search`: Perform a web search to get the latest information.
     - `web_fetch`: Read the content of a specific web page by URL.
     - `read_url_markdown`: Cleanly convert web pages to Markdown via markdown.new.
-    - `create_prompt`: Create or update system prompts dynamically from within a conversation.
-- **Tool Auto-Approval**: Configure regex patterns per system prompt to automatically execute safe tool calls without manual confirmation (e.g., auto-approve `read_file` on specific directories). See [TOOL_AUTO_APPROVAL.md](./TOOL_AUTO_APPROVAL.md).
+    - `create_prompt`: Create new system prompts dynamically from within a conversation.
+    - `update_prompt`: Update existing prompts — modify text, input templates, visibility, or rename.
+- **Tool Auto-Approval**: Configure regex patterns per system prompt to automatically execute safe tool calls without manual confirmation. Add `"tools.{ToolName}.{parameter}": "regex"` keys to a prompt's JSON — when all patterns match, the tool executes without the approval dialog. Falls back to manual confirmation if any pattern fails. Disable by removing all `tools.*` keys.
 
 ### 💬 Advanced Chat Interface
 - **Markdown Rendering**: Chat history is rendered with Markdown, including syntax highlighting for code blocks.
@@ -93,7 +94,7 @@ Section names must match provider names defined in `providers/providers.json`. O
 - **`prompts/`**: Contains system prompt JSON files (`.json` only; `.md` files are ignored at runtime). All JSON files in this directory are merged at startup. Each prompt can define:
     - `"value"`: The system prompt text.
     - `"input_template"`: Optional template with `{placeholders}` pre-filled into the input box.
-    - `"tools.{ToolName}.{parameter}"`: Regex patterns for tool auto-approval (see [TOOL_AUTO_APPROVAL.md](./TOOL_AUTO_APPROVAL.md)).
+    - `"tools.{ToolName}.{parameter}"`: Regex patterns for auto-approving specific tool calls (e.g., `"tools.FileSystemTool.operation": "read_file|list_dir"` to auto-approve read-only file ops). All defined patterns must match the tool call, otherwise fall back to manual approval.
 
 ## Usage
 

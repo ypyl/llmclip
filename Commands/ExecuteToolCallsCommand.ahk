@@ -81,6 +81,9 @@ class ExecuteToolCallsCommand {
             patternKey := MarkdownNewTool.TOOL_NAME
         } else if (toolName = PromptCreatorTool.TOOL_NAME) {
             patternKey := PromptCreatorTool.TOOL_NAME
+        } else if (toolName = PromptCreatorTool.TOOL_NAME_UPDATE) {
+            ; update_prompt always requires manual approval — no auto-approval
+            return false
         } else {
             return false
         }

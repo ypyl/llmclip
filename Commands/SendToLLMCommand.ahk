@@ -50,6 +50,12 @@ class SendToLLMCommand {
         webFetchEnabled := this.configManager.IsToolEnabled(modelIndex, WebFetchTool.TOOL_NAME)
         markdownNewEnabled := this.configManager.IsToolEnabled(modelIndex, MarkdownNewTool.TOOL_NAME)
         createPromptEnabled := this.configManager.IsToolEnabled(modelIndex, PromptCreatorTool.TOOL_NAME)
+        updatePromptEnabled := this.configManager.IsToolEnabled(modelIndex, PromptCreatorTool.TOOL_NAME_UPDATE)
+
+        ; Get current prompt name for system message injection
+        promptNames := this.configManager.GetSystemPromptNames(modelIndex)
+        promptIndex := this.sessionManager.GetSessionSystemPrompt(targetSessionIndex)
+        promptName := (promptIndex > 0 && promptIndex <= promptNames.Length) ? promptNames[promptIndex] : ""
 
         try {
             newMessages := this.llmService.SendToLLM(
@@ -60,7 +66,9 @@ class SendToLLMCommand {
                 webFetchEnabled,
                 fileSystemEnabled,
                 markdownNewEnabled,
-                createPromptEnabled
+                createPromptEnabled,
+                updatePromptEnabled,
+                promptName
             )
 
             if (newMessages.Length > 0) {

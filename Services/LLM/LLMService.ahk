@@ -20,7 +20,7 @@ class LLMService {
         this.llmClientInstance := llmClient
     }
 
-    ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false, createPromptEnabled := false) {
+    ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false, createPromptEnabled := false, updatePromptEnabled := false) {
         enabledTools := []
         if (powerShellEnabled)
             enabledTools.Push(PowerShellTool.TOOL_NAME)
@@ -43,6 +43,10 @@ class LLMService {
         ; Enable prompt creation if enabled
         if (createPromptEnabled) {
             enabledTools.Push(PromptCreatorTool.TOOL_NAME)
+        }
+        ; Enable prompt update if enabled
+        if (updatePromptEnabled) {
+            enabledTools.Push(PromptCreatorTool.TOOL_NAME_UPDATE)
         }
 
         return enabledTools
@@ -92,19 +96,23 @@ class LLMService {
         return results
     }
 
-    SendToLLM(messages, modelIndex, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false, createPromptEnabled := false) {
+    SendToLLM(messages, modelIndex, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false, createPromptEnabled := false, updatePromptEnabled := false, promptName := "") {
         ; Append Date and Time to the system message
         if (messages.Length > 0 && messages[1].Role == "system") {
             systemMsg := messages[1]
             originalText := systemMsg.GetText()
             currentTime := FormatTime(, "yyyy-MM-dd HH:mm:ss")
-            systemMsg.Contents := [TextContent(originalText . "`n`nCurrent Date and Time: " . currentTime)]
+            suffix := "`n`nCurrent Date and Time: " . currentTime
+            if (promptName != "") {
+                suffix .= "`nCurrent prompt: `"" . promptName . "`""
+            }
+            systemMsg.Contents := [TextContent(originalText . suffix)]
         }
 
         try {
             ; Create LLM client if it doesn't exist yet
             settings := this.configManager.GetSelectedSettings(modelIndex)
-            settings["tools"] := this.ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled, createPromptEnabled)
+            settings["tools"] := this.ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled, createPromptEnabled, updatePromptEnabled)
 
             ; Expand tool names to definition objects using toolsMap
             resolvedTools := []

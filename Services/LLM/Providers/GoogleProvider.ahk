@@ -185,6 +185,8 @@ class GoogleProvider extends BaseProvider {
                 enabledTools.Push(MarkdownNewTool.GetGeminiToolDefinition())
             else if (t = PromptCreatorTool.TOOL_NAME)
                 enabledTools.Push(PromptCreatorTool.GetGeminiToolDefinition())
+            else if (t = PromptCreatorTool.TOOL_NAME_UPDATE)
+                enabledTools.Push(PromptCreatorTool.GetGeminiUpdateToolDefinition())
         }
         if (enabledTools.Length > 0)
             body["tools"] := enabledTools

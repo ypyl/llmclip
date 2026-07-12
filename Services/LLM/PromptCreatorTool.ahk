@@ -5,6 +5,14 @@
 class PromptCreatorTool {
     static TOOL_NAME := "create_prompt"
     static TOOL_LABEL := "Create Prompt"
+    static TOOL_NAME_UPDATE := "update_prompt"
+    static TOOL_LABEL_UPDATE := "Update Prompt"
+
+    toolName := ""  ; set via constructor — "create_prompt" or "update_prompt"
+
+    __New(toolName := "") {
+        this.toolName := (toolName != "") ? toolName : PromptCreatorTool.TOOL_NAME
+    }
 
     /**
      * Sanitize a display name to a safe kebab-case filename.
@@ -29,6 +37,41 @@ class PromptCreatorTool {
      * Get the OpenAI tool definition for this tool
      */
     GetOpenAiToolDefinition() {
+        if (this.toolName == PromptCreatorTool.TOOL_NAME_UPDATE) {
+            return {
+                type: "function",
+                function: {
+                    name: PromptCreatorTool.TOOL_NAME_UPDATE,
+                    description: "Update an existing system prompt. Use this to modify a prompt's text, input template, visibility, or display name. The user must approve every update.",
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            name: {
+                                type: "string",
+                                description: "The exact display name of the prompt to update (e.g. 'Rust Code Review'). Required."
+                            },
+                            new_name: {
+                                type: "string",
+                                description: "Optional new display name to rename the prompt to."
+                            },
+                            value: {
+                                type: "string",
+                                description: "Optional new system prompt text. Write in second person ('You are a...')."
+                            },
+                            input_template: {
+                                type: "string",
+                                description: "Optional new template for user input, with {placeholders} (e.g. 'The repository is at {repo_path}')."
+                            },
+                            hidden: {
+                                type: "boolean",
+                                description: "Optional. Set true to hide the prompt from the menu, false to show it."
+                            }
+                        },
+                        required: ["name"]
+                    }
+                }
+            }
+        }
         return {
             type: "function",
             function: {
@@ -94,16 +137,57 @@ class PromptCreatorTool {
         }
     }
 
+    static GetGeminiUpdateToolDefinition() {
+        return {
+            functionDeclarations: [{
+                name: PromptCreatorTool.TOOL_NAME_UPDATE,
+                description: "Update an existing system prompt. Use this to modify a prompt's text, input template, visibility, or display name. The user must approve every update.",
+                parameters: {
+                    type: "object",
+                    properties: {
+                        name: {
+                            type: "string",
+                            description: "The exact display name of the prompt to update (e.g. 'Rust Code Review'). Required."
+                        },
+                        new_name: {
+                            type: "string",
+                            description: "Optional new display name to rename the prompt to."
+                        },
+                        value: {
+                            type: "string",
+                            description: "Optional new system prompt text. Write in second person ('You are a...')."
+                        },
+                        input_template: {
+                            type: "string",
+                            description: "Optional new template for user input, with {placeholders} (e.g. 'The repository is at {repo_path}')."
+                        },
+                        hidden: {
+                            type: "boolean",
+                            description: "Optional. Set true to hide the prompt from the menu, false to show it."
+                        }
+                    },
+                    required: ["name"]
+                }
+            }]
+        }
+    }
+
     /**
      * Execute a tool call from the LLM
      * @param toolCall - The tool call object from the LLM
      * @returns The tool response ChatMessage
      */
     ExecuteToolCall(toolCall) {
-        if (toolCall.Name != PromptCreatorTool.TOOL_NAME) {
-            return
+        if (toolCall.Name == PromptCreatorTool.TOOL_NAME) {
+            return this.ExecuteCreatePrompt(toolCall)
         }
+        if (toolCall.Name == PromptCreatorTool.TOOL_NAME_UPDATE) {
+            return this.ExecuteUpdatePrompt(toolCall)
+        }
+        return
+    }
 
+    ExecuteCreatePrompt(toolCall) {
         try {
             args := toolCall.Arguments
 
@@ -198,6 +282,70 @@ class PromptCreatorTool {
             msg := ChatMessage("tool")
             msg.Contents.Push(FunctionResultContent(toolCall.Id, "Successfully created system prompt '" . displayName . "' (saved to " . jsonPath . " and " . mdPath . "). The prompt is now available in the prompts menu."))
             return msg
+
+        } catch as e {
+            msg := ChatMessage("tool")
+            msg.Contents.Push(FunctionResultContent(toolCall.Id, "Error: " . e.Message))
+            return msg
+        }
+    }
+
+    ExecuteUpdatePrompt(toolCall) {
+        try {
+            args := toolCall.Arguments
+
+            ; Validate required parameter: name
+            if (!args.Has("name") || args["name"] == "") {
+                msg := ChatMessage("tool")
+                msg.Contents.Push(FunctionResultContent(toolCall.Id, "Error: Missing or empty required parameter 'name'. Provide the display name of the prompt to update."))
+                return msg
+            }
+
+            ; Validate at least one update field is provided
+            hasNewName := args.Has("new_name") && args["new_name"] != ""
+            hasValue := args.Has("value") && args["value"] != ""
+            hasInputTemplate := args.Has("input_template")
+            hasHidden := args.Has("hidden")
+
+            if (!hasNewName && !hasValue && !hasInputTemplate && !hasHidden) {
+                msg := ChatMessage("tool")
+                msg.Contents.Push(FunctionResultContent(toolCall.Id, "Error: At least one of 'new_name', 'value', 'input_template', or 'hidden' must be provided."))
+                return msg
+            }
+
+            displayName := args["name"]
+
+            ; Build updates map
+            updates := Map()
+            if (hasNewName)
+                updates["new_name"] := args["new_name"]
+            if (hasValue)
+                updates["value"] := args["value"]
+            if (hasInputTemplate)
+                updates["input_template"] := args["input_template"]
+            if (hasHidden)
+                updates["hidden"] := args["hidden"]
+
+            ; Delegate to SystemPrompts
+            cfg := ConfigurationService.GetInstance()
+            result := cfg.systemPromptsManager.UpdatePrompt(displayName, updates)
+
+            if (result["success"]) {
+                ; Reload configuration so changes appear in UI
+                try {
+                    cfg.Reload()
+                } catch as e {
+                    ; Reload failure is non-fatal
+                }
+
+                msg := ChatMessage("tool")
+                msg.Contents.Push(FunctionResultContent(toolCall.Id, "Successfully updated prompt '" . displayName . "'. " . result["details"]))
+                return msg
+            } else {
+                msg := ChatMessage("tool")
+                msg.Contents.Push(FunctionResultContent(toolCall.Id, "Error: " . result["error"]))
+                return msg
+            }
 
         } catch as e {
             msg := ChatMessage("tool")

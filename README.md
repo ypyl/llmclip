@@ -22,14 +22,12 @@ LLMClip monitors your clipboard and aggregates copied text, files, folders, imag
 - **9 Built-in Providers**: Pre-configured support for **GitHub Models**, **Groq**, **Groq Audio** (TTS), **Google (Gemini)**, **Ollama Local**, **Ollama Cloud**, **OpenRouter**, **Nvidia**, and **OpenCodeGo**.
 - **Customizable**: Flexible configuration via `providers/` and `prompts/` directories — all `*.json` files in each are merged at runtime. Define curl templates, models, tool flags, system prompts with templates, and auto-approval rules.
 - **Per-Model System Prompts**: Multiple system prompt roles are selectable from a dropdown for every model. All prompts are available to all providers. System prompts can include input templates with `{placeholders}`.
-- **Tools**: Allow models to execute terminal commands, read/write files, search the web, fetch pages, create prompts, and more. Available tools:
+- **Tools**: Allow models to execute terminal commands, read/write files, search the web, fetch pages, and more. Available tools:
     - `execute_powershell`: Run PowerShell scripts for system operations.
     - `file_system`: Perform local file read, write, and list operations.
     - `web_search`: Perform a web search to get the latest information.
     - `web_fetch`: Read the content of a specific web page by URL.
     - `read_url_markdown`: Cleanly convert web pages to Markdown via markdown.new.
-    - `create_prompt`: Create new system prompts dynamically from within a conversation.
-    - `update_prompt`: Update existing prompts — modify text, input templates, visibility, or rename.
 - **Tool Auto-Approval**: Configure regex patterns per system prompt to automatically execute safe tool calls without manual confirmation. Add `"tools.{ToolName}.{parameter}": "regex"` keys to a prompt's JSON — when all patterns match, the tool executes without the approval dialog. Falls back to manual confirmation if any pattern fails. Disable by removing all `tools.*` keys.
 
 ### 💬 Advanced Chat Interface
@@ -37,12 +35,13 @@ LLMClip monitors your clipboard and aggregates copied text, files, folders, imag
     - **Mermaid Diagrams**: Supports rendering of Mermaid diagrams for visual workflows and charts.
     - **Save as SVG**: Save generated diagrams directly from the chat interface.
 - **History Management**:
-    - **In-place Editing**: Double-click the **markdown view** of any message to edit its content directly (preserves images and tool calls).
-    - **Branching**: Double-click any previous **user** message to create a new history branch (timeline). Navigate with **↑/↓** buttons in the chat header.
+    - **In-place Editing**: Double-click the **markdown view** of any message to edit its content directly (preserves images and tool calls). The editor toolbar shows only Save and Cancel for a focused editing experience.
+    - **Branching**: Double-click any previous **user** message to create a new history branch (timeline). Navigate with **⬅/➡** buttons in the chat footer. Buttons auto-disable at edge branches and hide when there is only one branch. Delete button disables when no message is selected.
 - **Session Management**: Switch between up to **5 independent chat sessions**, each with its own model, system prompt, chat history, and context items. Session labels show the active system prompt name.
 - **Persistence**:
     - **Manual**: Save/Load conversations as JSON via **File → Save/Load Conversation**.
     - **Automatic**: App state and the last conversation are auto-saved on exit and auto-restored on startup.
+    - **Session Traceability**: Every LLM API call is logged as a JSONL line in the `sessions/` folder (one file per app launch). Each line captures the triggering message, provider, model, raw response, duration, and token usage — enabling auditing and debugging of all LLM interactions.
 
 ## Installation
 

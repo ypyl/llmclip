@@ -65,3 +65,4 @@ rules:
     - Each task should be independently testable by running `main.ahk`
     - Group tasks by architectural layer (Services first, then Commands, then Controllers, then Views)
     - Add a final integration task to verify end-to-end with `main.ahk`
+    - If the change adds, removes, or modifies user-facing features, tools, hotkeys, or documented capabilities, include a task to update `README.md` sections affected by the change

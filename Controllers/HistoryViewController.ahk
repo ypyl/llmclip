@@ -70,11 +70,42 @@ class HistoryViewController {
         
         if (this.getHistoryInfoCommand)
             this.historyView.SetHistoryInfo(this.getHistoryInfoCommand.Execute())
+
+        this.UpdateButtonStates()
+    }
+
+    UpdateButtonStates() {
+        ; Delete: enabled only when a row is selected
+        hasSelection := this.historyView.GetNext() != 0
+        this.historyView.SetDeleteButtonEnabled(hasSelection)
+
+        ; Previous/Next: reflect branch position
+        if (this.getHistoryInfoCommand) {
+            historyInfo := this.getHistoryInfoCommand.Execute()
+            parts := StrSplit(historyInfo, "/")
+            if (parts.Length == 2) {
+                currentBranch := Integer(parts[1])
+                totalBranches := Integer(parts[2])
+
+                if (totalBranches <= 1) {
+                    ; Only one branch — hide both buttons
+                    this.historyView.SetPrevButtonVisible(false)
+                    this.historyView.SetNextButtonVisible(false)
+                } else {
+                    this.historyView.SetPrevButtonVisible(true)
+                    this.historyView.SetNextButtonVisible(true)
+                    this.historyView.SetPrevButtonEnabled(currentBranch > 1)
+                    this.historyView.SetNextButtonEnabled(currentBranch < totalBranches)
+                }
+            }
+        }
     }
 
     ChatHistorySelect(GuiCtrl, Item, Selected) {
-        if (!Selected)
+        if (!Selected) {
+            this.UpdateButtonStates()
             return
+        }
 
         ; Deselect ContextBox to ensure mutual exclusion
         if (this.mainView)
@@ -93,6 +124,8 @@ class HistoryViewController {
             this.historyView.SetActionButtonVisible(true)  ; Show the Copy button
             this.renderMarkdownCommand.Execute(presentationText)  ; Render the selected message in the WebView
         }
+        
+        this.UpdateButtonStates()
     }
 
     ChatHistoryDoubleClick(GuiCtrl, Item) {

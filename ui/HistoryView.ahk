@@ -60,4 +60,29 @@ class HistoryView {
         if (this.clearHistoryButton)
             this.clearHistoryButton.Enabled := enabled
     }
+
+    SetDeleteButtonEnabled(enabled) {
+        if (this.deleteMessageButton)
+            this.deleteMessageButton.Enabled := enabled
+    }
+
+    SetPrevButtonEnabled(enabled) {
+        if (this.historyPrevButton)
+            this.historyPrevButton.Enabled := enabled
+    }
+
+    SetPrevButtonVisible(visible) {
+        if (this.historyPrevButton)
+            this.historyPrevButton.Visible := visible
+    }
+
+    SetNextButtonEnabled(enabled) {
+        if (this.historyNextButton)
+            this.historyNextButton.Enabled := enabled
+    }
+
+    SetNextButtonVisible(visible) {
+        if (this.historyNextButton)
+            this.historyNextButton.Visible := visible
+    }
 }

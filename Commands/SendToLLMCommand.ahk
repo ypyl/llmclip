@@ -68,7 +68,8 @@ class SendToLLMCommand {
                 markdownNewEnabled,
                 createPromptEnabled,
                 updatePromptEnabled,
-                promptName
+                promptName,
+                targetSessionIndex
             )
 
             if (newMessages.Length > 0) {

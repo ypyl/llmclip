@@ -96,7 +96,7 @@ class LLMService {
         return results
     }
 
-    SendToLLM(messages, modelIndex, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false, createPromptEnabled := false, updatePromptEnabled := false, promptName := "") {
+    SendToLLM(messages, modelIndex, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false, createPromptEnabled := false, updatePromptEnabled := false, promptName := "", sessionIndex := 0) {
         ; Append Date and Time to the system message
         if (messages.Length > 0 && messages[1].Role == "system") {
             systemMsg := messages[1]
@@ -121,6 +121,9 @@ class LLMService {
                     resolvedTools.Push(this.tools[t].GetOpenAiToolDefinition())
             }
             settings["tools"] := resolvedTools
+
+            ; Thread session index for traceability
+            settings["session_index"] := sessionIndex
 
             ; Use LLM client with settings
             startTime := A_TickCount

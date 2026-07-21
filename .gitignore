@@ -11,3 +11,4 @@ keys.ini
 prompts
 conversation.json
 state.json
+sessions/

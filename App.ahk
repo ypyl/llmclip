@@ -6,6 +6,7 @@
 #Include Services\LLM\MarkdownNewTool.ahk
 #Include Services\LLM\PromptCreatorTool.ahk
 #Include Services\SessionManager.ahk
+#Include Services\TraceabilityService.ahk
 #Include Utils\ClipboardParserHelper.ahk
 #Include Utils\WebContentFetcher.ahk
 #Include Services\WebViewManager.ahk
@@ -118,6 +119,9 @@ class App {
             { id: PromptCreatorTool.TOOL_NAME_UPDATE, label: PromptCreatorTool.TOOL_LABEL_UPDATE }
         ]
 
+        ; Initialize Traceability Service
+        trc := TraceabilityService()
+
         ; Initialize LLM Client and Providers
         llmProviders := Map(
             "openai", OpenAIProvider(),
@@ -125,7 +129,7 @@ class App {
             "google", GoogleProvider(),
             "audio", GroqAudioProvider()
         )
-        clientInstance := LLMClient(llmProviders)
+        clientInstance := LLMClient(trc, llmProviders)
 
         llm := LLMService(cfg, toolsMap, clientInstance)
 

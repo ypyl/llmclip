@@ -13,7 +13,8 @@ class LLMClient {
     pid := 0
     isCancelled := false
 
-    __New(providers) {
+    __New(traceabilityService, providers) {
+        this.traceabilityService := traceabilityService
         this.providers := providers
     }
 
@@ -27,6 +28,10 @@ class LLMClient {
     Call(messages, settings) {
         try {
             this.isCancelled := false
+            startTime := A_TickCount
+            sessionIndex := settings.Has("session_index") ? settings["session_index"] : 0
+            body := Map()
+            response := ""
             curl := settings["curl"]
             selectedLLMType := settings.Has("type") ? settings["type"] : "groq"
 
@@ -95,7 +100,9 @@ class LLMClient {
             if (providerName = "GroqAudio" || providerName = "Groq Audio" || providerName = "Audio") {
                 audioMsg := ChatMessage("assistant")
                 audioMsg.Contents.Push(AudioContent(outputFile, "wav"))
-                return [audioMsg]
+                parsedMessages := [audioMsg]
+                this.TraceLog(sessionIndex, settings, body, "", parsedMessages, startTime)
+                return parsedMessages
             }
 
             ; Read response for non-audio types
@@ -103,7 +110,9 @@ class LLMClient {
                 response := FileRead(outputFile, "UTF-8")
                 if (response != "") {
                     ; Providers now return ChatMessage instances directly
-                    return provider.ParseResponse(response)
+                    parsedMessages := provider.ParseResponse(response)
+                    this.TraceLog(sessionIndex, settings, body, response, parsedMessages, startTime)
+                    return parsedMessages
                 }
             }
             throw Error("No response received")
@@ -112,8 +121,9 @@ class LLMClient {
             if (e.Message == "Request cancelled") {
                 throw e
             }
-            errorMsg := ChatMessage("assistant", [TextContent(e.Message)])
-            return [errorMsg]
+            parsedMessages := [ChatMessage("assistant", [TextContent(e.Message)])]
+            this.TraceLog(sessionIndex, settings, body, response, parsedMessages, startTime, e.Message)
+            return parsedMessages
         } finally {
             this.pid := 0
         }
@@ -124,5 +134,29 @@ class LLMClient {
         if this.providers.Has(t)
             return this.providers[t]
         throw Error("Unknown provider type: " t)
+    }
+
+    TraceLog(sessionIndex, settings, body, responseRaw, parsedMessages, startTime, errorMsg := "") {
+        if (!this.traceabilityService)
+            return
+
+        providerName := settings.Has("provider_name") ? settings["provider_name"] : settings.Get("type", "")
+        model := settings.Has("model") ? settings["model"] : ""
+        durationMs := A_TickCount - startTime
+
+        ; Extract tokens from parsed messages if available
+        tokens := unset
+        for msg in parsedMessages {
+            if (msg.AdditionalProperties.Has("tokens")) {
+                tokens := msg.AdditionalProperties["tokens"]
+                break
+            }
+        }
+
+        if (errorMsg != "") {
+            this.traceabilityService.LogInteraction(sessionIndex, providerName, model, body, responseRaw, parsedMessages, durationMs, , errorMsg)
+        } else {
+            this.traceabilityService.LogInteraction(sessionIndex, providerName, model, body, responseRaw, parsedMessages, durationMs, tokens)
+        }
     }
 }

@@ -20,7 +20,7 @@ class LLMService {
         this.llmClientInstance := llmClient
     }
 
-    ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false, createPromptEnabled := false, updatePromptEnabled := false) {
+    ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false) {
         enabledTools := []
         if (powerShellEnabled)
             enabledTools.Push(PowerShellTool.TOOL_NAME)
@@ -39,14 +39,6 @@ class LLMService {
         ; Enable markdown new if enabled
         if (markdownNewEnabled) {
             enabledTools.Push(MarkdownNewTool.TOOL_NAME)
-        }
-        ; Enable prompt creation if enabled
-        if (createPromptEnabled) {
-            enabledTools.Push(PromptCreatorTool.TOOL_NAME)
-        }
-        ; Enable prompt update if enabled
-        if (updatePromptEnabled) {
-            enabledTools.Push(PromptCreatorTool.TOOL_NAME_UPDATE)
         }
 
         return enabledTools
@@ -96,7 +88,7 @@ class LLMService {
         return results
     }
 
-    SendToLLM(messages, modelIndex, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false, createPromptEnabled := false, updatePromptEnabled := false, promptName := "", sessionIndex := 0) {
+    SendToLLM(messages, modelIndex, powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled := false, promptName := "", sessionIndex := 0) {
         ; Append Date and Time to the system message
         if (messages.Length > 0 && messages[1].Role == "system") {
             systemMsg := messages[1]
@@ -112,7 +104,7 @@ class LLMService {
         try {
             ; Create LLM client if it doesn't exist yet
             settings := this.configManager.GetSelectedSettings(modelIndex)
-            settings["tools"] := this.ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled, createPromptEnabled, updatePromptEnabled)
+            settings["tools"] := this.ConfigureToolSettings(powerShellEnabled, webSearchEnabled, webFetchEnabled, fileSystemEnabled, markdownNewEnabled)
 
             ; Expand tool names to definition objects using toolsMap
             resolvedTools := []

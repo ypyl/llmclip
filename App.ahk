@@ -4,7 +4,6 @@
 #Include Utils\ArrayHelper.ahk
 #Include Services\LLM\LLMService.ahk
 #Include Services\LLM\MarkdownNewTool.ahk
-#Include Services\LLM\PromptCreatorTool.ahk
 #Include Services\SessionManager.ahk
 #Include Services\TraceabilityService.ahk
 #Include Utils\ClipboardParserHelper.ahk
@@ -95,17 +94,13 @@ class App {
         wst := WebSearchTool()
         wft := WebFetchTool()
         mnt := MarkdownNewTool()
-        pct := PromptCreatorTool(PromptCreatorTool.TOOL_NAME)
-        pcu := PromptCreatorTool(PromptCreatorTool.TOOL_NAME_UPDATE)
 
         toolsMap := Map(
             PowerShellTool.TOOL_NAME, pst,
             FileSystemTool.TOOL_NAME, fst,
             WebSearchTool.TOOL_NAME, wst,
             WebFetchTool.TOOL_NAME, wft,
-            MarkdownNewTool.TOOL_NAME, mnt,
-            PromptCreatorTool.TOOL_NAME, pct,
-            PromptCreatorTool.TOOL_NAME_UPDATE, pcu
+            MarkdownNewTool.TOOL_NAME, mnt
         )
 
         ; Derive tool definitions from toolsMap (single source of truth for tool roster)
@@ -114,9 +109,7 @@ class App {
             { id: FileSystemTool.TOOL_NAME, label: FileSystemTool.TOOL_LABEL },
             { id: WebSearchTool.TOOL_NAME, label: WebSearchTool.TOOL_LABEL },
             { id: WebFetchTool.TOOL_NAME, label: WebFetchTool.TOOL_LABEL },
-            { id: MarkdownNewTool.TOOL_NAME, label: MarkdownNewTool.TOOL_LABEL },
-            { id: PromptCreatorTool.TOOL_NAME, label: PromptCreatorTool.TOOL_LABEL },
-            { id: PromptCreatorTool.TOOL_NAME_UPDATE, label: PromptCreatorTool.TOOL_LABEL_UPDATE }
+            { id: MarkdownNewTool.TOOL_NAME, label: MarkdownNewTool.TOOL_LABEL }
         ]
 
         ; Initialize Traceability Service

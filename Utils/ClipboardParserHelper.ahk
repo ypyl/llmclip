@@ -66,9 +66,14 @@ class ClipboardParserHelper {
                     position := uriEnd  ; Move to next position
                 }
 
-                ; If no URIs found, fall back to original clipboard text
-                if (localTxtFromClipboardArray.Length = 0)
-                    localTxtFromClipboardArray := [txtFromClipboard]
+                ; If no URIs found, try CF_HDROP format (bare Windows paths)
+                if (localTxtFromClipboardArray.Length = 0) {
+                    hdropPaths := this.ExtractFromCFHDrop()
+                    if (hdropPaths.Length > 0)
+                        localTxtFromClipboardArray := hdropPaths
+                    else
+                        localTxtFromClipboardArray := [txtFromClipboard]
+                }
             } catch as e {
                 MsgBox "Error processing clipboard: " e.Message
             }
@@ -81,6 +86,34 @@ class ClipboardParserHelper {
         }
 
         return localTxtFromClipboardArray
+    }
+
+    ; Extract file paths from CF_HDROP clipboard format (Windows native drag-drop)
+    static ExtractFromCFHDrop() {
+        result := []
+
+        if (!DllCall("OpenClipboard", "Ptr", 0))
+            return result
+
+        hDrop := DllCall("GetClipboardData", "UInt", 15, "UPtr")  ; CF_HDROP = 15
+
+        if (hDrop) {
+            fileCount := DllCall("shell32\DragQueryFileW", "UPtr", hDrop, "UInt", 0xFFFFFFFF, "Ptr", 0, "UInt", 0, "UInt")
+            if (fileCount > 0) {
+                buf := Buffer(520)  ; MAX_PATH * 2 for wide chars (260 chars)
+                Loop fileCount {
+                    copied := DllCall("shell32\DragQueryFileW", "UPtr", hDrop, "UInt", A_Index - 1, "Ptr", buf.Ptr, "UInt", 260, "UInt")
+                    if (copied > 0) {
+                        path := StrGet(buf.Ptr, "UTF-16")
+                        if (path != "")
+                            result.Push(path)
+                    }
+                }
+            }
+        }
+
+        DllCall("CloseClipboard")
+        return result
     }
 
     ; Convert a URI to a Windows path

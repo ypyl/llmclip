@@ -37,43 +37,51 @@ class ClipboardParserHelper {
         ; Check for VS Code using class and title
         isVsCodeActive := (activeClass = "Chrome_WidgetWin_1" && (InStr(activeTitle, "Visual Studio Code") || InStr(activeTitle, "Antigravity")))
 
-        ; If empty, check raw clipboard for file paths
+        ; If empty, scan raw clipboard for file paths
         if (isVsCodeActive && txtFromClipboard = "") {
             try {
                 localTxtFromClipboardArray := []  ; Reset array
 
-                ; 1) Try CF_HDROP first (native Windows file drop format)
-                hdropPaths := this.ExtractFromCFHDrop()
-                if (hdropPaths.Length > 0) {
-                    localTxtFromClipboardArray := hdropPaths
-                } else {
-                    ; 2) Fall back to raw ClipboardAll byte scan for file:/// URIs
-                    cb_all := ClipboardAll()
-                    rawData := ""
-                    Loop cb_all.Size {
-                        byte := NumGet(cb_all.Ptr, A_Index - 1, "UChar")
-                        if (byte != 0) {  ; Skip null bytes
-                            rawData .= Chr(byte)
-                        }
+                cb_all := ClipboardAll()
+                rawData := ""
+                Loop cb_all.Size {
+                    byte := NumGet(cb_all.Ptr, A_Index - 1, "UChar")
+                    if (byte != 0) {  ; Skip null bytes
+                        rawData .= Chr(byte)
                     }
-
-                    position := 1
-                    while (position := InStr(rawData, "file:///", false, position)) {
-                        uriStart := position
-                        uriEnd := InStr(rawData, "`n", false, uriStart) || StrLen(rawData) + 1
-                        fileUri := SubStr(rawData, uriStart, uriEnd - uriStart)
-
-                        decodedPath := this.UriToPath(fileUri)
-                        if (decodedPath)
-                            localTxtFromClipboardArray.Push(decodedPath)
-
-                        position := uriEnd  ; Move to next position
-                    }
-
-                    ; 3) If both failed, fall back to original clipboard text
-                    if (localTxtFromClipboardArray.Length = 0)
-                        localTxtFromClipboardArray := [txtFromClipboard]
                 }
+
+                ; 1) Try file:/// URIs
+                position := 1
+                while (position := InStr(rawData, "file:///", false, position)) {
+                    uriStart := position
+                    uriEnd := InStr(rawData, "`n", false, uriStart) || StrLen(rawData) + 1
+                    fileUri := SubStr(rawData, uriStart, uriEnd - uriStart)
+
+                    decodedPath := this.UriToPath(fileUri)
+                    if (decodedPath)
+                        localTxtFromClipboardArray.Push(decodedPath)
+
+                    position := uriEnd
+                }
+
+                ; 2) If no URIs, scan for bare Windows drive-letter paths (e.g. C:\Users\...)
+                if (localTxtFromClipboardArray.Length = 0) {
+                    searchPos := 1
+                    while (foundPos := RegExMatch(rawData, "[A-Za-z]:\\", &match, searchPos)) {
+                        ; Extract from drive letter to end, then trim trailing garbage
+                        candidate := SubStr(rawData, foundPos)
+                        while (candidate != "" && !FileExist(candidate) && !DirExist(candidate))
+                            candidate := SubStr(candidate, 1, -1)
+                        if (candidate != "")
+                            localTxtFromClipboardArray.Push(candidate)
+                        searchPos := foundPos + StrLen(candidate)  ; Advance past this path
+                    }
+                }
+
+                ; 3) If still nothing, fall back to original clipboard text
+                if (localTxtFromClipboardArray.Length = 0)
+                    localTxtFromClipboardArray := [txtFromClipboard]
             } catch as e {
                 MsgBox "Error processing clipboard: " e.Message
             }
@@ -86,34 +94,6 @@ class ClipboardParserHelper {
         }
 
         return localTxtFromClipboardArray
-    }
-
-    ; Extract file paths from CF_HDROP clipboard format (Windows native drag-drop)
-    static ExtractFromCFHDrop() {
-        result := []
-
-        if (!DllCall("OpenClipboard", "Ptr", 0))
-            return result
-
-        hDrop := DllCall("GetClipboardData", "UInt", 15, "UPtr")  ; CF_HDROP = 15
-
-        if (hDrop) {
-            fileCount := DllCall("shell32\DragQueryFileW", "UPtr", hDrop, "UInt", 0xFFFFFFFF, "Ptr", 0, "UInt", 0, "UInt")
-            if (fileCount > 0) {
-                buf := Buffer(520)  ; MAX_PATH * 2 for wide chars (260 chars)
-                Loop fileCount {
-                    copied := DllCall("shell32\DragQueryFileW", "UPtr", hDrop, "UInt", A_Index - 1, "Ptr", buf.Ptr, "UInt", 260, "UInt")
-                    if (copied > 0) {
-                        path := StrGet(buf.Ptr, "UTF-16")
-                        if (path != "")
-                            result.Push(path)
-                    }
-                }
-            }
-        }
-
-        DllCall("CloseClipboard")
-        return result
     }
 
     ; Convert a URI to a Windows path

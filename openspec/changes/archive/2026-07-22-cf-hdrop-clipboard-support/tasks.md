@@ -8,4 +8,4 @@
 
 ## 3. Verification
 
-- [ ] 3.1 Run `main.ahk`, start recording, copy a file from VSCode Explorer pane, verify the file path appears in the context list. Also verify plain text copy and Windows Explorer file copy still work.
+- [x] 3.1 Run `main.ahk`, start recording, copy a file from VSCode Explorer pane, verify the file path appears in the context list. Also verify plain text copy and Windows Explorer file copy still work.

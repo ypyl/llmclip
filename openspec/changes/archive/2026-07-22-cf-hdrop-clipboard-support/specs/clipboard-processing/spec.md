@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Clipboard content is parsed by ClipboardParserHelper
-`ProcessClipboardCommand` SHALL delegate parsing to `ClipboardParserHelper.Parse()`, which SHALL detect whether the clipboard content is plain text, newline-separated file paths, `file:///` URIs, `CF_HDROP` file paths, or image data.
+`ProcessClipboardCommand` SHALL delegate parsing to `ClipboardParserHelper.Parse()`, which SHALL detect whether the clipboard content is plain text, newline-separated file paths, `file:///` URIs, bare Windows drive-letter paths, or image data.
 
 #### Scenario: Clipboard contains plain text
 - **WHEN** clipboard content is a single line of text that does not match any existing file paths
@@ -15,14 +15,14 @@
 - **WHEN** clipboard content is multi-line AND at least one line is NOT a valid path
 - **THEN** `Parse()` returns the entire content as a single text string, with line endings normalized to LF
 
-#### Scenario: Clipboard contains CF_HDROP file paths without file URIs
+#### Scenario: Clipboard contains bare drive-letter paths without file URIs
 - **WHEN** the `file:///` URI scan produces no results
-- **AND** the clipboard contains `CF_HDROP` format data with one or more file paths
-- **THEN** `Parse()` SHALL extract each file path via `DragQueryFile` and return them as an array of strings
-- **AND** the extraction SHALL handle both ANSI and UTF-16 encoded paths correctly
+- **AND** the raw clipboard bytes contain a Windows drive-letter path (e.g., `C:\Users\...`)
+- **THEN** `Parse()` SHALL extract the path by locating the drive-letter pattern and validating the candidate via `FileExist`/`DirExist`
+- **AND** SHALL return the valid path(s) as an array of strings
 
-#### Scenario: CF_HDROP extraction fails gracefully
+#### Scenario: Drive-letter extraction fails gracefully
 - **WHEN** the `file:///` URI scan produces no results
-- **AND** `CF_HDROP` data is not present or cannot be read (e.g., clipboard locked)
+- **AND** no valid drive-letter path can be extracted from the raw data
 - **THEN** `Parse()` SHALL fall back to returning the plain text clipboard content as a single-element array
 - **AND** SHALL NOT display error messages or disrupt the user

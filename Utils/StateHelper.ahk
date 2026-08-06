@@ -2,19 +2,13 @@ class StateHelper {
     static GetStatePath() => A_ScriptDir "\state.json"
     static GetConversationPath() => A_ScriptDir "\conversation.json"
 
-    static Save(path, obj) {
-        jsonStr := JSON.Stringify(obj)
-        if (FileExist(path))
-            FileDelete(path)
-        FileAppend(jsonStr, path, "UTF-8")
-    }
+    static Save(path, obj) => FileHelper.WriteText(path, JSON.Stringify(obj))
 
     static Load(path) {
         if (!FileExist(path))
             return ""
         try {
-            content := FileRead(path, "UTF-8")
-            return JSON.Load(content)
+            return JSON.Load(FileHelper.ReadText(path))
         } catch {
             return ""
         }

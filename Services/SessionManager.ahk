@@ -271,16 +271,13 @@ class SessionManager {
     }
 
     ImportSessionState(state) {
-        isMap := Type(state) = "Map"
+        ; JSON.Load returns Maps — convert once to plain objects for FromObject
+        state := this.ConvertMapToObject(state)
 
-        hasContext := isMap ? state.Has("context") : state.HasOwnProp("context")
-        hasLLMType := isMap ? state.Has("llmType") : state.HasOwnProp("llmType")
-        hasSystemPrompt := isMap ? state.Has("systemPrompt") : state.HasOwnProp("systemPrompt")
-
-        if (!hasContext || !hasLLMType || !hasSystemPrompt)
+        if (!state.HasOwnProp("context") || !state.HasOwnProp("llmType") || !state.HasOwnProp("systemPrompt"))
             throw Error("Invalid session state file")
 
-        this.sessions[this.currentSessionIndex] := Session.FromObject(state, ObjBindMethod(this, "ConvertMapToObject"))
+        this.sessions[this.currentSessionIndex] := Session.FromObject(state)
         return true
     }
 

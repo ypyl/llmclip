@@ -2,7 +2,6 @@
 #Include ..\Services\ProcessingState.ahk
 
 class MainController {
-    view := ""
     mainView := ""
 
     ; Sub-view references
@@ -101,7 +100,6 @@ class MainController {
 
     SetView(mainView, promptView, contextView, historyView, menuView, topControlsView, responseView) {
         this.mainView := mainView
-        this.view := mainView  ; backward compat during migration
         this.promptView := promptView
         this.contextView := contextView
         this.historyView := historyView
@@ -132,10 +130,10 @@ class MainController {
         OnClipboardChange ObjBindMethod(this, "ClipChanged")
     }
 
-    ToggleDisplay() {
+    ToggleDisplay(*) {
         if (!this.recordingService.isRecording) {
             this.OnStartRecording()
-        } else if (!this.mainView.guiShown) {
+        } else if (this.mainView && !this.mainView.guiShown) {
             this.mainView.Show()
         } else {
             this.OnStopRecording()
@@ -335,16 +333,6 @@ class MainController {
         this.stopRecordingCommand.Execute()
         this.CopyRecordedContextToClipboard()
         this.UpdateRecordingUI()
-    }
-
-    OnToggleRecording(*) {
-        if (!this.recordingService.isRecording) {
-            this.OnStartRecording()
-        } else if (this.mainView && !this.mainView.guiShown) {
-            this.mainView.Show()
-        } else {
-            this.OnStopRecording()
-        }
     }
 
     CopyRecordedContextToClipboard() {

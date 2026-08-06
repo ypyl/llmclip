@@ -99,11 +99,9 @@ class Session {
         }
     }
 
-    static FromObject(obj, convertMapFunc) {
-        isMap := Type(obj) = "Map"
-
-        hasHistories := isMap ? obj.Has("histories") : obj.HasOwnProp("histories")
-        hasMessages := isMap ? obj.Has("messages") : obj.HasOwnProp("messages")
+    static FromObject(obj) {
+        hasHistories := obj.HasOwnProp("histories")
+        hasMessages := obj.HasOwnProp("messages")
 
         if (!hasHistories && !hasMessages)
             throw Error("Invalid session data")
@@ -111,27 +109,23 @@ class Session {
         newSession := Session("", 1)
 
         if (hasHistories) {
-            histories := isMap ? obj["histories"] : obj.histories
             newSession.histories := []
-            for hist in histories
-                newSession.histories.Push(History.FromObject(hist, convertMapFunc))
-            newSession.currentHistoryIndex := isMap ? obj["historyIndex"] : obj.historyIndex
+            for hist in obj.histories
+                newSession.histories.Push(History.FromObject(hist))
+            newSession.currentHistoryIndex := obj.historyIndex
         } else {
-            messages := isMap ? obj["messages"] : obj.messages
-            newSession.histories := [History.FromObject(messages, convertMapFunc)]
+            newSession.histories := [History.FromObject(obj.messages)]
         }
 
-        context := isMap ? obj["context"] : obj.context
         newSession.context := []
-        for item in context
+        for item in obj.context
             newSession.context.Push(ContextItem.FromObject(item))
 
-        newSession.llmType := isMap ? obj["llmType"] : obj.llmType
-        newSession.systemPromptIndex := isMap ? obj["systemPrompt"] : obj.systemPrompt
+        newSession.llmType := obj.llmType
+        newSession.systemPromptIndex := obj.systemPrompt
 
-        hasProcessingState := isMap ? obj.Has("processingState") : obj.HasOwnProp("processingState")
-        if (hasProcessingState)
-            newSession.processingState := isMap ? obj["processingState"] : obj.processingState
+        if (obj.HasOwnProp("processingState"))
+            newSession.processingState := obj.processingState
 
         return newSession
     }

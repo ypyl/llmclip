@@ -16,9 +16,6 @@ class ContextItem {
     }
 
     static FromObject(obj) {
-        if (Type(obj) = "Map") {
-            return ContextItem(obj["Value"], obj["Checked"])
-        }
         return ContextItem(obj.Value, obj.Checked)
     }
 }

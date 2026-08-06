@@ -40,11 +40,10 @@ class History {
         return result
     }
 
-    static FromObject(obj, convertMapFunc) {
+    static FromObject(obj) {
         messages := []
         for msg in obj {
-            plainObj := convertMapFunc.Call(msg)
-            messages.Push(ChatMessage.FromObject(plainObj))
+            messages.Push(ChatMessage.FromObject(msg))
         }
         return History(messages)
     }

@@ -120,25 +120,6 @@ class SessionManager {
         return true
     }
 
-    HasToolResponse(message) {
-        toolCalls := this.GetToolCalls(message)
-        if (toolCalls.Length = 0)
-            return false
-
-        messages := this.GetCurrentSessionMessages()
-        for toolCall in toolCalls {
-            for msg in messages {
-                if (msg.Role = "tool") {
-                    for part in msg.Contents {
-                        if (part is FunctionResultContent && part.CallId = toolCall.Id)
-                            return true
-                    }
-                }
-            }
-        }
-        return false
-    }
-
     GetToolCalls(msg) {
         toolCalls := []
         for part in msg.Contents {
@@ -183,20 +164,6 @@ class SessionManager {
                         return true
                 }
             }
-        }
-        return false
-    }
-
-    IsToolCallExecuted(toolCallId) {
-        return this.IsToolCallExecutedInSession(this.currentSessionIndex, toolCallId)
-    }
-
-    UpdateMessage(index, newContent) {
-        messages := this.GetCurrentSessionMessages()
-        if (index > 0 && index <= messages.Length) {
-            msg := messages[index]
-            msg.Contents := [TextContent(newContent)]
-            return true
         }
         return false
     }
@@ -247,8 +214,6 @@ class SessionManager {
         }
         return false
     }
-
-    GetMessageText(message) => message.GetText()
 
     GetUserMessageTextWithoutContext(message) {
         if (message.Role == "user" && message.AdditionalProperties.Has("hasContext")
@@ -348,14 +313,6 @@ class SessionManager {
         return contentParts
     }
 
-    HasVal(haystack, needle) {
-        for index, value in haystack {
-            if (value = needle)
-                return true
-        }
-        return false
-    }
-
     CheckContentInMessages(messages, newContent) {
         for msg in messages {
             if (InStr(msg.GetText(), newContent))
@@ -393,15 +350,6 @@ class SessionManager {
     }
 
 
-
-    HasAnyCheckedItem() {
-        context := this.GetCurrentSessionContext()
-        for item in context {
-            if (item.Checked)
-                return true
-        }
-        return false
-    }
 
     UncheckAllContext() {
         context := this.GetCurrentSessionContext()

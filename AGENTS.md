@@ -5,7 +5,7 @@
 - **AutoHotkey v2** (not v1). Syntax differs significantly: fat-arrow functions, class syntax, `=>` lambdas, no `%` command syntax.
 - Entry point: `main.ahk` → instantiates `App()` (in `App.ahk`) → calls `App.Start()`.
 - No build step for development. Run `main.ahk` directly with AutoHotkey v2.
-- No test suite, no linter, no formatter configured for AHK.
+- No test suite, no linter, no formatter configured for AHK. Verification is done via **ad-hoc headless test scripts** — see [Testing](#testing).
 
 ## Architecture (mandatory — see ARCHITECTURE.md)
 
@@ -52,6 +52,56 @@ Include paths in sub-files are relative to that file (e.g., `#Include ..\Service
 - `keys.ini` section names must match provider names in `providers.json` (e.g., `[Groq]`, `[Google]`).
 - LLM calls use **curl** subprocess — cURL must be installed and on PATH.
 - Tool auto-approval is configured in system prompt JSONs via `tools.{ToolName}.{parameterName}` regex patterns (see `TOOL_AUTO_APPROVAL.md`).
+
+## Testing
+
+No test framework exists. Verify changes with throwaway headless AHK scripts — include the real class files, exercise methods, write results to a temp file, `ExitApp`. Never commit test scripts; delete them after use.
+
+**Working pattern (learned the hard way — follow it exactly):**
+
+```ahk
+#Requires AutoHotkey 2.0
+#Warn All, StdOut          ; see warnings section below
+SetWorkingDir("C:\Users\ypyl\projects\llmclip")
+#Include C:\Users\ypyl\projects\llmclip\Services\Foo.ahk   ; real file, absolute path
+
+out := ""
+try {
+    ; ... exercise methods, append results to `out` ...
+    out .= "ALL-TESTS-PASSED`n"
+} catch as e {
+    out .= "ERROR: " . e.Message . " (what=" . e.What . " line=" . e.Line . ")`n"
+}
+FileAppend(out, "C:\Users\ypyl\projects\llmclip\temp_result.txt", "UTF-8")
+ExitApp(0)
+```
+
+```bash
+# AHK v2 lives here (v2.0.26):
+AHK="$LOCALAPPDATA/Programs/AutoHotkey/v2/AutoHotkey64.exe"
+
+# CRITICAL: Git Bash mangles /ErrorStdOut into a path — use the DOUBLE slash.
+# It redirects syntax errors to stdout, nothing else.
+"$AHK" //ErrorStdOut test.ahk > /tmp/out.txt 2>&1; echo "exit: $?"
+
+# Or wrap in timeout: exit 124 = a dialog blocked the script (warning or uncaught error)
+timeout 8 "$AHK" //ErrorStdOut test.ahk > /tmp/out.txt 2>&1; echo "exit: $? (124=dialog)"
+```
+
+**Exit codes:** `0` = clean; `2` = script failed (syntax error or uncaught runtime error); `124` = timeout — a dialog appeared. **Pipes mask the exit code** (`$?` becomes the last pipe command's) — capture output to a file first.
+
+**Warnings vs errors (AHK v2.0.26 behavior):**
+
+- **All warnings are ON by default in MsgBox mode** — no `#Warn` needed for a dialog to pop. `//ErrorStdOut` does NOT suppress them. Use `#Warn All, StdOut` (stdout instead of dialogs) or `#Warn All, Off`. Valid modes are only: `MsgBox`, `StdOut`, `OutputDebug`, `Off`. Valid types: `VarUnset`, `LocalSameAsGlobal`, `Unreachable`, `All`.
+- **Reading an unset variable is a hard runtime Error** (dialog with "Show call stack"). Only `try/catch` suppresses it. This is real bug behavior, not noise — fix the code.
+- `OnError()` handler does NOT catch warnings, only errors.
+
+**AHK gotchas that bite in tests:**
+
+- Variables assigned inside a lambda are closure-scoped — invisible outside it. Assign test fixtures at top level.
+- Bash heredocs eat backticks (`` `n `` in `FileAppend`) — use a quoted heredoc (`<<'EOF'`) or the write tool.
+- Relative `#Include` paths resolve from the including file's directory, not the working dir — include real files by absolute path.
+- To verify a class loads cleanly with zero warnings: `#Warn All, StdOut` + include + run; exit 0 with the marker file written = clean.
 
 ## Versioning & Release
 

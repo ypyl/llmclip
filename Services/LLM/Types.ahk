@@ -1,32 +1,19 @@
 #Requires AutoHotkey 2.0
 
-/**
- * Base class for content parts of a chat message.
- */
-class ChatContent {
-    Type := ""
-}
-
-class TextContent extends ChatContent {
+class TextContent {
     Text := ""
 
     __New(text) {
-        this.Type := "text"
         this.Text := text
-    }
-
-    Clone() {
-        return TextContent(this.Text)
     }
 }
 
-class ImageContent extends ChatContent {
+class ImageContent {
     Url := ""
     Data := "" ; Base64 data
     MimeType := ""
 
     __New(urlOrData, mimeType := "") {
-        this.Type := "image_url"
         if (InStr(urlOrData, "http") == 1) {
             this.Url := urlOrData
         } else {
@@ -34,56 +21,37 @@ class ImageContent extends ChatContent {
         }
         this.MimeType := mimeType
     }
-
-    Clone() {
-        return ImageContent(this.Url != "" ? this.Url : this.Data, this.MimeType)
-    }
 }
 
-class AudioContent extends ChatContent {
+class AudioContent {
     Data := "" ; Base64 data or path
     Format := ""
 
     __New(dataOrPath, format := "wav") {
-        this.Type := "audio"
         this.Data := dataOrPath
         this.Format := format
     }
-
-    Clone() {
-        return AudioContent(this.Data, this.Format)
-    }
 }
 
-class FunctionCallContent extends ChatContent {
+class FunctionCallContent {
     Id := ""
     Name := ""
     Arguments := Map()
 
     __New(id, name, arguments) {
-        this.Type := "function_call"
         this.Id := id
         this.Name := name
         this.Arguments := arguments
     }
-
-    Clone() {
-        return FunctionCallContent(this.Id, this.Name, this.Arguments.Clone())
-    }
 }
 
-class FunctionResultContent extends ChatContent {
+class FunctionResultContent {
     CallId := ""
     Result := ""
 
     __New(callId, result) {
-        this.Type := "function_result"
         this.CallId := callId
         this.Result := result
-    }
-
-    Clone() {
-        return FunctionResultContent(this.CallId, this.Result)
     }
 }
 
@@ -107,24 +75,8 @@ class ChatMessage {
         }
     }
 
-    Clone() {
-        newMsg := ChatMessage(this.Role)
-        newMsg.AuthorName := this.AuthorName
-        for part in this.Contents {
-            newMsg.Contents.Push(part.Clone())
-        }
-        for key, value in this.AdditionalProperties {
-            newMsg.AdditionalProperties[key] := value
-        }
-        return newMsg
-    }
-
     AddText(text) {
         this.Contents.Push(TextContent(text))
-    }
-
-    AddImage(urlOrData, mimeType := "") {
-        this.Contents.Push(ImageContent(urlOrData, mimeType))
     }
 
     /**
@@ -334,4 +286,3 @@ class ChatMessage {
         return msg
     }
 }
-

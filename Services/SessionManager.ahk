@@ -281,6 +281,40 @@ class SessionManager {
         return true
     }
 
+    ExportAllSessions() {
+        allSessions := []
+        for sessionObj in this.sessions
+            allSessions.Push(sessionObj.ToObject())
+        return { currentIndex: this.currentSessionIndex, sessions: allSessions }
+    }
+
+    ImportAllSessions(state) {
+        ; JSON.Load returns Maps — convert once to plain objects for FromObject
+        state := this.ConvertMapToObject(state)
+
+        if (!state.HasOwnProp("sessions") || !state.HasOwnProp("currentIndex"))
+            throw Error("Invalid all-sessions state file")
+
+        newSessions := []
+        Loop this.MAX_SESSIONS {
+            sessionState := (A_Index <= state.sessions.Length) ? state.sessions[A_Index] : ""
+            if (sessionState) {
+                newSession := Session.FromObject(sessionState)
+                ; A session saved mid-request must never come back processing
+                newSession.processingState := ProcessingState.IDLE
+                newSessions.Push(newSession)
+            } else {
+                newSessions.Push(Session(this.defaultSystemPrompt, this.defaultModelIndex))
+            }
+        }
+        this.sessions := newSessions
+
+        this.currentSessionIndex := (state.currentIndex > 0 && state.currentIndex <= this.MAX_SESSIONS)
+            ? state.currentIndex
+            : 1
+        return true
+    }
+
     BuildUserMessage(userMessageContent, imagePaths) {
         contentParts := []
 

@@ -1,10 +1,8 @@
 class LoadConversationOnStartCommand {
     sessionManager := ""
-    configManager := ""
 
-    __New(sessionManager, configManager) {
+    __New(sessionManager) {
         this.sessionManager := sessionManager
-        this.configManager := configManager
     }
 
     Execute() {
@@ -12,15 +10,10 @@ class LoadConversationOnStartCommand {
         if (state == "")
             return false
 
-        this.sessionManager.ImportSessionState(state)
-
-        ; Update system prompt content to match loaded state
-        systemPrompt := this.configManager.GetSystemPromptValue(
-            this.sessionManager.GetCurrentSessionModelIndex(),
-            this.sessionManager.GetCurrentSessionSystemPrompt()
-        )
-        this.sessionManager.UpdateSystemPromptContent(systemPrompt)
-
+        ; Only the all-sessions format is supported.
+        ; An old-format or corrupt file throws here; MainController.Start()'s
+        ; safety net turns that into a fresh start with the 5 empty sessions.
+        this.sessionManager.ImportAllSessions(state)
         return true
     }
 }

@@ -40,7 +40,7 @@ LLMClip monitors your clipboard and aggregates copied text, files, folders, imag
 - **Session Management**: Switch between up to **5 independent chat sessions**, each with its own model, system prompt, chat history, and context items. Session labels show the active system prompt name.
 - **Persistence**:
     - **Manual**: Save/Load conversations as JSON via **File → Save/Load Conversation**.
-    - **Automatic**: App state and the last conversation are auto-saved on exit and auto-restored on startup.
+    - **Automatic**: All 5 sessions (each with its own history, context, model, and system prompt) are auto-saved on exit and auto-restored on startup.
     - **Session Traceability**: Every LLM API call is logged as a JSONL line in the `sessions/` folder (one file per app launch). Each line captures the triggering message, provider, model, raw response, duration, and token usage — enabling auditing and debugging of all LLM interactions.
 
 ## Installation

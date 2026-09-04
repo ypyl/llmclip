@@ -180,7 +180,7 @@ class App {
         saveStateOnExit := SaveStateOnExitCommand(sess, cfg)
         saveConvOnExit := SaveConversationOnExitCommand(sess)
         loadStateOnStart := LoadStateOnStartCommand(sess, cfg)
-        loadConvOnStart := LoadConversationOnStartCommand(sess, cfg)
+        loadConvOnStart := LoadConversationOnStartCommand(sess)
         setProcessingState := SetProcessingStateCommand(sess)
 
         ; 3. Initialize View

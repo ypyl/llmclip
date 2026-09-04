@@ -261,6 +261,9 @@ class MainController {
         try {
             this.saveStateOnExitCommand.Execute()
             this.saveConversationOnExitCommand.Execute()
+        } catch as e {
+            ; Surface save failures without an exit-time dialog (see via DbgView)
+            OutputDebug("state save failed: " . e.Message . " (what=" . e.What . " line=" . e.Line . ")")
         }
     }
 

@@ -14,30 +14,8 @@ class LoadStateOnStartCommand {
 
         isMap := Type(state) = "Map"
 
-        ; Restore model index
-        modelIndex := isMap ? state["modelIndex"] : state.modelIndex
-        if (modelIndex > 0 && modelIndex <= this.configManager.models.Length)
-            this.sessionManager.SetCurrentSessionModelIndex(modelIndex)
-
-        ; Restore system prompt index
-        systemPromptIndex := isMap ? state["systemPromptIndex"] : state.systemPromptIndex
-        this.sessionManager.SetCurrentSessionSystemPrompt(systemPromptIndex)
-
-        ; Update system prompt content
-        systemPrompt := this.configManager.GetSystemPromptValue(
-            this.sessionManager.GetCurrentSessionModelIndex(),
-            this.sessionManager.GetCurrentSessionSystemPrompt()
-        )
-        this.sessionManager.UpdateSystemPromptContent(systemPrompt)
-
-        ; Restore session index
-        hasSessionIndex := isMap ? state.Has("sessionIndex") : state.HasOwnProp("sessionIndex")
-        if (hasSessionIndex) {
-            sessionIndex := isMap ? state["sessionIndex"] : state.sessionIndex
-            this.sessionManager.SwitchSession(sessionIndex)
-        }
-
-        ; Restore tool overrides
+        ; Restore tool overrides (per-session model/system prompt and the active
+        ; session index now live in the all-sessions conversation file)
         hasToolOverrides := isMap ? state.Has("toolOverrides") : state.HasOwnProp("toolOverrides")
         if (hasToolOverrides) {
             overrides := isMap ? state["toolOverrides"] : state.toolOverrides

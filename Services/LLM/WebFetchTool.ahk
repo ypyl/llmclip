@@ -1,8 +1,6 @@
-#Include ..\..\Lib\Json.ahk
+#Include OllamaHttpTool.ahk
 
-class WebFetchTool {
-    currentHttpObject := ""
-    isCancelled := false
+class WebFetchTool extends OllamaHttpTool {
     static TOOL_NAME := "web_fetch"
     static TOOL_LABEL := "Web Fetch"
 
@@ -13,68 +11,57 @@ class WebFetchTool {
      * @returns The fetched content
      */
     Execute(targetUrl, apiKey := "") {
-        try {
-            ; Check for cancellation
-            if (this.isCancelled) {
-                return "Operation cancelled by user"
+        apiUrl := "https://ollama.com/api/web_fetch"
+
+        body := Map()
+        body["url"] := targetUrl
+
+        result := this.PostJson(apiUrl, body, apiKey, "Web fetch")
+        if (!result.ok)
+            return result.error
+
+        response := result.response
+
+        resultText := "Fetch Results for '" . targetUrl . "':`n`n"
+
+        title := response.Has("title") ? response["title"] : "No Title"
+        content := response.Has("content") ? response["content"] : ""
+
+        resultText .= "Title: " . title . "`n"
+        if (content != "")
+            resultText .= "Content: " . content . "`n"
+
+        if (response.Has("links") && response["links"] is Array) {
+            resultText .= "`nValuable Links:`n"
+            count := 0
+            for link in response["links"] {
+                if (count >= 10) ; Limit links display
+                    break
+                resultText .= "- " . link . "`n"
+                count++
             }
+        }
 
-            apiUrl := "https://ollama.com/api/web_fetch"
+        return resultText
+    }
 
-            body := Map()
-            body["url"] := targetUrl
-
-            http := ComObject("WinHttp.WinHttpRequest.5.1")
-            this.currentHttpObject := http
-            http.Open("POST", apiUrl, true)
-            http.SetRequestHeader("Content-Type", "application/json")
-            if (apiKey != "")
-                http.SetRequestHeader("Authorization", "Bearer " . apiKey)
-
-            http.Send(JSON.Dump(body))
-
-            ; Wait for response with cancellation check
-            while (!http.WaitForResponse(100)) {
-                ; Check for cancellation every 100ms
-                if (this.isCancelled) {
-                    try http.Abort()
-                    this.currentHttpObject := ""
-                    return "Operation cancelled by user"
-                }
+    /**
+     * Single source of truth for this tool's schema, shared by all providers
+     */
+    static GetToolSchema() {
+        return {
+            name: WebFetchTool.TOOL_NAME,
+            description: "Fetches a single web page by URL and returns its content. Use this to read the content of a specific page.",
+            parameters: {
+                type: "object",
+                properties: {
+                    url: {
+                        type: "string",
+                        description: "The URL of the web page to fetch"
+                    }
+                },
+                required: ["url"]
             }
-
-            this.currentHttpObject := ""
-
-            if (http.Status != 200) {
-                return "Error: Web fetch failed with status " . http.Status . " - " . http.ResponseText
-            }
-
-            response := JSON.Load(http.ResponseText)
-
-            resultText := "Fetch Results for '" . targetUrl . "':`n`n"
-
-            title := response.Has("title") ? response["title"] : "No Title"
-            content := response.Has("content") ? response["content"] : ""
-
-            resultText .= "Title: " . title . "`n"
-            if (content != "")
-                resultText .= "Content: " . content . "`n"
-
-            if (response.Has("links") && response["links"] is Array) {
-                resultText .= "`nValuable Links:`n"
-                count := 0
-                for link in response["links"] {
-                    if (count >= 10) ; Limit links display
-                        break
-                    resultText .= "- " . link . "`n"
-                    count++
-                }
-            }
-
-            return resultText
-
-        } catch as e {
-            return "Error executing web fetch: " . e.Message
         }
     }
 
@@ -82,45 +69,7 @@ class WebFetchTool {
      * Get the OpenAI tool definition for this tool
      */
     GetOpenAiToolDefinition() {
-        return {
-            type: "function",
-            function: {
-                name: WebFetchTool.TOOL_NAME,
-                description: "Fetches a single web page by URL and returns its content. Use this to read the content of a specific page.",
-                parameters: {
-                    type: "object",
-                    properties: {
-                        url: {
-                            type: "string",
-                            description: "The URL of the web page to fetch"
-                        }
-                    },
-                    required: ["url"]
-                }
-            }
-        }
-    }
-
-    /**
-     * Get the Gemini tool definition for this tool
-     */
-    static GetGeminiToolDefinition() {
-        return {
-            functionDeclarations: [{
-                name: WebFetchTool.TOOL_NAME,
-                description: "Fetches a single web page by URL and returns its content. Use this to read the content of a specific page.",
-                parameters: {
-                    type: "object",
-                    properties: {
-                        url: {
-                            type: "string",
-                            description: "The URL of the web page to fetch"
-                        }
-                    },
-                    required: ["url"]
-                }
-            }]
-        }
+        return {type: "function", function: WebFetchTool.GetToolSchema()}
     }
 
     /**
@@ -154,17 +103,6 @@ class WebFetchTool {
             msg := ChatMessage("tool")
             msg.Contents.Push(FunctionResultContent(toolCall.Id, "Error: " . e.Message))
             return msg
-        }
-    }
-
-    /**
-     * Cancel any running web request
-     */
-    Cancel() {
-        this.isCancelled := true
-        if (this.currentHttpObject != "") {
-            try this.currentHttpObject.Abort()
-            this.currentHttpObject := ""
         }
     }
 }

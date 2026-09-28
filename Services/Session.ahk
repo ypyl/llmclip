@@ -1,6 +1,5 @@
 #Include LLM\Types.ahk
 #Include ContextItem.ahk
-#Include History.ahk
 #Include ProcessingState.ahk
 
 class Session {
@@ -12,20 +11,22 @@ class Session {
     processingState := ProcessingState.IDLE
 
     __New(defaultSystemPrompt, defaultModelIndex := 1) {
-        this.histories := [History([ChatMessage("system", [TextContent(defaultSystemPrompt)])])]
+        this.histories := [[ChatMessage("system", [TextContent(defaultSystemPrompt)])]]
         this.llmType := defaultModelIndex
     }
 
     GetCurrentHistory() => this.histories[this.currentHistoryIndex]
 
-    GetCurrentMessages() => this.GetCurrentHistory().GetAll()
-
-    AddMessages(messages) => this.GetCurrentHistory().Add(messages)
+    GetCurrentMessages() => this.GetCurrentHistory()
 
     CreateHistoryBranch(upToIndex) {
-        newHistory := this.GetCurrentHistory().Branch(upToIndex)
-        if (!newHistory)
+        messages := this.GetCurrentHistory()
+        if (upToIndex <= 0 || upToIndex >= messages.Length)
             return false
+
+        newHistory := []
+        Loop upToIndex
+            newHistory.Push(messages[A_Index])
 
         this.histories.Push(newHistory)
         this.currentHistoryIndex := this.histories.Length
@@ -51,7 +52,7 @@ class Session {
     GetHistoryInfo() => this.currentHistoryIndex . "/" . this.histories.Length
 
     GetSystemMessage() {
-        for msg in this.GetCurrentHistory().GetAll()
+        for msg in this.GetCurrentHistory()
             if (msg.Role == "system")
                 return msg
         return ""
@@ -59,7 +60,7 @@ class Session {
 
     ResetSesssion() {
         systemMsg := this.GetSystemMessage()
-        this.histories := [History(systemMsg ? [systemMsg] : [])]
+        this.histories := [systemMsg ? [systemMsg] : []]
         this.currentHistoryIndex := 1
         this.context := []
         this.processingState := ProcessingState.IDLE
@@ -67,13 +68,13 @@ class Session {
 
     ResetHistory() {
         systemMsg := this.GetSystemMessage()
-        this.histories := [History(systemMsg ? [systemMsg] : [])]
+        this.histories := [systemMsg ? [systemMsg] : []]
         this.currentHistoryIndex := 1
         this.processingState := ProcessingState.IDLE
     }
 
     UpdateSystemPrompt(systemPromptContent) {
-        for msg in this.GetCurrentHistory().GetAll()
+        for msg in this.GetCurrentHistory()
             if (msg.Role == "system") {
                 msg.Contents := [TextContent(systemPromptContent)]
                 return
@@ -82,8 +83,12 @@ class Session {
 
     ToObject() {
         allHistories := []
-        for hist in this.histories
-            allHistories.Push(hist.ToObject())
+        for hist in this.histories {
+            messages := []
+            for msg in hist
+                messages.Push(msg.ToObject(true))
+            allHistories.Push(messages)
+        }
 
         contextItems := []
         for item in this.context
@@ -110,11 +115,18 @@ class Session {
 
         if (hasHistories) {
             newSession.histories := []
-            for hist in obj.histories
-                newSession.histories.Push(History.FromObject(hist))
+            for hist in obj.histories {
+                messages := []
+                for msg in hist
+                    messages.Push(ChatMessage.FromObject(msg))
+                newSession.histories.Push(messages)
+            }
             newSession.currentHistoryIndex := obj.historyIndex
         } else {
-            newSession.histories := [History.FromObject(obj.messages)]
+            messages := []
+            for msg in obj.messages
+                messages.Push(ChatMessage.FromObject(msg))
+            newSession.histories := [messages]
         }
 
         newSession.context := []

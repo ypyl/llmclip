@@ -13,6 +13,7 @@
 #Include Services\RecordingService.ahk
 #Include Services\LLM\PowerShellTool.ahk
 #Include Services\LLM\FileSystemTool.ahk
+#Include Services\LLM\OllamaHttpTool.ahk
 #Include Services\LLM\WebSearchTool.ahk
 #Include Services\LLM\WebFetchTool.ahk
 #Include Services\LLM\LLMClient.ahk
@@ -35,7 +36,6 @@
 #Include Commands\ClearContextCommand.ahk
 #Include Commands\StopRecordingCommand.ahk
 #Include Commands\StartRecordingCommand.ahk
-#Include Commands\ToggleRecordingCommand.ahk
 #Include Commands\DeleteMessageCommand.ahk
 #Include Commands\ClearHistoryCommand.ahk
 #Include Commands\ResetAllCommand.ahk
@@ -144,7 +144,6 @@ class App {
         clearCtx := ClearContextCommand(sess)
         stopRec := StopRecordingCommand(rec)
         startRec := StartRecordingCommand(rec)
-        toggleRec := ToggleRecordingCommand(rec)
         resetAll := ResetAllCommand(sess)
         deleteMsg := DeleteMessageCommand(sess)
         clearHist := ClearHistoryCommand(sess, cfg)
@@ -193,7 +192,7 @@ class App {
         this.controller.SetView(this.view, this.view.promptView, this.view.contextView, this.view.historyView, this.view.menuView, this.view.topControlsView, this.view.responseView)
 
         this.controller.SetCommands(
-            saveConv, loadConv, clearCtx, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, renderLastMsg, uncheckContext, processClip, switchSession, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState, startRec, stopRec, toggleRec
+            saveConv, loadConv, clearCtx, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, renderLastMsg, uncheckContext, processClip, switchSession, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState, startRec, stopRec
         )
 
         ; 4. Initialize Sub-Controllers

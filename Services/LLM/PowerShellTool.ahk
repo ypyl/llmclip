@@ -79,56 +79,34 @@ class PowerShellTool {
     }
 
     /**
-     * Get the OpenAI tool definition for this tool
+     * Single source of truth for this tool's schema, shared by all providers
      */
-    GetOpenAiToolDefinition() {
+    static GetToolSchema() {
         return {
-            type: "function",
-            function: {
-                name: PowerShellTool.TOOL_NAME,
-                description: "Execute a PowerShell script. Can be used for file operations, command execution, system queries, and more. The script runs with ExecutionPolicy Bypass.",
-                parameters: {
-                    type: "object",
-                    properties: {
-                        script: {
-                            type: "string",
-                            description: "The PowerShell script to execute. Can be a single command or multiple commands separated by semicolons or newlines."
-                        },
-                        working_directory: {
-                            type: "string",
-                            description: "The working directory for the script execution. Defaults to the script directory if not specified."
-                        }
+            name: PowerShellTool.TOOL_NAME,
+            description: "Execute a PowerShell script. Can be used for file operations, command execution, system queries, and more. The script runs with ExecutionPolicy Bypass.",
+            parameters: {
+                type: "object",
+                properties: {
+                    script: {
+                        type: "string",
+                        description: "The PowerShell script to execute. Can be a single command or multiple commands separated by semicolons or newlines."
                     },
-                    required: ["script"]
-                }
+                    working_directory: {
+                        type: "string",
+                        description: "The working directory for the script execution. Defaults to the script directory if not specified."
+                    }
+                },
+                required: ["script"]
             }
         }
     }
 
     /**
-     * Get the Gemini tool definition for this tool
+     * Get the OpenAI tool definition for this tool
      */
-    static GetGeminiToolDefinition() {
-        return {
-            functionDeclarations: [{
-                name: PowerShellTool.TOOL_NAME,
-                description: "Execute a PowerShell script. Can be used for file operations, command execution, system queries, and more. The script runs with ExecutionPolicy Bypass.",
-                parameters: {
-                    type: "object",
-                    properties: {
-                        script: {
-                            type: "string",
-                            description: "The PowerShell script to execute. Can be a single command or multiple commands separated by semicolons or newlines."
-                        },
-                        working_directory: {
-                            type: "string",
-                            description: "The working directory for the script execution. Defaults to the script directory if not specified."
-                        }
-                    },
-                    required: ["script"]
-                }
-            }]
-        }
+    GetOpenAiToolDefinition() {
+        return {type: "function", function: PowerShellTool.GetToolSchema()}
     }
 
     /**

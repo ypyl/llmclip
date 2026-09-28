@@ -75,10 +75,6 @@ class ChatMessage {
         }
     }
 
-    AddText(text) {
-        this.Contents.Push(TextContent(text))
-    }
-
     /**
      * Get text content from the message
      * @returns Combined text from all TextContent parts

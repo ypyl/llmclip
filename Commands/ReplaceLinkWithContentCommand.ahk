@@ -1,4 +1,3 @@
-#Include ..\Lib\Json.ahk
 #Include ..\Utils\WebContentFetcher.ahk
 
 class ReplaceLinkWithContentCommand {
@@ -12,29 +11,11 @@ class ReplaceLinkWithContentCommand {
 
     Execute(itemIndex, contextItem) {
         ; Fetch web content using WebContentFetcher
-        markdownContent := WebContentFetcher.FetchMarkdown(contextItem)
-        title := ""
-        
-        ; Check if the content is JSON
-        trimmed := Trim(markdownContent, " `t`n`r")
-        if (SubStr(trimmed, 1, 1) == "{" && SubStr(trimmed, -1) == "}") {
-            try {
-                jsonObj := JSON.Load(trimmed)
-                if (jsonObj.Has("success") && jsonObj["success"]) {
-                    if (jsonObj.Has("content")) {
-                        markdownContent := jsonObj["content"]
-                    }
-                    if (jsonObj.Has("title")) {
-                        title := jsonObj["title"]
-                    }
-                }
-            } catch {
-                ; Not valid JSON, proceed with raw content
-            }
-        }
+        parsed := WebContentFetcher.ParseMarkdownResponse(WebContentFetcher.FetchMarkdown(contextItem))
+        title := parsed.title
 
         ; Update the session context
-        formattedContent := "URL: " . contextItem . (title ? "`nTitle: " . title : "") . "`n`n" . markdownContent
+        formattedContent := "URL: " . contextItem . (title ? "`nTitle: " . title : "") . "`n`n" . parsed.content
 
         return this.sessionManager.UpdateContextItem(itemIndex, formattedContent)
     }

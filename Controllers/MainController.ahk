@@ -51,7 +51,6 @@ class MainController {
     trayView := ""
     startRecordingCommand := ""
     stopRecordingCommand := ""
-    toggleRecordingCommand := ""
 
 
     __New(configManager, sessionManager, llmService, webViewManager, recordingService, contextManager, toolDefs) {
@@ -64,7 +63,7 @@ class MainController {
         this._toolDefs := toolDefs
     }
 
-    SetCommands(saveConv, loadConv, clearCtx, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, renderLastMsg, uncheckContext, processClipboard, switchSession, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState, startRec, stopRec, toggleRec) {
+    SetCommands(saveConv, loadConv, clearCtx, resetAll, saveDiagram, renderMarkdown, cancelRequest, executeToolCalls, sendToLLM, renderLastMsg, uncheckContext, processClipboard, switchSession, saveStateOnExit, saveConvOnExit, loadStateOnStart, loadConvOnStart, setProcessingState, startRec, stopRec) {
         this.saveConversationCommand := saveConv
         this.loadConversationCommand := loadConv
         this.clearContextCommand := clearCtx
@@ -85,7 +84,6 @@ class MainController {
         this.setProcessingStateCommand := setProcessingState
         this.startRecordingCommand := startRec
         this.stopRecordingCommand := stopRec
-        this.toggleRecordingCommand := toggleRec
     }
 
     SetSubControllers(ctxView, histView, settings) {

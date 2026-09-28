@@ -109,7 +109,6 @@
   ContextManager.ahk  (Clipboard/file context processing)
   WebViewManager.ahk  (WebView2 bridge — see §5)
   Session.ahk         (Domain Object — session data)
-  History.ahk         (Domain Object — message history tree)
   ContextItem.ahk     (Domain Object — context list item)
 /utils                (Static helpers — clipboard, files, base64, JSON)
 /Lib                  (Vendored — thqby/ahk2_lib — DO NOT EDIT)

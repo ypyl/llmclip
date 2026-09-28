@@ -126,15 +126,6 @@ class WebViewManager {
         }
     }
 
-    NavigateBackToMarkdown(contentToRender := "") {
-        ; Navigate back to the markdown HTML and render content if provided
-        if (contentToRender != "") {
-            this.RenderMarkdown(contentToRender)
-        } else {
-            this.NavigateToUi()
-        }
-    }
-
     OnSaveDiagram(svgData) {
         if (this.saveDiagramCallback) {
             this.saveDiagramCallback.Call(svgData)

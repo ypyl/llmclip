@@ -114,18 +114,10 @@ class ConfigurationService {
         prompts := this.GetVisiblePrompts(modelIndex)
         if (prompts.Length >= promptIndex) {
             value := prompts[promptIndex]["value"]
-            
-            try {
-                pathInSystemPrompts := "prompts\" . value
-                if (SubStr(value, 1, 2) = ".\") {
-                    pathInSystemPrompts := "prompts\" . SubStr(value, 3)
-                }
 
-                if (FileExist(pathInSystemPrompts)) {
-                    value := FileRead(pathInSystemPrompts)
-                } else if (FileExist(value)) {
-                    value := FileRead(value)
-                }
+            try {
+                if (path := this.ResolvePromptFilePath(value))
+                    value := FileRead(path)
             } catch {
                 ; Ignore errors for long strings
             }
@@ -133,6 +125,19 @@ class ConfigurationService {
             return value
         }
         return defaultPrompt
+    }
+
+    ; Resolve a prompt "value" to an on-disk file path, or "" if it is a literal string
+    ResolvePromptFilePath(value) {
+        pathInSystemPrompts := "prompts\" . value
+        if (SubStr(value, 1, 2) = ".\")
+            pathInSystemPrompts := "prompts\" . SubStr(value, 3)
+
+        if (FileExist(pathInSystemPrompts))
+            return pathInSystemPrompts
+        if (FileExist(value))
+            return value
+        return ""
     }
 
     GetInputTemplate(modelIndex, promptIndex) {
@@ -206,26 +211,14 @@ class ConfigurationService {
     }
 
     SaveRawSystemPromptValue(modelIndex, promptName, newText) {
-        cleanText := newText
-
         prompts := this.GetVisiblePrompts(modelIndex)
         for prompt in prompts {
             if (prompt["name"] == promptName) {
-                value := prompt["value"]
-                
-                ; Check if it's a file
-                pathInSystemPrompts := "prompts\" . value
-                if (SubStr(value, 1, 2) = ".\") {
-                    pathInSystemPrompts := "prompts\" . SubStr(value, 3)
-                }
-
-                if (FileExist(pathInSystemPrompts)) {
-                    FileOpen(pathInSystemPrompts, "w", "UTF-8").Write(cleanText)
-                } else if (FileExist(value)) {
-                    FileOpen(value, "w", "UTF-8").Write(cleanText)
+                if (path := this.ResolvePromptFilePath(prompt["value"])) {
+                    FileOpen(path, "w", "UTF-8").Write(newText)
                 } else {
                     ; It's a literal string in JSON
-                    this.systemPromptsManager.UpdatePromptValue(promptName, cleanText)
+                    this.systemPromptsManager.UpdatePromptValue(promptName, newText)
                 }
                 
                 ; Reload to ensure everything is consistent

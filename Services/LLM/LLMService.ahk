@@ -151,8 +151,4 @@ class LLMService {
             this.currentTool.Cancel()
         }
     }
-
-    ResetToolsCancellation() {
-        this.isCancelledForTools := false
-    }
 }

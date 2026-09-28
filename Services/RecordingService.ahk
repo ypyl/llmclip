@@ -16,12 +16,4 @@ class RecordingService {
         }
         return false
     }
-
-    ToggleRecording() {
-        if (this.isRecording) {
-            return this.StopRecording()
-        } else {
-            return this.StartRecording()
-        }
-    }
 }

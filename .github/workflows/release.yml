@@ -43,7 +43,7 @@ jobs:
       - name: 📁 Prepare for Release (Zip the executable and dependencies)
         # Create a ZIP file for easy downloading and distribution
         run: |
-          Compress-Archive -Path ${{ env.EXE_NAME }},mermaid.min.js,providers/providers.json,ui.html,marked.min.js,readability.min.js,WebView2Loader.dll -DestinationPath ${{ github.event.repository.name }}-${{ github.ref_name }}.zip
+          Compress-Archive -Path ${{ env.EXE_NAME }},mermaid.min.js,providers/providers.json,ui.html,marked.min.js,overtype@latest.js,WebView2Loader.dll -DestinationPath ${{ github.event.repository.name }}-${{ github.ref_name }}.zip
 
       - name: 🚀 Create GitHub Release
         uses: softprops/action-gh-release@v2

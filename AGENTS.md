@@ -113,7 +113,7 @@ timeout 8 "$AHK" //ErrorStdOut test.ahk > /tmp/out.txt 2>&1; echo "exit: $? (124
   2. Commit: `git commit -m "Bump version to X.Y.Z for release"`
   3. Tag: `git tag vX.Y.Z`
   4. Push: `git push && git push origin vX.Y.Z`
-- Release zip bundles: `llmclip.exe`, `mermaid.min.js`, `providers/providers.json`, `ui.html`, `marked.min.js`, `readability.min.js`, `WebView2Loader.dll`.
+- Release zip bundles: `llmclip.exe`, `mermaid.min.js`, `providers/providers.json`, `ui.html`, `marked.min.js`, `overtype@latest.js`, `WebView2Loader.dll`.
 - Uses `benmusson/ahk2exe-action@v1.2.0` for compilation.
 
 ## Common Pitfalls

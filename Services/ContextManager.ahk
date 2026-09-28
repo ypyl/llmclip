@@ -27,22 +27,6 @@ class ContextManager {
         return itemText
     }
 
-    FormatArticleFromObject(item, article) {
-        try {
-            if (IsObject(article)) {
-                ; Normalize whitespace in textContent
-                normalizedText := RegExReplace(article.textContent, "\s+", " ")
-                return "URL: " item "`n`nTitle: " article.title "`n`n" normalizedText
-            } else if (article != "") {
-                return "URL: " item "`n[" article "]"
-            } else {
-                return "URL: " item
-            }
-        } catch as e {
-            return "URL: " item "`n[Error formatting article: " e.Message "]"
-        }
-    }
-
     ; Check if the item is an HTTP link
     IsHttpLink(item) {
         return RegExMatch(item, "i)^https?://") > 0

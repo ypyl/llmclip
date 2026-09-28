@@ -28,9 +28,11 @@ class SessionManager {
 
     GetSessionMessages(index) => this.sessions[index].GetCurrentMessages()
 
-    AddMessages(messages) => this.GetCurrentSession().AddMessages(messages)
-
-    AddMessagesToSession(index, messages) => this.sessions[index].AddMessages(messages)
+    AddMessagesToSession(index, messages) {
+        target := this.sessions[index].GetCurrentMessages()
+        for msg in messages
+            target.Push(msg)
+    }
 
     CreateHistoryBranch(upToIndex) => this.GetCurrentSession().CreateHistoryBranch(upToIndex)
 
@@ -74,10 +76,6 @@ class SessionManager {
 
     ClearCurrentMessages() => this.GetCurrentSession().ResetHistory()
 
-    ClearCurrentContext() => this.GetCurrentSession().context := []
-
-
-
     AddContextItems(items) {
         addedAny := false
         context := this.GetCurrentSessionContext()
@@ -113,13 +111,6 @@ class SessionManager {
         return false
     }
 
-    IsContextItemChecked(index) {
-        context := this.GetCurrentSessionContext()
-        if (index > 0 && index <= context.Length)
-            return context[index].Checked
-        return true
-    }
-
     GetToolCalls(msg) {
         toolCalls := []
         for part in msg.Contents {
@@ -149,10 +140,6 @@ class SessionManager {
             }
         }
         return false
-    }
-
-    HasUnexecutedToolCalls() {
-        return this.HasUnexecutedToolCallsForSession(this.currentSessionIndex)
     }
 
     IsToolCallExecutedInSession(index, toolCallId) {
@@ -241,15 +228,6 @@ class SessionManager {
         }
 
         return message.GetText()
-    }
-
-    DeleteMessage(index) {
-        messages := this.GetCurrentSessionMessages()
-        if (index > 1 && index <= messages.Length) {
-            messages.RemoveAt(index)
-            return true
-        }
-        return false
     }
 
     ExportSessionState() => this.GetCurrentSession().ToObject()

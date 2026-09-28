@@ -65,23 +65,7 @@ class ExecuteToolCallsCommand {
     }
 
     MatchesPattern(toolCall, patterns) {
-        toolName := toolCall.Name
-
-        ; Map internal tool names to pattern keys
-        patternKey := ""
-        if (toolName = PowerShellTool.TOOL_NAME) {
-            patternKey := PowerShellTool.TOOL_NAME
-        } else if (toolName = FileSystemTool.TOOL_NAME) {
-            patternKey := FileSystemTool.TOOL_NAME
-        } else if (toolName = WebSearchTool.TOOL_NAME) {
-            patternKey := WebSearchTool.TOOL_NAME
-        } else if (toolName = WebFetchTool.TOOL_NAME) {
-            patternKey := WebFetchTool.TOOL_NAME
-        } else if (toolName = MarkdownNewTool.TOOL_NAME) {
-            patternKey := MarkdownNewTool.TOOL_NAME
-        } else {
-            return false
-        }
+        patternKey := toolCall.Name
 
         if (!patterns.Has(patternKey)) {
             return false

@@ -13,32 +13,11 @@ class PrepareContextCommand {
      * Executes the prepare context command: merges predefined context into current session.
      */
     Execute() {
-        context := this.sessionManager.GetCurrentSessionContext()
         predefinedContext := this.configManager.GetContext(
             this.sessionManager.GetCurrentSessionModelIndex(),
             this.sessionManager.GetCurrentSessionSystemPrompt()
         )
-        
-        addedAny := false
-        for item in predefinedContext {
-            if (!this.HasVal(context, item)) {
-                context.Push(ContextItem(item))
-                addedAny := true
-            }
-        }
-        
-        if (addedAny) {
-            this.sessionManager.SetCurrentSessionContext(context)
-        }
-        
-        return addedAny
-    }
 
-    HasVal(haystack, needle) {
-        for index, item in haystack {
-            if (item.Value = needle)
-                return true
-        }
-        return false
+        return this.sessionManager.AddContextItems(predefinedContext)
     }
 }

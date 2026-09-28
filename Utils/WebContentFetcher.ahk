@@ -2,6 +2,41 @@
 
 class WebContentFetcher {
     static tempDir := A_ScriptDir "\temp"
+
+    /**
+     * Parse a markdown.new response. Successful calls may return raw markdown
+     * or a JSON envelope; failures return JSON with success=false.
+     * @returns {ok, raw, content, title, error}
+     */
+    static ParseMarkdownResponse(response) {
+        parsed := {ok: true, raw: response, content: response, title: "", error: ""}
+
+        trimmed := Trim(response, " `t`n`r")
+        if (SubStr(trimmed, 1, 1) != "{" || SubStr(trimmed, -1) != "}")
+            return parsed
+
+        try {
+            jsonObj := JSON.Load(trimmed)
+        } catch {
+            return parsed ; Not valid JSON, treat as raw markdown
+        }
+
+        if (!jsonObj.Has("success"))
+            return parsed
+
+        if (!jsonObj["success"]) {
+            parsed.ok := false
+            parsed.error := "Error from markdown.new: " . (jsonObj.Has("message") ? jsonObj["message"] : "Unknown error")
+            return parsed
+        }
+
+        if (jsonObj.Has("content"))
+            parsed.content := jsonObj["content"]
+        if (jsonObj.Has("title"))
+            parsed.title := jsonObj["title"]
+
+        return parsed
+    }
     /**
      * Fetch web content as markdown using markdown.new API via curl.
      * Pure HTTP — no cancellation support. Callers handle their own cancellation.

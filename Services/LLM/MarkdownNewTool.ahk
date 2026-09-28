@@ -1,4 +1,3 @@
-#Include ..\..\Lib\Json.ahk
 #Include ..\..\Utils\WebContentFetcher.ahk
 
 class MarkdownNewTool {
@@ -16,67 +15,38 @@ class MarkdownNewTool {
             return "Operation cancelled by user"
         }
 
-        response := WebContentFetcher.FetchMarkdown(targetUrl)
+        parsed := WebContentFetcher.ParseMarkdownResponse(WebContentFetcher.FetchMarkdown(targetUrl))
+        if (!parsed.ok)
+            return parsed.error
 
-        ; Check if response is JSON (error) or Markdown
-        trimmed := Trim(response, " `t`n`r")
-        if (SubStr(trimmed, 1, 1) == "{" && SubStr(trimmed, -1) == "}") {
-            try {
-                jsonObj := JSON.Load(trimmed)
-                if (jsonObj.Has("success") && jsonObj["success"] == 0) {
-                     return "Error from markdown.new: " . (jsonObj.Has("message") ? jsonObj["message"] : "Unknown error")
-                }
-            } catch {
-                ; Not valid JSON, proceed as Markdown
+        return parsed.raw
+    }
+
+    /**
+     * Single source of truth for this tool's schema, shared by all providers
+     */
+    static GetToolSchema() {
+        return {
+            name: MarkdownNewTool.TOOL_NAME,
+            description: "Converts any URL to clean Markdown using Cloudflare's markdown.new service. Use this to read the content of web pages.",
+            parameters: {
+                type: "object",
+                properties: {
+                    url: {
+                        type: "string",
+                        description: "The URL of the web page to fetch"
+                    }
+                },
+                required: ["url"]
             }
         }
-
-        return response
     }
 
     /**
      * Get the OpenAI tool definition for this tool
      */
     GetOpenAiToolDefinition() {
-        return {
-            type: "function",
-            function: {
-                name: MarkdownNewTool.TOOL_NAME,
-                description: "Converts any URL to clean Markdown using Cloudflare's markdown.new service. Use this to read the content of web pages.",
-                parameters: {
-                    type: "object",
-                    properties: {
-                        url: {
-                            type: "string",
-                            description: "The URL of the web page to fetch"
-                        }
-                    },
-                    required: ["url"]
-                }
-            }
-        }
-    }
-
-    /**
-     * Get the Gemini tool definition for this tool
-     */
-    static GetGeminiToolDefinition() {
-        return {
-            functionDeclarations: [{
-                name: MarkdownNewTool.TOOL_NAME,
-                description: "Converts any URL to clean Markdown using Cloudflare's markdown.new service. Use this to read the content of web pages.",
-                parameters: {
-                    type: "object",
-                    properties: {
-                        url: {
-                            type: "string",
-                            description: "The URL of the web page to fetch"
-                        }
-                    },
-                    required: ["url"]
-                }
-            }]
-        }
+        return {type: "function", function: MarkdownNewTool.GetToolSchema()}
     }
 
     /**

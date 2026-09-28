@@ -34,13 +34,7 @@ class HistoryView {
 
     DeleteItems() => this.chatHistory.Delete()
     AddItem(role, text, duration, tokens) => this.chatHistory.Add(, role, text, duration, tokens)
-    Modify(row, options, text?) {
-        if (IsSet(text)) {
-            this.chatHistory.Modify(row, options, text)
-        } else {
-            this.chatHistory.Modify(row, options)
-        }
-    }
+    Modify(row, options) => this.chatHistory.Modify(row, options)
     GetCount() => this.chatHistory.GetCount()
     GetNext(row := 0) => this.chatHistory.GetNext(row)
     SetActionButtonVisible(visible) => this.chatMessageButton.Visible := visible

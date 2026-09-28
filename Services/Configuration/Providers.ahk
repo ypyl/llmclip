@@ -61,14 +61,4 @@ class Providers {
     GetAll() {
         return this.providers
     }
-
-    ; Returns flat list of "providerName/modelName" strings
-    GetNames() {
-        names := []
-        for providerName, providerEntry in this.providers {
-            for modelName in providerEntry["models"]
-                names.Push(providerName . "/" . modelName)
-        }
-        return names
-    }
 }

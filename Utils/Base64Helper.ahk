@@ -14,18 +14,4 @@ Class Base64Helper {
 			(VarSetStrCapacity(&VarOut, nSize << 1), DllCall("crypt32\CryptBinaryToString", "Ptr", p, "UInt", s, "UInt", Codec, "Str", VarOut, "Uint*", &nSize)))
 			return (VarSetStrCapacity(&VarOut, -1), VarOut)
 	}
-
-	/**
-	 * Base64 Decoding
-	 * https://docs.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-cryptstringtobinarya
-	 * @param VarIn Variable containing a null-terminated Base64 encoded string
-	 * @param Codec CRYPT_STRING_BASE64 0x00000001
-	 * @returns buffer if success, otherwise blank.
-	 * VarOut may contain any binary contents including NULL bytes.
-	 */
-	static Decode(VarIn, Codec := 0x00000001) {
-		if (DllCall("crypt32\CryptStringToBinary", "Str", VarIn, "UInt", 0, "UInt", Codec, "Ptr", 0, "Uint*", &SizeOut := 0, "Ptr", 0, "Ptr", 0) &&
-			DllCall("Crypt32.dll\CryptStringToBinary", "Str", VarIn, "UInt", 0, "UInt", Codec, "Ptr", VarOut := Buffer(SizeOut), "Uint*", &SizeOut, "Ptr", 0, "Ptr", 0))
-			return VarOut
-	}
 }

@@ -91,66 +91,39 @@ class FileSystemTool {
 
 
     /**
-     * Get the OpenAI tool definition for this tool
+     * Single source of truth for this tool's schema, shared by all providers
      */
-    GetOpenAiToolDefinition() {
+    static GetToolSchema() {
         return {
-            type: "function",
-            function: {
-                name: FileSystemTool.TOOL_NAME,
-                description: "Perform file system operations like reading, writing, and listing files.",
-                parameters: {
-                    type: "object",
-                    properties: {
-                        operation: {
-                            type: "string",
-                            enum: ["read_file", "write_file", "list_dir"],
-                            description: "The operation to perform."
-                        },
-                        path: {
-                            type: "string",
-                            description: "The absolute path to the file or directory."
-                        },
-                        content: {
-                            type: "string",
-                            description: "The content to write (required for write_file)."
-                        }
+            name: FileSystemTool.TOOL_NAME,
+            description: "Perform file system operations like reading, writing, and listing files.",
+            parameters: {
+                type: "object",
+                properties: {
+                    operation: {
+                        type: "string",
+                        enum: ["read_file", "write_file", "list_dir"],
+                        description: "The operation to perform."
                     },
-                    required: ["operation", "path"]
-                }
+                    path: {
+                        type: "string",
+                        description: "The absolute path to the file or directory."
+                    },
+                    content: {
+                        type: "string",
+                        description: "The content to write (required for write_file)."
+                    }
+                },
+                required: ["operation", "path"]
             }
         }
     }
 
     /**
-     * Get the Gemini tool definition for this tool
+     * Get the OpenAI tool definition for this tool
      */
-    static GetGeminiToolDefinition() {
-        return {
-            functionDeclarations: [{
-                name: FileSystemTool.TOOL_NAME,
-                description: "Perform file system operations like reading, writing, and listing files.",
-                parameters: {
-                    type: "object",
-                    properties: {
-                         operation: {
-                            type: "string",
-                            enum: ["read_file", "write_file", "list_dir"],
-                            description: "The operation to perform."
-                        },
-                        path: {
-                            type: "string",
-                            description: "The absolute path to the file or directory."
-                        },
-                        content: {
-                            type: "string",
-                            description: "The content to write (required for write_file)."
-                        }
-                    },
-                    required: ["operation", "path"]
-                }
-            }]
-        }
+    GetOpenAiToolDefinition() {
+        return {type: "function", function: FileSystemTool.GetToolSchema()}
     }
 
     /**

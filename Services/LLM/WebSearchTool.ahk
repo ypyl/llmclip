@@ -1,8 +1,6 @@
-#Include ..\..\Lib\Json.ahk
+#Include OllamaHttpTool.ahk
 
-class WebSearchTool {
-    currentHttpObject := ""
-    isCancelled := false
+class WebSearchTool extends OllamaHttpTool {
     static TOOL_NAME := "web_search"
     static TOOL_LABEL := "Web Search"
 
@@ -14,69 +12,61 @@ class WebSearchTool {
      * @returns The search results
      */
     Execute(query, max_results := 5, apiKey := "") {
-        try {
-            ; Check for cancellation
-            if (this.isCancelled) {
-                return "Operation cancelled by user"
+        url := "https://ollama.com/api/web_search"
+
+        body := Map()
+        body["query"] := query
+        if (max_results)
+            body["max_results"] := max_results
+
+        result := this.PostJson(url, body, apiKey, "Web search")
+        if (!result.ok)
+            return result.error
+
+        response := result.response
+
+        resultText := "Search Results for '" . query . "':`n`n"
+
+        if (response.Has("results") && response["results"] is Array) {
+            for item in response["results"] {
+                title := item.Has("title") ? item["title"] : "No Title"
+                link := item.Has("url") ? item["url"] : "No URL"
+                content := item.Has("content") ? item["content"] : ""
+
+                resultText .= "Title: " . title . "`n"
+                resultText .= "URL: " . link . "`n"
+                if (content != "")
+                    resultText .= "Content: " . content . "`n"
+                resultText .= "`n-------------------`n"
             }
+        } else {
+            resultText .= "No results found."
+        }
 
-            url := "https://ollama.com/api/web_search"
+        return resultText
+    }
 
-            body := Map()
-            body["query"] := query
-            if (max_results)
-                body["max_results"] := max_results
-
-            http := ComObject("WinHttp.WinHttpRequest.5.1")
-            this.currentHttpObject := http
-            http.Open("POST", url, true)
-            http.SetRequestHeader("Content-Type", "application/json")
-            if (apiKey != "")
-                http.SetRequestHeader("Authorization", "Bearer " . apiKey)
-
-            http.Send(JSON.Dump(body))
-
-            ; Wait for response with cancellation check
-            startTime := A_TickCount
-            while (!http.WaitForResponse(100)) {
-                ; Check for cancellation every 100ms
-                if (this.isCancelled) {
-                    try http.Abort()
-                    this.currentHttpObject := ""
-                    return "Operation cancelled by user"
-                }
+    /**
+     * Single source of truth for this tool's schema, shared by all providers
+     */
+    static GetToolSchema() {
+        return {
+            name: WebSearchTool.TOOL_NAME,
+            description: "Performs a web search for a single query and returns relevant results. Use this to get latest information.",
+            parameters: {
+                type: "object",
+                properties: {
+                    query: {
+                        type: "string",
+                        description: "The search query string"
+                    },
+                    max_results: {
+                        type: "integer",
+                        description: "Maximum results to return (default 5, max 10)"
+                    }
+                },
+                required: ["query"]
             }
-
-            this.currentHttpObject := ""
-
-            if (http.Status != 200) {
-                return "Error: Web search failed with status " . http.Status . " - " . http.ResponseText
-            }
-
-            response := JSON.Load(http.ResponseText)
-
-            resultText := "Search Results for '" . query . "':`n`n"
-
-            if (response.Has("results") && response["results"] is Array) {
-                for item in response["results"] {
-                    title := item.Has("title") ? item["title"] : "No Title"
-                    link := item.Has("url") ? item["url"] : "No URL"
-                    content := item.Has("content") ? item["content"] : ""
-
-                    resultText .= "Title: " . title . "`n"
-                    resultText .= "URL: " . link . "`n"
-                    if (content != "")
-                        resultText .= "Content: " . content . "`n"
-                    resultText .= "`n-------------------`n"
-                }
-            } else {
-                resultText .= "No results found."
-            }
-
-            return resultText
-
-        } catch as e {
-            return "Error executing web search: " . e.Message
         }
     }
 
@@ -84,53 +74,7 @@ class WebSearchTool {
      * Get the OpenAI tool definition for this tool
      */
     GetOpenAiToolDefinition() {
-        return {
-            type: "function",
-            function: {
-                name: WebSearchTool.TOOL_NAME,
-                description: "Performs a web search for a single query and returns relevant results. Use this to get latest information.",
-                parameters: {
-                    type: "object",
-                    properties: {
-                        query: {
-                            type: "string",
-                            description: "The search query string"
-                        },
-                        max_results: {
-                            type: "integer",
-                            description: "Maximum results to return (default 5, max 10)"
-                        }
-                    },
-                    required: ["query"]
-                }
-            }
-        }
-    }
-
-    /**
-     * Get the Gemini tool definition for this tool
-     */
-    static GetGeminiToolDefinition() {
-        return {
-            functionDeclarations: [{
-                name: WebSearchTool.TOOL_NAME,
-                description: "Performs a web search for a single query and returns relevant results. Use this to get latest information.",
-                parameters: {
-                    type: "object",
-                    properties: {
-                        query: {
-                            type: "string",
-                            description: "The search query string"
-                        },
-                        max_results: {
-                            type: "integer",
-                            description: "Maximum results to return (default 5, max 10)"
-                        }
-                    },
-                    required: ["query"]
-                }
-            }]
-        }
+        return {type: "function", function: WebSearchTool.GetToolSchema()}
     }
 
     /**
@@ -166,17 +110,6 @@ class WebSearchTool {
             msg := ChatMessage("tool")
             msg.Contents.Push(FunctionResultContent(toolCall.Id, "Error: " . e.Message))
             return msg
-        }
-    }
-
-    /**
-     * Cancel any running web request
-     */
-    Cancel() {
-        this.isCancelled := true
-        if (this.currentHttpObject != "") {
-            try this.currentHttpObject.Abort()
-            this.currentHttpObject := ""
         }
     }
 }

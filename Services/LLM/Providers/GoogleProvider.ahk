@@ -1,9 +1,4 @@
 #Include "BaseProvider.ahk"
-#Include "..\PowerShellTool.ahk"
-#Include "..\FileSystemTool.ahk"
-#Include "..\WebSearchTool.ahk"
-#Include "..\WebFetchTool.ahk"
-#Include "..\MarkdownNewTool.ahk"
 
 class GoogleProvider extends BaseProvider {
 
@@ -169,19 +164,12 @@ class GoogleProvider extends BaseProvider {
         }
 
         body["contents"] := contents
+        ; settings["tools"] holds OpenAI-style definitions resolved by LLMService;
+        ; Gemini wants the same {name, description, parameters} object
         enabledTools := []
         for t in settings.Get("tools", []) {
-            if (t = PowerShellTool.TOOL_NAME)
-                enabledTools.Push(PowerShellTool.GetGeminiToolDefinition())
-            else if (t = FileSystemTool.TOOL_NAME)
-                enabledTools.Push(FileSystemTool.GetGeminiToolDefinition())
-            else if (t = WebSearchTool.TOOL_NAME )
-                enabledTools.Push(WebSearchTool.GetGeminiToolDefinition())
-            else if (t = WebFetchTool.TOOL_NAME) {
-                enabledTools.Push(WebFetchTool.GetGeminiToolDefinition())
-            }
-            else if (t = MarkdownNewTool.TOOL_NAME)
-                enabledTools.Push(MarkdownNewTool.GetGeminiToolDefinition())
+            if (t is Object && t.HasOwnProp("function"))
+                enabledTools.Push({functionDeclarations: [t.function]})
         }
         if (enabledTools.Length > 0)
             body["tools"] := enabledTools

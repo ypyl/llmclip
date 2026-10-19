@@ -41,6 +41,7 @@ Include paths in sub-files are relative to that file (e.g., `#Include ..\Service
 | `utils/` | Pure static helpers (Clipboard, File, Base64, etc.) |
 | `Lib/` | **Vendored** dependencies from [thqby/ahk2_lib](https://github.com/thqby/ahk2_lib) — do not modify |
 | `providers/providers.json` | LLM endpoint definitions (curl templates, model lists, tool flags) — runtime config |
+| `providers/azure.json` | Private Azure OpenAI provider with `auth: command` (Entra ID via `az`) — gitignored; template in `providers/azure.example.json` |
 | `keys.ini` | API keys — gitignored, must be created locally |
 | `roles.json` | Model-to-prompt-role mapping — runtime config |
 | `prompts/` | System prompt JSON files — gitignored, user-customizable |
@@ -49,6 +50,7 @@ Include paths in sub-files are relative to that file (e.g., `#Include ..\Service
 
 - `ConfigurationService` is a **singleton** — always access via `ConfigurationService.GetInstance()`.
 - `providers/providers.json` and `prompts/` directory JSONs are merged at runtime (multiple JSON files combine).
+- Token auth: a provider may declare `"auth": {"type": "command", "command": "..."}`. `Services/Auth/TokenService.ahk` runs that command, caches the token per command string, and invalidates on `401`. `LLMClient` substitutes `{AUTH_TOKEN}` and, when the template uses it, `{HEADERS_FILE}` — a temp file holding the `Authorization` header so the token never appears on the curl command line.
 - `keys.ini` section names must match provider names in `providers.json` (e.g., `[Groq]`, `[Google]`).
 - LLM calls use **curl** subprocess — cURL must be installed and on PATH.
 - Tool auto-approval is configured in system prompt JSONs via `tools.{ToolName}.{parameterName}` regex patterns (see `TOOL_AUTO_APPROVAL.md`).

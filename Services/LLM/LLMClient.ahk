@@ -12,10 +12,12 @@ class LLMClient {
     tempDir := A_ScriptDir "\temp"
     pid := 0
     isCancelled := false
+    tokenService := ""
 
-    __New(traceabilityService, providers) {
+    __New(traceabilityService, providers, tokenService := "") {
         this.traceabilityService := traceabilityService
         this.providers := providers
+        this.tokenService := tokenService
     }
 
     Cancel() {
@@ -26,6 +28,9 @@ class LLMClient {
     }
 
     Call(messages, settings) {
+        ; Declared before the try block: finally and catch both read it, and
+        ; reading an unset variable is a hard error in AHK v2.
+        headersFile := ""
         try {
             this.isCancelled := false
             startTime := A_TickCount
@@ -75,6 +80,26 @@ class LLMClient {
                 curlCmd := StrReplace(curlCmd, "{MODEL}", settings["model"])
             }
 
+            ; Resolve command-based credentials (e.g. Entra ID via Azure CLI)
+            resolvedToken := ""
+            if (InStr(curlCmd, "{AUTH_TOKEN}") || InStr(curlCmd, "{HEADERS_FILE}")) {
+                if (!settings.Has("auth"))
+                    throw Error("Provider uses AUTH_TOKEN but has no auth config: " . selectedLLMType)
+                if (!this.tokenService)
+                    throw Error("No TokenService available for provider: " . selectedLLMType)
+                resolvedToken := this.tokenService.GetToken(settings["auth"])
+                curlCmd := StrReplace(curlCmd, "{AUTH_TOKEN}", resolvedToken)
+            }
+
+            ; Write the credential to a file so it never lands on the command
+            ; line (Win32_Process.CommandLine is world-readable). UTF-8-RAW:
+            ; a BOM would corrupt the header name.
+            if (InStr(curlCmd, "{HEADERS_FILE}")) {
+                headersFile := this.tempDir "\auth_headers.txt"
+                FileOpen(headersFile, "w", "UTF-8-RAW").Write("Authorization: Bearer " . resolvedToken . "`n")
+                curlCmd := StrReplace(curlCmd, "{HEADERS_FILE}", headersFile)
+            }
+
             ; Execute curl
             Run(curlCmd, , "Hide", &pid)
             this.pid := pid
@@ -121,12 +146,24 @@ class LLMClient {
             if (e.Message == "Request cancelled") {
                 throw e
             }
+            ; A rejected token may be revoked or shorter-lived than our TTL.
+            ; Drop it so the next send re-acquires instead of failing for an hour.
+            if (settings.Has("auth") && this.tokenService && this.IsAuthFailure(e.Message))
+                this.tokenService.Invalidate(settings["auth"])
             parsedMessages := [ChatMessage("assistant", [TextContent(e.Message)])]
             this.TraceLog(sessionIndex, settings, body, response, parsedMessages, startTime, e.Message)
             return parsedMessages
         } finally {
+            if (headersFile != "")
+                try FileDelete(headersFile)
             this.pid := 0
         }
+    }
+
+    IsAuthFailure(text) {
+        if (text = "")
+            return false
+        return InStr(text, "401") || InStr(text, "Unauthorized") || InStr(text, "invalid_token") || InStr(text, "Invalid audience")
     }
 
     GetProvider(settings) {

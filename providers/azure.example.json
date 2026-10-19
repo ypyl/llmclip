@@ -1,0 +1,45 @@
+{
+  "AzureOpenAI": {
+    "provider_type": "openai",
+    "auth": {
+      "type": "command",
+      "command": "az account get-access-token --resource https://cognitiveservices.azure.com --query accessToken -o tsv",
+      "ttl_seconds": 900,
+      "skew_seconds": 60,
+      "login_hint": "az login"
+    },
+    "curl": "curl -s -S -X POST \"https://YOUR-RESOURCE.openai.azure.com/openai/deployments/{MODEL}/chat/completions?api-version=2024-10-21\" -H @\"{HEADERS_FILE}\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
+    "models": [
+      {
+        "model": "gpt-4o",
+        "temperature": 0.7,
+        "image": true,
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch"]
+      },
+      {
+        "model": "gpt-4o-mini",
+        "temperature": 0.7,
+        "image": true,
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch"]
+      },
+      {
+        "model": "gpt-4.1",
+        "temperature": 0.7,
+        "image": true,
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch"]
+      },
+      {
+        "model": "gpt-4.1-mini",
+        "temperature": 0.7,
+        "image": true,
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch"]
+      },
+      {
+        "model": "gpt-5-mini",
+        "temperature": 1,
+        "image": true,
+        "tools": ["execute_powershell", "file_system", "web_search", "web_fetch"]
+      }
+    ]
+  }
+}

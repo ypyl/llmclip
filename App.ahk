@@ -17,6 +17,7 @@
 #Include Services\LLM\WebSearchTool.ahk
 #Include Services\LLM\WebFetchTool.ahk
 #Include Services\LLM\LLMClient.ahk
+#Include Services\Auth\TokenService.ahk
 #Include Services\LLM\Providers\OpenAIProvider.ahk
 #Include Services\LLM\Providers\OllamaProvider.ahk
 #Include Services\LLM\Providers\GoogleProvider.ahk
@@ -122,7 +123,8 @@ class App {
             "google", GoogleProvider(),
             "audio", GroqAudioProvider()
         )
-        clientInstance := LLMClient(trc, llmProviders)
+        tokenSvc := TokenService()
+        clientInstance := LLMClient(trc, llmProviders, tokenSvc)
 
         llm := LLMService(cfg, toolsMap, clientInstance)
 

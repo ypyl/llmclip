@@ -19,7 +19,7 @@ LLMClip monitors your clipboard and aggregates copied text, files, folders, imag
 - **Selection Control**: Checkboxes allow you to select specific items from your history to send as context. Selected items are highlighted as `<SELECTED_CONTEXT>` in the prompt, while checked items appear as general `<CONTEXT>`.
 
 ### 🤖 LLM Integration
-- **9 Built-in Providers**: Pre-configured support for **GitHub Models**, **Groq**, **Groq Audio** (TTS), **Google (Gemini)**, **Ollama Local**, **Ollama Cloud**, **OpenRouter**, **Nvidia**, and **OpenCodeGo**.
+- **9 Built-in Providers**: Pre-configured support for **GitHub Models**, **Groq**, **Groq Audio** (TTS), **Google (Gemini)**, **Ollama Local**, **Ollama Cloud**, **OpenRouter**, **Nvidia**, and **OpenCodeGo**. A tenth provider can be added for a private Azure OpenAI deployment that authenticates with Entra ID instead of an API key (see [Token Auth](#token-auth-az-login)).
 - **Customizable**: Flexible configuration via `providers/` and `prompts/` directories — all `*.json` files in each are merged at runtime. Define curl templates, models, tool flags, system prompts with templates, and auto-approval rules.
 - **Per-Model System Prompts**: Multiple system prompt roles are selectable from a dropdown for every model. All prompts are available to all providers. System prompts can include input templates with `{placeholders}`.
 - **Tools**: Allow models to execute terminal commands, read/write files, search the web, fetch pages, and more. Available tools:
@@ -87,9 +87,63 @@ api_key=your_opencodego_api_key_here
 
 Section names must match provider names defined in `providers/providers.json`. Omit sections for providers you don't use.
 
+### Token Auth (`az login`)
+
+A provider can authenticate with a short-lived token from a command instead of a static API key. This is how the app reaches a company Azure OpenAI deployment through SSO: no shared secret in `keys.ini`, and access is governed by the user's Entra ID role.
+
+Prerequisites:
+
+1. Azure CLI installed and on PATH (`winget install Microsoft.AzureCLI`).
+2. Signed in with `az login`.
+3. Your account holds the `Cognitive Services OpenAI User` role on the resource. Tenant membership alone is not enough.
+
+Create `providers/azure.json` from the tracked template `providers/azure.example.json` and fill in your host and deployment names:
+
+```json
+{
+  "AzureOpenAI": {
+    "provider_type": "openai",
+    "auth": {
+      "type": "command",
+      "command": "az account get-access-token --resource https://cognitiveservices.azure.com --query accessToken -o tsv",
+      "ttl_seconds": 900,
+      "skew_seconds": 60,
+      "login_hint": "az login"
+    },
+    "curl": "curl -s -S -X POST \"https://YOUR-RESOURCE.openai.azure.com/openai/deployments/{MODEL}/chat/completions?api-version=2024-10-21\" -H @\"{HEADERS_FILE}\" -H \"Content-Type: application/json\" -d \"@{1}\" -o \"{2}\"",
+    "models": [
+      { "model": "gpt-4o-mini", "temperature": 0.7, "image": true, "tools": ["file_system", "web_fetch"] }
+    ]
+  }
+}
+```
+
+`providers/azure.json` is gitignored, so an internal endpoint never lands in the repository. `{MODEL}` is the **deployment name**, not the model name.
+
+Fields of the `auth` object:
+
+| Field | Meaning |
+| :--- | :--- |
+| `type` | Only `"command"` is supported |
+| `command` | Runs through `cmd /c` and must print the token on stdout |
+| `ttl_seconds` | Re-use window for the cached token. Default `900` |
+| `skew_seconds` | Refresh this much before the TTL ends. Default `60` |
+| `login_hint` | Printed in the error message when the command fails |
+
+Curl placeholders for token auth:
+
+| Placeholder | Value |
+| :--- | :--- |
+| `{AUTH_TOKEN}` | The token returned by `command` |
+| `{HEADERS_FILE}` | Path to a temp file containing `Authorization: Bearer <token>`. Keeps the token off the process command line. |
+
+The token is cached per command string and invalidated automatically when a request returns `401`, so a revoked or expired token recovers on the next send. The same mechanism works with any CLI that prints a token on stdout, for example `gh auth token`.
+
+Note: `gpt-5` family deployments reject a `temperature` other than `1`. Set `"temperature": 1` for those deployments, as `providers/azure.example.json` does.
+
 ### Advanced Configuration
 
-- **`providers/`**: Contains provider JSON files (`.json`). All files in this directory are merged at runtime. Each defines LLM endpoints, curl command templates, model lists, image support flags, and tool capabilities. The included `providers.json` serves as the default; if you add additional files, `providers.json` is skipped in favor of your custom files. Add or customize providers by creating files here.
+- **`providers/`**: Contains provider JSON files (`.json`). All files in this directory are merged at runtime. Each defines LLM endpoints, curl command templates, model lists, image support flags, tool capabilities, and optionally an `auth` object for command-based credentials. Add or customize providers by creating files here. Use `providers/azure.json` (gitignored) for anything machine- or company-specific.
 - **`prompts/`**: Contains system prompt JSON files (`.json` only; `.md` files are ignored at runtime). All JSON files in this directory are merged at startup. Each prompt can define:
     - `"value"`: The system prompt text.
     - `"input_template"`: Optional template with `{placeholders}` pre-filled into the input box.

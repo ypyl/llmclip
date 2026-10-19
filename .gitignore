@@ -12,3 +12,5 @@ prompts
 conversation.json
 state.json
 sessions/
+
+providers/azure.json

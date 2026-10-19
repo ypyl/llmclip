@@ -11,13 +11,10 @@ class Providers {
         this.providers := Map()
         if (!DirExist("providers"))
             return
-        fileCount := 0
-        Loop Files, "providers\*.json"
-            fileCount++
-        skipDefault := fileCount > 1
+        ; Every providers\*.json merges additively. Provider-level keys are set
+        ; on first sight, models merge by name. Never skip providers.json: a
+        ; company-specific file must not disable the shipped defaults.
         Loop Files, "providers\*.json" {
-            if (skipDefault && A_LoopFileName = "providers.json")
-                continue
             try {
                 parsed := JSON.LoadFile(A_LoopFilePath)
                 for providerName, providerConfig in parsed {

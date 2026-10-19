@@ -1,4 +1,8 @@
-# dead-code-removal
+# dead-code-removal Specification
+
+## Purpose
+
+The application starts and runs after dead files are removed, with no `#Include` errors and no references left pointing at deleted code.
 
 ## Requirements
 

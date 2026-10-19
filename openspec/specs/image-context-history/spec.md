@@ -1,7 +1,9 @@
 # image-context-history Specification
 
 ## Purpose
-TBD - created by archiving change image-context-in-history. Update Purpose after archive.
+
+Image context is visible and inspectable. Images carried by a user message appear as their own history row and render in the WebView when clicked, without leaking into the text preview of the message.
+
 ## Requirements
 ### Requirement: Image context displayed as separate history row
 The system SHALL display a separate clickable row in the chat history ListView when a user message includes attached images as context, using the same 📎 row pattern already used for text context.
@@ -50,4 +52,3 @@ The system SHALL exclude image-related content from the user message row in the 
 #### Scenario: User message row is empty when only images are sent
 - **WHEN** a user sends a message with only image context (no typed prompt text)
 - **THEN** the 👤 user message row SHALL display "(empty message)" or equivalent placeholder
-

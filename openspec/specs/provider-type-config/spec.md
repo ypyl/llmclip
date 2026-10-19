@@ -1,3 +1,9 @@
+# provider-type-config Specification
+
+## Purpose
+
+Each provider declares how its requests and responses are shaped. The `provider_type` field in `providers.json` selects the internal provider class, so routing never depends on matching provider name strings.
+
 ## Requirements
 
 ### Requirement: Provider type declared in providers.json

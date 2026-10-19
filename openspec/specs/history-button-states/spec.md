@@ -1,4 +1,10 @@
-## ADDED Requirements
+# history-button-states Specification
+
+## Purpose
+
+History navigation shows what is actually possible. The branch arrows disable at the ends of the timeline, Delete is disabled when no message is selected, and every button state is recalculated whenever history, selection, or branch position changes.
+
+## Requirements
 
 ### Requirement: Delete button disabled when nothing selected
 

@@ -1,4 +1,10 @@
-## ADDED Requirements
+# session-traceability Specification
+
+## Purpose
+
+Every LLM call is auditable. Each request and each tool round-trip is appended as a JSONL line under `sessions/`, and credentials never reach the log.
+
+## Requirements
 
 ### Requirement: Traceability service manages session log files
 

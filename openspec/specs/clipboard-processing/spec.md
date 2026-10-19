@@ -1,3 +1,9 @@
+# clipboard-processing Specification
+
+## Purpose
+
+Recording turns clipboard activity into context. While recording is active, copied text, files, images and URLs are parsed into context items, and items already in the context are skipped.
+
 ## Requirements
 
 ### Requirement: Clipboard changes trigger context capture during recording

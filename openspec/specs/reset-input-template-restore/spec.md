@@ -1,4 +1,8 @@
-# reset-input-template-restore
+# reset-input-template-restore Specification
+
+## Purpose
+
+Reset All leaves the session ready to use again, including restoring the input text produced by the selected prompt's template.
 
 ## Requirements
 

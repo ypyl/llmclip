@@ -1,10 +1,14 @@
-## ADDED Requirements
+# controller-notification-callbacks Specification
+
+## Purpose
+
+Controllers stay independent of each other. A sub-controller that needs a refresh wider than its own view calls an opaque callback wired in the composition root, instead of reaching through a view into another controller.
+
+## Requirements
 
 ### Requirement: Sub-controller notifies parent via opaque callback
 
-When a sub-controller needs to trigger a refresh or coordination action that spans beyond its own view scope, it SHALL invoke an opaque callback rather than reaching through a View to access other controllers. The callback MUST be set via property assignment after construction in `App.ahk`, using the same pattern already prescribed for View↔Controller wiring.
-
-The sub-controller MUST NOT know the identity of the callback target. It SHALL guard calls with a nil check to safely degrade if wiring is omitted.
+When a sub-controller needs a refresh wider than its own view, it SHALL invoke an opaque callback instead of reaching through a View to another controller. The callback MUST be assigned by property after construction in `App.ahk`. The sub-controller SHALL NOT know the identity of the callback target, and SHALL guard each call with a nil check.
 
 #### Scenario: Session change triggers full UI refresh
 

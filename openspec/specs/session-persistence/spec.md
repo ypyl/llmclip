@@ -8,9 +8,9 @@ Persist all 5 chat sessions on app exit and fully restore them on the next start
 
 ### Requirement: All sessions are saved on exit
 
-On real app exit, the complete state of all 5 sessions is written to `conversation.json`, together with the index of the session that was active at exit.
+On real app exit, the complete state of all 5 sessions SHALL be written to `conversation.json`, together with the index of the session that was active at exit.
 
-The per-session state includes: message histories (including history branches and the active branch index), context items, the session's model selection, the session's system prompt selection, and the session's processing state.
+The per-session state SHALL include: message histories (including history branches and the active branch index), context items, the session's model selection, the session's system prompt selection, and the session's processing state.
 
 #### Scenario: Saving on exit preserves all 5 sessions
 
@@ -24,9 +24,9 @@ The per-session state includes: message histories (including history branches an
 
 ### Requirement: All sessions are restored on start
 
-On application start, if a valid saved state exists, all 5 sessions are reconstructed from it — messages, context, model, system prompt, and history branches included — and the saved active session index becomes the active session.
+On application start, if a valid saved state exists, all 5 sessions SHALL be reconstructed from it, including messages, context, model, system prompt, and history branches, and the saved active session index SHALL become the active session.
 
-A restored session that was saved mid-request starts in the idle state, never in a processing state.
+A restored session that was saved mid-request SHALL start in the idle state, never in a processing state.
 
 #### Scenario: Restoring all sessions after a save
 
@@ -45,7 +45,7 @@ A restored session that was saved mid-request starts in the idle state, never in
 
 ### Requirement: Only the all-sessions format is supported
 
-The previous single-session conversation file format is not migrated or read. A state file without the all-sessions shape is treated as no saved state.
+The previous single-session conversation file format SHALL NOT be migrated or read. A state file without the all-sessions shape SHALL be treated as no saved state.
 
 #### Scenario: Old-format file is ignored
 
@@ -54,7 +54,7 @@ The previous single-session conversation file format is not migrated or read. A 
 
 ### Requirement: Per-session model and system prompt restore with session state
 
-The model and system prompt of every session are restored from that session's own saved state, not from a single global value. Session-scoped UI state that depends on the active session follows the restored active session.
+The model and system prompt of every session SHALL be restored from that session's own saved state, not from a single global value. Session-scoped UI state that depends on the active session SHALL follow the restored active session.
 
 #### Scenario: Two sessions with different models survive a restart
 
@@ -63,7 +63,7 @@ The model and system prompt of every session are restored from that session's ow
 
 ### Requirement: Persistence writes are atomic and failures are surfaced
 
-State file writes are atomic: a write interrupted by process termination cannot leave a truncated or partial JSON file, and save failures on exit are surfaced rather than silently ignored.
+State file writes SHALL be atomic, so a write interrupted by process termination cannot leave a truncated or partial JSON file. Save failures on exit SHALL be surfaced rather than silently ignored.
 
 #### Scenario: Interrupted write never corrupts the saved state
 

@@ -1,3 +1,9 @@
+# recording Specification
+
+## Purpose
+
+The user can start and stop clipboard recording, the UI reflects the current state, and commands delegate to `RecordingService` rather than changing state directly.
+
 ## Requirements
 
 ### Requirement: User can start and stop clipboard recording

@@ -1,4 +1,6 @@
-# delete-message-sort
+# delete-message-sort Specification
+
+## Purpose
 
 DeleteMessageCommand defensively sorts its input indices in descending order before removal, so the command works correctly regardless of input order.
 

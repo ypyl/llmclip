@@ -1,6 +1,8 @@
-# tool-persistence
+# tool-persistence Specification
 
-Tool enable/disable preferences are stored per-model in a `toolOverrides` Map, persisted to `state.json`, and survive configuration reloads and app restarts. Preferences are merged with provider defaults at read time.
+## Purpose
+
+Tool choices belong to the user and the model. Per-model enable and disable preferences survive configuration reloads and application restarts by living in `state.json`, separate from the provider defaults.
 
 ## Requirements
 

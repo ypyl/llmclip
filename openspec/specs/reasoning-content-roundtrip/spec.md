@@ -1,4 +1,10 @@
-## ADDED Requirements
+# reasoning-content-roundtrip Specification
+
+## Purpose
+
+Reasoning output from a model survives the whole trip: parsed from the API response, stored on the message, replayed on tool-call turns, shown and editable in the UI, and preserved across save and load.
+
+## Requirements
 
 ### Requirement: Parse reasoning_content from API responses
 

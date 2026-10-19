@@ -1,3 +1,9 @@
+# app-version-display Specification
+
+## Purpose
+
+The user can tell which build is running. The version is defined once in `version.txt` at the repository root and rendered in the window title bar.
+
 ## Requirements
 
 ### Requirement: Version stored in version.txt

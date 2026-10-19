@@ -1,4 +1,10 @@
-## ADDED Requirements
+# tool-presentation Specification
+
+## Purpose
+
+Tool names and labels have a single source. Each tool class owns its label, the roster is derived from the `toolsMap`, and menus are built from that data instead of hardcoded lists.
+
+## Requirements
 
 ### Requirement: Tool classes own their display label
 Each tool class in `services/LLM/` SHALL define a `static TOOL_LABEL` constant containing the human-readable display name used in the Tools menu.

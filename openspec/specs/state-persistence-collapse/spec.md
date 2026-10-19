@@ -1,3 +1,9 @@
+# state-persistence-collapse Specification
+
+## Purpose
+
+State persistence has one implementation. `StateHelper` owns saving and loading, and the per-concern wrappers delegate to it instead of each repeating its own file handling.
+
 ## Requirements
 
 ### Requirement: StateHelper provides unified Save and Load methods

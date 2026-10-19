@@ -1,3 +1,9 @@
+# tool-def-passthrough Specification
+
+## Purpose
+
+Tool definitions are resolved once. `LLMService` expands enabled tool names into OpenAI tool definitions before the call, and providers send the resolved definitions rather than re-deriving them.
+
 ## Requirements
 
 ### Requirement: LLMService resolves tool definitions before providers

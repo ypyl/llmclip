@@ -1,3 +1,9 @@
+# send-to-llm-pipeline Specification
+
+## Purpose
+
+The path from pressing send to appending a reply: the user message is built with context and images, the system prompt is refreshed, per-model tool settings are read, and the response is appended to the session. Regeneration branches the history instead of appending.
+
 ## Requirements
 
 ### Requirement: User message is built with context and images

@@ -55,7 +55,7 @@ rules:
   design:
     - List all new `#Include` additions needed in `App.ahk` with exact paths
     - Verify no circular dependencies in the dependency graph
-    - Follow the composition root pattern: all instantiation in `App.ahk`
+    - "Follow the composition root pattern: all instantiation in `App.ahk`"
     - If adding to `services/LLM/` or `services/Configuration/`, follow existing provider/config patterns
     - Never modify files in `Lib/`
 

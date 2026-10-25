@@ -110,10 +110,12 @@ timeout 8 "$AHK" //ErrorStdOut test.ahk > /tmp/out.txt 2>&1; echo "exit: $? (124
 - Before tagging a release, bump the version in `version.txt` and commit it.
 - CI (`.github/workflows/release.yml`): triggered on semver tag push (`v*.*.*`). Compiles `main.ahk` → `llmclip.exe` with `icon.ico`.
 - Release workflow:
-  1. Bump version in `version.txt`
-  2. Commit: `git commit -m "Bump version to X.Y.Z for release"`
-  3. Tag: `git tag vX.Y.Z`
-  4. Push: `git push && git push origin vX.Y.Z`
+  1. Write the release notes in **`RELEASE_NOTES.md`**: first line `# vX.Y.Z - <short summary>`, then the body. The workflow uses that first line as the release title and the rest as the body, and fails the run if the headline does not start with the pushed tag, so a stale file cannot ship.
+  2. Bump version in `version.txt`
+  3. Commit: `git commit -m "Bump version to X.Y.Z for release"`
+  4. Tag: `git tag vX.Y.Z`
+  5. Push: `git push && git push origin vX.Y.Z`
+- `RELEASE_NOTES.md` always holds the notes for the *next* release, not a changelog. Older notes live in the published GitHub releases.
 - Release zip bundles: `llmclip.exe`, `mermaid.min.js`, `providers/providers.json`, `ui.html`, `marked.min.js`, `overtype@latest.js`, `WebView2Loader.dll`.
 - Uses `benmusson/ahk2exe-action@v1.2.0` for compilation.
 

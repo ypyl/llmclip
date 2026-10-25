@@ -117,3 +117,16 @@ When a curl template contains `{HEADERS_FILE}`, `LLMClient.Call()` SHALL write `
 #### Scenario: Overriding a single provider key
 - **WHEN** a second file redeclares a provider name that already exists
 - **THEN** the models from both files are available under that provider name
+
+### Requirement: SESSION_ID placeholder is resolved per conversation
+`LLMClient.Call()` SHALL replace `{SESSION_ID}` in the curl template with `llmclip-<session_index>`, the stable identifier of the conversation being sent. The value SHALL be the same for every request in a session and SHALL NOT be random per call. This lets gateways that route and cache by session, such as OpenCode Go, receive the `x-opencode-session` header.
+
+#### Scenario: OpenCode Go request carries a session header
+- **WHEN** the OpenCode Go template contains `-H "x-opencode-session: {SESSION_ID}"`
+- **AND** the request is sent from session 3
+- **THEN** the executed command line contains `x-opencode-session: llmclip-3`
+- **AND** no `{SESSION_ID}` substring remains in the command
+
+#### Scenario: Template without the placeholder
+- **WHEN** a template does not contain `{SESSION_ID}`
+- **THEN** nothing is substituted and the command is unchanged

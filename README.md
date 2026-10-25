@@ -136,6 +136,7 @@ Curl placeholders for token auth:
 | :--- | :--- |
 | `{AUTH_TOKEN}` | The token returned by `command` |
 | `{HEADERS_FILE}` | Path to a temp file containing `Authorization: Bearer <token>`. Keeps the token off the process command line. |
+| `{SESSION_ID}` | Stable per-conversation ID (`llmclip-<session index>`). Required by gateways that route and cache by session, such as OpenCode Go (`x-opencode-session`). |
 
 The token is cached per command string and invalidated automatically when a request returns `401`, so a revoked or expired token recovers on the next send. The same mechanism works with any CLI that prints a token on stdout, for example `gh auth token`.
 
@@ -147,7 +148,7 @@ Note: `gpt-5` family deployments reject a `temperature` other than `1`. Set `"te
 - **`prompts/`**: Contains system prompt JSON files (`.json` only; `.md` files are ignored at runtime). All JSON files in this directory are merged at startup. Each prompt can define:
     - `"value"`: The system prompt text.
     - `"input_template"`: Optional template with `{placeholders}` pre-filled into the input box.
-    - `"tools.{ToolName}.{parameter}"`: Regex patterns for auto-approving specific tool calls (e.g., `"tools.FileSystemTool.operation": "read_file|list_dir"` to auto-approve read-only file ops). All defined patterns must match the tool call, otherwise fall back to manual approval.
+    - `"tools.{tool_id}.{parameter}"`: Regex patterns for auto-approving specific tool calls (e.g., `"tools.file_system.operation": "read_file|list_dir"` to auto-approve read-only file ops). `tool_id` is the tool name the model calls: `execute_powershell`, `file_system`, `web_search`, `web_fetch`, `read_url_markdown`. All defined patterns must match the tool call, otherwise fall back to manual approval.
 
 ## Usage
 

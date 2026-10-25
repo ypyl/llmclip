@@ -80,6 +80,11 @@ class LLMClient {
                 curlCmd := StrReplace(curlCmd, "{MODEL}", settings["model"])
             }
 
+            ; Stable per-conversation ID for gateways that route and cache by
+            ; session. OpenCode Go rejects requests without x-opencode-session.
+            if (InStr(curlCmd, "{SESSION_ID}"))
+                curlCmd := StrReplace(curlCmd, "{SESSION_ID}", "llmclip-" . sessionIndex)
+
             ; Resolve command-based credentials (e.g. Entra ID via Azure CLI)
             resolvedToken := ""
             if (InStr(curlCmd, "{AUTH_TOKEN}") || InStr(curlCmd, "{HEADERS_FILE}")) {
